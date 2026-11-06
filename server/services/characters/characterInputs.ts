@@ -14,15 +14,15 @@ import type { Character } from "@/shared/relations.ts";
 
 /**
  * The character's own rows (`CharacterRows`), read as stored through `database`: its links of each role it holds many
- * of, its inventory, its advancements and their picks by step, and the modifiers set on the character, then their
- * requirements.
+ * of, its inventory, its advancements and their picks by step (each role and step its base rules' module declares), and
+ * the modifiers set on the character, then their requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
-  const characterId = character.id;
-  const links = await CharacterLinks.findPerRole(database, { characterId });
+  const { baseRules, id: characterId } = character;
+  const links = await CharacterLinks.findPerRole(database, baseRules, { characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const advancements = await CharacterAdvancements.findMany(database, { characterId });
-  const picks = await Picks.findPerStep(database, { advancementIds: advancements.map(({ id }) => id) });
+  const picks = await Picks.findPerStep(database, baseRules, { advancementIds: advancements.map(({ id }) => id) });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
   return { links, inventory, advancements, picks, modifiers, requirements };

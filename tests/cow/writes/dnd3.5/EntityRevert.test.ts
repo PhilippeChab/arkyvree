@@ -35,6 +35,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A user's published extension of the seeded rules, and a fork of theirs subscribing to it. */
@@ -52,8 +53,14 @@ async function createExtensionAndHost(userId: string, coreId: string) {
 
 /** A fork's own feat and spell, each named uniquely. */
 async function createOwnFeatAndSpell(rulesetId: string) {
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: `Own Feat ${uniqueId()}`, rulesetId });
-  const [spell] = await Entities.create<Spell>(db, "spells", { name: `Own Spell ${uniqueId()}`, rulesetId });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    name: `Own Feat ${uniqueId()}`,
+    rulesetId,
+  });
+  const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", {
+    name: `Own Spell ${uniqueId()}`,
+    rulesetId,
+  });
   return { feat, spell };
 }
 
@@ -125,7 +132,7 @@ describe("reverting a fork's copy", () => {
     const { session, fork, ctx } = await setup();
     const reflex = ctx.saveMap.Reflex;
     const copy = await copyEntity(db, "saves", reflex, fork);
-    const [spell] = await Entities.create<Spell>(db, "spells", {
+    const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", {
       name: `Own Spell ${uniqueId()}`,
       rulesetId: fork.id,
       links: { resistedBy: copy.id },
@@ -153,8 +160,14 @@ describe("reverting a fork's copy", () => {
     const parentClass = await copyEntity(db, "classes", fighter, fork);
     const { klass } = await createTestClassLevel(fork.id);
     await addClassSkills(db, klass.id, [skill.id]);
-    await Entities.update<Klass>(db, "classes", { links: { subclassOf: parentClass.id } }, { id: klass.id });
-    const [subrace] = await Entities.create<Race>(db, "races", {
+    await Entities.update<Klass>(
+      db,
+      DND35_BASE_RULES,
+      "classes",
+      { links: { subclassOf: parentClass.id } },
+      { id: klass.id },
+    );
+    const [subrace] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
       name: `Own Subrace ${uniqueId()}`,
       rulesetId: fork.id,
       fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -196,8 +209,12 @@ describe("reverting a fork's copy", () => {
       feats: { [ctx.aptMap.General]: [feat.id] },
       skills: { [skill.id]: 2 },
     });
-    await CharacterInventory.create(db, { characterId: character.id, itemId: itemCopy.id, quantity: 1 });
-    await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: languageCopy.id }]);
+    await CharacterInventory.create(db, DND35_BASE_RULES, {
+      characterId: character.id,
+      itemId: itemCopy.id,
+      quantity: 1,
+    });
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: languageCopy.id }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);
     await RulesetChangesService.revertOverride(session, fork.id, "skills", climb);
@@ -234,14 +251,17 @@ describe("reverting a fork's copy", () => {
     const parent = await createTestRuleset(null, { private: false, status: "Published" });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
     // A class of the parent's, with one level, which the fork copied and gave a second
-    const [source] = await Entities.create<Klass>(db, "classes", {
+    const [source] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: `Parent Class ${uniqueId()}`,
       rulesetId: parent.id,
       fields: { [CLASS_HD]: 8 },
     });
-    await Entities.create<KlassLevel>(db, "class-levels", { ownerId: source.id, position: 1 });
+    await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", { ownerId: source.id, position: 1 });
     const copy = await copyEntity(db, "classes", source.id, fork);
-    const [added] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: copy.id, position: 2 });
+    const [added] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: copy.id,
+      position: 2,
+    });
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await addCharacterLevel(character.id, added.id);
 

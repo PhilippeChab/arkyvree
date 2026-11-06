@@ -40,7 +40,7 @@ async function readRulesetScope(tx: Db, rulesetId: string): Promise<RulesetScope
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   const sources = await Rulesets.findSources(tx, { id: rulesetId });
   if (!ruleset || !sources) return undefined;
-  return { ruleset, rulesetData: await RulesetViews.getData(sources, ruleset.baseRules), sources };
+  return { ruleset, rulesetData: await RulesetViews.getData(sources), sources };
 }
 
 /**
@@ -67,11 +67,11 @@ export async function withLockedRulesetScope<T, B = undefined>(
   const checked = (await before?.()) as B;
   const chain = await Locks.lockRulesets(
     tx,
-    { ids: [...new Set([...Engine.copyOnWrite().buildSourceChain(sources), ...reads])] },
+    { ids: [...new Set([...Engine.forRules(sources.baseRules).copyOnWrite().buildSourceChain(sources), ...reads])] },
     "share",
   );
   const versions = new Map([[rulesetId, committed], ...chain]);
-  const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
+  const rulesetData = await RulesetViews.getFreshData(tx, sources, versions);
   return await fn({ ruleset, rulesetData, sources, versions } as unknown as LockedRulesetScope, checked);
 }
 
@@ -132,11 +132,11 @@ export async function withSharedRulesetScope<T, B = undefined>(
   if (!ruleset || !sources) throw new NotFoundError("Ruleset not found");
   const chain = await Locks.lockRulesets(
     tx,
-    { ids: [...new Set(Engine.copyOnWrite().buildSourceChain(sources))] },
+    { ids: [...new Set(Engine.forRules(sources.baseRules).copyOnWrite().buildSourceChain(sources))] },
     "share",
   );
   const checked = (await before?.()) as B;
   const versions = new Map([...own, ...chain]);
-  const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
+  const rulesetData = await RulesetViews.getFreshData(tx, sources, versions);
   return await fn({ ruleset, rulesetData, sources, versions }, checked);
 }

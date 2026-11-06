@@ -4,6 +4,7 @@ import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
@@ -35,7 +36,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
     db: Db,
     override readonly ctx: Dnd35SeedContext,
   ) {
-    super(db, ctx);
+    super(db, DND35_BASE_RULES, ctx);
   }
 
   /** A context of the ruleset naming none of its rows: what a step needs no names for (items) or names as it goes. */

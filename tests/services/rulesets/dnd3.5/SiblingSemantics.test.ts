@@ -26,6 +26,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Every page of a list, by its size and its ids. */
@@ -93,8 +94,14 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   const aptitudeIds: string[] = [];
   const featIds: string[] = [];
   const { session, host, rulesetIds } = await setup(async (rulesetId, _baseId, index) => {
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { rulesetId, name: "Audit Shared Pool" });
-    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Audit Pool Feat ${index}` });
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+      rulesetId,
+      name: "Audit Shared Pool",
+    });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      rulesetId,
+      name: `Audit Pool Feat ${index}`,
+    });
     await addLists(db, "feats", feat.id, [{ toId: aptitude.id }]);
     aptitudeIds.push(aptitude.id);
     featIds.push(feat.id);
@@ -153,7 +160,12 @@ for (const [chainingOperator, reverseOrder] of [
     }, reverseOrder);
     const abilities = new AbilitiesComponent();
     const rows = await fetchEveryPage((pagination) =>
-      Entities.findPage<RulesetAbility>(db, { entityType: "abilities", rulesetId: host.rulesetId! }, pagination),
+      Entities.findPage<RulesetAbility>(
+        db,
+        DND35_BASE_RULES,
+        { entityType: "abilities", rulesetId: host.rulesetId! },
+        pagination,
+      ),
     );
     // The base's scores, each its `score` link, its ability named by the base's view
     const base = (await Rulesets.findOne(db, { id: host.rulesetId! }))!;

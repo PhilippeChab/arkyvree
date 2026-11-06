@@ -22,6 +22,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
@@ -158,7 +159,10 @@ describe("EntitiesService: feats", () => {
     test("counts the spells its own ruleset's view links to an aptitude, not a sibling fork's", async () => {
       const { user: author } = await createTestUser();
       const base = await createTestRuleset(author.id, { status: "Published" });
-      const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Shared List", rulesetId: base.id });
+      const [list] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+        name: "Shared List",
+        rulesetId: base.id,
+      });
       const forkOf = async () => {
         const { user, session } = await createTestUser();
         const fork = await createTestRuleset(user.id, { rulesetId: base.id });
@@ -261,7 +265,9 @@ describe("EntitiesService: feats", () => {
       const ruleset = await createSeededTestRuleset(SEED_USER_ID);
       await subscribeTestRuleset(ruleset.id, [scoundrel.id]);
       const where = { entityType: "feats", rulesetId: scoundrel.id, fields: { [FEAT_FAMILY]: "Luck" } };
-      const luck = (await Entities.findList<Feat>(db, { ...where, order: "name" })).map((feat) => feat.name);
+      const luck = (await Entities.findList<Feat>(db, DND35_BASE_RULES, { ...where, order: "name" })).map(
+        (feat) => feat.name,
+      );
       expect(luck).toHaveLength(20);
 
       const { rows } = await featGroupsOf(ruleset.id, { search: "Luck" });
@@ -284,7 +290,7 @@ describe("EntitiesService: feats", () => {
       name: "Doomed Feat",
       links: { listedIn: [{ toId: combat }] },
     });
-    const [klass] = await Entities.create<Klass>(db, "classes", {
+    const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },

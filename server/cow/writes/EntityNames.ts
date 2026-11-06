@@ -1,16 +1,11 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CowData, RulesetSources } from "@/engine/index.ts";
+import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import {
-  Entities,
-  EntitySnapshots,
-  RULESET_ENTITY_TYPES,
-  RulesetEntities,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import type ExtensionDeparture from "./ExtensionDeparture.ts";
 
@@ -41,11 +36,17 @@ function toOwnNameError(name: string) {
 export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}
 
-  /** The names of `entities`, each once, by their type, in the order the modules declare the types. */
-  private static namesByType(entities: { entityType: RulesetEntityType; name: string }[]) {
+  /**
+   * The names of `entities`, each once, by their type, in the order their base rules' module declares the types
+   * (`baseRules`).
+   */
+  private static namesByType(baseRules: BaseRules, entities: { entityType: RulesetEntityType; name: string }[]) {
     const byType = Map.groupBy(entities, (entity) => entity.entityType);
     return new Map(
-      RULESET_ENTITY_TYPES.map((type) => [type, [...new Set((byType.get(type) ?? []).map((entity) => entity.name))]]),
+      Engine.forRules(baseRules)
+        .storage()
+        .standaloneKinds()
+        .map((type) => [type, [...new Set((byType.get(type) ?? []).map((entity) => entity.name))]]),
     );
   }
 
@@ -161,7 +162,7 @@ export default class EntityNames {
     await this.refuseChainNames(
       tx,
       after,
-      EntityNames.namesByType(brought),
+      EntityNames.namesByType(this.scope.ruleset.baseRules, brought),
       new Set(),
       (entityType, name) =>
         `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
@@ -242,7 +243,10 @@ export default class EntityNames {
     await this.refuseChainNames(
       tx,
       after,
-      EntityNames.namesByType(shown.filter((entity) => remaining.has(entity.rulesetId))),
+      EntityNames.namesByType(
+        this.scope.ruleset.baseRules,
+        shown.filter((entity) => remaining.has(entity.rulesetId)),
+      ),
       new Set(copyIds),
       (entityType, name) =>
         `Cannot unsubscribe: ${entityType} "${name}", which this extension replaces, would show again beside another of its name: rename that one first`,

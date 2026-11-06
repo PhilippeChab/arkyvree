@@ -5,11 +5,13 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A class level's base bonuses to saves (`classLevelId`, `bonuses`: each a save, `toId`, and its bonus, `amount`). */
 export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { amount: number; toId: string }[]) {
   return await EntityLinks.createMany(
     db,
+    DND35_BASE_RULES,
     bonuses.map(({ amount, toId }) => ({
       role: "baseBonus",
       fromId: classLevelId,
@@ -25,6 +27,7 @@ export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { am
 export async function addClassSkills(db: Db, classId: string, skillIds: string[]) {
   return await EntityLinks.createMany(
     db,
+    DND35_BASE_RULES,
     skillIds.map((toId) => ({ role: "classSkill", fromId: classId, fromType: "classes", toId, toType: "skills" })),
   );
 }
@@ -44,6 +47,7 @@ export async function addGrants(
 ) {
   return await EntityLinks.createMany(
     db,
+    DND35_BASE_RULES,
     grants.map(({ free = true, toId, viaId }) => ({
       role: "grants",
       fromId: classLevelId,
@@ -67,6 +71,7 @@ export async function addListings(
 ) {
   return await EntityLinks.createMany(
     db,
+    DND35_BASE_RULES,
     listings.map(({ fromId, tier, toId }) => ({
       role: "listedIn",
       fromId,

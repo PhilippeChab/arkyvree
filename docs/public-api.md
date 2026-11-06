@@ -65,7 +65,7 @@ found: `/v1`'s key (`index.ts`), or the MCP server's, whose tools call them in t
   the seeded base ruleset whichever base rules it is (`tests/support/v1.ts`: a character made as the rules' form lays
   it out, a fork as the app forks one), and name no game's term.
 - A ruleset's entities are read by kind, as the rules name them (`/v1/rulesets/{id}/entities/{kind}`,
-  `Engine.storage().standaloneKinds()`), whatever the kind: their columns, their fields under `fields` by the names the
+  `Engine.rules().standaloneKinds()`), whatever the kind: their columns, their fields under `fields` by the names the
   ruleset declares, and their links with their targets' names. A kind adds what its rules describe: its modifiers and
   requirements, where a character may place it.
 - The routers follow the app's, a resource each (`characters/inventory/`, `characters/advancements/`,

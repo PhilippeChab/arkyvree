@@ -4,7 +4,6 @@ import { DependentCache } from "@/server/cache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { OperatorKind, TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
@@ -53,7 +52,8 @@ class RulesetViews {
    * any of them unlinks the rows naming what it deletes (the database's `apply_delete_rules`).
    */
   private static rowWritersOf(rulesetId: string, ruleset: RulesetSources) {
-    if (rulesetId === ruleset.id) return [rulesetId, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
+    if (rulesetId === ruleset.id)
+      return [rulesetId, ...Engine.forRules(ruleset.baseRules).copyOnWrite().buildSourceChain(ruleset)];
     const parent = ruleset.parentId ? [ruleset.parentId] : [];
     return ruleset.extensionIds.includes(rulesetId) ? [rulesetId, ...parent] : [rulesetId];
   }
@@ -72,7 +72,7 @@ class RulesetViews {
   /** The engine's list of a ruleset's target paths of a kind, from its view: a write's own, else the cache's. */
   private async listTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
     const { ruleset, sources } = scope;
-    const rulesetData = scope.rulesetData ?? (await this.getData(sources, ruleset.baseRules));
+    const rulesetData = scope.rulesetData ?? (await this.getData(sources));
     return Engine.for({ ruleset, rulesetData }).targetPaths().list(kind);
   }
 
@@ -108,7 +108,7 @@ class RulesetViews {
    * key readers of the newly committed chain use. Read through the shared `db`, never a transaction.
    */
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
-    const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
+    const dependencies = [ruleset.id, ...Engine.forRules(ruleset.baseRules).copyOnWrite().buildSourceChain(ruleset)];
     const entry = await this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => {
       const versions = await Rulesets.findVersions(db, { ids: dependencies });
       return { data: { value: await CowDataReader.read(db, ruleset), versions } };
@@ -117,15 +117,15 @@ class RulesetViews {
   }
 
   /**
-   * A ruleset's view, of its sources (`ruleset`) and its base rules: its own rows and its source chain's, composed by its
-   * copy-on-write data.
+   * A ruleset's view, of its sources (`ruleset`, its base rules among them): its own rows and its source chain's,
+   * composed by its copy-on-write data.
    */
-  async getData(ruleset: RulesetSources, baseRules: BaseRules): Promise<RulesetData> {
+  async getData(ruleset: RulesetSources): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all(
       [ruleset.id, ...cowData.sourceChain].map((id) => this.getRawData(id, RulesetViews.rowWritersOf(id, ruleset))),
     );
-    return Engine.copyOnWrite().buildView({ baseRules }, chain, cowData);
+    return Engine.forRules(ruleset.baseRules).copyOnWrite().buildView(chain, cowData);
   }
 
   /**
@@ -134,13 +134,8 @@ class RulesetViews {
    * those versions, and those it keeps at others read again through the transaction, one query at a time, before the
    * write writes anything, so they're the committed rows its locks hold, which the cache keeps in their place.
    */
-  async getFreshData(
-    tx: Db,
-    ruleset: RulesetSources,
-    baseRules: BaseRules,
-    current: ReadonlyMap<string, number>,
-  ): Promise<RulesetData> {
-    const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
+  async getFreshData(tx: Db, ruleset: RulesetSources, current: ReadonlyMap<string, number>): Promise<RulesetData> {
+    const dependencies = [ruleset.id, ...Engine.forRules(ruleset.baseRules).copyOnWrite().buildSourceChain(ruleset)];
     const cowEntry = await this.cowData.getOrFetch(
       JSON.stringify(dependencies),
       dependencies,
@@ -166,7 +161,7 @@ class RulesetViews {
       );
       chain.push(entry.value);
     }
-    return Engine.copyOnWrite().buildView({ baseRules }, chain, cowEntry.value);
+    return Engine.forRules(ruleset.baseRules).copyOnWrite().buildView(chain, cowEntry.value);
   }
 
   /**
@@ -196,7 +191,7 @@ class RulesetViews {
    */
   async getTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
     const { sources, versions: current } = scope;
-    const sourceChain = Engine.copyOnWrite().buildSourceChain(sources);
+    const sourceChain = Engine.forRules(sources.baseRules).copyOnWrite().buildSourceChain(sources);
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([sources.id, kind, ...sourceChain]);
     const dependencies = [sources.id, ...sourceChain];

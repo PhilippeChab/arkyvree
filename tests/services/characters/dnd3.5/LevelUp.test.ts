@@ -43,6 +43,7 @@ import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A level of a batch: class, level, hit points and the ability it increases. */
@@ -1862,7 +1863,7 @@ describe("re-saving a level", () => {
 
     test("saved there before the check existed is refused again, and can be cleared", async () => {
       const { ctx, first, resave } = await setupFighter();
-      await Picks.createMany(db, [
+      await Picks.createMany(db, DND35_BASE_RULES, [
         { advancementId: first.id, step: "abilities", entityId: ctx.abilityMap["Strength"], amount: 1 },
       ]);
       // The edit dialog sends the stored increase back.

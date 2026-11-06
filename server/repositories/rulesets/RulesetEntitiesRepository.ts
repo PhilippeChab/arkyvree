@@ -4,7 +4,7 @@ import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 
-import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTypes.ts";
+import type { RulesetEntityType } from "./entityTypes.ts";
 
 /**
  * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets, of these names when
@@ -40,11 +40,12 @@ class RulesetEntitiesRepository {
   async findNames(db: Db, where: NamesWhere) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
-    const types = where.entityType ? [where.entityType] : RULESET_ENTITY_TYPES;
+    // Of a kind, or of every kind no other owns: an entity with no owner
+    const kinds = where.entityType ? eq(entitiesInRules.type, where.entityType) : isNull(entitiesInRules.ownerType);
     return await db
       .select(NAMED)
       .from(entitiesInRules)
-      .where(and(inArray(entitiesInRules.type, types), this.namesCondition(where)));
+      .where(and(kinds, this.namesCondition(where)));
   }
 
   /**
@@ -103,7 +104,7 @@ class RulesetEntitiesRepository {
       .from(entitiesInRules)
       .where(
         and(
-          inArray(entitiesInRules.type, RULESET_ENTITY_TYPES),
+          isNull(entitiesInRules.ownerType),
           inArray(entitiesInRules.rulesetId, [where.rulesetId, ...where.rulesetIds]),
           namedIn([where.rulesetId]),
           namedIn(where.rulesetIds),

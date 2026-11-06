@@ -35,7 +35,7 @@ const entityBody = z.strictObject({
  * A route's entity kind: the ruleset (`id`), and the kind by its type (`classes`, `class-levels`), which a client sends
  * as text (it reads the types off its rules) and the route refuses unless a kind has it.
  */
-const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(Engine.storage().standaloneKinds())) });
+const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(Engine.rules().standaloneKinds())) });
 
 /** A route's entity: its kind's params, and its id. */
 const entityParams = kindParams.extend({ entityId: z.string().uuid() });

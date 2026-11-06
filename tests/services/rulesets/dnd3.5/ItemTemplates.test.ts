@@ -19,6 +19,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -607,7 +608,7 @@ describe("Item templates", () => {
         name: "Old",
         fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
       });
-      await Entities.create<Item>(db, "items", {
+      await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
         rulesetId: ruleset.id,
         name: "Old Mail",
         fields: { [ITEM_TYPE]: "Armor" },
@@ -670,7 +671,7 @@ describe("Item templates", () => {
 
     test("kept by an edit of one stored with another, which can change it to one", async () => {
       const { session, ruleset } = await setup();
-      const [ring] = await Entities.create<Item>(db, "items", {
+      const [ring] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
         rulesetId: ruleset.id,
         name: "Old Ring",
         fields: { [ITEM_TYPE]: "Ring", [ITEM_IS_TEMPLATE]: true },

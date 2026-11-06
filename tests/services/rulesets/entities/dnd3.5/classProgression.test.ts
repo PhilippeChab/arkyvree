@@ -20,6 +20,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type Body = Parameters<typeof EntitiesService.updateProgression>[4];
@@ -372,7 +373,7 @@ describe("EntitiesService: a class's progression", () => {
         ownedTokens: [{ id: first, updatedAt: stale }],
       }),
     ).rejects.toBeInstanceOf(ConflictError);
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
       name: "Fighter Bonus Feat Two",
       rulesetId: fork.id,
     });

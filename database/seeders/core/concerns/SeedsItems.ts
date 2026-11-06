@@ -20,7 +20,7 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
      * one its ruleset's rules refuse (`checkMadeFrom`) refuses the seed.
      */
     private itemLinks(type: string, item: ItemSeed, items: ReadonlyMap<string, ItemSeed>, ids: Ids) {
-      const flag = Engine.storage().kind(type).template;
+      const flag = Engine.forRules(this.baseRules).storage().kind(type).template;
       const links = Object.entries(item.links ?? {}) as [string, string][];
       if (flag && item.fields[flag] === true && links.length > 0)
         throw new Error(`${item.name}: a template item can't be made from another (its ${links[0][0]})`);

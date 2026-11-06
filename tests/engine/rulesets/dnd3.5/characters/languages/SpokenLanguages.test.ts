@@ -14,6 +14,7 @@ import { addCharacterLevel, createTestClassLevel, findClassLevel, pickFeat } fro
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Languages any seeded race or class picks freely, in the order a room fills: none of them granted, none secret. */
@@ -27,7 +28,7 @@ function namesOf(languages: { name: string }[]) {
 /** A new race of a new fork of the seed user's, whose one modifier on an ability is `adjustment`. */
 async function createAdjustingRace(adjustment: { operator: string; target: string; value: string }) {
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const [race] = await Entities.create<Race>(db, "races", {
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: `Kin ${uniqueId()}`,
     rulesetId: fork.id,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -217,7 +218,10 @@ describe("A character's languages", () => {
   test("are a feat's too, which its modifier grants without a pick", async () => {
     const { aptMap } = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
-    const [feat] = await Entities.create<Feat>(db, "feats", { name: `Sylvan Lore ${uniqueId()}`, rulesetId: fork.id });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      name: `Sylvan Lore ${uniqueId()}`,
+      rulesetId: fork.id,
+    });
     await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",
@@ -239,7 +243,7 @@ describe("A character's languages", () => {
     const { langMap } = await getSeedCtx();
     const human = await newCharacter("Human");
     for (const name of ["Abyssal", "Aquan"])
-      await CharacterLinks.createMany(db, human.id, "speaks", [{ entityId: langMap[name] }]);
+      await CharacterLinks.createMany(db, DND35_BASE_RULES, human.id, "speaks", [{ entityId: langMap[name] }]);
 
     // Its picks stand, and the picker offers none more
     const described = await describeLanguages(human, ["Abyssal", "Aquan"]);

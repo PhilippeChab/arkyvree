@@ -4,7 +4,7 @@ import { CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -71,7 +71,7 @@ class RequirementsService {
         const requirement = rows[0];
         if (!requirement) throw new InternalError("Failed to create requirement");
 
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: requirement.id,
           targetType: TARGET_TYPES.requirements,
@@ -113,7 +113,7 @@ class RequirementsService {
         const rows = await Requirements.delete(tx, { id: customization.id });
         const deletedRequirement = rows[0];
 
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: deletedRequirement.id,
           targetType: TARGET_TYPES.requirements,
@@ -175,7 +175,7 @@ class RequirementsService {
         const updatedRequirement = rows[0];
         if (!updatedRequirement) throw new InternalError("Failed to update requirement");
 
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: updatedRequirement.id,
           targetType: TARGET_TYPES.requirements,

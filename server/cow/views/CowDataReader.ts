@@ -3,19 +3,22 @@ import { type CowData, type CowRows, Engine, type RulesetSources } from "@/engin
 import { Entities, EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
 
 /**
- * A ruleset's `CowData`: the rows the engine builds it from (`copyOnWrite().getReads`: the chain's snapshots, the owned
- * entities of the owners it copied or its own hide, its namesakes, and the entities of the kinds a name is the identity
- * of), read as stored through the handle it's given, and the engine's build of them. The cache reads it through the
- * shared `db` and keeps it for every reader (`RulesetViews.getCowData`); a write reads it through its transaction,
- * which sees the transaction's own copies (`EntityCopy`, an unsubscribe's departing references), and keeps nothing.
+ * A ruleset's `CowData`: the rows the engine builds it from (`Engine.forRules(baseRules).copyOnWrite().getReads`: the
+ * chain's snapshots, the owned entities of the owners it copied or its own hide, its namesakes, and the entities of the
+ * kinds a name is the identity of), read as stored through the handle it's given, and the engine's build of them. The
+ * cache reads it through the shared `db` and keeps it for every reader (`RulesetViews.getCowData`); a write reads it
+ * through its transaction, which sees the transaction's own copies (`EntityCopy`, an unsubscribe's departing
+ * references), and keeps nothing.
  */
 export default class CowDataReader {
+  /** A ruleset's (`ruleset`, its sources), its kinds paired by its base rules' module's declarations. */
   static async read(database: Db, ruleset: RulesetSources): Promise<CowData> {
-    const reads = Engine.copyOnWrite().getReads(ruleset);
+    const copyOnWrite = Engine.forRules(ruleset.baseRules).copyOnWrite();
+    const reads = copyOnWrite.getReads(ruleset);
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
-    const ownerIds = Engine.copyOnWrite().getPairedOwnerIds({ ownNamesakes, snapshots });
+    const ownerIds = copyOnWrite.getPairedOwnerIds({ ownNamesakes, snapshots });
     const owned: CowRows["owned"] = [];
     for (const entityType of reads.owned.entityTypes) {
       const positions = await Entities.findPositions(database, { entityType, ownerIds });
@@ -27,6 +30,6 @@ export default class CowDataReader {
       const rows = await Entities.findMany(database, where);
       identities.push(...rows.map(({ id, name, rulesetId }) => ({ entityType, id, name: name ?? "", rulesetId })));
     }
-    return Engine.copyOnWrite().buildData(ruleset, { identities, namesakes, owned, ownNamesakes, snapshots });
+    return copyOnWrite.buildData(ruleset, { identities, namesakes, owned, ownNamesakes, snapshots });
   }
 }

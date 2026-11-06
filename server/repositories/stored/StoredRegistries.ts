@@ -14,6 +14,7 @@ import {
   stepsInCharacter,
 } from "@/drizzle/schema.ts";
 import { Engine, type StorageRegistries } from "@/engine/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * A registry table, as the sync compares it: its key's columns, each declared row's key, and how to name a row (by its
@@ -28,14 +29,50 @@ interface Registry {
   table: PgTable;
 }
 
-/** What the registries must hold: every registered module's base rules and declarations. */
-export interface DeclaredRegistries {
-  modules: string[];
-  registries: StorageRegistries;
-}
+/** What the registries must hold: every registered module's declarations, by its base rules. */
+export type DeclaredRegistries = { baseRules: BaseRules; registries: StorageRegistries }[];
 
 /** Postgres's code for a foreign key a delete would break. */
 const FOREIGN_KEY_VIOLATION = "23503";
+
+/**
+ * The character's registry tables (its items' types, its advancements' steps, its roles), as `registriesOf` orders
+ * them.
+ */
+function characterRegistriesOf(declared: DeclaredRegistries): Registry[] {
+  return [
+    {
+      table: itemTypesInCharacter,
+      columns: [itemTypesInCharacter.baseRules, itemTypesInCharacter.entityType],
+      declared: keysOf(
+        declared,
+        (registries) => registries.itemTypes,
+        (type) => [type],
+      ),
+      name: ([baseRules, type]) => `item type ${type} of ${baseRules}`,
+    },
+    {
+      table: stepsInCharacter,
+      columns: [stepsInCharacter.baseRules, stepsInCharacter.step],
+      declared: keysOf(
+        declared,
+        (registries) => registries.steps,
+        (def) => [def.step],
+      ),
+      name: ([baseRules, step]) => `step ${step} of ${baseRules}`,
+    },
+    {
+      table: characterRolesInCharacter,
+      columns: [characterRolesInCharacter.baseRules, characterRolesInCharacter.role],
+      declared: keysOf(
+        declared,
+        (registries) => registries.characterRoles,
+        (def) => [def.role],
+      ),
+      name: ([baseRules, role]) => `character role ${role} of ${baseRules}`,
+    },
+  ];
+}
 
 /** Whether an error is Postgres refusing a delete that rows still reference. */
 function isForeignKeyViolation(error: unknown): boolean {
@@ -49,79 +86,102 @@ function keyOf(values: unknown[]) {
 }
 
 /**
- * The registry tables, in the order their undeclared rows can go: a row that names another goes first (a type's
- * fields and roles before the type, an owned type before its owner).
+ * Each declared row's key (`key`, of each row `pick` reads of a module's registries), its module's base rules first:
+ * every module's.
  */
-function registriesOf({ modules, registries }: DeclaredRegistries): Registry[] {
+function keysOf<T>(
+  declared: DeclaredRegistries,
+  pick: (registries: StorageRegistries) => readonly T[],
+  key: (row: T) => (string | null)[],
+) {
+  return declared.flatMap(({ baseRules, registries }) => pick(registries).map((row) => [baseRules, ...key(row)]));
+}
+
+/**
+ * The registry tables, in the order their undeclared rows can go: a row that names another goes first (a type's
+ * fields and roles before the type, an owned type before its owner, every row before its module). Each is keyed by its
+ * module's base rules first: two modules' rows of one name are two rows.
+ */
+function registriesOf(declared: DeclaredRegistries): Registry[] {
+  return [...characterRegistriesOf(declared), ...rulesRegistriesOf(declared)];
+}
+
+/**
+ * The rules' registry tables (a ruleset's roles, the fields, the link roles, the entity types, the modules), as
+ * `registriesOf` orders them.
+ */
+function rulesRegistriesOf(declared: DeclaredRegistries): Registry[] {
   return [
     {
-      table: itemTypesInCharacter,
-      columns: [itemTypesInCharacter.entityType],
-      declared: registries.itemTypes.map((type) => [type]),
-      name: ([type]) => `item type ${type}`,
-    },
-    {
-      table: stepsInCharacter,
-      columns: [stepsInCharacter.step],
-      declared: registries.steps.map((def) => [def.step]),
-      name: ([step]) => `step ${step}`,
-    },
-    {
-      table: characterRolesInCharacter,
-      columns: [characterRolesInCharacter.role],
-      declared: registries.characterRoles.map((def) => [def.role]),
-      name: ([role]) => `character role ${role}`,
-    },
-    {
       table: rulesetRolesInRules,
-      columns: [rulesetRolesInRules.role],
-      declared: registries.rulesetRoles.map((def) => [def.role]),
-      name: ([role]) => `ruleset role ${role}`,
+      columns: [rulesetRolesInRules.baseRules, rulesetRolesInRules.role],
+      declared: keysOf(
+        declared,
+        (registries) => registries.rulesetRoles,
+        (def) => [def.role],
+      ),
+      name: ([baseRules, role]) => `ruleset role ${role} of ${baseRules}`,
     },
     {
       table: fieldDefsInRules,
-      columns: [fieldDefsInRules.ownerType, fieldDefsInRules.field],
-      declared: registries.fieldDefs.map((def) => [def.ownerType, def.field]),
-      name: ([ownerType, field]) => `field ${field} of ${ownerType}`,
+      columns: [fieldDefsInRules.baseRules, fieldDefsInRules.ownerType, fieldDefsInRules.field],
+      declared: keysOf(
+        declared,
+        (registries) => registries.fieldDefs,
+        (def) => [def.ownerType, def.field],
+      ),
+      name: ([baseRules, ownerType, field]) => `field ${field} of ${ownerType} of ${baseRules}`,
     },
     {
       table: linkRolesInRules,
-      columns: [linkRolesInRules.role, linkRolesInRules.fromType, linkRolesInRules.toType],
-      declared: registries.linkRoles.map((def) => [def.role, def.fromType, def.toType]),
-      name: ([role, fromType, toType]) => `link role ${role} from ${fromType} to ${toType}`,
+      columns: [linkRolesInRules.baseRules, linkRolesInRules.role, linkRolesInRules.fromType, linkRolesInRules.toType],
+      declared: keysOf(
+        declared,
+        (registries) => registries.linkRoles,
+        (def) => [def.role, def.fromType, def.toType],
+      ),
+      name: ([baseRules, role, fromType, toType]) => `link role ${role} from ${fromType} to ${toType} of ${baseRules}`,
     },
     {
       table: linkRoleKindsInRules,
-      columns: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType],
-      declared: registries.linkRoles.map((def) => [def.role, def.fromType]),
-      name: ([role, fromType]) => `link role ${role} from ${fromType}`,
+      columns: [linkRoleKindsInRules.baseRules, linkRoleKindsInRules.role, linkRoleKindsInRules.fromType],
+      declared: keysOf(
+        declared,
+        (registries) => registries.linkRoles,
+        (def) => [def.role, def.fromType],
+      ),
+      name: ([baseRules, role, fromType]) => `link role ${role} from ${fromType} of ${baseRules}`,
     },
     {
       table: entityTypesInRules,
-      columns: [entityTypesInRules.type],
-      declared: registries.entityTypes.map((def) => [def.type]),
-      name: ([type]) => `entity type ${type}`,
+      columns: [entityTypesInRules.baseRules, entityTypesInRules.type],
+      declared: keysOf(
+        declared,
+        (registries) => registries.entityTypes,
+        (def) => [def.type],
+      ),
+      name: ([baseRules, type]) => `entity type ${type} of ${baseRules}`,
       // Owned types first: their rows name their owners
       order: sql`${entityTypesInRules.ownerType} IS NULL`,
     },
     {
       table: modulesInRules,
       columns: [modulesInRules.baseRules],
-      declared: modules.map((baseRules) => [baseRules]),
+      declared: declared.map(({ baseRules }) => [baseRules]),
       name: ([baseRules]) => `module ${baseRules}`,
     },
   ];
 }
 
 /**
- * The registries as the database holds them, kept to what the registered modules declare
- * (`Engine.storage().registries()`): every migrate writes them (`scripts/db/migrate.ts`), so a module's new entity
- * type, field, link role or step is a code change only. A declaration that changed rewrites the rows that carry it (a
- * field that becomes a set, a role that becomes single: their foreign keys cascade), and the database refuses one its
- * rows can't take. A row no module declares any more goes, unless rows still use it: then the sync is refused, naming
- * it. Two modules can't declare one name: `StorageEngine` refuses it before anything is written. They keep what the
- * rows are checked against, never what the engine alone reads of a declaration: how sibling copies merge a field or a
- * link, the role an entity reads a field off another through.
+ * The registries as the database holds them, kept to what the registered modules declare (`Engine.storages()`, each
+ * one's `registries()`): every migrate writes them (`scripts/db/migrate.ts`), so a module's new entity type, field,
+ * link role or step is a code change only. Each row is its module's, keyed by its base rules first: two modules
+ * declaring one name (each its feats) are two rows, which their own rows' keys name. A declaration that changed
+ * rewrites the rows that carry it (a field that becomes a set, a role that becomes single: their foreign keys cascade),
+ * and the database refuses one its rows can't take. A row no module declares any more goes, unless rows still use it:
+ * then the sync is refused, naming it. They keep what the rows are checked against, never what the engine alone reads
+ * of a declaration: how sibling copies merge a field or a link, the role an entity reads a field off another through.
  */
 export default class StoredRegistries {
   /** Removes what no module declares any more, refusing, by its name, a row that rows still use. */
@@ -150,95 +210,129 @@ export default class StoredRegistries {
     }
   }
 
-  /** Writes the modules and their entity types: an owner before the types it owns, whose rows name it. */
-  private static async writeEntityTypes(db: Db, { modules, registries }: DeclaredRegistries) {
-    if (modules.length > 0) {
+  /** Writes the modules and each one's entity types: an owner before the types it owns, whose rows name it. */
+  private static async writeEntityTypes(db: Db, declared: DeclaredRegistries) {
+    if (declared.length > 0) {
       await db
         .insert(modulesInRules)
-        .values(modules.map((baseRules) => ({ baseRules })))
+        .values(declared.map(({ baseRules }) => ({ baseRules })))
         .onConflictDoNothing();
     }
-    const types = [...registries.entityTypes].sort(
-      (a, b) => Number(a.ownerType !== null) - Number(b.ownerType !== null),
-    );
-    for (const def of types) {
-      await db
-        .insert(entityTypesInRules)
-        .values({ type: def.type, ownerType: def.ownerType })
-        .onConflictDoUpdate({ target: entityTypesInRules.type, set: { ownerType: def.ownerType } });
+    for (const { baseRules, registries } of declared) {
+      const types = [...registries.entityTypes].sort(
+        (a, b) => Number(a.ownerType !== null) - Number(b.ownerType !== null),
+      );
+      for (const def of types) {
+        await db
+          .insert(entityTypesInRules)
+          .values({ baseRules, type: def.type, ownerType: def.ownerType })
+          .onConflictDoUpdate({
+            target: [entityTypesInRules.baseRules, entityTypesInRules.type],
+            set: { ownerType: def.ownerType },
+          });
+      }
     }
   }
 
-  /** Writes the fields: a change of kind or of set-ness rewrites the rows that hold the field. */
-  private static async writeFields(db: Db, { registries }: DeclaredRegistries) {
-    for (const def of registries.fieldDefs) {
-      const values = {
-        ownerKind: def.ownerKind,
-        valueKind: def.valueKind,
-        multiple: def.multiple,
-      };
-      await db
-        .insert(fieldDefsInRules)
-        .values({ ownerType: def.ownerType, field: def.field, ...values })
-        .onConflictDoUpdate({ target: [fieldDefsInRules.ownerType, fieldDefsInRules.field], set: values });
+  /** Writes each module's fields: a change of kind or of set-ness rewrites the rows that hold the field. */
+  private static async writeFields(db: Db, declared: DeclaredRegistries) {
+    for (const { baseRules, registries } of declared) {
+      for (const def of registries.fieldDefs) {
+        const values = {
+          ownerKind: def.ownerKind,
+          valueKind: def.valueKind,
+          multiple: def.multiple,
+        };
+        await db
+          .insert(fieldDefsInRules)
+          .values({ baseRules, ownerType: def.ownerType, field: def.field, ...values })
+          .onConflictDoUpdate({
+            target: [fieldDefsInRules.baseRules, fieldDefsInRules.ownerType, fieldDefsInRules.field],
+            set: values,
+          });
+      }
     }
   }
 
   /**
-   * Writes the link roles: first each role's single for its from-type, which its rows and its links carry (a change
-   * rewrites them), then each role from a type to another.
+   * Writes each module's link roles: first each role's single for its from-type, which its rows and its links carry (a
+   * change rewrites them), then each role from a type to another.
    */
-  private static async writeLinkRoles(db: Db, { registries }: DeclaredRegistries) {
-    const kinds = new Map(registries.linkRoles.map((def) => [keyOf([def.role, def.fromType]), def]));
-    for (const def of kinds.values()) {
-      await db
-        .insert(linkRoleKindsInRules)
-        .values({ role: def.role, fromType: def.fromType, single: def.single })
-        .onConflictDoUpdate({
-          target: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType],
-          set: { single: def.single },
-        });
-    }
-    for (const def of registries.linkRoles) {
-      const values = { viaType: def.viaType, onDelete: def.onDelete, viaOnDelete: def.viaOnDelete };
-      await db
-        .insert(linkRolesInRules)
-        .values({ role: def.role, fromType: def.fromType, toType: def.toType, single: def.single, ...values })
-        .onConflictDoUpdate({
-          target: [linkRolesInRules.role, linkRolesInRules.fromType, linkRolesInRules.toType],
-          set: values,
-        });
+  private static async writeLinkRoles(db: Db, declared: DeclaredRegistries) {
+    for (const { baseRules, registries } of declared) {
+      const kinds = new Map(registries.linkRoles.map((def) => [keyOf([def.role, def.fromType]), def]));
+      for (const def of kinds.values()) {
+        await db
+          .insert(linkRoleKindsInRules)
+          .values({ baseRules, role: def.role, fromType: def.fromType, single: def.single })
+          .onConflictDoUpdate({
+            target: [linkRoleKindsInRules.baseRules, linkRoleKindsInRules.role, linkRoleKindsInRules.fromType],
+            set: { single: def.single },
+          });
+      }
+      for (const def of registries.linkRoles) {
+        const values = { viaType: def.viaType, onDelete: def.onDelete, viaOnDelete: def.viaOnDelete };
+        await db
+          .insert(linkRolesInRules)
+          .values({
+            baseRules,
+            role: def.role,
+            fromType: def.fromType,
+            toType: def.toType,
+            single: def.single,
+            ...values,
+          })
+          .onConflictDoUpdate({
+            target: [
+              linkRolesInRules.baseRules,
+              linkRolesInRules.role,
+              linkRolesInRules.fromType,
+              linkRolesInRules.toType,
+            ],
+            set: values,
+          });
+      }
     }
   }
 
-  /** Writes a ruleset's roles, a character's, its advancements' steps and the types its items are. */
-  private static async writeOwnersRoles(db: Db, { registries }: DeclaredRegistries) {
-    for (const def of registries.rulesetRoles) {
-      const values = { toType: def.toType, onDelete: def.onDelete };
-      await db
-        .insert(rulesetRolesInRules)
-        .values({ role: def.role, ...values })
-        .onConflictDoUpdate({ target: rulesetRolesInRules.role, set: values });
-    }
-    for (const def of registries.characterRoles) {
-      const values = { entityType: def.entityType, single: def.single, onDelete: def.onDelete };
-      await db
-        .insert(characterRolesInCharacter)
-        .values({ role: def.role, ...values })
-        .onConflictDoUpdate({ target: characterRolesInCharacter.role, set: values });
-    }
-    for (const def of registries.steps) {
-      const values = { entityType: def.entityType, viaType: def.viaType, onDelete: def.onDelete, repeats: def.repeats };
-      await db
-        .insert(stepsInCharacter)
-        .values({ step: def.step, ...values })
-        .onConflictDoUpdate({ target: stepsInCharacter.step, set: values });
-    }
-    if (registries.itemTypes.length > 0) {
-      await db
-        .insert(itemTypesInCharacter)
-        .values(registries.itemTypes.map((entityType) => ({ entityType })))
-        .onConflictDoNothing();
+  /** Writes each module's ruleset roles, its character roles, its advancements' steps and the types its items are. */
+  private static async writeOwnersRoles(db: Db, declared: DeclaredRegistries) {
+    for (const { baseRules, registries } of declared) {
+      for (const def of registries.rulesetRoles) {
+        const values = { toType: def.toType, onDelete: def.onDelete };
+        await db
+          .insert(rulesetRolesInRules)
+          .values({ baseRules, role: def.role, ...values })
+          .onConflictDoUpdate({ target: [rulesetRolesInRules.baseRules, rulesetRolesInRules.role], set: values });
+      }
+      for (const def of registries.characterRoles) {
+        const values = { entityType: def.entityType, single: def.single, onDelete: def.onDelete };
+        await db
+          .insert(characterRolesInCharacter)
+          .values({ baseRules, role: def.role, ...values })
+          .onConflictDoUpdate({
+            target: [characterRolesInCharacter.baseRules, characterRolesInCharacter.role],
+            set: values,
+          });
+      }
+      for (const def of registries.steps) {
+        const values = {
+          entityType: def.entityType,
+          viaType: def.viaType,
+          onDelete: def.onDelete,
+          repeats: def.repeats,
+        };
+        await db
+          .insert(stepsInCharacter)
+          .values({ baseRules, step: def.step, ...values })
+          .onConflictDoUpdate({ target: [stepsInCharacter.baseRules, stepsInCharacter.step], set: values });
+      }
+      if (registries.itemTypes.length > 0) {
+        await db
+          .insert(itemTypesInCharacter)
+          .values(registries.itemTypes.map((entityType) => ({ baseRules, entityType })))
+          .onConflictDoNothing();
+      }
     }
   }
 
@@ -250,7 +344,10 @@ export default class StoredRegistries {
    */
   static async reconcile(
     db: Db,
-    declared: DeclaredRegistries = { modules: Engine.storage().modules(), registries: Engine.storage().registries() },
+    declared: DeclaredRegistries = Engine.storages().map((storage) => ({
+      baseRules: storage.baseRules,
+      registries: storage.registries(),
+    })),
   ) {
     await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);

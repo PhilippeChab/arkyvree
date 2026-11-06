@@ -39,7 +39,7 @@ export default class EntityEdit {
    * the source chain.
    */
   async cowById(tx: Db, entityType: string, entityId: string, notFound: string): Promise<EditTarget> {
-    const ownerType = Engine.storage().ownerOf(entityType);
+    const ownerType = Engine.forRules(this.scope.ruleset.baseRules).storage().ownerOf(entityType);
     if (ownerType) return await this.cowOwned(tx, entityType, ownerType as RulesetEntityType, entityId, notFound);
 
     const type = entityType as RulesetEntityType;

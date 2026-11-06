@@ -26,7 +26,7 @@ class CharacterInventoryService {
       const request = { location, quantity, remainingCharges, totalCharges, groups };
       // The item the view shows for the id sent (a copy's, when the ruleset copied it), refused when it shows none
       const fields = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, force);
-      const rows = await CharacterInventory.create(tx, { ...fields, characterId });
+      const rows = await CharacterInventory.create(tx, scope.ruleset.baseRules, { ...fields, characterId });
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -121,7 +121,8 @@ class CharacterInventoryService {
       const request = { location, quantity, remainingCharges, totalCharges, groups };
       const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request }, force);
 
-      const rows = await CharacterInventory.update(tx, fields, { characterId, id: entryId, expectedUpdatedAt });
+      const where = { characterId, id: entryId, expectedUpdatedAt };
+      const rows = await CharacterInventory.update(tx, scope.ruleset.baseRules, fields, where);
       if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       await Activities.create(tx, {

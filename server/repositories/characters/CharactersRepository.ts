@@ -9,6 +9,8 @@ import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdit
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
+import { toQualified } from "@/server/repositories/stored/toQualified.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -55,6 +57,16 @@ class CharactersRepository extends include(
     );
   }
 
+  /**
+   * The condition that a character is a player character, not another's child (3.5's bonded creatures): its kind its
+   * base rules' player character's (`StorageEngine.playerKind`), each base rules' paired with its own.
+   */
+  private isPlayerCharacter(): SQL {
+    const playerKinds = Engine.storages().map((storage) => sql`(${storage.baseRules}, ${storage.playerKind()})`);
+    const kind = toQualified(charactersInCharacter.kind);
+    return sql`(${StoredCharacters.buildBaseRules()}, ${kind}) IN (${sql.join(playerKinds, sql`, `)})`;
+  }
+
   /** What the user's characters list keeps: its pages and its total share it. */
   private listCondition(db: Db, where: CharacterListWhere) {
     const { accessRole, search, userId, visibility = Visibility.UnarchivedOnly } = where;
@@ -62,7 +74,7 @@ class CharactersRepository extends include(
     const contributes = this.contributesTo(db, userId);
     return this.where([
       accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
-      inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+      this.isPlayerCharacter(),
       this.visibility(visibility),
       this.search(search, [this.table.name, this.table.description]),
     ]);
@@ -106,13 +118,17 @@ class CharactersRepository extends include(
   }
 
   /**
-   * Writes a new character: its row, its fields' values (one always written it gives none of, its default) and its
-   * single links.
+   * Writes a new character of a ruleset of `baseRules`: its row, its fields' values (one always written it gives none
+   * of, its default) and its single links, as its module declares them.
    */
-  async create(db: Db, values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">) {
+  async create(
+    db: Db,
+    baseRules: BaseRules,
+    values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">,
+  ) {
     const { fields, links, ...own } = values;
     const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
-    await StoredCharacters.write(db, [created.id], { fields, links }, true);
+    await StoredCharacters.write(db, Engine.forRules(baseRules).storage(), [created.id], { fields, links }, true);
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
@@ -151,7 +167,7 @@ class CharactersRepository extends include(
           "userId" in where && eq(this.table.userId, where.userId),
         ],
         [
-          "userId" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "userId" in where && this.isPlayerCharacter(),
           "search" in where && this.search(where.search, [this.table.name]),
           this.visibility(visibility),
         ],
@@ -179,7 +195,7 @@ class CharactersRepository extends include(
         ],
         [
           "kind" in where && eq(this.table.kind, where.kind),
-          "shareToken" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "shareToken" in where && this.isPlayerCharacter(),
           this.visibility(visibility),
         ],
       ),
@@ -227,7 +243,7 @@ class CharactersRepository extends include(
       .where(
         and(
           inArray(charactersInCharacter.rulesetId, where.rulesetIds),
-          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
+          this.isPlayerCharacter(),
           or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
         ),
       );
@@ -251,14 +267,15 @@ class CharactersRepository extends include(
   /**
    * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`), or
    * to a parent's live children (`parentCharacterId`: 3.5's bonded creatures): its row's columns, its fields' values and
-   * its single links it gives, its `updatedAt` moved as any change moves it. Answers it as written, or nothing.
+   * its single links it gives, its `updatedAt` moved as any change moves it, its fields and links as its base rules'
+   * module declares them, which the update answers with each row it writes. Answers it as written, or nothing.
    */
   async update(
     db: Db,
     values: CharacterValues,
     where: { expectedUpdatedAt?: string; id: string } | { parentCharacterId: string },
   ) {
-    const { fields, links, ...own } = values;
+    const { fields = {}, links = {}, ...own } = values;
     const updated = await db
       .update(this.table)
       .set({ ...own, updatedAt: new Date().toISOString() })
@@ -271,9 +288,12 @@ class CharactersRepository extends include(
           [isNull(this.table.deletedAt), "id" in where && this.casUpdatedAt(where.expectedUpdatedAt)],
         ),
       )
-      .returning({ id: this.table.id });
+      .returning({ id: this.table.id, baseRules: StoredCharacters.buildBaseRules() });
     const ids = updated.map((row) => row.id);
-    await StoredCharacters.write(db, ids, { fields, links });
+    for (const [baseRules, rows] of Map.groupBy(updated, (row) => row.baseRules)) {
+      const characterIds = rows.map((row) => row.id);
+      await StoredCharacters.write(db, Engine.forRules(baseRules).storage(), characterIds, { fields, links });
+    }
     return ids.length === 0 ? [] : await this.rows(db, inArray(this.table.id, ids));
   }
 }

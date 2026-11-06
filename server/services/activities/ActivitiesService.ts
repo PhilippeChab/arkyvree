@@ -9,7 +9,6 @@ import {
   Invites,
   type Pagination,
   Players,
-  RULESET_ENTITY_TYPES,
 } from "@/server/repositories/index.ts";
 import { findReadableCampaign, findVisibleCampaignCharacter } from "@/server/services/campaigns/index.ts";
 import { findReadableCharacter } from "@/server/services/characters/index.ts";
@@ -17,11 +16,11 @@ import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
-import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
+import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
-import { type ContentRow, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
+import { type ContentRow, findContentBaseRules, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
@@ -73,14 +72,14 @@ class ActivitiesService {
   }
 
   /**
-   * The id an entity of a ruleset's content (`entity`, its row in the ruleset `stored`) shows by in another ruleset
-   * (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's spell list's):
-   * the row its view shows in its place (its own, or its copy where the ruleset copied it since), read as a write finds
-   * it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for it, its row
-   * gone), nor for an entity it doesn't inherit.
+   * The id an entity of a ruleset's content (`entity`, of `baseRules`, its row in the ruleset `stored`) shows by in
+   * another ruleset (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's
+   * spell list's): the row its view shows in its place (its own, or its copy where the ruleset copied it since), read
+   * as a write finds it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for
+   * it, its row gone), nor for an entity it doesn't inherit.
    */
-  private async findShownIn(written: string, entity: ContentRow, stored: string) {
-    if (!isOneOf(entity.type, RULESET_ENTITY_TYPES)) return undefined;
+  private async findShownIn(baseRules: BaseRules, written: string, entity: ContentRow, stored: string) {
+    if (!isOneOf(entity.type, Engine.forRules(baseRules).storage().standaloneKinds())) return undefined;
     const view = await withRulesetScope(db, written, async (scope) => {
       const cow = scope.rulesetData.cow;
       return { chain: [written, ...cow.sourceChain], shownId: cow.resolve(entity.id) };
@@ -106,20 +105,24 @@ class ActivitiesService {
   }
 
   /**
-   * The page that lists an owner's customizations (`entityId`, `entityType`), on the tab of `section` (its modifiers'
-   * or its requirements'): its customization page, or the page of a kind that owns another (a class's); none for an
-   * owner outside a ruleset (a character's own modifiers).
+   * The page that lists a customization's owner's customizations (`target`, a modifier or a requirement, whose type is
+   * `section`), on the tab of its type: its customization page, or the page of a kind that owns another (a class's), as
+   * its base rules declare them; none for an owner outside a ruleset (a character's own modifiers).
    */
   private async resolveCustomizationUrl(
     session: Session,
-    entityId: string,
-    entityType: string,
+    target: ContentRow,
     section: "modifiers" | "requirements",
   ): Promise<string | null> {
-    const storage = Engine.storage();
+    const baseRules = await findContentBaseRules(db, target);
+    // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
+    const owner = baseRules && (await findContentOwner(db, baseRules, target));
+    if (!baseRules || !owner) return null;
+    const { id: entityId, type: entityType } = owner;
+    const storage = Engine.forRules(baseRules).storage();
     const pages = storage.customizationPages();
     if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
-    const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
+    const rulesetId = await findContentRuleset(db, baseRules, owner);
     if (!rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
     return buildEntityPagePath(rulesetId, entityType, entityId, pages, section);
   }
@@ -129,6 +132,7 @@ class ActivitiesService {
    * owner's on the tab of its targets (a class's skills, whose activity targets the class); any other entity's, its
    * customization page when it has one, else its own. It opens in the ruleset the activity recorded writing (`written`)
    * where that ruleset shows it (`findShownIn`: a fork's spell list change to the class it inherits), else in its own.
+   * What its type is, its base rules (its entity's row's) declare: the target is an entity, or an edited link's owner.
    */
   private async resolveRulesEntity(
     session: Session,
@@ -136,18 +140,20 @@ class ActivitiesService {
     targetId: string,
     written: string | undefined,
   ): Promise<string | null> {
-    const storage = Engine.storage();
+    const baseRules = await Entities.findBaseRules(db, { id: targetId });
+    if (!baseRules) return null;
+    const storage = Engine.forRules(baseRules).storage();
     const target = { id: targetId, type: targetType };
     const edited = storage.editedLinks().get(targetType);
     // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits
     // its links has a customization page (3.5's classes: their customizations are their page's tabs)
-    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
-    const stored = page && (await findContentRuleset(db, page));
+    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, baseRules, target) : target;
+    const stored = page && (await findContentRuleset(db, baseRules, page));
     if (!page || !stored) return null;
     const pages = storage.customizationPages();
     // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
     if (written !== undefined && written !== stored && (await this.rulesetUrl(session, written))) {
-      const shownId = await this.findShownIn(written, page, stored);
+      const shownId = await this.findShownIn(baseRules, written, page, stored);
       if (shownId) return buildEntityPagePath(written, page.type, shownId, pages, edited?.to);
     }
     if (!(await this.rulesetUrl(session, stored))) return null;
@@ -231,11 +237,8 @@ class ActivitiesService {
 
       // Customization entities
       case TARGET_TYPES.modifiers:
-      case TARGET_TYPES.requirements: {
-        // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
-        const owner = await findContentOwner(db, { id: targetId, type: targetType });
-        return owner ? await this.resolveCustomizationUrl(session, owner.id, owner.type, targetType) : null;
-      }
+      case TARGET_TYPES.requirements:
+        return await this.resolveCustomizationUrl(session, { id: targetId, type: targetType }, targetType);
       // Rules sub-entities (entity has rulesetId)
       default:
         return await this.resolveRulesEntity(session, targetType, targetId, rulesetId);

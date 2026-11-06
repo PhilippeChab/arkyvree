@@ -8,6 +8,7 @@ import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset, readTargetPaths, sourcesOf, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 async function setup() {
   const session = makeSession();
@@ -46,7 +47,7 @@ test("target-path service invalidates extension subscribers but retains an unrel
   const host = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
   await subscribeTestRuleset(host.id, [edited.id]);
-  const [feat] = await Entities.create<Feat>(db, "feats", {
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
     rulesetId: edited.id,
     name: "Performance Marker",
     description: "Before",
@@ -55,7 +56,7 @@ test("target-path service invalidates extension subscribers but retains an unrel
   const before = await readTargetPaths(host.id, "requirement");
   const untouched = await readTargetPaths(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
-  await Entities.update<Feat>(db, "feats", { name: "Updated Marker" }, { id: feat.id });
+  await Entities.update<Feat>(db, DND35_BASE_RULES, "feats", { name: "Updated Marker" }, { id: feat.id });
   RulesetViews.invalidate(edited.id);
   const next = await readTargetPaths(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);

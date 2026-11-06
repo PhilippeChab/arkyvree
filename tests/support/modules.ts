@@ -3,6 +3,7 @@ import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { RulesetModule, StorageDeclaration } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /**
  * A flag and a set a made-up module declares on its characters, which no registered module's do: whether it's retired,
@@ -29,7 +30,7 @@ export const CHARACTER_FLAG_AND_SET = {
 
 /**
  * Every registered module, its registries' and its fields' declarations (its characters' too) changed by `change`: what
- * a test builds its own storage of (`new StorageEngine(…)`), never the shared one.
+ * a test builds its own storages of (`storagesOf`), never the shared ones.
  */
 export function modulesWith(
   change: (
@@ -61,8 +62,22 @@ export function modulesWithCharacterFlagAndSet(): [BaseRules, RulesetModule][] {
  */
 export function modulesWithSecond(fields: Record<string, Fields>): [BaseRules, RulesetModule][] {
   const [[, first]] = Modules.all();
-  const { [StorageEngine.shared().characterOwnerType]: characterFields = {}, ...owners } = fields;
+  const { [StorageEngine.of(DND35_BASE_RULES).characterOwnerType]: characterFields = {}, ...owners } = fields;
   const registries = { characterRoles: [], entityTypes: [], itemTypes: [], linkRoles: [], rulesetRoles: [], steps: [] };
   const storage = { character: { playerKind: "second-pc", scoredRoles: [] }, kinds: {}, registries };
   return [...Modules.all(), ["second" as BaseRules, { ...first, characterFields, fields: owners, storage }]];
+}
+
+/**
+ * Each module's storage (`modules`, a test's own: `modulesWith`, `modulesWithSecond`), by its base rules: what a test's
+ * write (`StoredCharacters.write`) and read (`StoredCharacters.toCharacter`) take a character's module's declarations
+ * of, never the shared ones.
+ */
+export function storagesOf(modules: [BaseRules, RulesetModule][]): (baseRules: BaseRules) => StorageEngine {
+  const storages = new Map(modules.map(([baseRules, module]) => [baseRules, new StorageEngine(baseRules, module)]));
+  return (baseRules) => {
+    const storage = storages.get(baseRules);
+    if (!storage) throw new Error(`No module of ${baseRules}`);
+    return storage;
+  };
 }

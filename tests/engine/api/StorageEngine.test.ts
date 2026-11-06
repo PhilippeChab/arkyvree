@@ -3,8 +3,15 @@ import { describe, expect, test } from "bun:test";
 import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { Field, type Fields, type StoredLeaf } from "@/engine/core/fields/index.ts";
-import type { FieldValue, StoredEntity, StoredFieldValue, StoredLink } from "@/engine/core/module/index.ts";
+import type {
+  FieldValue,
+  RulesetModule,
+  StoredEntity,
+  StoredFieldValue,
+  StoredLink,
+} from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
+import { toFieldRows } from "@/server/repositories/stored/toFieldRows.ts";
 import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import {
@@ -12,7 +19,9 @@ import {
   modulesWith,
   modulesWithCharacterFlagAndSet,
   modulesWithSecond,
+  storagesOf,
 } from "@/tests/support/modules.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A flag a made-up module declares on its rulesets' Settings, which no registered module's do. */
 const SETTINGS_FLAG = {
@@ -25,11 +34,21 @@ const SETTINGS_FLAG = {
   },
 } as const;
 
+/** Builds each module's storage (`modules`): what refuses a declaration it can't read. */
+function buildEach(modules: [BaseRules, RulesetModule][]) {
+  return () => modules.map(([baseRules, module]) => new StorageEngine(baseRules, module));
+}
+
 /** The first stored field of `fields` (each owner type's) that `find` picks, its declaration to change in place. */
 function leafOf(fields: Record<string, Fields>, find: (leaf: StoredLeaf) => boolean): Record<string, unknown> {
   return Object.values(fields)
     .flatMap((owned) => Field.storedLeavesOf(owned))
     .find(find) as unknown as Record<string, unknown>;
+}
+
+/** The made-up module beside the registered ones (`modulesWithSecond`'s last), and its base rules. */
+function secondOf(modules: [BaseRules, RulesetModule][]): [BaseRules, RulesetModule] {
+  return modules.at(-1)!;
 }
 
 /** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
@@ -74,7 +93,7 @@ function storedValue(field: string, value: FieldValue, ordinal = 0): StoredField
 
 describe("A module's storage", () => {
   test("declares a view's kinds, an owner before what it owns, and the links whose sibling copies' merge", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const schema = storage.viewSchema();
     expect(storage.viewSchema()).toBe(schema);
     const order = schema.kinds.map(({ type }) => type);
@@ -99,7 +118,7 @@ describe("A module's storage", () => {
   });
 
   test("reads the kinds a user customizes into the view's kinds, and describes every stored field's owner", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { fieldDefs } = storage.registries();
     // Every stored field of an entity or a ruleset is its owner's, as its module declares them, whose form the rules
     // describe (an owner may hold links alone: a save, its ability)
@@ -111,7 +130,7 @@ describe("A module's storage", () => {
   });
 
   test("reads an entity's record: every field it holds, in their declared order, and its single links", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { fieldDefs, linkRoles } = storage.registries();
     const set = fieldDefs.find((def) => def.ownerKind === "entity" && def.multiple && def.valueKind === "text")!;
     const { ownerType: type } = set;
@@ -145,7 +164,7 @@ describe("A module's storage", () => {
   });
 
   test("stores a number field's value kept to its places, refusing one it doesn't hold exactly, a character's too", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { fieldDefs } = storage.registries();
     const scaled = fieldDefs.find(
       (def) => def.valueKind === "number" && storage.declaredFields().scaleOf(def.ownerType, def.field) === 2,
@@ -167,7 +186,7 @@ describe("A module's storage", () => {
   });
 
   test("reads kind-wide only the fields declared so, of a kind that declares any", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const declared = storage.declaredFields();
     const { fieldDefs } = storage.registries();
     const owner = fieldDefs.find(
@@ -191,33 +210,31 @@ describe("A module's storage", () => {
   });
 
   test("writes a new entity in its kind's partition, with its fields always written's defaults", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { entityTypes, fieldDefs } = storage.registries();
     for (const { type } of entityTypes) expect(storage.partitionOf(type)).toBe(storage.kind(type).partition ?? "");
     // A new owner's write of none of its fields holds those always written, each its default; an existing one's, none
-    const [baseRules] = storage.modules();
     const held = (ownerType: string) =>
-      Object.keys(storage.writtenFields(ownerType, {}, true, baseRules)).every((field) =>
+      Object.keys(storage.writtenFields(ownerType, {}, true)).every((field) =>
         fieldDefs.some((def) => def.ownerType === ownerType && def.field === field),
       );
     for (const { ownerType } of fieldDefs) {
       expect(held(ownerType)).toBe(true);
-      expect(storage.writtenFields(ownerType, {}, false, baseRules)).toEqual({});
+      expect(storage.writtenFields(ownerType, {}, false)).toEqual({});
     }
-    expect(
-      fieldDefs.some(({ ownerType }) => Object.keys(storage.writtenFields(ownerType, {}, true, baseRules)).length > 0),
-    ).toBe(true);
+    expect(fieldDefs.some(({ ownerType }) => Object.keys(storage.writtenFields(ownerType, {}, true)).length > 0)).toBe(
+      true,
+    );
   });
 
   test("writes and reads the flag and the set its module declares on its characters, as an entity's", () => {
-    const storage = new StorageEngine(modulesWithCharacterFlagAndSet());
-    const [baseRules] = storage.modules();
+    const storage = storagesOf(modulesWithCharacterFlagAndSet())(DND35_BASE_RULES);
     expect(storage.field("characters", "TEST_RETIRED")).toMatchObject({ valueKind: "flag", multiple: false });
     expect(storage.field("characters", "TEST_TITLES")).toMatchObject({ valueKind: "text", multiple: true });
     // A new character's flag always written, false when it gives none; its set's values, each once
-    const written = storage.writtenFields("characters", { TEST_TITLES: ["Lord", "Sir", "Lord"] }, true, baseRules);
+    const written = storage.writtenFields("characters", { TEST_TITLES: ["Lord", "Sir", "Lord"] }, true);
     expect(written).toMatchObject({ TEST_RETIRED: [false], TEST_TITLES: ["Lord", "Sir"] });
-    expect(storage.writtenFields("characters", { TEST_RETIRED: true, TEST_TITLES: null }, false, baseRules)).toEqual({
+    expect(storage.writtenFields("characters", { TEST_RETIRED: true, TEST_TITLES: null }, false)).toEqual({
       TEST_RETIRED: [true],
       TEST_TITLES: [],
     });
@@ -228,80 +245,71 @@ describe("A module's storage", () => {
     expect(storage.fieldsOf("characters", rows)).toMatchObject({ TEST_RETIRED: false, TEST_TITLES: ["Sir", "Lord"] });
   });
 
-  test("registers a second module beside the first, its fields of the owner types every module's share derived as theirs", () => {
-    const storage = StorageEngine.shared();
+  test("keeps a second module's declarations apart from the first's, its characters' and Settings' fields its own", () => {
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { characterOwnerType: characters, settingsOwnerType: settings } = storage;
-    // One with no fields of its own
-    expect(new StorageEngine(modulesWithSecond({})).registries().fieldDefs).toEqual(storage.registries().fieldDefs);
-    // One whose characters and Settings declare fields of their own: their rows beside the first's
-    const second = new StorageEngine(
+    // One whose characters and Settings declare fields of their own: its rows alone, none of the first's
+    const [secondRules, module] = secondOf(
       modulesWithSecond({ [characters]: CHARACTER_FLAG_AND_SET, [settings]: SETTINGS_FLAG }),
     );
-    const { fieldDefs } = second.registries();
-    expect(fieldDefs).toEqual(expect.arrayContaining(storage.registries().fieldDefs));
-    expect(fieldDefs.filter((def) => def.field.startsWith("TEST_"))).toEqual([
+    const second = new StorageEngine(secondRules, module);
+    expect(second.baseRules).toBe(secondRules);
+    expect(second.registries().fieldDefs).toEqual([
       { ownerKind: "ruleset", ownerType: settings, field: "TEST_HOUSE_RULES", valueKind: "flag", multiple: false },
       { ownerKind: "character", ownerType: characters, field: "TEST_RETIRED", valueKind: "flag", multiple: false },
       { ownerKind: "character", ownerType: characters, field: "TEST_TITLES", valueKind: "text", multiple: true },
     ]);
-    // A character's or a ruleset's write takes its own module's fields: a new one holds its own module's defaults alone
-    const [first] = storage.modules();
-    const secondRules = "second" as BaseRules;
-    expect(second.writtenFields(characters, {}, true, first)).toEqual(
-      storage.writtenFields(characters, {}, true, first),
-    );
-    expect(second.writtenFields(characters, {}, true, secondRules)).toEqual({ TEST_RETIRED: [false] });
-    expect(second.writtenFields(settings, { TEST_HOUSE_RULES: true }, false, secondRules)).toEqual({
-      TEST_HOUSE_RULES: [true],
-    });
-    // One without its module's base rules, of no registered module, or naming another module's field: refused
-    expect(() => second.writtenFields(characters, {}, true)).toThrow(
-      "A write of the fields of characters takes its module's base rules",
-    );
-    expect(() => second.writtenFields(characters, {}, true, "third" as BaseRules)).toThrow(
-      "third is no registered module's base rules",
-    );
-    expect(() => second.writtenFields(characters, { TEST_RETIRED: true }, false, first)).toThrow(
-      `${first} declares no field TEST_RETIRED of characters`,
-    );
+    expect(storage.registries().fieldDefs.filter((def) => def.field.startsWith("TEST_"))).toEqual([]);
+    // A character's or a ruleset's write takes its own module's fields: a new one holds its own module's defaults
+    // alone, and the write path refuses another's field
+    expect(second.writtenFields(characters, {}, true)).toEqual({ TEST_RETIRED: [false] });
+    expect(second.writtenFields(settings, { TEST_HOUSE_RULES: true }, false)).toEqual({ TEST_HOUSE_RULES: [true] });
+    const written = storage.writtenFields(characters, { TEST_RETIRED: true }, false);
+    const rows = () =>
+      Object.entries(written).flatMap(([field, values]) => toFieldRows(storage, characters, field, values));
+    expect(rows).toThrow(`${DND35_BASE_RULES} declares no field TEST_RETIRED of characters`);
   });
 
-  test("refuses an owner type two modules declare but those every module's share, a field two declare of one, or one of no owner", () => {
+  test("lets two modules declare one kind, each its own fields, which each reads and writes by its own", () => {
+    const [[baseRules, first]] = Modules.all();
+    const storage = StorageEngine.of(baseRules);
+    // The second module's feats hold a field the first's don't
+    const fields = { ...first.fields, feats: { ...first.fields.feats, ...SETTINGS_FLAG } } as RulesetModule["fields"];
+    const second = new StorageEngine("second" as BaseRules, { ...first, fields });
+    expect(second.kind("feats")).toEqual(storage.kind("feats"));
+    expect(second.field("feats", "TEST_HOUSE_RULES")).toMatchObject({ valueKind: "flag", multiple: false });
+    expect(storage.field("feats", "TEST_HOUSE_RULES")).toBeUndefined();
+    expect(second.writtenFields("feats", { TEST_HOUSE_RULES: true }, false)).toEqual({ TEST_HOUSE_RULES: [true] });
+    expect(second.fieldsOf("feats", [["TEST_HOUSE_RULES", true]])).toMatchObject({ TEST_HOUSE_RULES: true });
+    expect(storage.registries().fieldDefs.some((def) => def.field === "TEST_HOUSE_RULES")).toBe(false);
+  });
+
+  test("refuses two fields of an owner stored in one, the fields of no owner, or its characters' among its owners'", () => {
     const [[, first]] = Modules.all();
-    const { characterOwnerType: characters, settingsOwnerType: settings } = StorageEngine.shared();
+    const { characterOwnerType: characters, settingsOwnerType: settings } = StorageEngine.of(DND35_BASE_RULES);
+    const build = (modules: [BaseRules, RulesetModule][]) => () => new StorageEngine(...secondOf(modules));
     for (const [ownerType, owned] of [
       [characters, first.characterFields],
       [settings, first.fields[settings]],
     ] as const) {
-      // A field a row stores (not a reference, which a link keeps)
+      // A field a row stores (not a reference, which a link keeps), under two names
       const name = Object.keys(owned).find((key) => Field.storedLeavesOf({ [key]: owned[key] }).length > 0)!;
-      expect(() => new StorageEngine(modulesWithSecond({ [ownerType]: { [name]: owned[name] } }))).toThrow(
-        `second declares the field ${name} of ${ownerType}, which another module declares`,
-      );
-      // Another name, but the field that stores the first's
-      expect(() => new StorageEngine(modulesWithSecond({ [ownerType]: { other: owned[name] } }))).toThrow(
+      expect(build(modulesWithSecond({ [ownerType]: { [name]: owned[name], other: owned[name] } }))).toThrow(
         `Two fields of ${ownerType} are stored in one`,
       );
     }
-    expect(() => new StorageEngine(modulesWithSecond({ heroes: SETTINGS_FLAG }))).toThrow(
+    expect(build(modulesWithSecond({ heroes: SETTINGS_FLAG }))).toThrow(
       "The fields of heroes are no entity type's, ruleset's or character's",
-    );
-    // An entity type's fields, which the one module that stores it declares
-    const [type] = Object.keys(first.fields).filter((ownerType) => ownerType !== settings);
-    expect(() => new StorageEngine(modulesWithSecond({ [type]: SETTINGS_FLAG }))).toThrow(
-      `second declares ${type}, which another module stores`,
     );
     // Its characters' fields, declared among its owners'
     const withSecond = modulesWithSecond({});
     const [secondRules, second] = withSecond.pop()!;
     withSecond.push([secondRules, { ...second, fields: { [characters]: CHARACTER_FLAG_AND_SET } }]);
-    expect(() => new StorageEngine(withSecond)).toThrow(
-      "second declares its characters' fields among its owners', not as theirs",
-    );
+    expect(build(withSecond)).toThrow("second declares its characters' fields among its owners', not as theirs");
   });
 
   test("reads an entity's links as a view holds them: in the order they were made, then by ordinal and target", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { linkRoles } = storage.registries();
     const many = linkRoles.find((def) => !def.single)!;
     const single = linkRoles.find((def) => def.single && def.fromType === many.fromType);
@@ -321,13 +329,11 @@ describe("A module's storage", () => {
   });
 
   test("answers a player character's kind, the kinds a user customizes and those a name is the identity of", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const types = storage.registries().entityTypes.map(({ type }) => type);
-    expect(storage.playerKinds().length).toBeGreaterThan(0);
-    for (const kind of storage.playerKinds()) {
-      expect(storage.isPlayerKind(kind)).toBe(true);
-      expect(storage.isPlayerKind(`${kind}-child`)).toBe(false);
-    }
+    const kind = storage.playerKind();
+    expect(storage.isPlayerKind(kind)).toBe(true);
+    expect(storage.isPlayerKind(`${kind}-child`)).toBe(false);
     // By type, as a refusal of another kind lists them
     expect(storage.customizableKinds()).toEqual(
       types.filter((type) => storage.kind(type).customizable).toSorted((a, b) => a.localeCompare(b)),
@@ -338,7 +344,7 @@ describe("A module's storage", () => {
   });
 
   test("answers the kinds whose customizations have a page of their own, as the rules describe them", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const pages = storage.customizationPages();
     expect(pages).toBe(storage.customizationPages());
     // A customizable kind's, but one that owns another's, whose customizations are its page's tabs; an owned kind's names
@@ -350,13 +356,12 @@ describe("A module's storage", () => {
         page: customized ? { type, ...(storage.ownerOf(type) && { owner: storage.ownerOf(type) }) } : undefined,
       });
     }
-    // Every base rules' rules describe the same pages, a kind being one module's
-    const described = Object.values(Engine.rules().describeAll()).flatMap((rules) => rules.customizationPages);
-    expect(described).toEqual([...pages.values()]);
+    // Its base rules' rules describe the same pages
+    expect(Engine.rules().describeAll()[DND35_BASE_RULES].customizationPages).toEqual([...pages.values()]);
   });
 
   test("answers each owned kind's owner, and the kinds no other owns, in their declarations' order", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { entityTypes } = storage.registries();
     for (const { ownerType, type } of entityTypes) expect(storage.ownerOf(type)).toBe(ownerType ?? undefined);
     expect(storage.standaloneKinds() as readonly string[]).toEqual(
@@ -368,7 +373,7 @@ describe("A module's storage", () => {
   });
 
   test("names the roles an entity's page edits, and those whose links refuse their target's delete", () => {
-    const storage = StorageEngine.shared();
+    const storage = StorageEngine.of(DND35_BASE_RULES);
     const { linkRoles } = storage.registries();
     expect(storage.editedLinks()).toBe(storage.editedLinks());
     for (const [role, { from, to }] of storage.editedLinks()) {
@@ -382,29 +387,29 @@ describe("A module's storage", () => {
   });
 
   test("refuses a merge or an inheritance it can't read", () => {
-    expect(() => new StorageEngine(Modules.all())).not.toThrow();
+    expect(buildEach(Modules.all())).not.toThrow();
     const unknownMerge = modulesWith((registries) => {
       registries.linkRoles[0].merge = "average" as Merge;
     });
-    expect(() => new StorageEngine(unknownMerge)).toThrow("merges by average, no rule the engine has");
+    expect(buildEach(unknownMerge)).toThrow("merges by average, no rule the engine has");
     const unionOfOne = modulesWith((_, fields) => {
       leafOf(fields, (leaf) => !Field.storedKindOf(leaf).multiple).merge = "union";
     });
-    expect(() => new StorageEngine(unionOfOne)).toThrow("holds one value: its sibling copies can't union it");
+    expect(buildEach(unionOfOne)).toThrow("holds one value: its sibling copies can't union it");
     const unionOfSingle = modulesWith((registries) => {
       registries.linkRoles.find((def) => def.single)!.merge = "union";
     });
-    expect(() => new StorageEngine(unionOfSingle)).toThrow("holds one value: its sibling copies can't union it");
+    expect(buildEach(unionOfSingle)).toThrow("holds one value: its sibling copies can't union it");
     const inherits = Object.values(Modules.all()[0][1].fields)
       .flatMap((owned) => Field.storedLeavesOf(owned))
       .find((leaf) => leaf.inherits)!.inherits!;
     const throughMany = modulesWith((registries) => {
       for (const role of registries.linkRoles) if (role.role === inherits) role.single = false;
     });
-    expect(() => new StorageEngine(throughMany)).toThrow(`is read off another through ${inherits}`);
+    expect(buildEach(throughMany)).toThrow(`is read off another through ${inherits}`);
     const notAnEntity = modulesWith((_, fields) => {
       leafOf({ rulesets: fields.rulesets! }, () => true).inherits = inherits;
     });
-    expect(() => new StorageEngine(notAnEntity)).toThrow(`is read off another through ${inherits}`);
+    expect(buildEach(notAnEntity)).toThrow(`is read off another through ${inherits}`);
   });
 });

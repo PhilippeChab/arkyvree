@@ -46,7 +46,7 @@ const entityBody = z.strictObject({
 const kindParams = idParam.extend({
   kind: z
     .string()
-    .pipe(z.enum(Engine.storage().standaloneKinds()))
+    .pipe(z.enum(Engine.rules().standaloneKinds()))
     .meta({ description: "The entity kind, one of the `kinds` `GET /v1/rules` lists" }),
 });
 

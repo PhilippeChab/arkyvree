@@ -53,6 +53,7 @@ export function Plans<B extends Constructor>(Base: B) {
       const { search, ...picker } = query;
       return await withRowEditableCharacter(db, session, characterId, async (scope, character) => {
         const opened = Engine.for(scope).character(character).advancements().openStepPicker(step, picker);
+        const { baseRules } = scope.ruleset;
         switch (opened.read) {
           // Tracks: its kind's rows in the character's ruleset, those its picker lists first (`firstIds`)
           case "tracks": {
@@ -64,7 +65,7 @@ export function Plans<B extends Constructor>(Base: B) {
               search,
               searchFields: opened.searchFields,
             };
-            const result = await Entities.findPage<EntityRecord & { name: string }>(db, filters, pagination);
+            const result = await Entities.findPage<EntityRecord & { name: string }>(db, baseRules, filters, pagination);
             const items = opened.picker.describeOptions(result.items);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }
@@ -75,7 +76,7 @@ export function Plans<B extends Constructor>(Base: B) {
               search,
               searchFields: opened.searchFields,
             };
-            const result = await Entities.findOptionGroupPage(db, filters, pagination);
+            const result = await Entities.findOptionGroupPage(db, baseRules, filters, pagination);
             const items = opened.picker.describeGroups(result.items);
             return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
           }
@@ -86,7 +87,7 @@ export function Plans<B extends Constructor>(Base: B) {
               search,
               searchFields: opened.searchFields,
             };
-            const result = await Entities.findOptionPage(db, filters, pagination);
+            const result = await Entities.findOptionPage(db, baseRules, filters, pagination);
             const items = opened.picker.describeOptions(result.items);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }

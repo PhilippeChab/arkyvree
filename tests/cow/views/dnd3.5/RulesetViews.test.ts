@@ -26,6 +26,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A published system ruleset built on the seeded one, as a book a fork takes is. */
@@ -149,7 +150,7 @@ describe("RulesetViews", () => {
 
   test("lists an entity's modifiers in the order they were made, a tie by target, and its values as its stat block shows them", async () => {
     const ruleset = await createTestRuleset(SEED_USER_ID);
-    const [item] = await Entities.createMany<Item>(db, "items", [
+    const [item] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
       { rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` },
     ]);
     // Each inserted out of that order, as a read in the plan's order would return them
@@ -289,7 +290,7 @@ describe("RulesetViews", () => {
       expect(forkView.abilities.length).toBe(seedView.abilities.length);
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
       // Fork inherits all customizations via compose: every entity's fields, of every kind, and the Settings
-      for (const { type } of StorageEngine.shared().viewSchema().kinds) {
+      for (const { type } of StorageEngine.of(DND35_BASE_RULES).viewSchema().kinds) {
         const fieldsOf = (data: typeof seedData) =>
           data.rows(type as keyof ViewKinds).map((row) => (row as { fields: unknown }).fields);
         expect(fieldsOf(forkData)).toEqual(fieldsOf(seedData));
@@ -367,7 +368,7 @@ describe("RulesetViews", () => {
       const seedRawBefore = await RulesetViews.getRawData(seed.id);
       const forkBefore = await composeFork(fork);
 
-      await Entities.createMany<Feat>(db, "feats", [
+      await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         {
           name: `Fork-only Feat ${uniqueId()}`,
           description: "Created directly in the fork",
@@ -389,7 +390,7 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
 
       // Create a fresh base feat with a modifier, a requirement, and a modifier-level requirement.
-      const [baseFeat] = await Entities.createMany<Feat>(db, "feats", [
+      const [baseFeat] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         {
           name: `Cascade Feat ${uniqueId()}`,
           description: "For cascade test",
@@ -470,7 +471,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
@@ -501,7 +502,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
 
@@ -527,7 +528,7 @@ describe("RulesetViews", () => {
       const featCountBefore = Dnd35View.of(forkBefore).feats.length;
 
       // Add a new feat directly to the seed (simulating external mutation).
-      await Entities.createMany<Feat>(db, "feats", [
+      await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         {
           name: `Seed-added Feat ${uniqueId()}`,
           description: "Added to seed after fork composed",
@@ -546,7 +547,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const [sampleFeat] = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const before = await composeFork(fork);
       const modifierCountBefore = (before.modifiersBySource.get(sampleFeat.id) ?? []).length;
@@ -572,7 +573,7 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
 
       // Create a throwaway base feat + two system-owned extensions that each COW it.
-      const [baseFeat] = await Entities.createMany<Feat>(db, "feats", [
+      const [baseFeat] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         {
           name: `Sibling Base Feat ${uniqueId()}`,
           description: "To be COW'd by two extensions",
@@ -614,7 +615,7 @@ describe("RulesetViews", () => {
       // Same sibling scenario as above, but on an item to prove compose's
       // exclusion logic works uniformly across entity types (races, items,
       // languages, classes — all go through the same hidden-row filter, CowData.isHidden).
-      const [baseItem] = await Entities.createMany<Item>(db, "items", [
+      const [baseItem] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
         {
           name: `Sibling Base Item ${uniqueId()}`,
           description: "To be COW'd by two extensions",
@@ -655,19 +656,21 @@ describe("RulesetViews", () => {
       const featName = `Homebrew Feat ${uniqueId()}`;
       const itemName = `Homebrew Item ${uniqueId()}`;
       // Two books' feats of a name pair, the first's winning; the first's copy of a core item, renamed
-      const [firstFeat, secondFeat] = await Entities.createMany<Feat>(db, "feats", [
+      const [firstFeat, secondFeat] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         { name: featName, rulesetId: first.id },
         { name: featName, rulesetId: second.id },
       ]);
-      const [baseItem] = await Entities.createMany<Item>(db, "items", [
+      const [baseItem] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
         { name: `Probe Item ${uniqueId()}`, rulesetId: seed.id, fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 } },
       ]);
       const bookItem = await copyEntity(db, "items", baseItem.id, first);
-      await Entities.update<Item>(db, "items", { name: itemName }, { id: bookItem.id as string });
+      await Entities.update<Item>(db, DND35_BASE_RULES, "items", { name: itemName }, { id: bookItem.id as string });
       const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
       await subscribeTestRuleset(fork.id, [first.id, second.id]);
-      const [ownFeat] = await Entities.createMany<Feat>(db, "feats", [{ name: featName, rulesetId: fork.id }]);
-      const [ownItem] = await Entities.createMany<Item>(db, "items", [
+      const [ownFeat] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
+        { name: featName, rulesetId: fork.id },
+      ]);
+      const [ownItem] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
         { name: itemName, rulesetId: fork.id, fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 } },
       ]);
       await insertRows(modifiersInCustomization, [{ ...STRENGTH_BONUS, sourceType: "feats", sourceId: firstFeat.id }]);
@@ -699,19 +702,19 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Homebrew Class ${uniqueId()}`;
-      const [bookClass] = await Entities.createMany<Klass>(db, "classes", [
+      const [bookClass] = await Entities.createMany<Klass>(db, DND35_BASE_RULES, "classes", [
         { name, rulesetId: book.id, fields: { [CLASS_HD]: 8 } },
       ]);
-      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "class-levels", [
+      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, DND35_BASE_RULES, "class-levels", [
         { ownerId: bookClass.id, position: 1 },
         { ownerId: bookClass.id, position: 2 },
       ]);
       const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
       await subscribeTestRuleset(fork.id, [book.id]);
-      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
+      const [ownClass] = await Entities.createMany<Klass>(db, DND35_BASE_RULES, "classes", [
         { name, rulesetId: fork.id, fields: { [CLASS_HD]: 10 } },
       ]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class-levels", [
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, DND35_BASE_RULES, "class-levels", [
         { ownerId: ownClass.id, position: 1 },
       ]);
 
@@ -739,10 +742,10 @@ describe("RulesetViews", () => {
       await copyEntity(db, "classes", coreCleric.id, book);
       const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
       await subscribeTestRuleset(fork.id, [book.id]);
-      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
+      const [ownClass] = await Entities.createMany<Klass>(db, DND35_BASE_RULES, "classes", [
         { name: "Cleric", rulesetId: fork.id, fields: { [CLASS_HD]: 8 } },
       ]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class-levels", [
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, DND35_BASE_RULES, "class-levels", [
         { ownerId: ownClass.id, position: 1 },
       ]);
 
@@ -757,11 +760,15 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const [first, second] = [await createBook(seed.id), await createBook(seed.id)];
       const name = `Shared Spells ${uniqueId()}`;
-      const [secondList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: second.id }]);
+      const [secondList] = await Entities.createMany<Aptitude>(db, DND35_BASE_RULES, "aptitudes", [
+        { name, rulesetId: second.id },
+      ]);
       const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
       await subscribeTestRuleset(fork.id, [first.id, second.id]);
       const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
-      const [firstList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: first.id }]);
+      const [firstList] = await Entities.createMany<Aptitude>(db, DND35_BASE_RULES, "aptitudes", [
+        { name, rulesetId: first.id },
+      ]);
 
       const view = await readView(fork.id);
       expect(

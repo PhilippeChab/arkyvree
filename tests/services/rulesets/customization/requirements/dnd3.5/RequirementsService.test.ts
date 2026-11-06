@@ -13,6 +13,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };
@@ -32,8 +33,11 @@ async function expectUncopied(inherited: Awaited<ReturnType<typeof setupInherite
 /** A new user's ruleset with a feat and a race of its own. */
 async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
-  const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: ruleset.id, name: `Test Feat ${uniqueId()}` });
-  const [race] = await Entities.create<Race>(db, "races", {
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    rulesetId: ruleset.id,
+    name: `Test Feat ${uniqueId()}`,
+  });
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     rulesetId: ruleset.id,
     name: `Test Race ${uniqueId()}`,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -49,7 +53,10 @@ async function setupInherited() {
   const { user: owner } = await createTestUser();
   const { session } = await createTestUser();
   const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
-  const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: parent.id, name: `Test Feat ${uniqueId()}` });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    rulesetId: parent.id,
+    name: `Test Feat ${uniqueId()}`,
+  });
   const parentRequirements = await Requirements.createMany(
     db,
     ["1", "2"].map((level) => ({ ...babAtLeast5, level, valueType: "number", entityId: feat.id, entityType: "feats" })),
@@ -258,7 +265,10 @@ describe("RequirementsService", () => {
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {
       const { session, rulesetId, feat } = await setup();
-      const [otherFeat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Other Feat ${uniqueId()}` });
+      const [otherFeat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+        rulesetId,
+        name: `Other Feat ${uniqueId()}`,
+      });
       const { session: other } = await createTestUserAndRuleset();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
       const update = { level: "2", chainingOperator: "or" };
@@ -302,7 +312,10 @@ describe("RequirementsService", () => {
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {
       const { session, rulesetId, feat } = await setup();
-      const [otherFeat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Other Feat ${uniqueId()}` });
+      const [otherFeat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+        rulesetId,
+        name: `Other Feat ${uniqueId()}`,
+      });
       const { session: other } = await createTestUserAndRuleset();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
 

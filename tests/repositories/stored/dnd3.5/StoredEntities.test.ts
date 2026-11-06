@@ -8,6 +8,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   DAMAGE_TYPE,
   FEAT_FAMILY,
@@ -26,14 +27,14 @@ describe("A stored item's weight and cost", () => {
   test("are kept to two places, however they're written: a seed's create, a bulk one, an update", async () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
     // As a seeder writes a book's item: its weight and cost as they're read off the page
-    const [seeded] = await Entities.create<Item>(db, "items", {
+    const [seeded] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
       name: "Seeded Dagger",
       rulesetId,
       fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 0.125, [ITEM_COST_GP]: 1.005 },
     });
     expect(seeded.fields).toMatchObject({ [ITEM_WEIGHT]: 0.13, [ITEM_COST_GP]: 1.01 });
 
-    const [light, heavy] = await Entities.createMany<Item>(db, "items", [
+    const [light, heavy] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
       { name: "Light Bolt", rulesetId, fields: { [ITEM_WEIGHT]: 0.004 } },
       { name: "Heavy Bolt", rulesetId, fields: { [ITEM_WEIGHT]: 2.345 } },
     ]);
@@ -41,7 +42,13 @@ describe("A stored item's weight and cost", () => {
     expect(light.fields[ITEM_WEIGHT]).toBe(0);
     expect(heavy.fields[ITEM_WEIGHT]).toBe(2.35);
 
-    await Entities.update<Item>(db, "items", { fields: { [ITEM_WEIGHT]: 3.14159 } }, { id: seeded.id });
+    await Entities.update<Item>(
+      db,
+      DND35_BASE_RULES,
+      "items",
+      { fields: { [ITEM_WEIGHT]: 3.14159 } },
+      { id: seeded.id },
+    );
     const updated = await Entities.findOne<Item>(db, { entityType: "items", id: seeded.id });
     expect(updated?.fields).toMatchObject({ [ITEM_WEIGHT]: 3.14, [ITEM_COST_GP]: 1.01 });
   });
@@ -51,7 +58,11 @@ describe("A stored item's weight and cost", () => {
     const creating = (weight: number) =>
       db
         .transaction((tx) =>
-          Entities.create<Item>(tx, "items", { name: "Weightless", rulesetId, fields: { [ITEM_WEIGHT]: weight } }),
+          Entities.create<Item>(tx, DND35_BASE_RULES, "items", {
+            name: "Weightless",
+            rulesetId,
+            fields: { [ITEM_WEIGHT]: weight },
+          }),
         )
         .catch((error: unknown) => error);
 
@@ -64,7 +75,7 @@ describe("A stored item's weight and cost", () => {
 describe("A stored entity's fields", () => {
   test("are written with it and read back whole, by field: a set's values in their declared order", async () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
-    const [sword] = await Entities.create<Item>(db, "items", {
+    const [sword] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
       name: "Probe Sword",
       rulesetId,
       fields: { [ITEM_TYPE]: "Weapon", [DAMAGE_TYPE]: ["Piercing", "Slashing"], [WEAPON_BASE_DAMAGE]: "1d8" },
@@ -83,7 +94,7 @@ describe("A stored entity's fields", () => {
 
   test("are replaced by an update where it names them, kept where it doesn't, a cleared one always written its default", async () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
-    const [feat] = await Entities.create<Feat>(db, "feats", {
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       name: "Probe Feat",
       rulesetId,
       fields: { [FEAT_FAMILY]: ["General"], [FEAT_SELECTABLE]: false },
@@ -96,6 +107,7 @@ describe("A stored entity's fields", () => {
 
     const [updated] = await Entities.update<Feat>(
       db,
+      DND35_BASE_RULES,
       "feats",
       { fields: { [FEAT_WEAPON_FINESSE]: true, [FEAT_SELECTABLE]: null } },
       { id: feat.id },
@@ -111,7 +123,9 @@ describe("A stored entity's fields", () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
     const creating = (fields: Record<string, FieldWrite>) =>
       db
-        .transaction((tx) => Entities.create<Item>(tx, "items", { name: "Refused", rulesetId, fields }))
+        .transaction((tx) =>
+          Entities.create<Item>(tx, DND35_BASE_RULES, "items", { name: "Refused", rulesetId, fields }),
+        )
         .catch((error: unknown) => error);
 
     expect(await creating({ [WEAPON_BASE_DAMAGE]: ["1d6", "1d8"] })).toMatchObject({
@@ -119,20 +133,25 @@ describe("A stored entity's fields", () => {
     });
     expect(await creating({ [ITEM_WEIGHT]: "heavy" })).toBeInstanceOf(Error);
     expect(await creating({ NO_SUCH_FIELD: "x" })).toMatchObject({
-      message: "No module declares the field NO_SUCH_FIELD of items",
+      message: `${DND35_BASE_RULES} declares no field NO_SUCH_FIELD of items`,
     });
   });
 
   test("find the entities that hold a field's value, whichever field it is", async () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
-    const [ring, sword] = await Entities.createMany<Item>(db, "items", [
+    const [ring, sword] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
       { name: "Probe Ring", rulesetId, fields: { [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" } },
       { name: "Probe Blade", rulesetId, fields: { [ITEM_TYPE]: "Weapon", [WEAPON_BASE_DAMAGE]: "1d8" } },
     ]);
     const found = async (fields: Record<string, FieldValue>) =>
-      (await Entities.findPage<Item>(db, { entityType: "items", rulesetId, fields }, { limit: 10, page: 1 })).items.map(
-        ({ id }) => id,
-      );
+      (
+        await Entities.findPage<Item>(
+          db,
+          DND35_BASE_RULES,
+          { entityType: "items", rulesetId, fields },
+          { limit: 10, page: 1 },
+        )
+      ).items.map(({ id }) => id);
     expect(await found({ [ITEM_SLOT]: "Finger" })).toEqual([ring.id]);
     expect(await found({ [WEAPON_BASE_DAMAGE]: "1d8" })).toEqual([sword.id]);
     expect(await found({ [ITEM_IS_TEMPLATE]: false })).toEqual([sword.id, ring.id]);
@@ -140,7 +159,7 @@ describe("A stored entity's fields", () => {
 
   test("find an entity holding no row of a field by the value its answer reads without one: its default", async () => {
     const { id: rulesetId } = await createTestRuleset(SEED_USER_ID);
-    const [plain, finesse] = await Entities.createMany<Feat>(db, "feats", [
+    const [plain, finesse] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
       { name: "Probe Plain", rulesetId },
       { name: "Probe Finesse", rulesetId, fields: { [FEAT_WEAPON_FINESSE]: true } },
     ]);
@@ -150,7 +169,14 @@ describe("A stored entity's fields", () => {
       FEAT_SELECTABLE,
     );
     const found = async (fields: Record<string, FieldValue | FieldValue[]>) =>
-      (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId, fields }, { limit: 10, page: 1 })).items
+      (
+        await Entities.findPage<Feat>(
+          db,
+          DND35_BASE_RULES,
+          { entityType: "feats", rulesetId, fields },
+          { limit: 10, page: 1 },
+        )
+      ).items
         .map(({ id }) => id)
         .toSorted();
     expect(await found({ [FEAT_SELECTABLE]: true })).toEqual([plain.id, finesse.id].toSorted());

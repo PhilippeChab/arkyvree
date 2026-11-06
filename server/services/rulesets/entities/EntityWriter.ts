@@ -30,15 +30,14 @@ import {
   Modifiers,
   type ReferencedType,
   Requirements,
-  RULESET_ENTITY_TYPES,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Ruleset, Session } from "@/shared/relations.ts";
 
 /** A new entity's row, and the ancestor whose deleted copy's tombstone it takes over by its name, if any. */
 interface NewRow {
@@ -89,9 +88,12 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 /** The unique index that keeps an owner's entities at their own places (a class's levels at their numbers). */
 const OWNED_POSITION_INDEX = "entities_owner_position_unique_idx";
 
-/** An entity's type, as a plan names it: refused when it isn't a ruleset entity's. */
-function entityTypeOf(type: string): RulesetEntityType {
-  const entityType = RULESET_ENTITY_TYPES.find((known) => known === type);
+/** An entity's type, as a plan names it: refused when it isn't one of its ruleset's base rules' kinds (`baseRules`). */
+function entityTypeOf(baseRules: BaseRules, type: string): RulesetEntityType {
+  const entityType = Engine.forRules(baseRules)
+    .storage()
+    .standaloneKinds()
+    .find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);
   return entityType;
 }
@@ -131,15 +133,15 @@ export default class EntityWriter {
    * requirements.
    */
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
-    const type = entityTypeOf(made.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, made.type);
     const names = new EntityNames(scope);
     const tombstoneAncestorId = await names.findTombstoneAncestor(tx, type, made.row.name);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
-      Entities.create(tx, type, { ...made.row, rulesetId: scope.ruleset.id }),
+      Entities.create(tx, scope.ruleset.baseRules, type, { ...made.row, rulesetId: scope.ruleset.id }),
     );
     if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
     const written = { entityId: entity.id, entityType: type };
-    await EntityWriter.setLinks(tx, written, made.links, false);
+    await EntityWriter.setLinks(tx, scope.ruleset.baseRules, written, made.links, false);
     await Modifiers.createMany(
       tx,
       made.modifiers.map((modifier) => ({ ...modifier, sourceId: entity.id, sourceType: type })),
@@ -163,23 +165,27 @@ export default class EntityWriter {
   ) {
     const { ownerId, planned, type } = owned;
     const [row] = await withUniqueRefusal(
-      () => Entities.create<Row>(tx, type, { ...planned.row, ownerId }),
+      () => Entities.create<Row>(tx, scope.ruleset.baseRules, type, { ...planned.row, ownerId }),
       (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
     );
     await EntityWriter.setParts(tx, scope, policy, { entityId: row.id, entityType: type }, planned, false);
     return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
   }
 
-  /** Records what a save did to an entity of a kind (`type`, by `verb`), with what the activity carries. */
+  /**
+   * Records what a save did to an entity of a kind (`type`, by `verb`) in the ruleset it wrote (`ruleset`), with what
+   * the activity carries.
+   */
   private static async recordActivity(
     tx: Db,
+    ruleset: Ruleset,
     session: Session,
     verb: "create" | "delete" | "update",
     type: string,
     targetId: string,
     data: Record<string, unknown>,
   ) {
-    await createActivityWithNotifications(tx, {
+    await createContentActivityWithNotifications(tx, ruleset, {
       userId: session.userId,
       targetId,
       targetType: type,
@@ -195,28 +201,29 @@ export default class EntityWriter {
    * links and customizations with it, and a soft-archive would block an entity of the same name made later.
    */
   private static async removeEntity(tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy, removal: EntityRemoval) {
-    const type = entityTypeOf(removal.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, removal.type);
     const inUse = await new EntityUses(scope).refusesDelete(tx, type, removal.id);
     policy.canDeleteEntity({ inUse, refusal: removal.inUse });
 
-    const notFound = EntityWriter.getNotFound(scope.ruleset, type);
+    const notFound = EntityWriter.getNotFound(scope.ruleset.baseRules, type);
     const target = await new EntityEdit(scope).cowById(tx, type, removal.id, notFound);
     await Entities.delete(tx, { entityType: type, id: target.id });
   }
 
   /**
-   * Updates the row a write targets (`target`) to the plan's (`row`, of `type`): refused as stale when the client's
-   * token (`updatedAt`) is behind, a copy's never being checked (its token is its source's).
+   * Updates the row a write targets (`target`) to the plan's (`row`, of `type`, of `baseRules`): refused as stale when
+   * the client's token (`updatedAt`) is behind, a copy's never being checked (its token is its source's).
    */
   private static async updateRow(
     tx: Db,
+    baseRules: BaseRules,
     type: string,
-    row: Parameters<typeof Entities.update>[2],
+    row: Parameters<typeof Entities.update>[3],
     target: EditTarget,
     updatedAt: string | undefined,
   ): Promise<Row> {
     const expectedUpdatedAt = target.expected(updatedAt);
-    const rows = await Entities.update<Row>(tx, type, row, { id: target.id, expectedUpdatedAt });
+    const rows = await Entities.update<Row>(tx, baseRules, type, row, { id: target.id, expectedUpdatedAt });
     if (rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     return rows[0];
   }
@@ -232,16 +239,22 @@ export default class EntityWriter {
    * kind named in its rules' word as the engine's refusals name it ("Class level not found"): the entity's words, its
    * first copy's included (`EntityEdit`).
    */
-  static getNotFound({ baseRules }: { baseRules: BaseRules }, type: string): string {
+  static getNotFound(baseRules: BaseRules, type: string): string {
     return Engine.rules().describeNotFound(baseRules, type);
   }
 
   /**
-   * Writes the links a plan sets on an entity, each set in its order, at once: on an entity it had written before
-   * (`replacing`: an edit's), each set replaces the entity's links of its role to its kind, and a role it leaves out
-   * keeps its links (none given: every one). A new entity holds none to replace.
+   * Writes the links a plan sets on an entity (of `baseRules`), each set in its order, at once: on an entity it had
+   * written before (`replacing`: an edit's), each set replaces the entity's links of its role to its kind, and a role
+   * it leaves out keeps its links (none given: every one). A new entity holds none to replace.
    */
-  static async setLinks(tx: Db, entity: WrittenEntity, sets: LinkSet[] | undefined, replacing: boolean) {
+  static async setLinks(
+    tx: Db,
+    baseRules: BaseRules,
+    entity: WrittenEntity,
+    sets: LinkSet[] | undefined,
+    replacing: boolean,
+  ) {
     if (!sets?.length) return;
     if (replacing) {
       for (const set of sets)
@@ -249,6 +262,7 @@ export default class EntityWriter {
     }
     await EntityLinks.createMany(
       tx,
+      baseRules,
       sets.flatMap((set) => linksOf(entity, set)),
     );
   }
@@ -265,7 +279,7 @@ export default class EntityWriter {
     parts: SavedParts,
     replacing: boolean,
   ) {
-    await EntityWriter.setLinks(tx, entity, parts.links, replacing);
+    await EntityWriter.setLinks(tx, scope.ruleset.baseRules, entity, parts.links, replacing);
     if (parts.writes) await EntityWriter.writeBeside(tx, scope, policy, parts.writes);
   }
 
@@ -285,23 +299,24 @@ export default class EntityWriter {
     before?: EntityWrites,
   ) {
     if (before) await EntityWriter.writeBeside(tx, scope, policy, before);
-    const entityType = entityTypeOf(type);
+    const entityType = entityTypeOf(scope.ruleset.baseRules, type);
     const edit = new EntityEdit(scope);
     const written = [];
     for (const planned of plans) {
       const target = await edit.cowToEdit(tx, entityType, planned.entity);
-      const row = await EntityWriter.updateRow(tx, entityType, planned.row, target, undefined);
+      const row = await EntityWriter.updateRow(tx, scope.ruleset.baseRules, entityType, planned.row, target, undefined);
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType }, planned, true);
       written.push(planned.describe(row, await EntityLinks.findOwn(tx, target.id)));
     }
     return written;
   }
 
-  /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
-  private async copyCustomizations(tx: Db, entities: Row[], sourceId: string) {
-    const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type)).get(sourceId);
+  /** The entity's customizations, copied onto the new ones (`entities`, of `baseRules`) from `sourceId`'s. */
+  private async copyCustomizations(tx: Db, baseRules: BaseRules, entities: Row[], sourceId: string) {
+    const copies = new CustomizationCopies(baseRules);
+    const customizations = (await copies.read(tx, [sourceId], this.type)).get(sourceId);
     if (!customizations) return;
-    await CustomizationCopies.copyToMany(
+    await copies.copyToMany(
       tx,
       entities.map((entity) => entity.id),
       this.type,
@@ -327,16 +342,19 @@ export default class EntityWriter {
     const written: Row[] = [];
     for (const { row, tombstoneAncestorId } of rows) {
       const [entity] = await EntityNames.withNameRefusal(row.name, () =>
-        Entities.create<Row>(tx, this.type, { ...row, rulesetId: ruleset.id }),
+        Entities.create<Row>(tx, ruleset.baseRules, this.type, { ...row, rulesetId: ruleset.id }),
       );
       if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
       written.push(entity);
     }
     // The customizations they copy, before what the plan writes beside them
-    if (plan.copyCustomizationsFrom) await this.copyCustomizations(tx, written, plan.copyCustomizationsFrom);
+    if (plan.copyCustomizationsFrom)
+      await this.copyCustomizations(tx, ruleset.baseRules, written, plan.copyCustomizationsFrom);
     for (const entity of written) {
       await EntityWriter.setParts(tx, scope, policy, { entityId: entity.id, entityType: this.type }, plan, false);
-      await EntityWriter.recordActivity(tx, session, "create", this.type, entity.id, { entityName: entity.name });
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "create", this.type, entity.id, {
+        entityName: entity.name,
+      });
     }
     return written;
   }
@@ -415,7 +433,7 @@ export default class EntityWriter {
       const owner = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.owner);
       const created = await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned, type });
 
-      await EntityWriter.recordActivity(tx, session, "create", type, created.id, planned.activity);
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "create", type, created.id, planned.activity);
       return created;
     });
   }
@@ -441,7 +459,8 @@ export default class EntityWriter {
         created.push(await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned: each, type }));
 
       const [first] = created;
-      if (first) await EntityWriter.recordActivity(tx, session, "create", type, first.id, planned.activity);
+      if (first)
+        await EntityWriter.recordActivity(tx, scope.ruleset, session, "create", type, first.id, planned.activity);
       return { created, ownerId: owner.id };
     });
   }
@@ -468,7 +487,7 @@ export default class EntityWriter {
 
       // The database deletes its links and customizations with it.
       const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
-      await EntityWriter.recordActivity(tx, session, "delete", this.type, targetId, {
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "delete", this.type, targetId, {
         rulesetId,
         entityName: planned.entity.name,
       });
@@ -493,19 +512,19 @@ export default class EntityWriter {
       const { ruleset } = scope;
       const uses = new EntityUses(scope);
       let inUse = false;
-      for (const ownedType of Engine.storage().ownedKinds(this.type))
+      for (const ownedType of Engine.forRules(ruleset.baseRules).storage().ownedKinds(this.type))
         inUse ||= await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId);
       policy.canDeleteEntity({ inUse });
       const { plan: planned, type } = plan(scope);
 
-      const notFound = EntityWriter.getNotFound(ruleset, type);
+      const notFound = EntityWriter.getNotFound(ruleset.baseRules, type);
       const edit = new EntityEdit(scope);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
       if (planned.writes) await EntityWriter.writeBeside(tx, scope, policy, planned.writes);
 
       // The database deletes its links and its customizations with it
       const [row] = await Entities.delete<Row>(tx, { entityType: type, id: target.id });
-      await EntityWriter.recordActivity(tx, session, "delete", type, row.id, planned.activity);
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "delete", type, row.id, planned.activity);
       return row;
     });
   }
@@ -530,11 +549,11 @@ export default class EntityWriter {
       await new EntityNames(scope).assertRenameAvailable(tx, this.type, planned.entity, body.name);
       const target = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.entity);
       const row = await EntityNames.withNameRefusal(body.name, () =>
-        EntityWriter.updateRow(tx, this.type, planned.row, target, body.updatedAt),
+        EntityWriter.updateRow(tx, scope.ruleset.baseRules, this.type, planned.row, target, body.updatedAt),
       );
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: this.type }, planned, true);
 
-      await EntityWriter.recordActivity(tx, session, "update", this.type, target.id, {
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "update", this.type, target.id, {
         entityName: body.name,
         // What its plan writes another value of, as its rules label it
         changedFields: planned.changes,
@@ -560,13 +579,13 @@ export default class EntityWriter {
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
-      const notFound = EntityWriter.getNotFound(ruleset, type);
+      const notFound = EntityWriter.getNotFound(ruleset.baseRules, type);
       const edit = new EntityEdit(scope);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
-      const row = await EntityWriter.updateRow(tx, type, planned.row, target, updatedAt);
+      const row = await EntityWriter.updateRow(tx, ruleset.baseRules, type, planned.row, target, updatedAt);
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: type }, planned, true);
 
-      await EntityWriter.recordActivity(tx, session, "update", type, target.id, {
+      await EntityWriter.recordActivity(tx, scope.ruleset, session, "update", type, target.id, {
         ...planned.activity,
         changedFields: planned.changes,
       });

@@ -8,6 +8,7 @@ import type { EntityWrite } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import StoredLinks, { type NewLink } from "@/server/repositories/stored/StoredLinks.ts";
 import StoredSettings, { type SettingsUpdate } from "@/server/repositories/stored/StoredSettings.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
@@ -32,12 +33,14 @@ export const RulesetSettings = new StoredSettings();
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
  * entities' rows with their fields and single links, their links and a ruleset's Settings, as the generic tables store
- * them (`Entities`, `EntityLinks`, `RulesetSettings`, by what the module declares), the customizations' rows and their
- * inserts, and the copies an extension makes of what it changes.
+ * them (`Entities`, `EntityLinks`, `RulesetSettings`, by what the module of the base rules of the rulesets it seeds
+ * declares: `baseRules`, its ruleset's seeder's), the customizations' rows and their inserts, and the copies an
+ * extension makes of what it changes.
  */
 export abstract class SeederState {
   constructor(
     readonly db: Db,
+    protected readonly baseRules: BaseRules,
     readonly ctx: SeedContext,
   ) {}
 
@@ -161,7 +164,7 @@ export abstract class SeederState {
 
   /** Inserts entities' links (`links`, each from its entity, by its role: a feat's pools, a class level's grants). */
   protected async insertLinks(links: NewLink[]) {
-    await EntityLinks.createMany(this.db, links);
+    await EntityLinks.createMany(this.db, this.baseRules, links);
   }
 
   /**
@@ -188,7 +191,7 @@ export abstract class SeederState {
 
   /** Inserts a kind's entities (`type`, `writes`: an owned kind's, which has no name, too): answers their ids. */
   protected async insertRows(type: string, writes: EntityWrite[]): Promise<string[]> {
-    return await Entities.createIds(this.db, type, writes);
+    return await Entities.createIds(this.db, this.baseRules, type, writes);
   }
 
   /** Records copies (`copies`: each entity's copy, by its id) in `entity_snapshots`: the ruleset shows each in place of its original. */

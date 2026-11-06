@@ -21,6 +21,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ITEM_COST_GP,
   ITEM_SLOT,
@@ -270,7 +271,10 @@ test("an edit keeping its entity's name, or giving an inherited one's copy its s
 
 test("a duplicate stored before the rule stays editable under its name, and leaves it for a free one", async () => {
   const { session, fork } = await setup();
-  const [duplicate] = await Entities.create<Feat>(db, "feats", { name: "Toughness", rulesetId: fork.id });
+  const [duplicate] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    name: "Toughness",
+    rulesetId: fork.id,
+  });
   RulesetViews.invalidate(fork.id);
 
   expect(
@@ -403,13 +407,13 @@ test("subscribing to an extension that shows a name its view shows twice no more
   const base = await createTestRuleset(null);
   const fork = { rulesetId: base.id };
   // A familiar's race and an animal companion's of one name, as the core rules' Hawk
-  const [twin] = await Entities.create<Race>(db, "races", {
+  const [twin] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Twin",
     rulesetId: base.id,
     partition: "familiar",
     fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 },
   });
-  await Entities.create<Race>(db, "races", {
+  await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Twin",
     rulesetId: base.id,
     partition: "animalcompanion",
@@ -430,11 +434,11 @@ test("a name another save took since the check, which meets the index, is refuse
   // Two saves that take one name at once both pass the check: the second one's write meets the index.
   const { id: rulesetId } = await createTestRuleset(null);
   const name = `Taken ${uniqueId()}`;
-  await Entities.create(db, "aptitudes", { rulesetId, name });
+  await Entities.create(db, DND35_BASE_RULES, "aptitudes", { rulesetId, name });
 
   expect(
     withTransaction((tx) =>
-      EntityNames.withNameRefusal(name, () => Entities.create(tx, "aptitudes", { rulesetId, name })),
+      EntityNames.withNameRefusal(name, () => Entities.create(tx, DND35_BASE_RULES, "aptitudes", { rulesetId, name })),
     ),
   ).rejects.toEqual(new ConflictError(`Name already exists in this ruleset: ${name}`));
   const unrelated = new Error("not the index's");

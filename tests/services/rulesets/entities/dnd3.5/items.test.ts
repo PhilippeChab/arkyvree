@@ -13,6 +13,7 @@ import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset, describedAs, ownerSessionOf, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
@@ -471,7 +472,7 @@ describe("EntitiesService: items", () => {
     const host = await createTestRuleset(user.id);
     await subscribeTestRuleset(host.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
+    await CharacterInventory.create(db, DND35_BASE_RULES, { characterId: character.id, itemId: item.id, quantity: 1 });
 
     await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "items", item.id), 409);
   });

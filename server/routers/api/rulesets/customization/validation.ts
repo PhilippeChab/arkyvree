@@ -11,14 +11,14 @@ export const chainingOperator = z.string().refine((value) => chainingOperators.h
 /** A customization route's entity: the ruleset (`id`), and the entity by its type and id. */
 export const entityParams = z.object({
   id: z.string().uuid(),
-  entityType: z.enum(Engine.storage().customizableKinds()),
+  entityType: z.enum(Engine.rules().customizableKinds()),
   entityId: z.string().uuid(),
 });
 export const modifierOperator = z.string().refine((value) => modifierOperators.has(value), "Invalid modifier operator");
 
 /** As `entityParams`, for the customizations a modifier can own too (its requirements). */
 export const ownerParams = entityParams.extend({
-  entityType: z.enum([...Engine.storage().customizableKinds(), "modifiers"]),
+  entityType: z.enum([...Engine.rules().customizableKinds(), "modifiers"]),
 });
 
 /** Keep RPC input types as strings, matching the existing form schemas. */

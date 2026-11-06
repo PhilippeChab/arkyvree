@@ -45,7 +45,7 @@ export function Copies<B extends Constructor>(Base: B) {
       return await withReadableRuleset(db, session, rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const { filters } = Engine.for(scope).entities(type).openTemplates(templateType);
-        return await Entities.findList<EntityRecord & { name: string }>(db, {
+        return await Entities.findList<EntityRecord & { name: string }>(db, scope.ruleset.baseRules, {
           entityType: type,
           rulesetId,
           ...rulesetData.cow.listFilters,

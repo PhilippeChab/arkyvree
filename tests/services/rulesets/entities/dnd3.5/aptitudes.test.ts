@@ -13,6 +13,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
@@ -86,9 +87,15 @@ describe("EntitiesService: aptitudes", () => {
       links: { listedIn: [{ toId: spellAptitude.id }] },
     });
 
-    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Granted Feat", rulesetId: ruleset.id });
-    const [spell] = await Entities.create<Spell>(db, "spells", { name: "Granted Power", rulesetId: ruleset.id });
-    const [klass] = await Entities.create<Klass>(db, "classes", {
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      name: "Granted Feat",
+      rulesetId: ruleset.id,
+    });
+    const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", {
+      name: "Granted Power",
+      rulesetId: ruleset.id,
+    });
+    const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },

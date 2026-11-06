@@ -7,6 +7,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -37,7 +38,7 @@ describe("EntitiesService: languages", () => {
     const host = await createTestRuleset(user.id);
     await subscribeTestRuleset(host.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: language.id }]);
 
     expect(EntitiesService.deleteEntity(session, extension.id, "languages", language.id)).rejects.toThrow(
       ConflictError,

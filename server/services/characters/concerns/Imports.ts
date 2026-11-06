@@ -32,16 +32,18 @@ export function Imports<B extends Constructor>(Base: B) {
         policy.canCreateCharacter();
         const characterId = crypto.randomUUID();
         const plan = Engine.for(scope).characters().planImport(text, { characterId, userId: session.userId });
-        const character = await createNewCharacter(tx, {
+        const { baseRules } = scope.ruleset;
+        const character = await createNewCharacter(tx, baseRules, {
           links: plan.links,
           row: { ...plan.row, id: characterId, rulesetId, userId: session.userId },
         });
-        for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
+        for (const advancement of plan.advancements) await createAdvancement(tx, baseRules, characterId, advancement);
         await CharacterInventory.createMany(
           tx,
+          baseRules,
           plan.inventory.map((entry) => ({ ...entry, characterId })),
         );
-        await writeChildren(tx, plan.children);
+        await writeChildren(tx, baseRules, plan.children);
 
         await Activities.create(tx, {
           userId: session.userId,

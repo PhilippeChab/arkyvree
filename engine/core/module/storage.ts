@@ -187,7 +187,7 @@ export interface StoredCharacterLink {
 /**
  * An entity as the generic tables store it, whole: its own columns (`rules.entities`), every field's values
  * (`entity_fields`, a set's one a row) and every link (`entity_links`, from it, in their order), which a ruleset's view
- * is read from (`Engine.copyOnWrite().buildRawData`). Timestamps are Postgres's text.
+ * is read from (`Engine.forRules(baseRules).copyOnWrite().buildRawData`). Timestamps are Postgres's text.
  */
 export interface StoredEntity {
   createdAt: string;

@@ -11,6 +11,7 @@ import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.
 import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** One group holding one requirement: that the character speaks `language`, by its slug. */
 function speaking(language: string): Requirement[][] {
@@ -43,7 +44,10 @@ async function bluffMisc(record: Character) {
 async function pickDraconicGatedFeat() {
   const { aptMap } = await getSeedCtx();
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: `Wyrm Tongue ${uniqueId()}`, rulesetId: fork.id });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    name: `Wyrm Tongue ${uniqueId()}`,
+    rulesetId: fork.id,
+  });
   const [modifier] = await Modifiers.create(db, {
     sourceId: feat.id,
     sourceType: "feats",
@@ -76,7 +80,7 @@ describe("A character's languages, as its requirements read them", () => {
     const human = await createTestCharacter(SEED_USER_ID);
     expect(await speaks(human, "draconic")).toBe(false);
 
-    await CharacterLinks.createMany(db, human.id, "speaks", [{ entityId: langMap["Draconic"] }]);
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, human.id, "speaks", [{ entityId: langMap["Draconic"] }]);
     expect(await speaks(human, "draconic")).toBe(true);
   });
 
@@ -103,7 +107,7 @@ describe("A character's languages, as its requirements read them", () => {
     const { langMap } = await getSeedCtx();
     const picker = await pickDraconicGatedFeat();
     expect(await bluffMisc(picker)).toBe(0);
-    await CharacterLinks.createMany(db, picker.id, "speaks", [{ entityId: langMap["Draconic"] }]);
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, picker.id, "speaks", [{ entityId: langMap["Draconic"] }]);
     expect(await bluffMisc(picker)).toBe(2);
 
     const granted = await pickDraconicGatedFeat();

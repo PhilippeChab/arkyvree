@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
 import { EntityReferences, Picks } from "@/server/repositories/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 describe("A repoint of what names an entity, an unsubscribe's or a revert's", () => {
   test("numbers a level's repeated picks of the entity after those of the one it points them at", async () => {
@@ -17,7 +18,7 @@ describe("A repoint of what names an entity, an unsubscribe's or a revert's", ()
     ).rows.map((feat) => feat.id);
     // The level picked `from` twice (a stackable feat), and `to` once
     const at = { advancementId: pick.advancement_id, step: "feats", viaId: pick.via_id };
-    await Picks.createMany(db, [
+    await Picks.createMany(db, DND35_BASE_RULES, [
       { ...at, entityId: from },
       { ...at, entityId: from },
       { ...at, entityId: to },

@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import Modules from "@/engine/api/Modules.ts";
 import RulesEngine from "@/engine/api/RulesEngine.ts";
-import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { KindCapabilities } from "@/engine/core/entities/index.ts";
 import type { FormField, GroupFormField } from "@/engine/core/fields/index.ts";
 import type { EntityKindDeclaration, RulesDeclaration, RulesetModule } from "@/engine/core/module/index.ts";
@@ -12,6 +11,7 @@ import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A kind of a registered module, and what its rules' class says it can do. */
 interface ClassKind {
@@ -146,7 +146,9 @@ describe("The rules' engine", () => {
       expect(own.filter((type) => !module.storage.kinds[type]?.customizable)).toEqual([]);
       return own;
     });
-    expect(customizable.toSorted()).toEqual([...Engine.storage().customizableKinds()].toSorted());
+    expect(customizable.toSorted()).toEqual(
+      [...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()].toSorted(),
+    );
 
     const { rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {
@@ -200,7 +202,8 @@ describe("The rules' engine", () => {
   test("restores every kind no other owns that takes an edit", async () => {
     const { rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {
-      const editable = Engine.storage()
+      const editable = Engine.forRules(DND35_BASE_RULES)
+        .storage()
         .standaloneKinds()
         .filter((type) => accepts(() => Engine.for(scope).entities(type, "update")));
       expect(Engine.rules().restorableKinds()).toEqual(editable);
@@ -209,8 +212,7 @@ describe("The rules' engine", () => {
 
   test("refuses, as it's built, a module whose kinds' declarations its rules or storage contradict", () => {
     const [[baseRules, module]] = Modules.all();
-    const storage = StorageEngine.shared();
-    const build = (broken: RulesetModule) => () => new RulesEngine([[baseRules, broken]], storage);
+    const build = (broken: RulesetModule) => () => new RulesEngine([[baseRules, broken]]);
     const plain = readClassKinds().find(({ capabilities }) => !capabilities.copies)!;
     const unknown = { icon: "help", type: "unknown-kind" as StandaloneKind };
     const withKinds = (kinds: (declared: EntityKindDeclaration[]) => EntityKindDeclaration[]) =>
@@ -299,7 +301,7 @@ describe("The rules' engine", () => {
   test("refuses, as it's built, a module whose list or class table names a field its levels or kind don't declare", () => {
     const [[baseRules, module]] = Modules.all();
     const build = (change: (rules: RulesDeclaration) => RulesDeclaration) => () =>
-      new RulesEngine([[baseRules, withRules(module, change)]], StorageEngine.shared());
+      new RulesEngine([[baseRules, withRules(module, change)]]);
     const [type] = Object.keys(module.ruleset.describeRules().lists);
     const column = { field: "noSuchField", reads: "text" as const, share: 10 };
     expect(

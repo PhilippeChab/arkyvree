@@ -12,6 +12,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/advancements/index.ts";
 import { createNewCharacter, readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 
@@ -36,7 +37,7 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
       const itemId = idOf(ctx.itemMap, name, "An inventory's item");
       const request = { groups, location, quantity, remainingCharges: null, totalCharges: null };
       const plan = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, false);
-      const [row] = await CharacterInventory.create(db, { ...plan, characterId });
+      const [row] = await CharacterInventory.create(db, scope.ruleset.baseRules, { ...plan, characterId });
       character = { ...character, rows: { ...character.rows, inventory: [...character.rows.inventory, row] } };
     }
   });
@@ -55,7 +56,8 @@ async function reconcileChildren(tx: Db, characterId: string): Promise<void> {
   await withRulesetScope(tx, parent.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, parent);
     const children = await readChildInputs(tx, character);
-    await writeChildren(tx, Engine.for(scope).character(character).advancements().planChildren(children).children);
+    const { children: plans } = Engine.for(scope).character(character).advancements().planChildren(children);
+    await writeChildren(tx, scope.ruleset.baseRules, plans);
   });
 }
 
@@ -73,7 +75,7 @@ export async function addClassLevels(
   const classLevels = await Entities.findPositions(db, { entityType: "class-levels", ownerIds: [classId] });
   for (let i = 0; i < levels.length; i++) {
     const classLevel = classLevels.find((owned) => owned.position === levels[i])!;
-    const advancement = await createAdvancement(db, characterId, {
+    const advancement = await createAdvancement(db, DND35_BASE_RULES, characterId, {
       entryId: classLevel.id,
       picks: [{ step: "hp", amount: hpPerLevel[i] }],
     });
@@ -91,6 +93,7 @@ export async function addFeats(
 ) {
   await Picks.createMany(
     db,
+    DND35_BASE_RULES,
     feats.map((f) => ({
       advancementId: charLevelIds[f.levelIndex],
       step: "feats",
@@ -108,6 +111,7 @@ export async function addSkills(
 ) {
   await Picks.createMany(
     db,
+    DND35_BASE_RULES,
     skills.map((s) => ({
       advancementId: charLevelIds[s.levelIndex],
       step: "skills",
@@ -125,6 +129,7 @@ export async function addSpells(
 ) {
   await Picks.createMany(
     db,
+    DND35_BASE_RULES,
     spells.map((p) => ({
       advancementId: charLevelIds[p.levelIndex],
       step: "spells",
@@ -161,7 +166,7 @@ export async function createCharacter(
   const { links, row } = await withRulesetScope(db, rulesetId, async (scope) =>
     Engine.for(scope).characters().planStart(start),
   );
-  const character = await createNewCharacter(db, {
+  const character = await createNewCharacter(db, DND35_BASE_RULES, {
     links: {
       ...links,
       speaks: data.languages.map((language) => ({

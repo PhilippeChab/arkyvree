@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import StorageEngine from "@/engine/api/StorageEngine.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   DAMAGE_TYPE,
   SPELL_AREA_OF_EFFECT,
@@ -14,7 +15,7 @@ import {
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The fields every module declares, 3.5's among them. */
-const DECLARED = StorageEngine.shared().declaredFields();
+const DECLARED = StorageEngine.of(DND35_BASE_RULES).declaredFields();
 
 describe("The 3.5 fields", () => {
   test("come in a stat block's order, each set's values in its options' order", () => {
@@ -48,7 +49,7 @@ describe("The 3.5 fields", () => {
   });
 
   test("merge every single link as the winning copy's alone, a class's bonus spell ability as its others", () => {
-    const singles = StorageEngine.shared()
+    const singles = StorageEngine.of(DND35_BASE_RULES)
       .registries()
       .linkRoles.filter(({ single }) => single);
     expect(singles.map(({ fromType, role }) => DECLARED.roleMergeOf(fromType, role))).toEqual(

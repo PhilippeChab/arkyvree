@@ -16,6 +16,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
@@ -162,7 +163,7 @@ describe("activity notifications", () => {
     const [owner, author, other] = await users(3);
     const ruleset = await createTestRuleset(owner.user.id);
     for (const contributor of [author, other]) await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
       name: "General",
       description: "",
       rulesetId: ruleset.id,
@@ -206,17 +207,17 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const { id: rulesetId, baseRules } = await createTestRuleset(owner.user.id);
     await addRulesetContributor(rulesetId, author.user, owner.user.id);
-    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
       name: "Strength",
       description: "",
       rulesetId,
     });
-    const [fighter] = await Entities.create<Klass>(db, "classes", {
+    const [fighter] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Fighter",
       rulesetId,
       fields: { [CLASS_HD]: 10 },
     });
-    const [climb] = await Entities.create<Skill>(db, "skills", {
+    const [climb] = await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
       name: "Climb",
       rulesetId,
       links: { keyAbility: ability.id },
@@ -277,7 +278,7 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const { id: rulesetId, baseRules } = await createTestRuleset(owner.user.id);
     await addRulesetContributor(rulesetId, author.user, owner.user.id);
-    const [fighter] = await Entities.create<Klass>(db, "classes", {
+    const [fighter] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Fighter",
       rulesetId,
       fields: { [CLASS_HD]: 10 },
@@ -322,7 +323,7 @@ describe("activity notifications", () => {
     const [owner, author] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);
     await addRulesetContributor(ruleset.id, author.user, owner.user.id);
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
       name: "General",
       description: "",
       rulesetId: ruleset.id,
@@ -336,17 +337,17 @@ describe("activity notifications", () => {
       name: "Worded Feat",
       fields: { [FEAT_FAMILY]: ["Luck"] },
     });
-    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
       name: "Strength",
       description: "",
       rulesetId: ruleset.id,
     });
-    const [fighter] = await Entities.create<Klass>(db, "classes", {
+    const [fighter] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Fighter",
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },
     });
-    const [climb] = await Entities.create<Skill>(db, "skills", {
+    const [climb] = await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
       name: "Climb",
       rulesetId: ruleset.id,
       links: { keyAbility: ability.id },
@@ -369,7 +370,7 @@ describe("activity notifications", () => {
   test("of a ruleset's content go to nobody when its owner works alone", async () => {
     const [owner] = await users(1);
     const ruleset = await createTestRuleset(owner.user.id);
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
       name: "General",
       description: "",
       rulesetId: ruleset.id,

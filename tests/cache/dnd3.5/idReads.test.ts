@@ -13,22 +13,23 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { linkedId, linksOf } from "@/tests/support/entityLinks.ts";
 import { copyEntity, createSeededTestRuleset, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 const PAGE = { limit: 200, page: 1 };
 
 /** A ruleset with a pool, a spell list and a save, and a fork of it with a feat and a spell of its own on them. */
 async function setupOwnRows() {
   const { user, session, ruleset: parent } = await createTestUserAndRuleset();
-  const [pool, spellList] = await Entities.createMany<Aptitude>(db, "aptitudes", [
+  const [pool, spellList] = await Entities.createMany<Aptitude>(db, DND35_BASE_RULES, "aptitudes", [
     { name: "Stored Pool", rulesetId: parent.id },
     { name: "Stored Spells", rulesetId: parent.id },
   ]);
-  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: "Wits",
     description: "Wits",
     rulesetId: parent.id,
   });
-  const [save] = await Entities.create<RulesetSave>(db, "saves", {
+  const [save] = await Entities.create<RulesetSave>(db, DND35_BASE_RULES, "saves", {
     name: "Stored Save",
     rulesetId: parent.id,
     links: { keyAbility: ability.id },
@@ -130,10 +131,10 @@ test("a character's inventory entry carries its item as the view has it", async 
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const item = await findPlainItem(fork.rulesetId!);
   const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
-  await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
+  await CharacterInventory.create(db, DND35_BASE_RULES, { characterId: character.id, itemId: item.id, quantity: 1 });
   // Copied and renamed in the fork: the entry still stores the core's item
   const copy = await copyEntity(db, "items", item.id, fork);
-  await Entities.update<Item>(db, "items", { name: "Copied Item" }, { id: copy.id });
+  await Entities.update<Item>(db, DND35_BASE_RULES, "items", { name: "Copied Item" }, { id: copy.id });
   RulesetViews.invalidate(fork.id);
 
   const [entry] = await CharacterInventoryService.getInventory(makeSession(), character.id);

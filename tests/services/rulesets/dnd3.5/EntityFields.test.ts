@@ -10,6 +10,7 @@ import { findFormValues, listValues, writeFieldValues } from "@/tests/support/ow
 import { copyEntity, createSeededTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 import {
   CLASS_CASTER_TYPE,
@@ -86,7 +87,7 @@ async function fieldsOf(rulesetId: string, type: "classes" | "feats" | "items" |
 async function setup() {
   const { session, ruleset, aptitudeIds } = await createTestUserAndRuleset(["General", "Wizard Spells"]);
   const [featPool, spellList] = aptitudeIds;
-  const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [intelligence] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: "Intelligence",
     description: "Intelligence",
     rulesetId: ruleset.id,
@@ -310,8 +311,14 @@ describe("An entity's fields", () => {
     const elf = await EntitiesService.createEntity(session, ruleset.id, "races", { name: "Elf" });
     expect(elf.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
     // A writer past its form, which gives none of them: its storage writes their defaults
-    const [bard] = await Entities.create<Klass>(db, "classes", { name: "Bard", rulesetId: ruleset.id });
-    const [gnome] = await Entities.create<Race>(db, "races", { name: "Gnome", rulesetId: ruleset.id });
+    const [bard] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
+      name: "Bard",
+      rulesetId: ruleset.id,
+    });
+    const [gnome] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
+      name: "Gnome",
+      rulesetId: ruleset.id,
+    });
     expect(bard.fields[CLASS_HD]).toBe(DEFAULT_HIT_DIE);
     expect(gnome.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
     // Given, it's what it stores; none is refused

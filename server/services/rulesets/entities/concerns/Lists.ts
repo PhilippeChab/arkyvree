@@ -3,7 +3,7 @@ import { Engine, type ListEntriesPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { LockedRulesetScope } from "@/server/cow/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
@@ -26,7 +26,7 @@ async function writeEntries(
   plan: ListEntriesPlan,
 ) {
   const written = await EntityWriter.updateEntities(tx, scope, policy, plan.listedType, plan.edits, plan.writes);
-  await createActivityWithNotifications(tx, {
+  await createContentActivityWithNotifications(tx, scope.ruleset, {
     userId: session.userId,
     targetId: plan.owner.id,
     targetType: type,
@@ -74,7 +74,7 @@ export function Lists<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).lists(type, ownerId).planOwnList();
         await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: plan.created.id,
           targetType: plan.created.type,

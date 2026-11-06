@@ -11,6 +11,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
@@ -48,7 +49,10 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     const host = await createSeededTestRuleset(session.userId);
     const extension = await createSeededTestRuleset(session.userId);
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
-    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: extension.id, name: "Extension Marker" });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      rulesetId: extension.id,
+      name: "Extension Marker",
+    });
     if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
     RulesetViews.invalidateAll();
     await overlap(
@@ -73,7 +77,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
     const seed = await getSeedCtx();
-    const [local] = await Entities.create<Feat>(db, "feats", {
+    const [local] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       rulesetId: fork.id,
       name: "Before Marker",
       description: "before",

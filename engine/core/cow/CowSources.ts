@@ -1,3 +1,5 @@
+import type { BaseRules } from "@/shared/enums.ts";
+
 /**
  * How a module's kinds pair in a ruleset's chain, by its storage: those a name is the identity of (`identities`: 3.5's
  * pools), those a book reprints, which pair by name when no copy pairs them (`reprints`: 3.5's feats and spells), those
@@ -27,10 +29,12 @@ export interface CowRows {
 }
 
 /**
- * A ruleset's id and where its inherited entities come from: the extensions it subscribes to, in their order (its
- * `ruleset_extensions` rows'), and the parent it forks (its `ruleset_id`), none for a base.
+ * A ruleset's id, its base rules (which its sources share: a fork's are its parent's, an extension's its base's) and
+ * where its inherited entities come from: the extensions it subscribes to, in their order (its `ruleset_extensions`
+ * rows'), and the parent it forks (its `ruleset_id`), none for a base.
  */
 export interface RulesetSources {
+  baseRules: BaseRules;
   extensionIds: string[];
   id: string;
   parentId: string | null;

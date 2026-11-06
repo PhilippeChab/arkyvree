@@ -4,7 +4,7 @@ import { EntityEdit, EntityUses } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -32,9 +32,11 @@ export function Links<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
         const { id: fromId } = await new EntityEdit(scope).cowToEdit(tx, type, plan.owner);
-        const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
+        const [link] = await EntityLinks.createMany(tx, scope.ruleset.baseRules, [
+          { ...plan.link, fromId, fromType: type },
+        ]);
 
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: fromId,
           targetType: plan.link.role,
@@ -74,7 +76,7 @@ export function Links<B extends Constructor>(Base: B) {
         // The fresh view showed it, and no other write runs under the lock: a guard, should one have
         if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        await createActivityWithNotifications(tx, {
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: fromId,
           targetType: plan.role,

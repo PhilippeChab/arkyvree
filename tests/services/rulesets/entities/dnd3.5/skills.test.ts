@@ -10,6 +10,7 @@ import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/
 import { addClassSkills } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
@@ -35,6 +36,7 @@ async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const abilities = await Entities.createMany<RulesetAbility>(
     db,
+    DND35_BASE_RULES,
     "abilities",
     ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );

@@ -44,6 +44,5 @@ export {
 } from "./instances.ts";
 export { isVisible, type LockedRow, type LockMode, default as Locks } from "./Locks.ts";
 export type { ReferencedType } from "./rulesets/entityReferences.ts";
-export { RULESET_ENTITY_TYPES } from "./rulesets/entityTypes.ts";
 export type { RulesetEntityType } from "./rulesets/entityTypes.ts";
 export type { NewLink } from "./stored/StoredLinks.ts";

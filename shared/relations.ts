@@ -22,11 +22,13 @@ import type { BaseRules } from "./enums.ts";
 
 export type Campaign = typeof campaignsInCampaign.$inferSelect;
 /**
- * A character's row as stored: its own columns, its fields' values by field, as its module declares them, each typed as
- * its column holds it (3.5's `CHARACTER_XP`, a number), and the entity of each of its single links by role (3.5's
- * `race`). A mapped type, as a row is plain data any record type takes (an interface isn't).
+ * A character's row as stored: its own columns, its ruleset's base rules (whose module declares what it holds), its
+ * fields' values by field, as its module declares them, each typed as its column holds it (3.5's `CHARACTER_XP`, a
+ * number), and the entity of each of its single links by role (3.5's `race`). A mapped type, as a row is plain data any
+ * record type takes (an interface isn't).
  */
 export type Character = typeof charactersInCharacter.$inferSelect & {
+  baseRules: BaseRules;
   fields: Record<string, CharacterFieldValue>;
   links: Record<string, string>;
 };
@@ -35,8 +37,11 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
  * or a flag), or a set's values, in their declared order.
  */
 export type CharacterFieldValue = boolean | number | string | readonly (boolean | number | string)[];
-/** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
-export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType">;
+/**
+ * An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. Its
+ * item's type and base rules, which its row keeps for its keys, its writer fills in.
+ */
+export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "baseRules" | "itemType">;
 export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;
 export type Player = typeof playersInCampaign.$inferSelect;

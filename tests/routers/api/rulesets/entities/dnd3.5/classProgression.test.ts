@@ -9,6 +9,7 @@ import { addBaseBonuses } from "@/tests/support/dnd3.5/links.ts";
 import { linksOf } from "@/tests/support/entityLinks.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
@@ -150,7 +151,7 @@ describe("rulesets class progression", () => {
 
     // A level that holds them, an older save's, takes them back as read, and holds none once saved
     const olderFields = { [CLASS_LEVEL_BAB]: 3, [CLASS_LEVEL_SKILL_POINTS]: 3 };
-    await Entities.update(db, "class-levels", { fields: olderFields }, { id: copied.id });
+    await Entities.update(db, DND35_BASE_RULES, "class-levels", { fields: olderFields }, { id: copied.id });
     await addBaseBonuses(
       db,
       copied.id,

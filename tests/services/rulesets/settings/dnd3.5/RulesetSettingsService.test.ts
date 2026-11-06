@@ -18,6 +18,7 @@ import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, ownerSessionOf, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CHARACTER_AGE,
   CHARACTER_ALIGNMENT,
@@ -202,7 +203,7 @@ describe("RulesetSettingsService", () => {
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
     const strength = { entityId: abilityMap["Strength"], amount: 1 };
-    await Picks.createMany(db, [{ advancementId: fourth, step: "abilities", ...strength }]);
+    await Picks.createMany(db, DND35_BASE_RULES, [{ advancementId: fourth, step: "abilities", ...strength }]);
     // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>

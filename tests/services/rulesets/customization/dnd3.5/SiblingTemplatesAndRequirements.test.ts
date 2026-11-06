@@ -20,6 +20,7 @@ import {
   ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ITEM_IS_TEMPLATE,
   ITEM_TYPE,
@@ -43,7 +44,7 @@ async function setup(
   const source =
     entityType === "items"
       ? (
-          await Entities.create<Item>(db, "items", {
+          await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
             rulesetId: host.rulesetId!,
             name: "Audit Template",
             fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },

@@ -44,7 +44,7 @@ export async function checkPools() {
           JOIN standing se ON se.character_id = pk.character_id AND se.named_id = pk.entity_id
           JOIN standing sp ON sp.character_id = pk.character_id AND sp.named_id = pk.via_id
           JOIN rules.entity_links l ON l.from_id = se.id AND l.to_id = sp.id AND l.role = r.role
-         WHERE r.from_type = pk.entity_type AND r.to_type = pk.via_type)`,
+         WHERE r.base_rules = e.base_rules AND r.from_type = pk.entity_type AND r.to_type = pk.via_type)`,
   );
   if (unlisted.length === 0) {
     console.log("✓ picks through pools");

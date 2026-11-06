@@ -27,7 +27,7 @@ const v1StepPayload = stepPayload.meta({
 export const customizedParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
-    .enum(Engine.storage().customizableKinds())
+    .enum(Engine.rules().customizableKinds())
     .meta({ description: "The entity's kind, among those the rules customize" }),
 });
 

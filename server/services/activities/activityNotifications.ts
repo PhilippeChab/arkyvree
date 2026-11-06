@@ -18,14 +18,6 @@ import { noteNotified } from "@/server/websockets/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 
-import { findContentRuleset, isContentType } from "./contentRuleset.ts";
-
-/** The ruleset a change to its content is in: its id, and its row while it's unarchived. */
-interface ChangedRuleset {
-  id: string;
-  row: Ruleset | undefined;
-}
-
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
 /**
@@ -70,19 +62,6 @@ function readId(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
-/**
- * The ruleset a change to its content (`activity`, carrying `data`) is in: a delete names it, the row it removed being
- * gone.
- */
-async function findChangedRuleset(
-  db: Db,
-  { targetId, targetType }: ActivityValues,
-  data: Record<string, unknown>,
-): Promise<ChangedRuleset | undefined> {
-  const id = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, type: targetType }));
-  return id ? { id, row: await Rulesets.findOne(db, { id }) } : undefined;
-}
-
 /** The Game Masters of the campaign an invite (`inviteId`) is to. */
 async function findGameMasters(db: Db, inviteId: string) {
   const invite = await Invites.findOne(db, { id: inviteId });
@@ -100,10 +79,9 @@ async function findRecipientIds(
   db: Db,
   activity: ActivityValues,
   data: Record<string, unknown>,
-  changed: ChangedRuleset | undefined,
+  changed: Ruleset | undefined,
 ) {
-  const recipient =
-    RECIPIENTS.get(activity.type) ?? (isContentType(activity.targetType) ? "rulesetStakeholders" : undefined);
+  const recipient = RECIPIENTS.get(activity.type) ?? (changed ? "rulesetStakeholders" : undefined);
   const userIds = recipient ? await findRecipients(db, recipient, activity, data, changed) : [];
   const recipientIds = new Set<string>();
   for (const userId of userIds) if (userId && userId !== activity.userId) recipientIds.add(userId);
@@ -119,7 +97,7 @@ async function findRecipients(
   recipient: Recipient,
   { targetId }: ActivityValues,
   data: Record<string, unknown>,
-  changed: ChangedRuleset | undefined,
+  changed: Ruleset | undefined,
 ): Promise<(string | null | undefined)[]> {
   // A revocation names what the contributor was, and reaches them only if they were collaborating
   if ("prevStatus" in data && data.prevStatus !== "Active") return [];
@@ -149,21 +127,21 @@ async function findRecipients(
 }
 
 /** A ruleset's owner and its active contributors, who hear of a change to its content. */
-async function findRulesetStakeholders(db: Db, { id, row }: ChangedRuleset) {
-  const contributors = await Contributors.findMany(db, { rulesetId: id, status: "Active" });
-  return [row?.userId, ...contributors.map(({ userId }) => userId)];
+async function findRulesetStakeholders(db: Db, ruleset: Ruleset) {
+  const contributors = await Contributors.findMany(db, { rulesetId: ruleset.id, status: "Active" });
+  return [ruleset.userId, ...contributors.map(({ userId }) => userId)];
 }
 
 /**
  * Records an activity (`values`), and notifies the users it concerns, but its actor: a notification each, carrying the
  * activity's data and the actor's name, which their pages hear of once the request is answered. A change to a ruleset's
- * content records its ruleset's base rules with it, whose words name what it changed ("created spell Fireball").
+ * content names the ruleset its write changed (`changed`), whose owner and active contributors hear of it, and records
+ * its base rules with it, whose words name what it changed ("created spell Fireball").
  */
-export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
+async function recordActivity(tx: Db, changed: Ruleset | undefined, values: ActivityValues) {
   const given = isRecord(values.data) ? values.data : {};
-  const changed = isContentType(values.targetType) ? await findChangedRuleset(tx, values, given) : undefined;
-  const data = changed?.row ? { ...given, baseRules: changed.row.baseRules } : given;
-  const [activity] = await Activities.create(tx, changed?.row ? { ...values, data } : values);
+  const data = changed ? { ...given, baseRules: changed.baseRules } : given;
+  const [activity] = await Activities.create(tx, changed ? { ...values, data } : values);
   const recipientIds = await findRecipientIds(tx, values, data, changed);
   if (recipientIds.length === 0) return;
 
@@ -184,4 +162,19 @@ export async function createActivityWithNotifications(tx: Db, values: ActivityVa
   );
   // Their pages hear of it once the request is answered, and its transaction committed
   noteNotified(recipientIds);
+}
+
+/**
+ * Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns.
+ */
+export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
+  await recordActivity(tx, undefined, values);
+}
+
+/**
+ * Records a change to a ruleset's content (`values`: an entity's, a customization's), in the ruleset its write changed
+ * (`ruleset`), and notifies its owner and active contributors.
+ */
+export async function createContentActivityWithNotifications(tx: Db, ruleset: Ruleset, values: ActivityValues) {
+  await recordActivity(tx, ruleset, values);
 }

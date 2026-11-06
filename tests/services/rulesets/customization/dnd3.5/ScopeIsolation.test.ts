@@ -13,6 +13,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 async function createModifier(sourceId: string) {
@@ -28,7 +29,7 @@ async function setup() {
   const session = makeSession();
   const own = await createSeededTestRuleset(session.userId);
   const foreign = await createSeededTestRuleset(session.userId);
-  const [feat] = await Entities.create<Feat>(db, "feats", {
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
     rulesetId: foreign.id,
     name: "Foreign feat",
     description: "Untouched",
@@ -95,7 +96,7 @@ describe("ruleset customization isolation", () => {
       new NotFoundError("Modifier no longer exists; refresh the feat"),
     );
     // The ruleset's own modifier: it has no such requirement
-    const [local] = await Entities.create<Feat>(db, "feats", {
+    const [local] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       rulesetId: own.id,
       name: "Local feat",
       description: "",
@@ -130,7 +131,7 @@ describe("ruleset customization isolation", () => {
 describe("modifier requirement ownership", () => {
   test("creates, updates, and deletes a requirement on a locally owned modifier", async () => {
     const { session, own } = await setup();
-    const [feat] = await Entities.create<Feat>(db, "feats", {
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       rulesetId: own.id,
       name: "Local feat",
       description: "Local",

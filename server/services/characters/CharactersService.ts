@@ -23,7 +23,8 @@ import {
 import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { withCharacterCreate, withCharacterWrite, withLockedCharacter } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { BaseRules } from "@/shared/enums.ts";
+import type { Character, Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
 import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
@@ -50,13 +51,14 @@ type CharacterEditPlan = ReturnType<ReturnType<ReturnType<typeof Engine.for>["ch
 
 class CharactersService extends include(Object, Archives, Imports) {
   /**
-   * Writes a character's edit (`edit`) under its write's lock: its own columns, refused as stale when its token is
-   * behind (`updatedAt`), and what its ruleset planned of its fields and its picked links (`planned`), and an activity.
+   * Writes a character's edit (`edit`, of `character`, its row read under its write's lock): its own columns, refused
+   * as stale when its token is behind (`updatedAt`), and what its ruleset planned of its fields and its picked links
+   * (`planned`), and an activity.
    */
   private async applyEdit(
     tx: Db,
     session: Session,
-    characterId: string,
+    character: Character,
     edit: CharacterEdit,
     planned?: CharacterEditPlan,
   ) {
@@ -64,7 +66,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const updatedRows = await Characters.update(
       tx,
       { ...characterFields, ...planned?.own, fields: planned?.fields },
-      { id: characterId, expectedUpdatedAt },
+      { id: character.id, expectedUpdatedAt },
     );
     if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
@@ -72,11 +74,11 @@ class CharactersService extends include(Object, Archives, Imports) {
 
     // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
     for (const [role, plan] of Object.entries(planned?.links ?? {}))
-      await this.writeLinkPicks(tx, characterId, role, plan);
+      await this.writeLinkPicks(tx, character.baseRules, character.id, role, plan);
 
     await Activities.create(tx, {
       userId: session.userId,
-      targetId: characterId,
+      targetId: character.id,
       targetType: TARGET_TYPES.characters,
       type: "updateCharacter",
     });
@@ -84,11 +86,21 @@ class CharactersService extends include(Object, Archives, Imports) {
     return updatedCharacter;
   }
 
-  /** A character's picks of a picked link's role (`role`) as a plan has them: its picks replaced. */
-  private async writeLinkPicks(tx: Db, characterId: string, role: string, plan: LinkPicksPlan): Promise<void> {
+  /**
+   * A character's picks of a picked link's role (`role`, of its ruleset's base rules, `baseRules`) as a plan has them:
+   * its picks replaced.
+   */
+  private async writeLinkPicks(
+    tx: Db,
+    baseRules: BaseRules,
+    characterId: string,
+    role: string,
+    plan: LinkPicksPlan,
+  ): Promise<void> {
     await CharacterLinks.delete(tx, { characterId, role });
     await CharacterLinks.createMany(
       tx,
+      baseRules,
       characterId,
       role,
       plan.entityIds.map((entityId) => ({ entityId })),
@@ -115,7 +127,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       policy.canCreateCharacter();
       const { fields, name, notes, picks, rulesetId, scores } = characterData;
       const { links, row } = Engine.for(scope).characters().planCreate({ fields, picks, scores });
-      const newCharacter = await createNewCharacter(tx, {
+      const newCharacter = await createNewCharacter(tx, scope.ruleset.baseRules, {
         links,
         row: { ...row, name, notes, rulesetId, userId: session.userId },
       });
@@ -230,6 +242,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       // Each option as an entity's row: its columns past those every kind's has are its kind's
       const result = await Entities.findPage<EntityRecord>(
         db,
+        scope.ruleset.baseRules,
         {
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
@@ -264,9 +277,9 @@ class CharactersService extends include(Object, Archives, Imports) {
     // columns alone (its name, its notes) take the character's lock alone, reading none of its ruleset
     if (!updateData.fields && !updateData.links) {
       // Archived or not: an archived one is its policy's to refuse
-      return await withLockedCharacter(session, characterId, async (tx, policy) => {
+      return await withLockedCharacter(session, characterId, async (tx, policy, character) => {
         policy.canEdit();
-        return await this.applyEdit(tx, session, characterId, updateData);
+        return await this.applyEdit(tx, session, character, updateData);
       });
     }
 
@@ -280,7 +293,7 @@ class CharactersService extends include(Object, Archives, Imports) {
         const planned = Engine.for(scope)
           .character(await readCharacterInput(tx, characterRecord))
           .planEdit({ fields, links });
-        return await this.applyEdit(tx, session, characterId, updateData, planned);
+        return await this.applyEdit(tx, session, characterRecord, updateData, planned);
       },
       { access: "canEdit" },
     );

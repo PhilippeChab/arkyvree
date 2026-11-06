@@ -16,6 +16,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { bumpContentVersion, invalidateSeededRuleset, readView } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** What a character's write waits at while another holds the character's row: its own lock of it. */
 const CHARACTER_LOCK = /from "character"\."characters".*for no key update/is;
@@ -24,7 +25,10 @@ const pool = createTestPool();
 
 /** A write of a character that reads its ruleset's view: an item of its ruleset, made for it, added to its inventory. */
 async function addItem(characterId: string, rulesetId: string, session: Session = makeSession()) {
-  const [item] = await Entities.create<Item>(db, "items", { name: `Probe Item ${uniqueId()}`, rulesetId });
+  const [item] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
+    name: `Probe Item ${uniqueId()}`,
+    rulesetId,
+  });
   // Written past the ruleset's helper, which would bump its version and hold its row for the test: its view dropped,
   // now and once the rollback undoes the item
   invalidateSeededRuleset(rulesetId);
@@ -118,7 +122,10 @@ test("a character's write reads its ruleset's rows a write committed after its v
   invalidateSeededRuleset(rulesetId);
   await readView(rulesetId);
   // Another process's write of the ruleset, committed: this process's cache never hears of it but by its version
-  const [item] = await Entities.create<Item>(db, "items", { name: `Fresh Item ${uniqueId()}`, rulesetId });
+  const [item] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
+    name: `Fresh Item ${uniqueId()}`,
+    rulesetId,
+  });
   await bumpContentVersion(rulesetId);
   const entry = await CharacterInventoryService.addItem(makeSession(), character.id, item.id, 1, null, null, null, []);
   expect(entry.characterId).toBe(character.id);

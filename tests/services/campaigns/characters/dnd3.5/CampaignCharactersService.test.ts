@@ -17,6 +17,7 @@ import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 type Visibility = "Private" | "Public" | "Partial";
 
@@ -37,7 +38,10 @@ async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
     const classLevel = (await findClassLevel(ctx.classMap.pc[klass], level))!;
-    await createAdvancement(db, characterId, { entryId: classLevel.id, picks: [{ step: "hp", amount: 8 }] });
+    await createAdvancement(db, DND35_BASE_RULES, characterId, {
+      entryId: classLevel.id,
+      picks: [{ step: "hp", amount: 8 }],
+    });
   }
 }
 

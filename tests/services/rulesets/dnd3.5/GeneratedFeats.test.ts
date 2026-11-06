@@ -23,6 +23,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   FEAT_FAMILY,
   FEAT_GENERATED,
@@ -69,18 +70,22 @@ function spell(aptitudeId: string, name: string, school?: string, fields: Record
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
 async function bareRuleset({ general = true } = {}) {
   const { session, ruleset } = await createTestUserAndRuleset();
-  const [strength] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [strength] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: "Strength",
     description: "",
     rulesetId: ruleset.id,
   });
-  const [spells] = await Entities.create<Aptitude>(db, "aptitudes", {
+  const [spells] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
     name: "Wizard Spells",
     description: "",
     rulesetId: ruleset.id,
   });
   const [generalAptitude] = general
-    ? await Entities.create<Aptitude>(db, "aptitudes", { name: "General", description: "", rulesetId: ruleset.id })
+    ? await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+        name: "General",
+        description: "",
+        rulesetId: ruleset.id,
+      })
     : [];
   return { session, ruleset, strength, spells, general: generalAptitude };
 }
@@ -275,7 +280,7 @@ describe("Spell Focus", () => {
   test("a school whose Greater Spell Focus the ruleset has of its own gets the set's other feat alone", async () => {
     const { session, ruleset, spells } = await bareRuleset();
     const greater = "Greater Spell Focus: Evocation";
-    await Entities.create(db, "feats", { name: greater, description: "", rulesetId: ruleset.id });
+    await Entities.create(db, DND35_BASE_RULES, "feats", { name: greater, description: "", rulesetId: ruleset.id });
     await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));
     expect(await featNames(ruleset.id)).toEqual([greater, "Spell Focus: Evocation"]);
   });
@@ -283,7 +288,11 @@ describe("Spell Focus", () => {
   test("a school whose Greater Spell Focus a fork inherits gets the set's other feat alone, each name once", async () => {
     const parent = await bareRuleset();
     const greater = "Greater Spell Focus: Evocation";
-    await Entities.create(db, "feats", { name: greater, description: "", rulesetId: parent.ruleset.id });
+    await Entities.create(db, DND35_BASE_RULES, "feats", {
+      name: greater,
+      description: "",
+      rulesetId: parent.ruleset.id,
+    });
     await Rulesets.update(db, { status: "Published" }, { id: parent.ruleset.id });
     const { user, session } = await createTestUser();
     const fork = await createTestRuleset(user.id, { rulesetId: parent.ruleset.id });
@@ -318,7 +327,7 @@ describe("Skill Focus", () => {
 
   test("isn't made again when the ruleset has a feat of its name", async () => {
     const { session, ruleset, strength } = await bareRuleset();
-    await Entities.create<Feat>(db, "feats", {
+    await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       name: "Skill Focus: Climb",
       description: "Mine",
       rulesetId: ruleset.id,
@@ -438,7 +447,7 @@ describe("an inherited skill's Skill Focus", () => {
     const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
     const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
     // A pick stays under the ancestor's id after the fork copies the feat.
-    await Picks.createMany(db, [
+    await Picks.createMany(db, DND35_BASE_RULES, [
       { advancementId: levelId, step: "feats", entityId: feat.id, viaId: ctx.aptMap.General },
     ]);
     const copy = picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork);
@@ -650,7 +659,7 @@ describe("generated feats", () => {
     // A weapon type of its own, outside the catalog an item's fields offer
     await writeFieldValues("items", weapon.id, [[WEAPON_TYPE, "Unique Weapon"]]);
     RulesetViews.invalidate(fork.id);
-    const [feat] = await Entities.create<Feat>(db, "feats", {
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
       rulesetId: fork.id,
       name: "Weapon Focus: Unique Weapon",
       description: "Group content",

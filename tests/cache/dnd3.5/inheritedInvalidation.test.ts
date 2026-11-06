@@ -14,6 +14,7 @@ import {
   subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 afterEach(() => {
   RulesetViews.invalidateAll();
@@ -35,7 +36,13 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const before = await readCowData(host.id);
   await readView(host.id);
   const copy = await copyEntity(db, "feats", source.id, extension);
-  await Entities.update<Feat>(db, "feats", { description: "Updated extension feat" }, { id: copy.id });
+  await Entities.update<Feat>(
+    db,
+    DND35_BASE_RULES,
+    "feats",
+    { description: "Updated extension feat" },
+    { id: copy.id },
+  );
   RulesetViews.invalidate(extension.id);
   const after = await readCowData(host.id);
   expect(after).not.toBe(before);
@@ -50,14 +57,14 @@ test("worker cache mode reads changes between builds without web invalidation", 
   MemoryCache.setEnabled(false);
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
-  const [feat] = await Entities.create<Feat>(db, "feats", {
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
     name: "Worker freshness",
     description: "Before",
     rulesetId: fork.id,
   });
   const first = await readView(fork.id);
   expect(Dnd35View.of(first).featsById.get(feat.id)?.description).toBe("Before");
-  await Entities.update<Feat>(db, "feats", { description: "After" }, { id: feat.id });
+  await Entities.update<Feat>(db, DND35_BASE_RULES, "feats", { description: "After" }, { id: feat.id });
   const next = await readView(fork.id);
   expect(Dnd35View.of(next).featsById.get(feat.id)?.description).toBe("After");
 });

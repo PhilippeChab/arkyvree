@@ -8,6 +8,7 @@ import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import { runWhileCommitting } from "@/tests/support/database.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /** The characters the probes committed, which another connection sees: deleted once every test rolled back. */
@@ -29,7 +30,7 @@ function png() {
 async function commitCharacter() {
   const client = await pool.connect();
   try {
-    const [character] = await Characters.create(createTestDbFromClient(client), {
+    const [character] = await Characters.create(createTestDbFromClient(client), DND35_BASE_RULES, {
       kind: PLAYER_CHARACTER_KIND,
       name: `Locked Character ${uniqueId()}`,
       rulesetId: (await getSeedCtx()).rulesetId,
