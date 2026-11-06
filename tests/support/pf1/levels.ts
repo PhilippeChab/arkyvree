@@ -77,5 +77,5 @@ export async function expectSavedLevels(saved: { entryId: string }[], levels: nu
 
 /** The picks of a step (`hp`, `abilities`, `skills`, `feats`, `spells`) these levels took, as stored. */
 export async function findPicks(step: string, advancementIds: string[]) {
-  return (await Picks.findPerStep(db, { baseRules: PF1_BASE_RULES, advancementIds }))[step] ?? [];
+  return (await Picks.findPerStep(db, PF1_BASE_RULES, { advancementIds }))[step] ?? [];
 }

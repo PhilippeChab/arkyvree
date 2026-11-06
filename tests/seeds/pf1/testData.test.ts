@@ -156,7 +156,7 @@ async function written(ctx: SeedContext, character: Character) {
     levelNames[level.id] = `${classes[classLevel.ownerId]} ${classLevel.position}`;
   }
   const levelIds = levels.map(({ id }) => id);
-  const links = await CharacterLinks.findPerRole(db, { baseRules: PF1_BASE_RULES, characterId: character.id });
+  const links = await CharacterLinks.findPerRole(db, PF1_BASE_RULES, { characterId: character.id });
   return {
     identity: {
       rulesetId: character.rulesetId,

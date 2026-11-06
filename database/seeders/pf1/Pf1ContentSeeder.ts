@@ -36,7 +36,7 @@ export abstract class Pf1ContentSeeder extends ContentSeeder<CoreContent, BookCo
     db: Db,
     override readonly ctx: Pf1SeedContext,
   ) {
-    super(db, ctx);
+    super(db, PF1_BASE_RULES, ctx);
   }
 
   /** A context of the ruleset naming none of its rows: what a step needs no names for (items) or names as it goes. */
@@ -77,9 +77,6 @@ export abstract class Pf1ContentSeeder extends ContentSeeder<CoreContent, BookCo
       inheritedSpellMap: {},
     };
   }
-
-  /** Its rulesets' base rules: Pathfinder's. */
-  protected override readonly baseRules = PF1_BASE_RULES;
 
   /**
    * Refuses an item made from a template of another type than its own, or of a type no template is of (a weapon's, an
