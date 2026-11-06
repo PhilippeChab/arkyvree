@@ -1,0 +1,73 @@
+import type { CharacterInput, PartialReading } from "@/engine/core/module/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import IdentityFields from "@/engine/rulesets/pf1/characters/IdentityFields.ts";
+import BondedPaths from "@/engine/rulesets/pf1/model/bonded/BondedPaths.ts";
+import type DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
+import Pf1CharacterBuilder from "@/engine/rulesets/pf1/model/Pf1CharacterBuilder.ts";
+import { BONDED_KIND_SLUGS } from "@/vocabulary/pf1/bondedKinds.ts";
+
+import CharacterResponse from "./CharacterResponse.ts";
+import SheetBlocks from "./SheetBlocks.ts";
+import SheetSummaries from "./SheetSummaries.ts";
+
+/** A bonded creature's sheet, which its subsheet reads, with the feat of its master's that bonds it (`bondFeatId`). */
+type BondedDescription = ReturnType<typeof CharacterResponse.buildBondedSheet> & { bondFeatId: string | null };
+
+/**
+ * A character described from the rows the server read: its sheet, a creature's, or its public part, past its row's
+ * columns, which the characters part writes. Its private notes are as its rows have them: the characters part reads
+ * them as the viewer does (`CharactersPart.describe`).
+ */
+export default class CharacterDescription {
+  /** The master's feat that bonds its creature of a kind: the one whose modifier sets the creature's race, if one does. */
+  private static bondFeatOf(master: DetailedCharacter, kind: string) {
+    const race = BondedPaths.raceOf(kind);
+    const bond = master.modifierEvaluator
+      .getModifiers()
+      .appliedModifiers.findLast((modifier) => modifier.target === race && modifier.sourceType === "feats");
+    return bond?.sourceId ?? null;
+  }
+
+  /** The master's bonded creatures (`bonded`), each built with its master's sheet, by their kind, in the kinds' order. */
+  private static describeBonded(view: RulesetView, master: DetailedCharacter, bonded: CharacterInput[]) {
+    const byKind = new Map(bonded.map((input) => [input.record.kind, input]));
+    const described: Record<string, BondedDescription> = {};
+    for (const kind of BONDED_KIND_SLUGS) {
+      const input = byKind.get(kind);
+      if (input) {
+        described[kind] = {
+          ...CharacterResponse.buildBondedSheet(
+            input.record,
+            Pf1CharacterBuilder.build(view, input, { parent: master }),
+          ),
+          bondFeatId: CharacterDescription.bondFeatOf(master, kind),
+        };
+      }
+    }
+    return described;
+  }
+
+  /**
+   * A character's sheet, as the API answers it past its row's columns: a player character's, its bonded creatures
+   * (`bonded`), each built with it, in the details of the feats that bond them; or a bonded creature's, from its
+   * master's.
+   */
+  static describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
+    const built = Pf1CharacterBuilder.build(view, character);
+    if (character.parent) return CharacterResponse.toResponse(CharacterResponse.buildSheet(built));
+    const sheet = CharacterResponse.buildSheet(built);
+    const described = CharacterDescription.describeBonded(view, built, bonded);
+    // Each creature in the details of the feat that bonds it
+    return CharacterResponse.toResponse({ ...sheet, blocks: SheetBlocks.bond(sheet.blocks, Object.values(described)) });
+  }
+
+  /**
+   * What a campaign member who only sees a character partly reads of its sheet: who it is, its race and physical traits
+   * (age, gender, height, weight: its identity's block as such a reader reads it), and its summary, with no classes.
+   * The characters part writes the rest of what such a reader reads, an allowlist (`PartialSheet`).
+   */
+  static describePartial(view: RulesetView, character: CharacterInput): PartialReading {
+    const { identity } = CharacterResponse.buildSheet(Pf1CharacterBuilder.build(view, character));
+    return { identity: IdentityFields.describe(identity, true), summary: SheetSummaries.describe({}) };
+  }
+}
