@@ -130,10 +130,10 @@ One workflow per concern, in `.github/workflows/`:
 
 | Workflow | Runs on | Jobs |
 |---|---|---|
-| `lint.yml` | push to develop, PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`) |
-| `build.yml` | push to develop, PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
-| `api-tests.yml` | push to develop, PR, called by Deploy | `API Tests (shard n/3)` on a push, `API Tests (changed, shard n/3)` and `API Tests (changed)` on a PR |
-| `e2e.yml` | push to develop, PR, called by Deploy | `E2E (shard n/3)` |
+| `lint.yml` | PR, called by Deploy | `Lint`: TypeScript (`tsgo`), oxlint and the formatting (`oxfmt --check`) |
+| `build.yml` | PR, called by Deploy | `Build`: the production build and the compiled PDF smoke check |
+| `api-tests.yml` | PR, called by Deploy | `API Tests (shard n/3)` when Deploy calls it, `API Tests (changed, shard n/3)` and `API Tests (changed)` on a PR |
+| `e2e.yml` | PR, called by Deploy | `E2E (shard n/3)` |
 | `deploy.yml` | push to main | the four above, `Main's head`, then `Deploy`: the web app, then the worker |
 
 - A push to main runs only `deploy.yml`, which calls the four check workflows (`workflow_call`) and needs them: a deploy never uses a green result from another branch or commit. When a check fails, **Re-run failed jobs** re-runs it and deploys once it passes, as long as main is still at that commit (a re-run checks it again). A `Deploy` shown as cancelled gave its place in the queue to a newer commit's: don't re-run it. `Main's head` skips the deploy of a commit main has moved on from, before it queues, so re-running an older push never deploys it over a newer one nor takes the newer one's place in the queue: if the newer one fails its checks, nothing deploys until a fix lands on main. To roll back, redeploy both apps from the same earlier commit: `fly releases -a <app> --image` lists each app's images, `fly deploy -a <app> --config <its fly.*.toml> --image <image>` deploys one. The database stays migrated: migrations don't run backwards

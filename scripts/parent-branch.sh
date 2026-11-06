@@ -4,10 +4,9 @@
 # Algorithm: pick the most recent branch whose tip is an ancestor of HEAD.
 # This correctly handles:
 #   - feature branch cut from main → parent is main
-#   - feature branch cut from develop → parent is develop
 #   - stacked branch cut from another feature (feature-on-feature) → parent is
 #     the underlying feature
-# Falls back to origin/develop, the branch pull requests target, when nothing matches (detached HEAD, no develop).
+# Falls back to origin/main, the branch pull requests target, when nothing matches (detached HEAD).
 set -euo pipefail
 
 CURRENT=$(git branch --show-current 2>/dev/null || true)
@@ -15,8 +14,8 @@ CURRENT=$(git branch --show-current 2>/dev/null || true)
 best_branch=""
 best_ts=0
 
-# Consider every local branch plus origin/main and origin/develop as candidates.
-candidates=$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin/main refs/remotes/origin/develop 2>/dev/null)
+# Consider every local branch plus origin/main as candidates.
+candidates=$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin/main 2>/dev/null)
 
 for ref in $candidates; do
   # Skip self.
@@ -31,4 +30,4 @@ for ref in $candidates; do
   fi
 done
 
-echo "${best_branch:-origin/develop}"
+echo "${best_branch:-origin/main}"

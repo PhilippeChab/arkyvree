@@ -18,7 +18,7 @@ Original idea and core architecture implemented by myself, the rest was done by 
 ```bash
 git clone https://github.com/PhilippeChab/arkyvree.git
 cd arkyvree
-git switch develop
+git switch main
 bun install
 ```
 
@@ -201,7 +201,7 @@ tests/
 ## Community
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request, and target
-`develop`. Community participation follows our [Code of Conduct](./CODE_OF_CONDUCT.md).
+`main`. Community participation follows our [Code of Conduct](./CODE_OF_CONDUCT.md).
 Use [GitHub issues](https://github.com/PhilippeChab/arkyvree/issues) for questions
 and bug reports. Report security issues privately as described in [SECURITY.md](./SECURITY.md).
 

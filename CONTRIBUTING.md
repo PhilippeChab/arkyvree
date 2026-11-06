@@ -90,7 +90,7 @@ could not run. Do not disable or skip failing tests to obtain a green result.
 
 ## Pull requests
 
-1. Create a branch from `develop` and target `develop` in your pull request.
+1. Create a branch from `main` and target `main` in your pull request.
 2. Explain the problem, the change, and relevant trade-offs; link the issue if there is one.
 3. Include reproduction steps or appropriately scoped tests for changed behavior.
 4. Include desktop and mobile screenshots for visible UI changes, without personal data.
