@@ -1,38 +1,21 @@
 import type { ProgressionDeclaration } from "@/engine/core/module/index.ts";
-import CombatSheet from "@/engine/rulesets/dnd5.2/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd5.2/limits.ts";
-import ClassProgressions from "@/engine/rulesets/dnd5.2/rules/ClassProgressions.ts";
-import { formatSigned } from "@/shared/text.ts";
-import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd5.2/bondedKinds.ts";
-import { type BabType, MAX_CLASS_LEVEL, type SaveType } from "@/vocabulary/dnd5.2/classes.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_RANKS } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd5.2/classes.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import ProgressionLabels from "./ProgressionLabels.ts";
 
-/** What a class level form's base attack bonus presets read: a label for each of its progressions. */
-const BAB_PRESET_LABELS: Record<BabType, string> = { good: "Good (full)", medium: "Medium (¾)", poor: "Poor (½)" };
-/** Each of a class's progressions' values at each class level, by how good it is: what its tracks' presets fill. */
-const LEVEL_PRESETS = ClassProgressions.describePresets();
-
 /** What a table in a book heads its level column with, in lower case. */
 const POSITION_ALIASES = ["level", "lvl"];
-/** What a class level form's save presets read: a label for each of their progressions. */
-const SAVE_PRESET_LABELS: Record<SaveType, string> = {
-  good: "Good",
-  poor: "Poor",
-  prestigeGood: "Prestige Good",
-  prestigePoor: "Prestige Poor",
-};
 
 /**
- * How a Pathfinder class progresses: its base attack bonus (as the sheet writes it, "+6/+1"; good, medium or poor, a point
- * every so many levels), its saves (signed; good or poor, a base and a point every so many levels), its skill points,
- * its features under "Special", and its spells per day and spells known, a column a spell level, Spells Known's "All"
- * carrying down. A class's spell list is the aptitude named for it ("Wizard Spells"), which its Spell List tab's first
- * add makes where the ruleset has none. A bonded creature's class has no base attack bonus, saves or skill points
- * (their `omittedFor`: `BONDED_KIND_SLUGS`): its sheet works them out from its master or its hit dice, and its levels
- * follow its master's, spending no skill points, so they hold none and its table leaves them out.
+ * How a class progresses in the 2024 rules: its features and feat pools under "Class Features" (its subclass's pick, its
+ * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), and its cantrips and prepared
+ * spells, a column a spell level: what it prepares by then, a level's new spells counted at the highest level it casts
+ * then, which a lower level's spells fill too. Its spell slots are no column of its own: the Multiclass Spellcaster
+ * table's, by the levels its caster type counts. A class's spell list is the aptitude named for it ("Wizard Spells"),
+ * which its Spell List tab's first add makes where the ruleset has none. Its levels follow no track: the Proficiency
+ * Bonus is the character's, by its level, and its hit points its hit die's.
  */
 export const PROGRESSION: ProgressionDeclaration = {
   counts: {
@@ -74,33 +57,19 @@ export const PROGRESSION: ProgressionDeclaration = {
       totals: "Feat pool totals",
     },
   },
-  grantsLabel: "Special",
+  grantsLabel: "Class Features",
   lastPosition: MAX_CLASS_LEVEL,
-  // Its Levels and Feat Pools tabs are its Progression's; Spells Known's, the Spells tab on its table
+  // Its Levels and Feat Pools tabs are its Progression's; its prepared spells', the Spells tab
   tabAliases: {
     "feat-pools": "progression",
     levels: "progression",
-    "spells-known": "spells?table=known",
-    "spells-per-day": "spells",
+    "spells-known": "spells",
   },
   tables: [
     {
-      columns: SPELL_LEVELS.map((level) => ({
-        aliases: ProgressionLabels.listSpellLevelAliases(level),
-        key: String(level),
-        label: SPELL_LEVEL_LABELS[level],
-      })),
-      key: "perDay",
-      label: "Spells per Day",
-      max: RULESET_LIMITS.tableCount,
-      table: "spells",
-      totals: "spellsPerDay",
-      positionAliases: POSITION_ALIASES,
-    },
-    {
       all: {
-        hint: "All Known From an Earlier Level",
-        lockedPaste: "That cell knows every spell from an earlier level: paste into an open cell, or Paste a Table",
+        hint: "All Prepared From an Earlier Level",
+        lockedPaste: "That cell prepares every spell from an earlier level: paste into an open cell, or Paste a Table",
         word: "All",
       },
       columns: SPELL_LEVELS.map((level) => ({
@@ -108,39 +77,14 @@ export const PROGRESSION: ProgressionDeclaration = {
         key: String(level),
         label: SPELL_LEVEL_LABELS[level],
       })),
-      help: "How many spells the class picks at each spell level by then: a wizard's spellbook, a sorcerer's spells known. \"All\" is every spell of its list.",
+      help: "How many cantrips and spells the class prepares by then: its cantrips at their own level, a level's new spells at the highest level it casts then, where a lower level's spell fits too. \"All\" is every spell of its list.",
       key: "known",
-      label: "Spells Known",
+      label: "Cantrips and Prepared Spells",
       max: RULESET_LIMITS.tableCount,
       positionAliases: POSITION_ALIASES,
       table: "spells-known",
       totals: "spellsKnown",
     },
   ],
-  tracks: [
-    {
-      field: CLASS_LEVEL_BAB,
-      key: "bab",
-      omittedFor: BONDED_KIND_SLUGS,
-      labels: ProgressionLabels.listLabels(RULESET_LIMITS.classLevel, (bab) => CombatSheet.formatBab(bab)),
-      presets: ProgressionLabels.listPresets(BAB_PRESET_LABELS, LEVEL_PRESETS.bab),
-      shortLabel: "BAB",
-      source: "field",
-    },
-    {
-      key: "saves",
-      omittedFor: BONDED_KIND_SLUGS,
-      labels: ProgressionLabels.listLabels(RULESET_LIMITS.saveBase, (base) => formatSigned(base)),
-      presets: ProgressionLabels.listPresets(SAVE_PRESET_LABELS, LEVEL_PRESETS.saves),
-      source: "amounts",
-    },
-    {
-      field: CLASS_LEVEL_SKILL_RANKS,
-      key: "skills",
-      omittedFor: BONDED_KIND_SLUGS,
-      presets: [],
-      source: "field",
-      unitLabel: "Points a Level",
-    },
-  ],
+  tracks: [],
 };

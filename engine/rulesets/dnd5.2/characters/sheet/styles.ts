@@ -208,32 +208,15 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZE.base,
     width: "40%",
   },
-  skillNameUntrained: {
-    fontSize: FONT_SIZE.base,
-    width: "40%",
-    color: "#888",
-  },
   skillAbility: {
     fontSize: FONT_SIZE.base,
-    width: "12%",
+    width: "15%",
     textAlign: "center",
-  },
-  skillAbilityUntrained: {
-    fontSize: FONT_SIZE.base,
-    width: "12%",
-    textAlign: "center",
-    color: "#888",
   },
   skillCell: {
     fontSize: FONT_SIZE.base,
-    width: "12%",
+    width: "15%",
     textAlign: "center",
-  },
-  skillCellUntrained: {
-    fontSize: FONT_SIZE.base,
-    width: "12%",
-    textAlign: "center",
-    color: "#888",
   },
   equipmentSection: {
     marginBottom: 4,

@@ -70,7 +70,8 @@ type AptitudesById = Map<string, AptitudesData[string]>;
 export interface AptitudeLevelData {
   allowed: number;
   readonly available: number;
-  spent: number;
+  /** The spells its room takes, of its level or a lower one (`AptitudesComponent.assignSpells`). */
+  readonly spent: number;
   uses: number;
 }
 
@@ -86,9 +87,39 @@ export interface OwnPicks {
 /** No picks of a level-up's own: a pool's room is what it has left. */
 const NO_OWN_PICKS: OwnPicks = { feats: {}, spells: {} };
 
+/** Every spell level a pool has room at, from 0 (cantrips). */
+const TIERS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
+
+/**
+ * Where a leveled pool's spells go (`counts`, by their spell level in it), as the 2024 rules prepare them: a spell of a
+ * level fills room of its level or of a higher one (`allowed`, each spell level's), a cantrip a cantrip's alone; the
+ * highest spells first, each in the lowest room it fits. A spell level all its spells are known at (`ALLOWED_ALL`)
+ * takes its own spells alone. A spell no room takes stays at its own level, overspent. What each spell level holds.
+ */
+function assignSpells(allowed: (level: number) => number, counts: Readonly<Record<string, number>>): number[] {
+  const spent = TIERS.map(() => 0);
+  for (const level of TIERS.toReversed()) {
+    for (let left = counts[String(level)] ?? 0; left > 0; left--) {
+      if (allowed(level) === ALLOWED_ALL) {
+        spent[level]++;
+        continue;
+      }
+      const fits = (tier: number) => (level === 0 ? tier === 0 : tier >= level);
+      const room = TIERS.find((tier) => fits(tier) && allowed(tier) !== ALLOWED_ALL && spent[tier] < allowed(tier));
+      spent[room ?? level]++;
+    }
+  }
+  return spent;
+}
+
 /** What's left to pick in all of `pools`. */
 function sumAvailable(pools: { available: number }[]) {
   return pools.reduce((total, pool) => total + pool.available, 0);
+}
+
+/** A pool's spells by spell level, less a level-up's own (`own`). */
+function withoutOwn(counts: Readonly<Record<string, number>>, own: Readonly<Record<string, number>>) {
+  return Object.fromEntries(TIERS.map((level) => [String(level), (counts[String(level)] ?? 0) - (own[level] ?? 0)]));
 }
 
 /**
@@ -107,6 +138,9 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
+
+  /** Each leveled aptitude's known spells (picked or granted, not free) by their spell level in it, by its key. */
+  private readonly spellCounts = new Map<string, Record<string, number>>();
 
   /**
    * An entry per aptitude of the ruleset (one per spell level for a leveled one, a spell list's: `SpellLists`): what it
@@ -135,7 +169,10 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     }
   }
 
-  /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */
+  /**
+   * Sets what the character spent on each aptitude: flat, or, for a leveled one, its spells by their spell level, which
+   * its spell levels' room takes as the rules prepare them (`assignSpells`) when read.
+   */
   private applySpent(
     aptitudeById: AptitudesById,
     { spentByAptitudeId, spentByAptitudeIdAndLevel }: ReturnType<AptitudesComponent["countSpent"]>,
@@ -144,17 +181,17 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
       const aptitude = aptitudeById.get(aptitudeId);
       if (aptitude) aptitude.spent = count;
     }
-
+    const keyById = new Map(Object.entries(this.aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
     for (const [aptitudeId, levelSpent] of Object.entries(spentByAptitudeIdAndLevel)) {
-      const aptitude = aptitudeById.get(aptitudeId);
-      if (!aptitude) continue;
-
-      const aptitudeObj = aptitude as Record<string, unknown>;
-      for (const [levelStr, count] of Object.entries(levelSpent)) {
-        const levelData = aptitudeObj[levelStr] as AptitudeLevelData | undefined;
-        if (levelData) levelData.spent = count;
-      }
+      const key = keyById.get(aptitudeId);
+      if (key && this.leveledAptitudeKeys.has(key)) this.spellCounts.set(key, levelSpent);
     }
+  }
+
+  /** Each spell level's room a leveled aptitude's spells take (`counts`: its known ones by default), as read now. */
+  private assignedSpells(key: string, counts = this.spellCounts.get(key) ?? {}): number[] {
+    const aptitude = this.aptitudes[key];
+    return assignSpells((level) => this.spellLevelOf(aptitude, String(level))?.allowed ?? 0, counts);
   }
 
   /** An entry per aptitude, with one per spell level for a leveled one. */
@@ -177,7 +214,8 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
       if (leveledAptitudeIds.has(aptitude.id)) {
         this.leveledAptitudeKeys.add(key);
         const aptitudeObj = this.aptitudes[key] as Record<string, unknown>;
-        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) aptitudeObj[String(level)] = this.newSpellLevel();
+        for (const level of TIERS)
+          aptitudeObj[String(level)] = this.newSpellLevel(() => this.assignedSpells(key)[level]);
 
         aptitudeObj[JOINS_CLASS_LIST.path] = false;
       }
@@ -187,7 +225,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
   /** The feats and the (non-free) spells the character took per aptitude, per spell level for a leveled spell. */
   private countSpent() {
     const spentByAptitudeId: Record<string, number> = {};
-    const spentByAptitudeIdAndLevel: Record<string, Record<number, number>> = {};
+    const spentByAptitudeIdAndLevel: Record<string, Record<string, number>> = {};
 
     for (const klass of Object.values(this.classes.getClasses())) {
       for (const level of klass.levels) {
@@ -211,9 +249,9 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
   /**
    * A spell level's entry. Its known slots are a count, or all known (ALLOWED_ALL), which a `set -1` makes them and an
    * add, before or after, leaves: the class tables' and the level-up wizard's count. Code that takes all known back
-   * clears it (`clearAllKnown`).
+   * clears it (`clearAllKnown`). What it spent is what its aptitude's spells take of its room (`spent`), when read.
    */
-  private newSpellLevel(): AptitudeLevelData {
+  private newSpellLevel(spent: () => number): AptitudeLevelData {
     const allKnownLevels = this.allKnownLevels;
     let count = 0;
     return {
@@ -225,7 +263,9 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
         if (value === ALLOWED_ALL) allKnownLevels.add(this);
         else if (!allKnownLevels.has(this)) count = value;
       },
-      spent: 0,
+      get spent() {
+        return spent();
+      },
       // What's left to pick, counted when read: none once every spell is known
       get available() {
         return this.allowed === ALLOWED_ALL ? 0 : this.allowed - this.spent;
@@ -239,19 +279,24 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
   }
 
   /**
-   * A leveled aptitude's spell pool: what each spell level that has room left gives, or that a level-up's own picks
-   * (`own`, by spell level) are in, with its room for them (what it has left, and them), and all of them.
+   * A leveled aptitude's spell pool (`key`): what each spell level that has room left gives, or that a level-up's own
+   * picks (`own`, by their spell level) take room at, with its room for them (what its spells but those leave it), and
+   * all of them. A spell takes room of its level or a higher one (`assignSpells`).
    */
-  private toLeveledPool(aptitude: AptitudesData[string], own: Record<string, number>): SpellPool {
+  private toLeveledPool(key: string, own: Record<string, number>): SpellPool {
+    const aptitude = this.aptitudes[key];
+    const counts = this.spellCounts.get(key) ?? {};
+    const before = this.assignedSpells(key, withoutOwn(counts, own));
+    const after = this.assignedSpells(key);
     const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
     let available = 0;
-    for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
-      const levelData = this.spellLevelOf(aptitude, String(spellLevel));
-      const picked = own[String(spellLevel)] ?? 0;
-      const room = (levelData?.available ?? 0) + picked;
-      if (levelData && (room > 0 || picked > 0)) {
-        levels[String(spellLevel)] = { allowed: levelData.allowed, spent: levelData.spent - picked, available: room };
-        available += room;
+    for (const level of TIERS) {
+      const levelData = this.spellLevelOf(aptitude, String(level));
+      if (!levelData) continue;
+      const room = levelData.allowed === ALLOWED_ALL ? 0 : levelData.allowed - before[level];
+      if (room > 0 || after[level] > before[level]) {
+        levels[String(level)] = { allowed: levelData.allowed, spent: before[level], available: room };
+        available += Math.max(0, room);
       }
     }
     const { id, name, allowed, spent } = aptitude;
@@ -281,7 +326,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       const { id, name, allowed, spent, available } = aptitude;
       if (this.leveledAptitudeKeys.has(key)) {
-        spellPools[id] = this.toLeveledPool(aptitude, own.spells[id] ?? {});
+        spellPools[id] = this.toLeveledPool(key, own.spells[id] ?? {});
         continue;
       }
       const shared = view.aptitudeIdsWithSpells.has(id);
@@ -300,7 +345,8 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * The pools a level-up's own picks (`own`, which the character holds) overfill: each pool they're in that has less
-   * than nothing left, a leveled one's at each spell level, with how many they pick there and its room for them.
+   * than nothing left, a leveled one's at each spell level its own picks are of, where a spell no room takes stays,
+   * with how many they pick there and its room for them.
    */
   getOverfullPools(own: OwnPicks): OverfullPool[] {
     const overfull: OverfullPool[] = [];
@@ -330,7 +376,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
         pools.push({ id, name, allowed: aptitude.allowed, spent: aptitude.spent, available: aptitude.available });
         continue;
       }
-      for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
+      for (const spellLevel of TIERS) {
         const slots = this.spellLevelOf(aptitude, String(spellLevel));
         if (slots)
           pools.push({ id, name, spellLevel, allowed: slots.allowed, spent: slots.spent, available: slots.available });

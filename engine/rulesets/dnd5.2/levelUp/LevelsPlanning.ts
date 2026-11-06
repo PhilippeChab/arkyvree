@@ -3,11 +3,10 @@ import type {
   AdvancementEditPlan,
   AdvancementsPlan,
   AdvancementWrite,
-  CharacterInput,
   PickPlan,
   StoredAdvancement,
 } from "@/engine/core/module/index.ts";
-import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import ClassLevels from "@/engine/rulesets/dnd5.2/characters/ClassLevels.ts";
 import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
@@ -18,9 +17,8 @@ import PicksDistribution from "./PicksDistribution.ts";
 import type { LevelEditRequest, LevelPicks, LevelUpRequest } from "./requests.ts";
 import type { HoldingCharacter } from "./SelectionChecks.ts";
 
-/** A planned level checked: its class level, hit points, ability increases (its `abilities` picks) and picks. */
+/** A planned level checked: its class level, hit points and picks. */
 interface PlannedLevel {
-  abilityIncreases: PickPlan[];
   classLevelId: string;
   hp: number;
   picks: LevelPicks;
@@ -42,23 +40,24 @@ export interface CheckedCharacter extends HoldingCharacter {
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`AdvancementRequests`);
  * - each level is its class's next, forced or not (`LevelRules.findNextClassLevel`), so not one the character holds
- *   already, and raises its abilities by what the rules give it;
- * - its hit points, its selections and their pools checked, no non-stackable feat or spell picked twice at a level
- *   (`SelectionChecks`);
+ *   already;
+ * - its hit points (a character's first level's, its die's highest), its selections and their pools checked, no
+ *   non-stackable feat or spell picked twice at a level (`SelectionChecks`);
  * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a spell
  *   it knows in its pool, held (picked or granted at another of its levels, saved or planned, a later one too, or made
  *   possessed or known by a modifier), picked earlier in the level-up, or given by the level's (or the level-up's)
  *   other picks, which stay; an edited level's own saved picks stay;
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
  * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
- *   edit (`findEditedLevelIssues`); and a level-up's levels take every skill point it spends, unless forced.
+ *   edit (`findEditedLevelIssues`). A class's first level's requirements (its multiclass prerequisites) are its
+ *   character's to meet but at the character's first level, which its sheet leaves them out of.
  */
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /** What planned levels write: each its advancement in its class level, and its picks. */
   private advancementsOf(planned: PlannedLevel[]): AdvancementWrite[] {
-    return planned.map(({ abilityIncreases, classLevelId, hp, picks }) => ({
+    return planned.map(({ classLevelId, hp, picks }) => ({
       entryId: classLevelId,
-      picks: this.savedPicksOf(hp, abilityIncreases, picks),
+      picks: this.savedPicksOf(hp, picks),
     }));
   }
 
@@ -80,21 +79,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       "invalid",
       `${label}${taken} can't be taken there: ${ClassLevels.format(className, next)} comes next`,
     );
-  }
-
-  /**
-   * The skill points a level-up spends (`skills`, by skill) that its planned levels don't take (`distributed`: each
-   * level's, past its points or the skill's max ranks there), an issue a skill: a save drops them, which an unforced
-   * one refuses.
-   */
-  private findDroppedSkillPoints(skills: Record<string, number>, distributed: LevelPicks[]): RulesIssue[] {
-    return Object.entries(skills).flatMap(([skillId, points]) => {
-      const taken = distributed.reduce((sum, level) => sum + (level.skills[skillId] ?? 0), 0);
-      if (points <= taken) return [];
-      const name = this.dnd52.skillsById.get(skillId)?.name ?? skillId;
-      const message = `${name}: ${points - taken} skill point(s) past what the levels take`;
-      return [{ category: "skills", message }];
-    });
   }
 
   /**
@@ -126,10 +110,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * A level-up's levels (`request`) checked, up to the character with them (`saved`): each level's class level, ability
-   * increases, hit points and picks (`planned`), its picks refused when the character holds them already or they
-   * overfill a pool, forced or not; and what an unforced save refuses, which its callers read (`issues`): the
-   * character's own issues, and the skill points its levels don't take.
+   * A level-up's levels (`request`) checked, up to the character with them (`saved`): each level's class level, hit
+   * points and picks (`planned`), its picks refused when the character holds them already or they overfill a pool,
+   * forced or not; and what an unforced save refuses, which its callers read (`issues`): the character's own issues.
    */
   private planSaved({ levels, picks }: LevelUpRequest) {
     const { rows } = this.character;
@@ -142,14 +125,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const otherLevels: { entryId: string }[] = [...rows.advancements];
     const planned: PlannedLevel[] = [];
     for (const [i, { klass, classLevel }] of classLevelEntries.entries()) {
-      const { hp, abilityIncreases } = levels[i];
+      const { hp } = levels[i];
       const levelPicks = distributed[i];
       // A refusal names the character's level it's about, after its saved levels and those planned before it
       const label = `Level ${rows.advancements.length + i + 1}: `;
       this.checkNextLevel(otherLevels, klass.name, classLevel, label);
-      this.checks.checkAbilityIncreases(rows.advancements.length + i, abilityIncreases, label);
-      this.checks.checkLevel({ klass, hp, ...levelPicks });
-      planned.push({ abilityIncreases, classLevelId: classLevel.id, hp, picks: levelPicks });
+      const hitPoints = this.levelHitPointsOf(klass, rows.advancements.length + i === 0);
+      this.checks.checkLevel({ hitPoints, hp, ...levelPicks });
+      planned.push({ classLevelId: classLevel.id, hp, picks: levelPicks });
       otherLevels.push({ entryId: classLevel.id });
     }
     // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
@@ -161,23 +144,17 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
 
     const saved = holding(picks);
     this.refuseOverfull(saved, picks);
-    // What the character with the levels fails, and the skill points the levels don't take, which the save drops
-    const issues = [...this.findDroppedSkillPoints(picks.skills, distributed), ...saved.validate().issues];
-    return { issues, planned, saved };
+    return { issues: saved.validate().issues, planned, saved };
   }
 
-  /**
-   * An edited level's projection: the level with its new hit points, ability increases and picks, in place of its saved
-   * row.
-   */
+  /** An edited level's projection: the level with its new hit points and picks, in place of its saved row. */
   private projectEditedLevel(
     advancement: { id: string; position: number },
     classLevelId: string,
     edit: LevelEditRequest,
   ) {
     const projection = new CharacterProjection(this.character);
-    const { abilityIncreases, hp } = edit;
-    const level = projection.addLevel(classLevelId, { abilityIncreases, hp, replacing: advancement });
+    const level = projection.addLevel(classLevelId, { hp: edit.hp, replacing: advancement });
     projection.pick(level, this.toPickPlans(edit));
     return projection;
   }
@@ -198,13 +175,13 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The character as a level-up leaves it: each planned level a fresh level after its saved ones, with its hit points,
-   * ability increases and picks, as a level's edit projects it.
+   * The character as a level-up leaves it: each planned level a fresh level after its saved ones, with its hit points
+   * and picks, as a level's edit projects it.
    */
   private projectLevelRequests(planned: PlannedLevel[]) {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityIncreases, classLevelId, hp, picks } of planned)
-      projection.pick(projection.addLevel(classLevelId, { abilityIncreases, hp }), this.toPickPlans(picks));
+    for (const { classLevelId, hp, picks } of planned)
+      projection.pick(projection.addLevel(classLevelId, { hp }), this.toPickPlans(picks));
     return projection;
   }
 
@@ -213,30 +190,22 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
   }
 
-  /** What a level's save writes under its advancement: its hit points, its ability increases, and its picks. */
-  private savedPicksOf(hp: number, abilityIncreases: PickPlan[], picks: LevelPicks): PickPlan[] {
-    return [{ step: "hp", amount: hp }, ...abilityIncreases, ...this.toPickPlans(picks)];
+  /** What a level's save writes under its advancement: its hit points, and its picks. */
+  private savedPicksOf(hp: number, picks: LevelPicks): PickPlan[] {
+    return [{ step: "hp", amount: hp }, ...this.toPickPlans(picks)];
   }
 
   /**
-   * The edit of the character's saved level `level`, with its bonded creatures' rows (`bonded`): the level as saved,
-   * its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that doesn't
-   * stack the character has already or a spell it knows in its pool already, the level's other picks' gifts too (but
-   * the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers for unless
-   * `force`d; and what its bonded creatures become with it.
+   * The edit of the character's saved level `level`: the level as saved, its new hit points (its die's highest at the
+   * character's first) and picks, checked, its picks refused when they pick a feat that doesn't stack the character has
+   * already or a spell it knows in its pool already, the level's other picks' gifts too (but the level's own saved
+   * picks), or overfill a pool (forced or not), and refused with the issues it answers for unless `force`d. It has no
+   * children to change.
    */
-  planEdit(
-    bonded: CharacterInput[],
-    level: StoredAdvancement,
-    edit: LevelEditRequest,
-    force: boolean,
-  ): AdvancementEditPlan {
-    const { rows } = this.character;
-    const { abilityIncreases, hp } = edit;
+  planEdit(level: StoredAdvancement, edit: LevelEditRequest, force: boolean): AdvancementEditPlan {
+    const { hp } = edit;
     const { classLevel, klass } = this.getSavedClassLevel(level);
-    // The levels in the order the character took them: the edited level's index is its total level less one
-    this.checks.checkAbilityIncreases(rows.advancements.indexOf(level), abilityIncreases);
-    this.checks.checkLevel({ klass, ...edit });
+    this.checks.checkLevel({ hitPoints: this.levelHitPointsOf(klass, this.isFirstSaved(level)), ...edit });
     // A new pick the character holds already (at another level, granted, by a modifier, or given by the level's other
     // picks) is refused, the level's saved picks stay, a repeat saved before too
     const holding = this.buildOnce((picks) =>
@@ -252,37 +221,21 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       const { before, withLevel } = this.projectLevelContribution(level.id, classLevel.id, edit);
       RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
     }
-    return {
-      ...this.planBondedOf(edited, bonded),
-      advancement: level,
-      picks: this.savedPicksOf(hp, abilityIncreases, edit),
-    };
+    return { ...LevelsPlanning.NO_CHILDREN, advancement: level, picks: this.savedPicksOf(hp, edit) };
   }
 
   /**
-   * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the rules spread
-   * them), and what the master's bonded creatures (`bonded`, their rows) become with them. Each level is checked as the
-   * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
-   * or picks what it can't; the picks are refused when they pick a feat that doesn't stack the character has already
-   * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell
-   * it knows in its pool already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the
-   * character with them with what it fails, or skill points the levels don't take (past each level's points and a
-   * skill's max ranks there, which a forced save drops), unless `force`d. Each level's writes are its advancement in
-   * its class level and its picks (its hit points, ability increases, skill ranks, feats and spells).
+   * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the rules spread them).
+   * Each level is checked as the levels before it see it, and refused when it's saved already, or picks what it can't;
+   * the picks are refused when they pick a feat that doesn't stack the character has already (at a saved level or a
+   * planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell it knows in its pool
+   * already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the character with them with what
+   * it fails, unless `force`d. Each level's writes are its advancement in its class level and its picks (its hit points,
+   * feats and spells). It has no children to change.
    */
-  planLevels(bonded: CharacterInput[], request: LevelUpRequest, force: boolean): AdvancementsPlan {
-    const { issues, planned, saved } = this.planSaved(request);
-    if (!force) RulesError.refuseIssues(issues);
-    return { ...this.planBondedOf(saved, bonded), advancements: this.advancementsOf(planned) };
-  }
-
-  /**
-   * The levels a level-up writes, saved forced (an import's, one level at a time, whose bonded creatures its caller
-   * plans once they're all in), with what the character with them fails of what an unforced save refuses (`issues`,
-   * none when it passes): what's refused even forced refuses them.
-   */
-  planLevelsForced(request: LevelUpRequest): Pick<AdvancementsPlan, "advancements"> & { issues: RulesIssue[] } {
+  planLevels(request: LevelUpRequest, force: boolean): AdvancementsPlan {
     const { issues, planned } = this.planSaved(request);
-    return { advancements: this.advancementsOf(planned), issues };
+    if (!force) RulesError.refuseIssues(issues);
+    return { ...LevelsPlanning.NO_CHILDREN, advancements: this.advancementsOf(planned) };
   }
 }

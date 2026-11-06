@@ -9,7 +9,6 @@ import type { Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
-import ClassSkills from "./ClassSkills.ts";
 import ClassSpellLists from "./ClassSpellLists.ts";
 import ClassTable from "./ClassTable.ts";
 import { CLASS_FIELDS } from "./fields.ts";
@@ -36,13 +35,6 @@ export default class ClassEntity extends RulesetEntity<Dnd52Kinds, "classes", ty
     if (!level) this.refuseMissing("class-levels");
     const klass = this.find(level.ownerId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
-  }
-
-  /**
-   * A class's class skills (`classId`): described, and what adding or removing one takes. Refused without the class.
-   */
-  links(classId: string) {
-    return new ClassSkills(this.view, this.find(classId));
   }
 
   /**

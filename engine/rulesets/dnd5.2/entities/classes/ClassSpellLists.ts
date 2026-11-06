@@ -5,7 +5,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import SpellEntity from "@/engine/rulesets/dnd5.2/entities/spells/SpellEntity.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Klass, Dnd52Kinds, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { Dnd52Kinds, Klass, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 
 import type ClassTable from "./ClassTable.ts";
 
@@ -36,6 +36,11 @@ export default class ClassSpellLists {
     private readonly klass: Klass,
     private readonly table: ClassTable,
   ) {}
+
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.view.rulesetData);
+  }
 
   /**
    * One of the class's spell lists (`listId`, its id or its source's), as its table gives it: refused as not found for
@@ -81,11 +86,6 @@ export default class ClassSpellLists {
     const id = crypto.randomUUID();
     const row = { description: "", id, name: own.name };
     return { id, made: { links: [], modifiers: [], requirements: [], row, type: "aptitudes" }, name: own.name };
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.view.rulesetData);
   }
 
   /**

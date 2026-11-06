@@ -1,22 +1,18 @@
 import { z } from "zod";
 
-import { OwnerValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { ViewLink } from "@/engine/core/view/index.ts";
-import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd5.2/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd5.2/limits.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd5.2/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
-import SkillRules from "@/engine/rulesets/dnd5.2/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/bondedKinds.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/characterKinds.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
 import type { PlannedClassLevel } from "./LevelUpBase.ts";
-import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
-import PicksDistribution, { type FeatSlots, type PerLevelDistributionData } from "./PicksDistribution.ts";
+import LevelUpState, { type GrantingLevel, type PoolPicks } from "./LevelUpState.ts";
+import PicksDistribution, { type FeatSlots } from "./PicksDistribution.ts";
 import type { LevelPicks, LevelRequest } from "./requests.ts";
 
 /**
@@ -26,13 +22,16 @@ import type { LevelPicks, LevelRequest } from "./requests.ts";
 export interface PlannedLevels {
   character: DetailedCharacter;
   classLevelEntries: PlannedClassLevel[];
-  /** Each planned level's granted feats the view shows: its class level's `grants` links to feats */
-  grantedFeatRecords: ViewLink[][];
+  /**
+   * Each planned level's granted feats the view shows: its class level's `grants` links' feats, and its starting
+   * proficiencies at a class's first level
+   */
+  grantedFeatRecords: { toId: string }[][];
   saved: DetailedCharacter;
   savedLevelCount: number;
 }
 
-/** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
+/** What the planned levels give: the pools the character picks in, and each level's slots. */
 export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
 
 /** A level-up's planned level, within the rules' bounds: no class past its last level. */
@@ -41,50 +40,9 @@ const PLANNED_LEVEL = z.object({ level: z.number().max(RULESET_LIMITS.classLevel
 /**
  * The levels a character plans in a level-up, from its rows: each checked to be the ruleset's, the character built with
  * them, and what they give, the same for the wizard's preview (`LevelUpPreview`) and the save (`LevelUpPlan`): the
- * pools the character picks in, and each level's skill points, class skills and pool slots (`PlansAptitudeSlots`).
+ * pools the character picks in, and each level's pool slots (`PlansAptitudeSlots`).
  */
 export default abstract class PlannedLevelsState extends include(LevelUpState, PlansAptitudeSlots) {
-  /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
-  private buildDistributionData(planned: PlannedLevels, gains: LevelGains): PerLevelDistributionData {
-    const { classSkills, perLevelFeatSlots, perLevelSpellSlots, perLevelSkillPoints } = gains;
-    return {
-      perLevelSkillPoints,
-      perLevelClassSkillIds: classSkills.perLevel,
-      perLevelFeatSlots,
-      perLevelSpellSlots,
-      savedLevelCount: planned.savedLevelCount,
-      skillContexts: PicksDistribution.contextsOf(
-        planned.character.components.skills.getEnrichedSkills(this.dnd52.skills, classSkills.merged),
-      ),
-    };
-  }
-
-  /**
-   * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
-   * ability's modifier.
-   */
-  private computeSkillPointBasesPerLevel(character: DetailedCharacter, classLevelIds: string[]): number[] {
-    const { skills } = character.components;
-    return classLevelIds.map((classLevelId) =>
-      skills.getLevelPointsPerLevel(
-        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class-levels", classLevelId) ?? OwnerValues.NONE).skills,
-      ),
-    );
-  }
-
-  /**
-   * What the planned levels give (`gains`) with each level's skill points counted on the character holding the plan's
-   * feats and spells (`picks`) as a save spreads them, as its sheet counts them: a racial ability pick on Intelligence
-   * adds to the points of the level that picks it (and of every other: the skill point ability counts retroactively).
-   * The gains as they are when the plan spends no skill point.
-   */
-  private countSkillPointsWithPicks(planned: PlannedLevels, picks: LevelPicks, gains: LevelGains): LevelGains {
-    const spends = Object.values(picks.skills).some((points) => points > 0);
-    if (!spends) return gains;
-    const character = this.buildWithPicks(planned, picks, gains);
-    return { ...gains, perLevelSkillPoints: this.computeSkillPointsPerLevel(character, gains.classLevelIds) };
-  }
-
   /**
    * The feat that gives each pool room past its slots, a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
    * too: the first-pass feat (one picked in a pool with slots) that targets it.
@@ -106,19 +64,21 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   }
 
   /**
-   * The planned levels (`classLevelEntries`), built from the character's rows: the character with them (each with its
-   * ability increase), and as saved.
+   * The planned levels (`classLevelEntries`), built from the character's rows: the character with them, and as saved,
+   * and the feats each grants, its class's starting proficiencies at its first level (a first class's at the
+   * character's first, a multiclass's otherwise).
    */
   protected buildPlannedLevels(classLevelEntries: PlannedClassLevel[]): PlannedLevels {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityIncreases, classLevel } of classLevelEntries)
-      projection.addLevel(classLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
+    for (const { classLevel } of classLevelEntries)
+      projection.addLevel(classLevel.id, { hp: LevelRules.UNROLLED_LEVEL_HP });
+    const savedLevelCount = this.character.rows.advancements.length;
     return {
-      grantedFeatRecords: classLevelEntries.map(({ classLevel }) =>
-        this.dnd52.grantedFeatsOf(classLevel.id).filter((grant) => this.dnd52.featsById.has(grant.toId)),
+      grantedFeatRecords: classLevelEntries.map(({ classLevel }, i) =>
+        this.grantedFeatsAt(classLevel.id, savedLevelCount + i === 0).map(({ id }) => ({ toId: id })),
       ),
       character: this.build(projection),
-      savedLevelCount: this.character.rows.advancements.length,
+      savedLevelCount,
       classLevelEntries,
       saved: this.build(),
     };
@@ -129,10 +89,10 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * what the levels give), which the preview fits the wizard's picks with.
    */
   protected buildWithPicks(planned: PlannedLevels, picks: PoolPicks, gains: LevelGains) {
-    const distributed = this.distributePlannedPicks(planned, { ...picks, skills: {} }, gains);
+    const distributed = this.distributePlannedPicks(planned, picks, gains);
     const projection = new CharacterProjection(this.character);
-    for (const [i, { abilityIncreases, classLevel }] of planned.classLevelEntries.entries()) {
-      const level = projection.addLevel(classLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
+    for (const [i, { classLevel }] of planned.classLevelEntries.entries()) {
+      const level = projection.addLevel(classLevel.id, { hp: LevelRules.UNROLLED_LEVEL_HP });
       projection.pick(level, this.toPickPlans(distributed[i]));
     }
     return this.build(projection);
@@ -140,10 +100,10 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
 
   /**
    * What the planned levels give, the same for the preview and the save: the pools the character picks in, and each
-   * level's skill points, class skills and pool slots.
+   * level's pool slots.
    */
   protected computeLevelGains(planned: PlannedLevels) {
-    const { grantedFeatRecords, character, savedLevelCount, classLevelEntries, saved } = planned;
+    const { grantedFeatRecords, character, classLevelEntries, saved } = planned;
     const classLevelIds = classLevelEntries.map(({ classLevel }) => classLevel.id);
     const pools = character.components.aptitudes.getLevelUpPools(this.dnd52);
     const slots = this.planAptitudeSlots(
@@ -151,50 +111,32 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       grantedFeatRecords,
       Object.keys(pools.featPools),
       Object.keys(pools.spellPools),
-      savedLevelCount,
       saved.components.aptitudes.getAptitudes(),
     );
-    return {
-      ...slots,
-      classSkills: this.getPlannedClassSkills(classLevelEntries.map(({ klass }) => klass.id)),
-      classLevelIds,
-      perLevelSkillPoints: this.computeSkillPointsPerLevel(character, classLevelIds),
-      pools,
-    };
-  }
-
-  /** Each planned level's skill points, in the batch's order: a first level's no more than any other's. */
-  protected computeSkillPointsPerLevel(character: DetailedCharacter, classLevelIds: string[]): number[] {
-    const { bonusPerLevel } = character.components.skills.getSkillPointBases();
-    return this.computeSkillPointBasesPerLevel(character, classLevelIds).map((points) =>
-      SkillRules.levelPoints(points, bonusPerLevel),
-    );
+    return { ...slots, classLevelIds, pools };
   }
 
   /**
-   * A save's pooled picks (skill ranks, and feats and spells by pool) spread over its planned levels, each level taking
-   * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
-   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them; each level's
-   * skill points are counted with the plan's feats and spells (`countSkillPointsWithPicks`).
+   * A save's pooled picks (feats and spells by pool) spread over its planned levels, each level taking what its slots
+   * allow, in order, and what's past a pool's slots on the level of the feat that gives it room, or the last
+   * (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
    */
   protected distributePlannedPicks(planned: PlannedLevels, picks: LevelPicks, gains = this.computeLevelGains(planned)) {
-    const data = this.buildDistributionData(planned, this.countSkillPointsWithPicks(planned, picks, gains));
+    const { perLevelFeatSlots, perLevelSpellSlots } = gains;
+    const data = { levelCount: planned.classLevelEntries.length, perLevelFeatSlots, perLevelSpellSlots };
     return new PicksDistribution(data).distribute(
       picks,
       this.buildSpellLevelLookup(Object.values(picks.spells).flat()),
-      this.getAptitudeSources(picks.feats, data.perLevelFeatSlots),
+      this.getAptitudeSources(picks.feats, perLevelFeatSlots),
     );
   }
 
-  /**
-   * The class skills of planned levels, from their classes (`classIds`, one per level): each level's, in the ruleset's
-   * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
-   */
-  protected getPlannedClassSkills(classIds: string[]) {
-    const recordsOf = (classId: string) => this.dnd52.classSkillsOf(classId);
-    const perLevel = classIds.map((classId) => [...this.getClassSkillIds(recordsOf(classId))]);
-    const merged = this.getClassSkillIds([...new Set(classIds)].flatMap(recordsOf));
-    return { perLevel, merged };
+  /** The planned levels whose grants a step lists: each its class level, and whether it's the character's first. */
+  protected grantingLevelsOf({ classLevelEntries, savedLevelCount }: PlannedLevels): GrantingLevel[] {
+    return classLevelEntries.map(({ classLevel }, i) => ({
+      classLevelId: classLevel.id,
+      first: savedLevelCount + i === 0,
+    }));
   }
 
   /**
@@ -207,7 +149,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.advancements.length);
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
-    return levels.map(({ classId, level, abilityIncreases }, i) => {
+    return levels.map(({ classId, level }, i) => {
       // A refusal names the character's level it's about, and a class in its rules' word
       const about = `Level ${i + 1}: `;
       const word = this.rulesetData.labelOf("classes");
@@ -220,7 +162,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       const classLevel = this.dnd52.classLevelByClassAndLevel.get(`${classId}:${level}`);
       if (!classLevel) throw this.rulesetData.notFound("class-levels", { about });
 
-      return { klass, classLevel, abilityIncreases };
+      return { klass, classLevel };
     });
   }
 }

@@ -1,21 +1,16 @@
-import { type CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
-import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
 
-/** A character's last level removed, from its rows: the level that goes, and what its bonded creatures become. */
+/** A character's last level removed, from its rows: the level that goes. */
 export default class LevelRemoval<C> extends LevelUpBase<C> {
   /**
-   * The level the character took last, which the removal deletes with its picks, and what its bonded creatures
-   * (`bonded`, their rows) become without it: refused when it has no level.
+   * The level the character took last, which the removal deletes with its picks: refused when it has no level. It has
+   * no children to change.
    */
-  planRemoval(bonded: CharacterInput[]) {
+  planRemoval() {
     const level = this.character.rows.advancements.at(-1);
     if (!level) throw new RulesError("not-found", "No level to remove");
-    const projection = new CharacterProjection(this.character);
-    projection.dropLevel(level.id);
-    const without = this.build(projection);
-    return { ...this.planBondedOf(without, bonded), advancement: level };
+    return { ...LevelUpBase.NO_CHILDREN, advancement: level };
   }
 }

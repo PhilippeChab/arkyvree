@@ -12,7 +12,7 @@ import { formatFieldValues } from "@/shared/customization/fields.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
- * The feats, spells and languages a Pathfinder character has without a pick: those its modifiers grant (`set …possessed`, `set
+ * The feats, spells and languages a D&D 5th Edition character has without a pick: those its modifiers grant (`set …possessed`, `set
  * …known`), each given as its modifier applies in the build's rounds, behind its requirements as any modifier.
  */
 export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: B) {
@@ -34,6 +34,11 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       const languageId = languageSlug === undefined ? undefined : languageIdBySlug.get(languageSlug);
       if (languageId) this.components.languages.grant(languageId);
       return [];
+    }
+
+    /** The view's D&D 5th Edition lists and indices. */
+    private get dnd52(): Dnd52View {
+      return Dnd52View.of(this.rulesetData);
     }
 
     /**
@@ -65,13 +70,8 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       return joined ? [] : spell.modifiers;
     }
 
-    /** The view's Pathfinder lists and indices. */
-    private get dnd52(): Dnd52View {
-      return Dnd52View.of(this.rulesetData);
-    }
-
     /**
-     * Possesses the feat of `featId` without a pick, a modifier's grant (`given`) or a bonded creature's stat block's:
+     * Possesses the feat of `featId` without a pick, a modifier's grant (`given`):
      * one the character holds already (picked, granted by a class level, or possessed before) stays as it is, `given`
      * when a modifier gives it; one it doesn't is possessed and counted (`FeatsComponent.grant`) and listed with the
      * feats it has without a pick (`getVirtualFeats`). Its modifiers, which join the build behind their own requirements:

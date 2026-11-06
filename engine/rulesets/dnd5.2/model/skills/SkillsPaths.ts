@@ -28,7 +28,8 @@ const NAVIGATABLE_PATHS = [
   },
   {
     path: "proficiency",
-    description: "The Proficiency Bonus it adds: all of it proficient, twice with Expertise, half with Jack of All Trades",
+    description:
+      "The Proficiency Bonus it adds: all of it proficient, twice with Expertise, half with Jack of All Trades",
     type: "number" as const,
     requirementOnly: true,
   },

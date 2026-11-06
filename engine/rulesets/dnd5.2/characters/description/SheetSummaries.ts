@@ -3,7 +3,7 @@ import ClassLevels from "@/engine/rulesets/dnd5.2/characters/ClassLevels.ts";
 import { LEVEL_WORD } from "@/vocabulary/dnd5.2/classes.ts";
 
 /**
- * A Pathfinder character's classes, as its sheet reads them: each its class, the character's level in it, and its levels in
+ * A character's classes, as its sheet reads them: each its class, the character's level in it, and its levels in
  * it, in the order it took them.
  */
 type SheetClasses = Record<
@@ -16,7 +16,7 @@ type SheetClasses = Record<
 >;
 
 /**
- * A Pathfinder sheet's summary, its header's line: its classes, each at its level ("Fighter 3"), and its levels in each; and
+ * A sheet's summary, its header's line: its classes, each at its level ("Fighter 3"), and its levels in each; and
  * the words of its page's level actions.
  */
 export default class SheetSummaries {

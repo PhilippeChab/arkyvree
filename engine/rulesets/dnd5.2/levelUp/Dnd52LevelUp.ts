@@ -14,24 +14,19 @@ import Dnd52CharacterBuilder from "@/engine/rulesets/dnd5.2/model/Dnd52Character
 import ClassPicker from "@/engine/rulesets/dnd5.2/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd5.2/pickers/FeatPicker.ts";
 import SpellPicker from "@/engine/rulesets/dnd5.2/pickers/SpellPicker.ts";
-import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
-import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Character } from "@/shared/relations.ts";
-import { LEVEL_WORD } from "@/vocabulary/dnd5.2/classes.ts";
+import { FIXED_HIT_POINTS_BY_DIE, LEVEL_WORD } from "@/vocabulary/dnd5.2/classes.ts";
 
-import BondedCreatures from "./BondedCreatures.ts";
-import BondedPlans from "./BondedPlans.ts";
 import LevelPlans from "./LevelPlans.ts";
 import LevelRemoval from "./LevelRemoval.ts";
 import LevelsPlanning from "./LevelsPlanning.ts";
-import type { LevelUpRules } from "./LevelUpBase.ts";
+import LevelUpBase, { type LevelUpRules } from "./LevelUpBase.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 
 /**
- * The Pathfinder level-up, as the module answers the server's level flows, each from the rows the server read: a level's
- * steps, the plan's answer and a step's picker, a saved level as an edit's plan, what a level-up, an edit and a
- * removal write, checked in order (`LevelsPlanning`), and the bonded creatures the levels make; and the rules its flows
- * read (`LevelUpRules`).
+ * The D&D 5th Edition level-up, as the module answers the server's level flows, each from the rows the server read: a
+ * level's steps, the plan's answer and a step's picker, a saved level as an edit's plan, and what a level-up, an edit
+ * and a removal write, checked in order (`LevelsPlanning`); and the rules its flows read (`LevelUpRules`). A character
+ * has no children: no class of the 2024 rules levels a companion.
  */
 export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRules<DetailedCharacter> {
   /** A character level's word, which the engine's refusals and its sheets' summary name one by. */
@@ -48,7 +43,7 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
   }
 
   /**
-   * A Pathfinder level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills,
+   * A D&D 5th Edition level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills,
    * feats and spells.
    */
   override listSteps(view: RulesetView, character: CharacterInput, edited: boolean) {
@@ -75,59 +70,54 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
           ? { kind: read.kind, read: "options", picker }
           : { kind: read.kind, read: "groups", picker };
       }
-      case "classes": {
-        // Its skill points spread over the planned levels as the save spreads them
-        const plan = new LevelUpPlan(view, character, this);
-        return { kind: read.kind, read: "tracks", picker: new ClassPicker(view, character, read.planned, plan) };
-      }
+      case "classes":
+        return { kind: read.kind, read: "tracks", picker: new ClassPicker(view, character, read.planned) };
       case "spells":
         return { kind: read.kind, read: "options", picker: new SpellPicker(view, character, read.query) };
     }
   }
 
   /**
-   * A plan's level-up, read as its save writes it (its levels, each with its hit points and ability increases, and its
-   * picks, spread over them): the rows it writes, each level checked and the character with them unless `force`d, and
-   * what the master's bonded creatures become.
+   * A plan's level-up, read as its save writes it (its levels, each with its hit points, and its picks, spread over
+   * them): the rows it writes, each level checked and the character with them unless `force`d.
    */
   override planAddition(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    _children: CharacterInput[],
     plan: ResolvedPlan,
     force: boolean,
   ) {
     const levelUp = new LevelPlans(view, character, this).readLevelUp(plan);
-    return new LevelsPlanning(view, character, this).planLevels(bonded, levelUp, force);
+    return new LevelsPlanning(view, character, this).planLevels(levelUp, force);
   }
 
   /**
-   * A plan's edit of its saved level (`plan.editedAdvancement`), read as its save writes it (the level's hit points,
-   * ability increases and picks): what it writes, checked unless `force`d, and what the bonded creatures become with
-   * it.
+   * A plan's edit of its saved level (`plan.editedAdvancement`), read as its save writes it (the level's hit points and
+   * picks): what it writes, checked unless `force`d.
    */
   override planAdvancementEdit(
     view: RulesetView,
     character: CharacterInput,
-    bonded: CharacterInput[],
+    _children: CharacterInput[],
     plan: ResolvedEdit,
     force: boolean,
   ) {
     const edit = new LevelPlans(view, character, this).readEdit(plan);
-    return new LevelsPlanning(view, character, this).planEdit(bonded, plan.editedAdvancement, edit, force);
+    return new LevelsPlanning(view, character, this).planEdit(plan.editedAdvancement, edit, force);
   }
 
-  /** What a master's bonded creatures become as its saved levels make them. */
-  override planChildren(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
-    return new BondedCreatures(view, character, this).planBonded(bonded);
+  /** A character's children: none, as no class of the 2024 rules levels a companion. */
+  override planChildren() {
+    return LevelUpBase.NO_CHILDREN;
   }
 
-  /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
-  override planRemoval(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
-    return new LevelRemoval(view, character, this).planRemoval(bonded);
+  /** The character's last level removed: the level that goes. */
+  override planRemoval(view: RulesetView, character: CharacterInput) {
+    return new LevelRemoval(view, character, this).planRemoval();
   }
 
-  /** The Pathfinder character built from its rows. */
+  /** The D&D 5th Edition character built from its rows. */
   buildCharacter(view: RulesetView, input: CharacterInput) {
     return Dnd52CharacterBuilder.build(view, input);
   }
@@ -172,14 +162,6 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
   }
 
   /**
-   * What the ability increases of the level after `totalLevel` levels add up to: one at each level the ruleset's
-   * Settings give one (`LevelRules`).
-   */
-  getAbilityIncreaseTotal(view: RulesetView, totalLevel: number) {
-    return LevelRules.of(view).countAbilityIncreases(totalLevel);
-  }
-
-  /**
    * Each planned level's class and class level: within the rules' bounds (a class's last level, a character's), a
    * player character's class of the view, and one of its levels.
    */
@@ -191,13 +173,11 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
     return new LevelUpPlan(view, character, this).getPlannedClassLevels(...args);
   }
 
-  /** The hit points a level gains: 1 to its class's hit die, the die's average rounded up between. */
+  /**
+   * The hit points a level after a character's first gains, of a class with hit die `hd`: a roll of it, or the Fixed
+   * Hit Points by Class table's value, its average (`FIXED_HIT_POINTS_BY_DIE`: half the die, plus 1).
+   */
   hitPointsOf(hd: number) {
-    return { average: Math.ceil(hd / 2), max: hd, min: 1 };
-  }
-
-  /** What a master's bonded creatures become with it: each kind's creature removed, kept or made, at its hit dice. */
-  planBondedCreatures(view: RulesetView, master: DetailedCharacter, record: Character, bonded: CharacterInput[]) {
-    return new BondedPlans(Dnd52View.of(view.rulesetData)).planMasterCreatures(master, record, bonded);
+    return { average: FIXED_HIT_POINTS_BY_DIE[hd] ?? Math.floor(hd / 2) + 1, max: hd, min: 1 };
   }
 }

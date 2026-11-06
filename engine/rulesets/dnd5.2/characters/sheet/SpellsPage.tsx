@@ -5,22 +5,19 @@ import type SpellGroups from "@/engine/rulesets/dnd5.2/characters/description/Sp
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd5.2/entities/spells/fields.ts";
 import { formatFieldName } from "@/shared/customization/fields.ts";
 import {
-  SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
-  SPELL_DESCRIPTOR,
+  SPELL_CONCENTRATION,
   SPELL_DURATION,
-  SPELL_EFFECT,
-  SPELL_RANGE_TYPE,
-  SPELL_RESISTANCE,
+  SPELL_MATERIAL,
+  SPELL_RANGE,
+  SPELL_RITUAL,
   SPELL_SCHOOL,
-  SPELL_SUBSCHOOL,
-  SPELL_TARGET,
 } from "@/vocabulary/dnd5.2/fields/index.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
-import SpellsPerDayTable from "./SpellsPerDayTable.tsx";
+import SpellSlotsTable from "./SpellSlotsTable.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
@@ -28,41 +25,38 @@ import { FONT_SIZE, styles } from "./styles.ts";
  * each one out as its field's label.
  */
 const SPELL_FIELD_ABBR: Record<string, string> = {
-  [SPELL_SUBSCHOOL]: "SS",
-  [SPELL_DESCRIPTOR]: "Desc",
-  [SPELL_COMPONENT]: "Comp",
   [SPELL_CASTING_TIME]: "CT",
-  [SPELL_RANGE_TYPE]: "R",
-  [SPELL_TARGET]: "T",
-  [SPELL_EFFECT]: "Eff",
-  [SPELL_AREA_OF_EFFECT]: "Area",
+  [SPELL_RANGE]: "R",
+  [SPELL_COMPONENT]: "Comp",
+  [SPELL_MATERIAL]: "M",
   [SPELL_DURATION]: "Dur",
-  [SPELL_RESISTANCE]: "SR",
+  [SPELL_RITUAL]: "Rit",
+  [SPELL_CONCENTRATION]: "Conc",
 };
 
 /** Each spell field's label, as it's declared. */
 const SPELL_FIELD_LABELS = new Map<string, string>(
   Field.storedLeavesOf(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
 );
-/** The spell fields in a Pathfinder stat block's order (the order they're declared in); the others follow by name. */
+/** The spell fields in a stat block's order (the order they're declared in); the others follow by name. */
 const SPELL_FIELD_ORDER: string[] = Field.storedLeavesOf(SPELL_FIELDS.fields).map((field) => field.field);
 
 const SPELL_FIELD_ORDER_INDEX = new Map(SPELL_FIELD_ORDER.map((k, i) => [k, i]));
 
 /**
- * The sheet's spells page: the character's slots per day (`perDay`), then the spells it knows and has without a pick,
- * by list and spell level (`spellGroups`), as its sheet describes them.
+ * The sheet's spells page: the character's spell slots (`slots`), then the spells it knows and has without a pick, by
+ * list and spell level (`spellGroups`), as its sheet describes them.
  */
 function SpellsPage({
   name,
-  perDay,
+  slots,
   spellGroups,
 }: {
   name: string;
-  perDay: ReturnType<typeof SpellGroups.describePerDay>;
+  slots: ReturnType<typeof SpellGroups.describeSlots>;
   spellGroups: ReturnType<typeof SpellGroups.describe>;
 }) {
-  if (spellGroups.length === 0 && perDay.lists.length === 0) return null;
+  if (spellGroups.length === 0 && slots.lists.length === 0) return null;
 
   return (
     <Page size="A4" style={styles.page}>
@@ -71,7 +65,7 @@ function SpellsPage({
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Spells</Text>
 
-        <SpellsPerDayTable perDay={perDay} />
+        <SpellSlotsTable slots={slots} />
 
         {(() => {
           const presentKeys = new Set<string>();
@@ -120,7 +114,6 @@ function SpellsPage({
                   }}
                 >
                   {SPELL_LEVEL_LABELS[group.level]}
-                  {group.uses != null ? ` — ${group.uses}/day` : ""}
                 </Text>
 
                 {/* Table header */}

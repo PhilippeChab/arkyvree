@@ -1,4 +1,3 @@
-import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import { CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 
@@ -10,33 +9,20 @@ import type { LevelPicks, PreviewRequest } from "./requests.ts";
 /** The level-up wizard's preview of the levels a character plans, from its rows: its steps, and each level's details. */
 export default class LevelUpPreview extends PlannedLevelsState {
   /**
-   * The level-up wizard's preview of the planned levels: its skills, feats, spells and attributes steps (whether every
-   * level's ability increase is picked among them), each level's class, hit die and skill points, and where each pool's
-   * next pick goes. The skills step spends the form's points (`picks.skills`, by skill, in its order) over the planned
-   * levels, as their save spreads them; the feats and spells steps fit the form's feats and spells (`picks`) to their
-   * pools, as a save would take them, and say what fits (`fitted`) and each pool's room for them. The skill points are
-   * the character's holding what fits, as a save counts them (a racial ability pick on Intelligence adds to them).
+   * The level-up wizard's preview of the planned levels: its feats and spells steps, each level's class, hit die and
+   * hit points (a character's first level's, its die's highest), and where each pool's next pick goes. The feats and
+   * spells steps fit the form's feats and spells (`picks`) to their pools, as a save would take them, and say what fits
+   * (`fitted`) and each pool's room for them.
    */
   private buildLevelUpPreview(planned: PlannedLevels, picks: Partial<LevelPicks>) {
-    const { character, savedLevelCount, classLevelEntries } = planned;
+    const { classLevelEntries, savedLevelCount } = planned;
     const gains = this.computeLevelGains(planned);
-    const { classSkills, classLevelIds } = gains;
+    const { classLevelIds } = gains;
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
-    const perLevelSkillPoints = this.computeSkillPointsPerLevel(fitted.character, classLevelIds);
-    const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd52, this.countOwnPicks(fitted.picks));
     return {
-      skills: this.skillStep(fitted.character, classSkills.merged, levels, picks.skills ?? {}),
-      feats: { ...this.featStep(pools, classLevelIds), fitted: fitted.picks.feats },
+      feats: { ...this.featStep(pools, this.grantingLevelsOf(planned)), fitted: fitted.picks.feats },
       spells: { ...this.spellStep(pools, classLevelIds), fitted: fitted.picks.spells },
-      attributes: {
-        abilityIncreaseLevels: this.getAbilityIncreaseLevels(savedLevelCount, classLevelEntries.length),
-        attributes: character.components.abilities.getAbilitiesWithIds(),
-        // Every planned level raises its abilities as its save checks them: the step's Next waits for it
-        picked: classLevelEntries.every(({ abilityIncreases }, i) =>
-          this.checks.areAbilityIncreasesPicked(savedLevelCount + i, abilityIncreases),
-        ),
-      },
       // Per-level data for HP step, review, and auto-assignment
       levelDetails: classLevelEntries.map(({ klass, classLevel }, i) => ({
         classId: klass.id,
@@ -44,20 +30,10 @@ export default class LevelUpPreview extends PlannedLevelsState {
         classLevelId: classLevel.id,
         level: classLevel.position,
         hd: klass.fields[CLASS_HD],
-        hitPoints: this.rules.hitPointsOf(klass.fields[CLASS_HD]),
-        skillPoints: perLevelSkillPoints[i],
+        hitPoints: this.levelHitPointsOf(klass, savedLevelCount + i === 0),
       })),
       nextPickLevels: this.nextPickLevelsOf(gains, fitted.picks),
-      perLevelSkillPoints,
     };
-  }
-
-  /** The planned levels (by index) that take an ability increase, after the character's `savedLevelCount` levels. */
-  private getAbilityIncreaseLevels(savedLevelCount: number, plannedCount: number) {
-    const levelRules = LevelRules.of(this.view);
-    const levels: number[] = [];
-    for (let i = 0; i < plannedCount; i++) if (levelRules.isAbilityIncreaseLevel(savedLevelCount + i)) levels.push(i);
-    return levels;
   }
 
   /**
@@ -95,16 +71,10 @@ export default class LevelUpPreview extends PlannedLevelsState {
   }
 
   /**
-   * The level-up wizard's preview of the levels the character plans (`levels`), each with its ability increases (raising
-   * nothing at a level that takes none: the wizard's pick for a level the plan moved), and of the picks made over them so
-   * far (`picks`: the skill points spent, by skill, in the form's order, and the feats and spells picked, by pool).
+   * The level-up wizard's preview of the levels the character plans (`levels`), and of the picks made over them so far
+   * (`picks`: the feats and spells picked, by pool).
    */
   describePreview({ levels, picks = {} }: PreviewRequest) {
-    const savedLevelCount = this.character.rows.advancements.length;
-    const levelRules = LevelRules.of(this.view);
-    const increased = levels.map((level, i) =>
-      levelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },
-    );
-    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedClassLevels(increased)), picks);
+    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedClassLevels(levels)), picks);
   }
 }

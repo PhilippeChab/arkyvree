@@ -2,7 +2,12 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd52Components } from "@/engine/rulesets/dnd5.2/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, isLeafOfKind, type OperatorKind, type TargetPath } from "@/shared/customization/target.ts";
+import {
+  deriveSegmentLabels,
+  isLeafOfKind,
+  type OperatorKind,
+  type TargetPath,
+} from "@/shared/customization/target.ts";
 
 const NAVIGATABLE_BACKGROUND_PATHS = [
   { path: "name", description: "Background name (e.g., Sage)", type: "string" as const, requirementOnly: true },

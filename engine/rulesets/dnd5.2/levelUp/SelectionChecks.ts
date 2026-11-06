@@ -3,10 +3,8 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatRules from "@/engine/rulesets/dnd5.2/rules/FeatRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import { type Klass } from "@/engine/rulesets/dnd5.2/view/rows.ts";
-import { CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
 
-import type { LevelUpRules } from "./LevelUpBase.ts";
+import type { LevelHitPoints } from "./LevelUpBase.ts";
 import type { LevelPicks } from "./requests.ts";
 
 /** An edited level's own saved feats and spells, each in its pool: the level's, whatever else holds them. */
@@ -15,11 +13,11 @@ interface KeptPicks {
   spells: StoredPick[];
 }
 
-/** The level's hit points and selections a check reads, with its class. */
+/** The level's hit points and selections a check reads, with the hit points its class gains there (`hitPoints`). */
 interface LevelChecked {
   feats: Record<string, string[]>;
+  hitPoints: LevelHitPoints;
   hp: number;
-  klass: Pick<Klass, "fields">;
   spells: Record<string, string[]>;
 }
 
@@ -64,15 +62,11 @@ export type Holding = (picks: PoolPicks) => HoldingCharacter;
 /**
  * A level's selections checked against the ruleset's view (`view`): linked to their pools, and not taken twice (a
  * non-stackable feat the character has, a spell in a pool it knows it in, the level's other picks' gifts too); and its
- * hit points and ability increases, within what the level-up rules give it (`rules`). Each selection is the ruleset's,
- * by the id its view keys it by: the level-up handle resolved the request when it entered, and refused a pick the view
- * lacks (`AdvancementRequests`).
+ * hit points, within what its class gives it there. Each selection is the ruleset's, by the id its view keys it by:
+ * the level-up handle resolved the request when it entered, and refused a pick the view lacks (`AdvancementRequests`).
  */
 export default class SelectionChecks {
-  constructor(
-    private readonly view: RulesetView,
-    private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
-  ) {
+  constructor(private readonly view: RulesetView) {
     this.feats = FeatRules.of(view.rulesetData);
   }
 
@@ -97,19 +91,9 @@ export default class SelectionChecks {
     throw new RulesError("invalid", `Spell "${name}" cannot be picked more than once at a level`);
   }
 
-  /**
-   * What's wrong with the ability increases of the level after `totalLevel` levels: none when they raise its abilities
-   * by what its rules give it (none where they give none), each ability once.
-   */
-  private findAbilityIncreaseError(totalLevel: number, increases: PickPlan[]) {
-    const total = this.rules.getAbilityIncreaseTotal(this.view, totalLevel);
-    if (increases.length > 0 && total === 0) return "Ability increase is not available at this level";
-    if (increases.length === 0 && total > 0) return "Ability increase is required at this level";
-    if (new Set(increases.map(({ entityId }) => entityId)).size < increases.length)
-      return "An ability is increased twice at this level";
-    if (increases.reduce((sum, { amount }) => sum + amount!, 0) !== total)
-      return `Ability increases must add up to ${total} at this level`;
-    return undefined;
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.view.rulesetData);
   }
 
   /**
@@ -154,11 +138,6 @@ export default class SelectionChecks {
     return Object.entries(picks).flatMap(([viaId, ids]) =>
       ids.map((entityId): LevelPick => ({ entityId, name: byId.get(entityId)?.name ?? entityId, step, viaId })),
     );
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.view.rulesetData);
   }
 
   /**
@@ -257,29 +236,13 @@ export default class SelectionChecks {
   }
 
   /**
-   * Whether the level after `totalLevel` levels raises its abilities by what its rules give it, as its save checks them
-   * (`checkAbilityIncreases`): a level that takes none is picked with none.
-   */
-  areAbilityIncreasesPicked(totalLevel: number, increases: PickPlan[]) {
-    return this.findAbilityIncreaseError(totalLevel, increases) === undefined;
-  }
-
-  /**
-   * Throws when the level after `totalLevel` levels raises its abilities by other than what its rules give it (none
-   * where they give none), or raises one twice. `label` names the level in the message ("Level 2: ").
-   */
-  checkAbilityIncreases(totalLevel: number, increases: PickPlan[], label = "") {
-    const error = this.findAbilityIncreaseError(totalLevel, increases);
-    if (error) throw new RulesError("invalid", `${label}${error}`);
-  }
-
-  /**
-   * A level's hit points and selections checked, for both the level save and the level-up's: each selection linked to
-   * its pool, no non-stackable feat or spell picked twice. Whether the character holds what it picks already is the
+   * A level's hit points and selections checked, for both the level save and the level-up's: its hit points within its
+   * class's (`hitPoints`: a character's first level's, its die's highest), each selection linked to its pool, no
+   * non-stackable feat or spell picked twice. Whether the character holds what it picks already is the
    * save's next check (`checkPicksNotHeld`).
    */
-  checkLevel({ klass, hp, feats, spells }: LevelChecked) {
-    const { max, min } = this.rules.hitPointsOf(klass.fields[CLASS_HD]);
+  checkLevel({ hitPoints, hp, feats, spells }: LevelChecked) {
+    const { max, min } = hitPoints;
     if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
     // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.

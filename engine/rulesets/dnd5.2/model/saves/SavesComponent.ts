@@ -11,8 +11,8 @@ interface SavesData {
     readonly ability: number;
     misc: number;
     name: string;
-    proficient: boolean;
     readonly proficiency: number;
+    proficient: boolean;
     readonly total: number;
   };
 }

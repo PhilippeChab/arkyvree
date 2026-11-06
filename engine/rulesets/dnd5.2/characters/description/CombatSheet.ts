@@ -1,45 +1,37 @@
 import type { SheetStat } from "@/engine/core/module/index.ts";
+import type { CarryingData } from "@/engine/rulesets/dnd5.2/model/combat/CarryingComponent.ts";
 import type { SetArmorClass, WeaponSet, WeaponSlot } from "@/engine/rulesets/dnd5.2/model/combat/CombatState.ts";
-import type { EncumbranceData } from "@/engine/rulesets/dnd5.2/model/combat/EncumbranceComponent.ts";
-import AttackRules from "@/engine/rulesets/dnd5.2/rules/AttackRules.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd5.2/rules/InventorySlots.ts";
-import { capitalize, formatSigned } from "@/shared/text.ts";
-import { COMBAT_RULES } from "@/vocabulary/dnd5.2/combat.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 /**
- * How far an attack reaches, as a sheet prints it: a ranged or thrown attack's farthest range ("1,100 ft."), and its
- * penalty for each range increment past the first ("-2 / 110 ft."), empty when it reaches only one (a net's); both
- * empty in melee, or without a range increment.
+ * One attack a sheet lists for a weapon, as the sheet prints it: its label (the slot, "thrown" added), to-hit, damage
+ * and its type, the rolls it scores a critical hit on, its range (normal and long) and its mastery, when its wielder
+ * uses it.
  */
-interface AttackRange {
-  increment: string;
-  range: string;
-}
-
-/**
- * One attack a sheet lists for a weapon, as the sheet prints it: its label (the slot, "thrown" and "two weapons"
- * added), to-hit, damage (a double weapon's other end's its own), critical, range, range increment and damage types.
- */
-interface AttackRow extends AttackRange {
+interface AttackRow {
   attack: string;
   critical: string;
   damage: string;
   key: string;
   label: string;
+  mastery: string;
+  range: string;
   types: string;
 }
 
 /**
- * What a sheet reads of a character's combat: its stats, its base attack bonus, its speed and its weapon sets, each with
- * its armor class (its component's `getCombat`).
+ * What a sheet reads of a character's combat: its stats, its Proficiency Bonus, the attacks it makes in an Attack
+ * action, the rolls it scores a critical hit on, what it carries, and its weapon sets, each with its Armor Class (its
+ * component's `getCombat`).
  */
 interface CombatStats {
-  bab: number;
-  cmb: { total: number };
-  cmd: { total: number };
-  encumbrance: EncumbranceData;
+  attacks: number;
+  carrying: CarryingData;
+  critical: { range: number };
   hp: { total: number };
   initiative: { total: number };
+  proficiency: number;
   speed: { total: number };
   weaponsets: Record<
     string,
@@ -59,7 +51,7 @@ interface SheetWeapon {
 
 /**
  * A weapon set as a sheet lists it: its index, stored from 0, the names of the items its hands hold (an unarmed strike
- * holds none), its armor class (and its boxes, labelled: `armorClass`), and its weapons with their attacks.
+ * holds none), its Armor Class (and its box, labelled: `armorClass`), and its weapons with their attacks.
  */
 interface SheetWeaponSet {
   ac: SheetArmorClass;
@@ -69,123 +61,79 @@ interface SheetWeaponSet {
   weapons: SheetWeapon[];
 }
 
-/** What a sheet reads of a weapon: its name, proficiency and kind, and its attacks' to-hit, damage, critical and range. */
+/** What a sheet reads of a weapon: its name, proficiency, properties, range and mastery, and its to-hit and damage. */
 interface SheetWeaponSource extends Pick<
   WeaponSlot,
-  "itemId" | "maxRange" | "name" | "natural" | "offend" | "proficient" | "range" | "ranged" | "thrown" | "twoweapon"
+  "itemId" | "mastery" | "name" | "properties" | "proficient" | "range"
 > {
-  damage: Pick<WeaponSlot["damage"], "critical" | "total" | "types">;
+  damage: Pick<WeaponSlot["damage"], "total" | "type">;
   tohit: Pick<WeaponSlot["tohit"], "total">;
 }
 
-/** A weapon set's armor class as a sheet lists it: AC, touch AC and flat-footed AC. */
-type SheetArmorClass = Pick<SetArmorClass, "flatfooted" | "total" | "touch">;
-
-/** The range of an attack that has none: a melee one's, or a ranged one's without a range increment. */
-const NO_RANGE: AttackRange = { range: "", increment: "" };
+/** A weapon set's Armor Class as a sheet lists it: its total. */
+type SheetArmorClass = Pick<SetArmorClass, "total">;
 
 /** A weapon slot's label, as an item's location names it. */
 const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
 
 /**
- * A character's combat as its sheets print it, the web sheet's and the PDF's alike: its base attack bonus's attacks,
- * its speed in feet, and each weapon's attacks, written as the Core Rulebook writes them.
+ * A character's combat as its sheets print it, the web sheet's and the PDF's alike: its Proficiency Bonus, its speed
+ * in feet, and each weapon's attacks, written as the SRD 5.2.1 writes them.
  */
 export default class CombatSheet {
-  /** A weapon set's armor class as its values stand: AC, touch AC and flat-footed AC, read once. */
-  private static armorClass({ total, touch, flatfooted }: SheetArmorClass): SheetArmorClass {
-    return { total, touch, flatfooted };
-  }
-
   /**
-   * A weapon's range, shot or thrown: the farthest it reaches ("1,100 ft."), and the penalty for each range increment
-   * past the first, signed as the sheet signs a bonus ("-2 / 110 ft."), none when it reaches no farther than its first
-   * (a net's). None without a range increment.
+   * A weapon's attacks, a row each: its own (melee or ranged), then a melee weapon's thrown one if it has the Thrown
+   * property, which reaches as far as its range.
    */
-  private static attackRange(weapon: SheetWeaponSource): AttackRange {
-    if (weapon.range <= 0) return NO_RANGE;
-    const penalty = formatSigned(COMBAT_RULES.RANGE_INCREMENT_PENALTY);
-    return {
-      range: CombatSheet.formatFeet(weapon.maxRange),
-      increment: weapon.maxRange > weapon.range ? `${penalty} / ${CombatSheet.formatFeet(weapon.range)}` : "",
-    };
-  }
-
-  /**
-   * A weapon's attacks, a row each: its own (melee or ranged), then a melee weapon's thrown one if it has a range, then
-   * the same with two weapons if its set holds one in each hand (or it's a double weapon), and a double weapon's other
-   * end. A ranged or thrown row gives its range and its range increment.
-   */
-  private static attackRows(weapon: SheetWeaponSource, slot: string): AttackRow[] {
-    const range = CombatSheet.attackRange(weapon);
-    const row = (ways: string[], attack: number[], ranged: boolean, damage?: string): AttackRow => {
+  private static attackRows(weapon: SheetWeaponSource, slot: string, critical: string): AttackRow[] {
+    const range = weapon.range ? `${weapon.range.normal}/${weapon.range.long} ft.` : "";
+    const row = (ways: string[], ranged: boolean): AttackRow => {
       const label = [slot, ...ways].join(", ");
       return {
         key: label,
         label,
-        attack: CombatSheet.formatAttacks(attack),
-        damage: damage ?? weapon.damage.total,
-        critical: CombatSheet.formatCritical(weapon.damage.critical),
-        ...(ranged ? range : NO_RANGE),
-        types: weapon.damage.types.join(", "),
+        attack: formatSigned(weapon.tohit.total),
+        damage: weapon.damage.total,
+        critical,
+        range: ranged ? range : "",
+        mastery: weapon.mastery ?? "",
+        types: weapon.damage.type,
       };
     };
-
-    const rows = [row([], weapon.tohit.total, weapon.ranged)];
-    if (weapon.thrown) rows.push(row(["thrown"], weapon.thrown.total, true));
-    if (weapon.twoweapon) {
-      const { damage, thrown, total } = weapon.twoweapon;
-      rows.push(row(["two weapons"], total, weapon.ranged, damage || undefined));
-      if (thrown) rows.push(row(["thrown", "two weapons"], thrown, true));
-    }
-    if (weapon.offend) rows.push(row(["other end"], weapon.offend.total, weapon.ranged, weapon.offend.damage));
-    return rows;
+    const thrown = weapon.properties.includes("Thrown");
+    const ranged = weapon.range !== null && !thrown;
+    return thrown ? [row([], false), row(["thrown"], true)] : [row([], ranged)];
   }
 
-  /** An attack's to-hit, its iterative attacks signed and joined ("+9/+4"); "—" for none. */
-  private static formatAttacks(attack: number[]): string {
-    if (attack.length === 0) return "—";
-    return attack.map((bonus) => formatSigned(bonus)).join("/");
+  /** The rolls an attack scores a critical hit on, `range` of them up to the 20: "20", "19–20", "18–20". */
+  private static formatCritical(range: number): string {
+    return range > 1 ? `${21 - range}–20` : "20";
   }
 
-  /**
-   * A weapon's critical as the Core Rulebook writes it: its multiplier alone for a threat on a 20 ("×3"), else its threat range
-   * before it ("19–20/×2"). `range` is how many rolls threaten, the 20 and those under it.
-   */
-  private static formatCritical(critical: WeaponSlot["damage"]["critical"]): string {
-    const multiplier = `×${critical.multiplier}`;
-    return critical.range > 1 ? `${21 - critical.range}–20/${multiplier}` : multiplier;
-  }
-
-  /** A distance in feet as the Core Rulebook writes it: "30 ft.", "1,000 ft.". */
+  /** A distance in feet as the SRD writes it: "30 ft.", "1,000 ft.". */
   private static formatFeet(feet: number): string {
     return `${feet.toLocaleString("en-US")} ft.`;
   }
 
-  /** The label a sheet gives a weapon: its slot's, or a natural attack's kind ("Primary", "Secondary"), whatever slot holds it. */
-  private static slotLabel(weapon: SheetWeaponSource, slot: keyof typeof SLOT_LABELS): string {
-    return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
-  }
-
   /**
-   * The weapon sets, by their index: each one's armor class, as its values stand, the items its hands hold (its
-   * weapons', a natural attack and an unarmed strike holding none, then its shield's), and each weapon with its
-   * attacks. A set that holds no weapon (a shield alone) is a loadout all the same.
+   * The weapon sets, by their index: each one's Armor Class, as its values stand, the items its hands hold (its
+   * weapons', an unarmed strike holding none, then its shield's), and each weapon with its attacks. A set that holds no
+   * weapon (a shield alone) is a loadout all the same.
    */
-  private static weaponSets(weaponsets: CombatStats["weaponsets"]): SheetWeaponSet[] {
+  private static weaponSets(weaponsets: CombatStats["weaponsets"], critical: string): SheetWeaponSet[] {
     return Object.entries(weaponsets)
       .sort(([a], [b]) => Number(a) - Number(b))
       .map(([set, slots]) => {
         const held = WEAPON_SET_SLOTS.flatMap((slot) => slots[slot] ?? []);
         return {
           set: Number(set),
-          ac: CombatSheet.armorClass(slots.ac),
+          ac: { total: slots.ac.total },
           armorClass: CombatSheet.describeArmorClass(slots.ac),
           held: [...held.filter((weapon) => weapon.itemId).map((weapon) => weapon.name), ...slots.shield.names],
           weapons: WEAPON_SET_SLOTS.flatMap((slot) => {
             const weapon = slots[slot];
             if (!weapon) return [];
-            const rows = CombatSheet.attackRows(weapon, CombatSheet.slotLabel(weapon, slot));
+            const rows = CombatSheet.attackRows(weapon, SLOT_LABELS[slot], critical);
             return [{ name: weapon.name, proficient: weapon.proficient, rows }];
           }),
         };
@@ -193,70 +141,51 @@ export default class CombatSheet {
   }
 
   /**
-   * The character's combat (`combat`, its component) as its sheets print it: its stats, its base attack bonus's
-   * attacks a round ("+11/+6/+1"), its speed in feet ("30 ft."), each weapon set's armor class and attacks (the sets
-   * themselves, as the rules hold them, left out, and the armor class's parts, which no sheet breaks down), and whether
-   * the character has weapon sets (`hasWeaponSets`): an item in a set's hand, without which its one loadout, its first
-   * set, striking unarmed, is shown with no set's heading.
+   * The character's combat (`combat`, its component) as its sheets print it: its stats, its Proficiency Bonus
+   * ("+2"), its speed in feet ("30 ft."), each weapon set's Armor Class and attacks (the sets themselves, as the rules
+   * hold them, left out), whether the character has weapon sets (`hasWeaponSets`: an item in a set's hand, without
+   * which its one loadout, its first set, striking unarmed, is shown with no set's heading), and what it carries.
    */
   static describe<C extends CombatStats & { ac: unknown }>(combat: { getCombat(): C }) {
     const { ac: _parts, weaponsets, ...stats } = combat.getCombat();
-    const weaponSets = CombatSheet.weaponSets(weaponsets);
-    const babLabel = CombatSheet.formatBab(stats.bab);
+    const weaponSets = CombatSheet.weaponSets(weaponsets, CombatSheet.formatCritical(stats.critical.range));
+    const proficiencyLabel = formatSigned(stats.proficiency);
     const speedLabel = CombatSheet.formatFeet(stats.speed.total);
-    const hp = { label: "HP", value: String(stats.hp.total) };
-    const bab = { label: "BAB", value: babLabel };
-    const speed = { label: "Speed", value: speedLabel };
     return {
       ...stats,
-      babLabel,
+      proficiencyLabel,
       speedLabel,
       weaponSets,
       hasWeaponSets: weaponSets.some(({ held }) => held.length > 0),
-      load: CombatSheet.describeLoad(stats.encumbrance),
-      // Its line, in the PDF's order, and what a bonded creature's summary shows of it
+      load: CombatSheet.describeLoad(stats.carrying),
+      // Its line, in the PDF's order
       stats: [
-        hp,
+        { label: "HP", value: String(stats.hp.total) },
         { label: "Initiative", value: formatSigned(stats.initiative.total) },
-        speed,
-        bab,
-        { label: "CMB", value: formatSigned(stats.cmb.total) },
-        { label: "CMD", value: String(stats.cmd.total) },
+        { label: "Speed", value: speedLabel },
+        { label: "Proficiency Bonus", value: proficiencyLabel },
+        { label: "Attacks", value: String(stats.attacks) },
       ] satisfies SheetStat[],
-      summary: [hp, bab, speed] satisfies SheetStat[],
     };
   }
 
-  /** A weapon set's armor class in its three boxes: its AC, its touch AC and its flat-footed AC. */
+  /** A weapon set's Armor Class in its box. */
   static describeArmorClass(ac: SheetArmorClass): SheetStat[] {
-    return [
-      { label: "AC", value: String(ac.total) },
-      { label: "Touch", value: String(ac.touch) },
-      { label: "Flat-footed", value: String(ac.flatfooted) },
-    ];
+    return [{ label: "AC", value: String(ac.total) }];
   }
 
   /**
-   * The load a character carries: its carried weight and its loads' limits, each with its label and a short one for a
-   * box (`figures`, in pounds), and its load past light, how it reads and how grave it is (`status`: none for light).
+   * What a character carries, against what it can: its carried weight, its carrying capacity and what it can drag, lift
+   * or push, each with its label and a short one for a box (`figures`, in pounds), and whether it carries more than it
+   * can (`status`: its speed is then 5 feet at most; none otherwise).
    */
-  static describeLoad(encumbrance: EncumbranceData) {
+  static describeLoad(carrying: CarryingData) {
     const figures = [
-      { label: "Carried Weight", shortLabel: "Carried", weight: encumbrance.carriedweight },
-      { label: "Light", shortLabel: "Light", weight: encumbrance.lightload },
-      { label: "Medium", shortLabel: "Medium", weight: encumbrance.mediumload },
-      { label: "Heavy", shortLabel: "Heavy", weight: encumbrance.heavyload },
+      { label: "Carried Weight", shortLabel: "Carried", weight: carrying.carriedweight },
+      { label: "Carrying Capacity", shortLabel: "Capacity", weight: carrying.capacity },
+      { label: "Drag, Lift, or Push", shortLabel: "Drag/Lift", weight: carrying.draglift },
     ];
-    const { load } = encumbrance;
-    const tones = { heavy: "warning", medium: "info", overloaded: "error" } as const;
-    const status = load && load !== "light" ? { label: capitalize(load), tone: tones[load] } : null;
+    const status = carrying.overloaded ? { label: "Over Capacity", tone: "error" as const } : null;
     return { figures, status };
-  }
-
-  /**
-   * A base attack bonus as the sheets and a class's table write it: its attacks a round, signed and joined ("+6/+1").
-   */
-  static formatBab(bab: number): string {
-    return CombatSheet.formatAttacks(AttackRules.listIterativeAttacks(bab));
   }
 }

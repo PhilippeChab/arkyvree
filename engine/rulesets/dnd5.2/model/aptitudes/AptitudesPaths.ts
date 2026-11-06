@@ -14,7 +14,8 @@ import {
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 
-const ALLOWED_ENTITY_TYPES = ["feats", "class-levels", "races"];
+/** The kinds whose modifiers give a pool room: a feat, a class level, a species and a background. */
+const ALLOWED_ENTITY_TYPES = ["feats", "class-levels", "species", "backgrounds"];
 const NAVIGATABLE_PATHS = [
   {
     path: "uses",

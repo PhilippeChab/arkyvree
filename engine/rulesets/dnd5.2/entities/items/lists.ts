@@ -1,7 +1,7 @@
 import type { ListDeclaration } from "@/engine/core/module/index.ts";
 import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd5.2/fields/index.ts";
 
-/** A Pathfinder item's list: its name, type, template, cost and weight, its description. */
+/** A item's list: its name, type, template, cost and weight, its description. */
 export const ITEM_LIST: ListDeclaration = {
   nameShare: 25,
   columns: [

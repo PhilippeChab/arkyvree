@@ -20,7 +20,7 @@ import type {
 } from "./loadedEntities.ts";
 
 /**
- * What a Pathfinder character has of its ruleset's entities (`partsOf`): its data past core's, but its own row and the
+ * What a D&D 5th Edition character has of its ruleset's entities (`partsOf`): its data past core's, but its own row and the
  * ruleset's Settings (`loadOwn`); and its classes' ids, whose modifiers it takes once each (`sourcesOf`).
  */
 type LoadedParts = Omit<LoadedCharacterData, keyof LoadedCharacter | "character"> & {
@@ -28,7 +28,7 @@ type LoadedParts = Omit<LoadedCharacterData, keyof LoadedCharacter | "character"
 };
 
 /**
- * What a Pathfinder character is built from, past what core loads (`LoadedCharacter`, its inventory's items Pathfinder's): its rows,
+ * What a D&D 5th Edition character is built from, past what core loads (`LoadedCharacter`, its inventory's items the module's): its rows,
  * as its ruleset's view composes them, and what they read of the view (its classes' fields, its skills' fields). The
  * ruleset's own lists the build reads off the view itself.
  */
@@ -51,8 +51,8 @@ export interface LoadedCharacterData extends LoadedCharacter<Item> {
 }
 
 /**
- * The Pathfinder loader, on core's (`CharacterDataLoader`): what a character has of its ruleset's entities (its levels, its
- * picks and grants, its classes, race and languages), each with its customizations from the view, the sources of its
+ * The D&D 5th Edition loader, on core's (`CharacterDataLoader`): what a character has of its ruleset's entities (its levels, its
+ * picks and grants, its classes, species, background and languages), each with its customizations from the view, the sources of its
  * modifiers in the order they apply, and its own row, ability scores and the ruleset's Settings. What its modifiers
  * grant it (a feat, a spell, a language) isn't loaded: a grant gives it as it applies, in the build's rounds behind its
  * requirements (`PossessesVirtually`).
@@ -64,7 +64,7 @@ export default class DetailedCharacterDataLoader extends include(
   ReadsRuleset,
 ) {
   /**
-   * The character's data: core's (`loaded`, its inventory's items Pathfinder's, as its ruleset's view holds them), its parts,
+   * The character's data: core's (`loaded`, its inventory's items the module's, as its ruleset's view holds them), its parts,
    * its own row, and the ruleset's Settings.
    */
   protected override loadOwn(
@@ -90,11 +90,19 @@ export default class DetailedCharacterDataLoader extends include(
 
     const abilityLookup = new Map(dnd52.abilities.map((a) => [a.id, a.name]));
     const levels = this.sortLevels(rows.advancements, rows.picks);
-    const { languages, classLevelsRaw, classes, classIds } = this.readCachedRows(rows, rulesetData, levels.classLevelIds);
+    const { languages, classLevelsRaw, classes, classIds } = this.readCachedRows(
+      rows,
+      rulesetData,
+      levels.classLevelIds,
+    );
     const { feats, grantCountsByPool, spells } = this.buildPicks(rows.picks, rulesetData, levels);
 
-    // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
-    const { classLevels } = this.toCustomizedClassLevels(classLevelsRaw, rulesetData);
+    // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps. The character's first
+    // level's requirements are a class's multiclass prerequisites, which a first class doesn't meet
+    const firstLevelId = levels.advancements[0]?.entryId;
+    const classLevels = this.toCustomizedClassLevels(classLevelsRaw, rulesetData).classLevels.map((level) =>
+      level.id === firstLevelId && level.position === 1 ? { ...level, requirements: [] } : level,
+    );
     const classFields = this.readClassFields(classIds, rulesetData, abilityLookup);
     const dcAbilities = { classSpellcastingAbilityMap: classFields.classSpellcastingAbilityMap, classLevels };
     return {

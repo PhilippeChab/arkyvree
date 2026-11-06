@@ -3,7 +3,6 @@ import type LevelUpBase from "@/engine/rulesets/dnd5.2/levelUp/LevelUpBase.ts";
 import type { FeatSlots, SpellSlots } from "@/engine/rulesets/dnd5.2/levelUp/PicksDistribution.ts";
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd5.2/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
-import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -22,8 +21,9 @@ interface SlotDeltas {
 /**
  * Each planned level's feat and spell slots, from the ruleset's modifiers rather than a character build per level:
  * what its class level's modifiers and the feats it grants add to a pool (`aptitudes.<slug>.allowed`, a spell level's
- * `aptitudes.<slug>.<level>.allowed`), and the general feats each character level gives, by the ruleset's Settings.
- * The character's unspent slots (a human's bonus feat) go to the first level.
+ * `aptitudes.<slug>.<level>.allowed`), its starting proficiencies' among them at a class's first level (a fighter's
+ * skill picks). The character's unspent slots (a human's Skillful pick, a background's ability scores) go to the first
+ * level.
  */
 export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCharacter>>>(Base: B) {
   abstract class PlanningAptitudeSlots extends Base {
@@ -71,33 +71,27 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
     }
 
     /**
-     * A planned level's slot deltas: its class level's modifiers, the modifiers of the feats granted there (its
-     * `grants` links' targets), and the general feats it gives (`generalFeats`, its ruleset's Settings').
+     * A planned level's slot deltas: its class level's modifiers, and the modifiers of the feats granted there (its
+     * `grants` links' targets, and its starting proficiencies at a class's first level).
      */
     private levelDeltas(
       classLevelId: string,
       autoFeatRecords: readonly { toId: string }[],
-      generalFeats: number,
       featSlots: FeatSlots,
       spellSlots: SpellSlots,
     ): SlotDeltas {
       const deltas: SlotDeltas = { allKnown: new Set(), feats: {}, spells: {} };
-      const { aptitudeIdBySlug } = this.dnd52;
       const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
 
       add(modifiersBySource.get(classLevelId) ?? []);
       for (const grant of autoFeatRecords) add(modifiersBySource.get(grant.toId) ?? []);
-
-      const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
-      if (generalAptId && featSlots[generalAptId] && generalFeats > 0)
-        deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalFeats;
       return deltas;
     }
 
     /**
-     * Each planned level's slots (`classLevelIds`, with the feats each grants, after the character's
-     * `savedLevelCount` levels) in the character's feat and spell pools. `baselineAptitudes` are the character's
+     * Each planned level's slots (`classLevelIds`, with the feats each grants, after the character's levels) in the
+     * character's feat and spell pools. `baselineAptitudes` are the character's
      * aptitudes as its sheet has them: a pool's counts, and a spell pool's spell levels by number.
      */
     protected planAptitudeSlots(
@@ -105,7 +99,6 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       grantedFeatRecords: (readonly { toId: string }[])[],
       featPoolIds: string[],
       spellPoolIds: string[],
-      savedLevelCount: number,
       baselineAptitudes: Record<string, { allowed: number; id: string; spent: number } & Record<string, unknown>>,
     ): { perLevelFeatSlots: FeatSlots; perLevelSpellSlots: SpellSlots } {
       const perLevelFeatSlots: FeatSlots = {};
@@ -115,13 +108,11 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       // A spell level all known (the character's already, or a planned level's set to all) takes no slot from a later
       // add: the sheet's count, and the class tables'
       const allKnown = this.allKnownLevels(baselineAptitudes);
-      const levelRules = LevelRules.of(this.view);
 
       for (let i = 0; i < classLevelIds.length; i++) {
         const deltas = this.levelDeltas(
           classLevelIds[i],
           grantedFeatRecords[i] ?? [],
-          levelRules.countGeneralFeatsAfter(savedLevelCount + i),
           perLevelFeatSlots,
           perLevelSpellSlots,
         );

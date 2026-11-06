@@ -9,7 +9,6 @@ import type {
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd5.2/levelUp/CharacterProjection.ts";
-import type LevelUpPlan from "@/engine/rulesets/dnd5.2/levelUp/LevelUpPlan.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd5.2/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
 import Dnd52CharacterBuilder from "@/engine/rulesets/dnd5.2/model/Dnd52CharacterBuilder.ts";
@@ -18,7 +17,7 @@ import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/bondedKinds.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/characterKinds.ts";
 
 /** What the class picker adds of a class: its place on its track, as a step's option holds it. */
 type TrackDetails = Required<Pick<StepOption, "track">>;
@@ -27,14 +26,15 @@ type TrackDetails = Required<Pick<StepOption, "track">>;
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
  * classes (`filters`), each the character can take another level of offered with the levels it takes next, in order,
  * and the levels the character has left, and checked with its next level added; highest next level first, then by
- * name. The skill points spent so far go on the planned levels as a save would spread them (`plan`).
+ * name. A class's first level's requirements are its multiclass prerequisites (13 in its primary abilities): the
+ * character's first level meets none, and a multiclass meets those of the classes it has too, as the SRD 5.2.1's
+ * Multiclassing rules ask.
  */
 export default class ClassPicker extends CharacterPicker<DetailedCharacter, EntityRecord, TrackDetails> {
   constructor(
     view: RulesetView,
     input: CharacterInput,
     private readonly planned: PlannedSoFar,
-    private readonly plan: LevelUpPlan,
   ) {
     super(view, input, Dnd52CharacterBuilder);
   }
@@ -67,16 +67,14 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   }
 
   /**
-   * What the level-up wizard plans adds to the character, for the class picker: its planned levels, the skill points
-   * spent so far, each planned level's as a save spreads them, and the feats picked so far, which requirements read: at
-   * the first planned level, or at the character's last level when it plans none.
+   * What the level-up wizard plans adds to the character, for the class picker: its planned levels, and the feats
+   * picked so far, which requirements read: at the first planned level, or at the character's last level when it plans
+   * none.
    */
   protected override project() {
-    const { abilityIncreases, classLevelIds = [], picks = [] } = this.planned;
+    const { classLevelIds = [], picks = [] } = this.planned;
     const projection = new CharacterProjection(this.input);
-    const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const levels = projection.addLevels(classLevelIds, { abilityIncreases, hp });
-    for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries()) projection.pick(levels[i], skills);
+    const levels = projection.addLevels(classLevelIds, { hp: LevelRules.UNROLLED_LEVEL_HP });
     const pickedAt = levels[0] ?? this.input.rows.advancements.toSorted((a, b) => a.position - b.position).at(-1);
     if (pickedAt) {
       projection.pick(
@@ -87,9 +85,17 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return projection.input;
   }
 
-  /** A class's requirement groups: its own and its next level's. */
+  /**
+   * A class's requirement groups: its own, and its next level's but at the character's first level (a class's first
+   * level's, its multiclass prerequisites, which a first class doesn't meet); taking a new class, the first levels' of
+   * the classes it has too (their prerequisites, which a multiclass meets in its current classes as in its new one).
+   */
   protected override requirementsOf(klass: EntityRecord) {
-    return [klass.id, this.nextLevelOf(klass)!.id]
+    const next = this.nextLevelOf(klass)!;
+    const levelIds = this.levelIds();
+    const first = levelIds.length === 0;
+    const held = next.position === 1 ? this.heldFirstLevelIds(levelIds) : [];
+    return [klass.id, ...(first ? [] : [next.id]), ...held]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
   }
@@ -122,6 +128,23 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return { partitions: [PLAYER_CHARACTER_KIND], firstIds };
   }
 
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.rulesetData);
+  }
+
+  /** The first levels of the classes the character's levels (`levelIds`, its class levels) are of, each once. */
+  private heldFirstLevelIds(levelIds: string[]): string[] {
+    const { classLevelByClassAndLevel, classLevelsById } = this.dnd52;
+    const classIds = new Set(levelIds.flatMap((id) => classLevelsById.get(id)?.ownerId ?? []));
+    return [...classIds].flatMap((classId) => classLevelByClassAndLevel.get(`${classId}:1`)?.id ?? []);
+  }
+
+  /** The class levels of the character's levels: those it saved, then those the wizard plans. */
+  private levelIds(): string[] {
+    return [...this.input.rows.advancements.map(({ entryId }) => entryId), ...(this.planned.classLevelIds ?? [])];
+  }
+
   /**
    * The class's next level for the character (`LevelRules.findNextClassLevel`): its lowest the character doesn't hold,
    * none when the class has no more.
@@ -129,11 +152,6 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     const next = LevelRules.findNextClassLevel(this.dnd52.classLevelsById, this.input.rows.advancements, klass.id);
     return this.dnd52.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.rulesetData);
   }
 
   /**

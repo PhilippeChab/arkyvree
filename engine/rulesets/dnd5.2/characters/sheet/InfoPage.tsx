@@ -5,7 +5,7 @@ import type CharacterResponse from "@/engine/rulesets/dnd5.2/characters/descript
 import SheetBlocks from "@/engine/rulesets/dnd5.2/characters/description/SheetBlocks.ts";
 import IdentityFields from "@/engine/rulesets/dnd5.2/characters/IdentityFields.ts";
 import AbilityRules from "@/engine/rulesets/dnd5.2/rules/AbilityRules.ts";
-import { CHARACTER_FIELDS, RACE_SIZE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CHARACTER_FIELDS, SPECIES_SIZE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import AbilityScores from "./AbilityScores.tsx";
 import SheetFormat from "./SheetFormat.ts";
@@ -19,14 +19,14 @@ interface Detail {
 }
 
 /**
- * The identity block's fields the personal details' first column prints, by their keys: its experience, race, age,
- * height and deity.
+ * The identity block's fields the personal details' first column prints, by their keys: its experience, species,
+ * background, age and deity.
  */
 const FIRST_DETAILS = [
   CHARACTER_FIELDS.xp.field,
-  IdentityFields.RACE_KEY,
+  IdentityFields.SPECIES_KEY,
+  IdentityFields.BACKGROUND_KEY,
   CHARACTER_FIELDS.age.field,
-  CHARACTER_FIELDS.height.field,
   CHARACTER_FIELDS.deity.field,
 ];
 
@@ -52,8 +52,8 @@ function DetailsColumn({ details }: { details: Detail[] }) {
 
 /**
  * The sheet's first page, from its sheet (`sheet`, as the API describes it): who the character is (its identity's block,
- * its size and vision beside it), its ability scores, saving throws and combat, each its block, under its name, its
- * classes (its summary's) and its ruleset's name (`rulesetName`).
+ * its size beside it), its ability scores, saving throws and combat, each its block, under its name, its classes (its
+ * summary's) and its ruleset's name (`rulesetName`).
  */
 function InfoPage({
   portraitUrl,
@@ -69,12 +69,11 @@ function InfoPage({
   const saves = SheetBlocks.blockOf(blocks, "scores", "saves");
   const combat = SheetBlocks.blockOf(blocks, "stats", "combat");
   const detailsOf = (keys: string[]) => keys.map((key) => detailOf(SheetBlocks.fieldOf(identity, key)));
-  // Its alignment and gender, its race's size, its weight, and its vision
+  // Its alignment and gender, its species' size, its height and its weight
   const second = [
     ...detailsOf([CHARACTER_FIELDS.alignment.field, CHARACTER_FIELDS.gender.field]),
-    { label: "Size", value: String(sheet.identity.physiology.race.fields[RACE_SIZE]) },
-    ...detailsOf([CHARACTER_FIELDS.weight.field]),
-    { label: "Vision", value: "Normal" },
+    { label: "Size", value: String(sheet.identity.physiology.species.fields[SPECIES_SIZE]) },
+    ...detailsOf([CHARACTER_FIELDS.height.field, CHARACTER_FIELDS.weight.field]),
   ];
   const description = SheetBlocks.fieldOf(identity, IdentityFields.DESCRIPTION_KEY);
   // The abilities other than the books', whose box names them under their abbreviation
@@ -87,9 +86,9 @@ function InfoPage({
       <View style={styles.header}>
         <Text style={styles.title}>{sheet.identity.physiology.name}</Text>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-          {/* Its classes, as the web sheet's header names them: Personal Details gives its race */}
+          {/* Its classes, as the web sheet's header names them: Personal Details gives its species */}
           <Text style={styles.subtitle}>{summary.tracks.map(({ label }) => label).join(summary.separator)}</Text>
-          <Text style={styles.subtitle}>{rulesetName ?? "Pathfinder"}</Text>
+          <Text style={styles.subtitle}>{rulesetName ?? ""}</Text>
         </View>
       </View>
 
@@ -152,9 +151,10 @@ function InfoPage({
           {/* Saving Throws */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Saving Throws</Text>
-            <View style={[styles.row, { justifyContent: "space-between" }]}>
+            {/* Six saving throws, three a line */}
+            <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between", rowGap: 4 }]}>
               {saves.scores.map((save) => (
-                <View key={save.key} style={styles.saveBox}>
+                <View key={save.key} style={[styles.saveBox, { width: "32%" }]}>
                   <Text style={styles.abilityName}>{save.label}</Text>
                   <Text style={styles.abilityMod}>{SheetFormat.valueOf(save)}</Text>
                   <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>

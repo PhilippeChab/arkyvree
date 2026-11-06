@@ -9,8 +9,7 @@ import {
   type ItemLocation,
   LOCATION_OPTIONS,
 } from "@/vocabulary/dnd5.2/equipment.ts";
-import { ITEM_HAS_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_SIZE } from "@/vocabulary/dnd5.2/fields/index.ts";
-import { SIZE_OPTIONS } from "@/vocabulary/dnd5.2/sizes.ts";
+import { ITEM_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_PROPERTIES } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {
@@ -21,7 +20,7 @@ interface HeldEntry {
 
 /**
  * An item, as its placement reads it: its fields (its template's of those it holds none of among them): its type, the
- * slot it's worn in (`"Other"` for none), its weapon's size, its charges.
+ * slot it's worn in (`"Other"` for none), its weapon's properties, its charges.
  */
 interface PlacedItem {
   fields: Item["fields"];
@@ -43,20 +42,17 @@ export interface ItemPlacementDescription {
   slot: ItemLocation | null;
 }
 
-/**
- * The weapon sizes that take both hands, as the weapon table gives them for a Medium wielder, whatever the wielder's
- * size: Large and past it (a greatsword, a bow).
- */
-const TWO_HANDED_SIZES = SIZE_OPTIONS.slice(SIZE_OPTIONS.indexOf("Large"));
+/** The property of a weapon that takes both hands to attack with (a Greatsword, a Longbow). */
+const TWO_HANDED_PROPERTY = "Two-Handed";
 
 /**
  * Where an item goes: a weapon to a hand its wielder picks, body armor to the torso, a shield to the off hand, any
  * other item to its own slot (or anywhere, for one worn nowhere in particular); and where an entry is worn.
  */
 export default class ItemPlacement {
-  /** The charges an item comes with: its `ITEM_HAS_CHARGES` count (0 when it names none), none without the field. */
+  /** The charges an item comes with: its `ITEM_CHARGES` count (0 when it names none), none without the field. */
   private static chargesOf(item: PlacedItem) {
-    const charges = item.fields[ITEM_HAS_CHARGES];
+    const charges = item.fields[ITEM_CHARGES];
     return charges === undefined ? null : Number.parseInt(String(charges), 10) || 0;
   }
 
@@ -70,9 +66,8 @@ export default class ItemPlacement {
    * worn nowhere in particular, else any.
    */
   private static offeredLocations(item: PlacedItem): readonly ItemLocation[] {
-    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null, [WEAPON_SIZE]: held } = item.fields;
-    const size = held === undefined ? undefined : String(held);
-    if (type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
+    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null, [WEAPON_PROPERTIES]: properties } = item.fields;
+    if (type === "Weapon" && ItemPlacement.isTwoHanded(properties)) return ["Two Handed"];
     return ItemPlacement.locationsOf(type) ?? (slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
   }
 
@@ -123,9 +118,9 @@ export default class ItemPlacement {
     return type !== null && Object.hasOwn(ITEM_TYPE_LOCATIONS, type);
   }
 
-  /** Whether a weapon of `size` (its `WEAPON_SIZE`) takes both hands: Large or past it. */
-  static isTwoHanded(size: string | null | undefined) {
-    return isOneOf(size, TWO_HANDED_SIZES);
+  /** Whether a weapon of `properties` (its `WEAPON_PROPERTIES`) takes both hands: the Two-Handed property. */
+  static isTwoHanded(properties: unknown) {
+    return Array.isArray(properties) && properties.includes(TWO_HANDED_PROPERTY);
   }
 
   /** The location an item of `type` goes to when its type sets that one alone (body armor's torso, a shield's off hand). */

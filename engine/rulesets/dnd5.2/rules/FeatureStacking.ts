@@ -49,6 +49,11 @@ export default class FeatureStacking {
     return featIds.map((id) => this.view.rulesetData.canonicalize(id));
   }
 
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.view.rulesetData);
+  }
+
   /** The class's levels' feats, as the view has them and once written (`changed`, by level id: the others kept). */
   private levelsOf(changed: ReadonlyMap<string, readonly string[]>): LevelGrants[] {
     return (this.dnd52.classLevelsByClass.get(this.klass.id) ?? []).map((level) => {
@@ -56,11 +61,6 @@ export default class FeatureStacking {
       const after = changed.get(level.id);
       return { after: after ? this.canonical(after) : before, before, position: level.position };
     });
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.view.rulesetData);
   }
 
   /**

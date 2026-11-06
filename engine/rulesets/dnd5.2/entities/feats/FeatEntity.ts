@@ -114,16 +114,16 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
     }
   }
 
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.rulesetData);
+  }
+
   /** The feats a class (`classId`) may grant as its features, as its rule gives them: refused for a class it lacks. */
   private featuresOf(classId: string) {
     const klass = this.dnd52.classesById.get(this.rulesetData.canonicalize(classId));
     if (!klass) throw new RulesError("not-found", "Class not found");
     return new ClassOffers(this.view, klass).describeFeatures();
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.rulesetData);
   }
 
   /** A pool's feats' ids (`aptitudeId`), as the ruleset composes them: every feat's (`undefined`) without one. */

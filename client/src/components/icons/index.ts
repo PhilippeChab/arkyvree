@@ -41,6 +41,7 @@ export {
   Gavel as GavelIcon,
   AdminPanelSettings as GMIcon,
   HelpOutlined as HelpIcon,
+  HistoryEdu as HistoryEduIcon,
   History as HistoryIcon,
   ImageOutlined as ImageOutlinedIcon,
   FileUploadOutlined as ImportIcon,

@@ -5,7 +5,7 @@ import { ABILITY_MODIFIER_DIVISOR, ABILITY_MODIFIER_OFFSET, ABILITY_NAMES } from
 /** The books' abilities' slugs, in their order: a sheet lists them first. */
 const BOOK_ABILITY_SLUGS = ABILITY_NAMES.map((name) => stripSeparators(name));
 
-/** The Pathfinder ability rules: what a score gives, and the order a sheet lists the abilities in. */
+/** The D&D 5th Edition ability rules: what a score gives, and the order a sheet lists the abilities in. */
 export default class AbilityRules {
   /** An ability's abbreviation, as a sheet's small boxes label it: its slug's first three letters ("forcepoints": FOR). */
   static abbreviate(slug: string): string {

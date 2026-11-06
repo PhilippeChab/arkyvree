@@ -6,9 +6,7 @@ import Dnd52CharacterBuilder from "@/engine/rulesets/dnd5.2/model/Dnd52Character
 import LanguageRules from "@/engine/rulesets/dnd5.2/rules/LanguageRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Language } from "@/engine/rulesets/dnd5.2/view/rows.ts";
-import { stripSeparators } from "@/shared/text.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
-import { LANGUAGE_PICK_ABILITY, LANGUAGE_SKILL } from "@/vocabulary/dnd5.2/languages.ts";
 
 /** A language as a character's languages name it: its id and name. */
 function describeLanguage({ id, name }: Language): DescribedLink {
@@ -17,9 +15,9 @@ function describeLanguage({ id, name }: Language): DescribedLink {
 
 /**
  * A character's languages, from its rows (`input`): those its modifiers grant it without a pick (`languages.<slug>.known`
- * set true: its race's automatic languages, a druid's Druidic), how many it picks (`LanguageRules`: by its permanent
- * Intelligence, its Linguistics ranks, its extra picks), what one more pick may add, and an edit's picks, a new one
- * refused past that room or when it's secret. The character is built once, when first read.
+ * set true: Common, a druid's Druidic), how many it picks (`LanguageRules`: two, and its extra picks), what one more
+ * pick may add, and an edit's picks, a new one refused past that room or when it's rare. The character is built once,
+ * when first read.
  */
 export default class SpokenLanguages {
   constructor(
@@ -50,34 +48,26 @@ export default class SpokenLanguages {
   }
 
   /**
-   * Why a new pick of `language` can't join `taken` picks, if it can't: a secret language, which only a modifier grants,
-   * or no room left.
+   * Why a new pick of `language` can't join `taken` picks, if it can't: a rare language, which only a feature grants, or
+   * no room left.
    */
   private refusalOf(language: Language, taken: number): string | undefined {
-    if (LanguageRules.isSecret(language.fields[LANGUAGE_TYPE] ?? ""))
-      return `${language.name} is a secret language: only a modifier that grants it lets a character speak it`;
+    if (LanguageRules.isRare(language.fields[LANGUAGE_TYPE] ?? ""))
+      return `${language.name} is a rare language: only a feature that grants it lets a character speak it`;
     const room = this.room();
     if (taken >= room)
       return `${language.name} is past the languages the character may pick (${taken} picked, room for ${room})`;
     return undefined;
   }
 
-  /**
-   * How many languages the character picks: by its permanent Intelligence modifier (its current score with its race's
-   * adjustment, an item's bonus aside), its Linguistics ranks and the extra picks its modifiers add.
-   */
+  /** How many languages the character picks: two, and the extra picks its modifiers add. */
   private room(): number {
-    const { abilities, languages, skills } = this.character.components;
-    return LanguageRules.roomOf(
-      abilities.getPermanentModifier(LANGUAGE_PICK_ABILITY),
-      skills.getSkills()[stripSeparators(LANGUAGE_SKILL)]?.rank ?? 0,
-      languages.getExtraPicks(),
-    );
+    return LanguageRules.roomOf(this.character.components.languages.getExtraPicks());
   }
 
   /**
    * What the character speaks without a pick, its picks (of `languageIds`, each the view's), and the languages one more
-   * pick may add, by name: any but a secret one, while the picks leave room.
+   * pick may add, by name: any but a rare one, while the picks leave room.
    */
   describe(languageIds: string[]): LinkRoom {
     const granted = this.granted();
@@ -95,7 +85,7 @@ export default class SpokenLanguages {
 
   /**
    * The picks an edit stores (of `languageIds`, each the view's): those no modifier grants the character. Those it keeps
-   * (its rows' own) are counted first, and never refused; a new pick is refused, naming it, when it's secret or the
+   * (its rows' own) are counted first, and never refused; a new pick is refused, naming it, when it's rare or the
    * room the picks before it leave takes none more.
    */
   plan(languageIds: string[]): string[] {

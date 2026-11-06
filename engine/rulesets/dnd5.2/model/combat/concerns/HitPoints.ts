@@ -9,13 +9,13 @@ import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd5.2/classes.ts";
  */
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithHitPoints extends Base {
-    /** Each level's hit points, which its Constitution modifier adds to. */
-    private levelRolls: number[] = [];
-
     /** The hit points Constitution adds: its modifier on each level's, a level giving 1 at least. */
     private constitutionHitPoints(): number {
       const modifier = this.abilities.getAbilityModifier("Constitution");
-      return this.levelRolls.reduce((total, roll) => total + Math.max(modifier, MIN_HIT_POINTS_PER_LEVEL - roll), 0);
+      return this.levelHitPoints.reduce(
+        (total, roll) => total + Math.max(modifier, MIN_HIT_POINTS_PER_LEVEL - roll),
+        0,
+      );
     }
 
     /**
@@ -24,7 +24,7 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
      */
     protected initializeHitPoints(rolls: number[]): void {
       const constitution = () => this.constitutionHitPoints();
-      this.levelRolls = rolls;
+      this.levelHitPoints = rolls;
       this.combat.hp = {
         base: rolls.reduce((total, roll) => total + roll, 0),
         get constitution() {

@@ -2,14 +2,14 @@
 
 import { z } from "zod";
 
-import { type FormBody, RulesetEntity } from "@/engine/core/entities/index.ts";
+import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
-import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
-import type { Aptitude, Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import type { Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 
-/** What an aptitude's edit may change: the rules count on a pool's name. */
+/**
+ * An aptitude as the ruleset has it: a pool its feats are picked in, or a spell list. No pool's name is one the rules
+ * count on: a generated feat's pool missing, a skill makes none (`GeneratedFeats`).
+ */
 export default class AptitudeEntity extends RulesetEntity<Dnd52Kinds, "aptitudes"> {
   /** Its list's filters: a kind's pools (`scope`: the feats', the spells' lists). */
   protected static override readonly listFilters = { scope: z.enum(["feats", "spells"]) };
@@ -19,16 +19,6 @@ export default class AptitudeEntity extends RulesetEntity<Dnd52Kinds, "aptitudes
 
   override readonly type = "aptitudes";
 
-  /** Refuses deleting an aptitude the rules count on by name. */
-  protected override checkDelete(aptitude: Aptitude) {
-    this.checkName(aptitude);
-  }
-
-  /** Refuses renaming an aptitude the rules count on by name. */
-  protected override checkForm(body: FormBody, _given: object, aptitude?: Aptitude) {
-    if (aptitude) this.checkName(aptitude, body.name);
-  }
-
   /**
    * A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists, those
    * their `listedIn` links name).
@@ -37,20 +27,5 @@ export default class AptitudeEntity extends RulesetEntity<Dnd52Kinds, "aptitudes
     const list = super.listOf(where);
     const linkedBy = scope && { fromType: scope, role: "listedIn" };
     return { ...list, filters: linkedBy ? { ...list.filters, linkedBy } : list.filters };
-  }
-
-  /**
-   * Refuses renaming the aptitude to `name`, or deleting it without one, when the ruleset's characters count on it by
-   * name: the one the general feats count toward, by its slug. A rename that keeps the slug ("general") changes nothing
-   * for them.
-   */
-  private checkName(aptitude: { name: string }, name?: string) {
-    const slug = LevelRules.GENERAL_FEATS_APTITUDE_SLUG;
-    if (stripSeparators(aptitude.name) !== slug) return;
-    if (name !== undefined && stripSeparators(name) === slug) return;
-    throw new RulesError(
-      "unprocessable",
-      `${aptitude.name} is the aptitude a character's general feats count toward: it can be neither renamed nor deleted`,
-    );
   }
 }

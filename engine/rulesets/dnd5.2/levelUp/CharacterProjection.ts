@@ -9,8 +9,7 @@ import type {
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the
- * advancements it adds, replaces or leaves out, and their picks (their hit points, ability increases, skill ranks,
- * feats and spells). The flows build the character from them as from saved rows (`input`), so what a level grants,
+ * advancements it adds, replaces or leaves out, and their picks (their hit points, feats and spells). The flows build the character from them as from saved rows (`input`), so what a level grants,
  * what a pick carries and where a level stands are read one way. It says which character it projects: the character as
  * it was before a level (`dropLevelsFrom`, what a level's prerequisites read), or with a level replaced where it stands
  * (`addLevel`'s `replacing`, what its slots and points read).
@@ -66,8 +65,8 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds an advancement as a save writes it (`plan`: its class level, and its picks, its hit points and ability
-   * increases among them), after the character's levels.
+   * Adds an advancement as a save writes it (`plan`: its class level, and its picks, its hit points among them), after
+   * the character's levels.
    */
   addAdvancement({ entryId, picks }: AdvancementWrite): StoredAdvancement {
     const level = this.place(entryId);
@@ -76,28 +75,21 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds a level of class level `classLevelId`, with its ability increases (its `abilities` picks) and hit points: after
-   * the character's levels, or in the place of the level it's `replacing`, which it leaves out.
+   * Adds a level of class level `classLevelId`, with its hit points: after the character's levels, or in the place of
+   * the level it's `replacing`, which it leaves out.
    */
   addLevel(
     classLevelId: string,
-    {
-      abilityIncreases = [],
-      hp,
-      replacing,
-    }: { abilityIncreases?: PickPlan[]; hp: number; replacing?: { id: string; position: number } },
+    { hp, replacing }: { hp: number; replacing?: { id: string; position: number } },
   ): StoredAdvancement {
     const level = this.place(classLevelId, replacing);
     this.add(level.id, { step: "hp", amount: hp });
-    for (const increase of abilityIncreases) this.add(level.id, increase);
     return level;
   }
 
-  /** Adds levels of these class levels, in order, with their ability increases (by place) when given. */
-  addLevels(classLevelIds: string[], { abilityIncreases, hp }: { abilityIncreases?: PickPlan[][]; hp: number }) {
-    return classLevelIds.map((classLevelId, i) =>
-      this.addLevel(classLevelId, { abilityIncreases: abilityIncreases?.[i], hp }),
-    );
+  /** Adds levels of these class levels, in order. */
+  addLevels(classLevelIds: string[], { hp }: { hp: number }) {
+    return classLevelIds.map((classLevelId) => this.addLevel(classLevelId, { hp }));
   }
 
   /** Leaves out the character's level `levelId`, with its picks. */
@@ -140,15 +132,10 @@ export default class CharacterProjection {
 
   /**
    * Adds picks at a level (`picks`, as a save writes them): one per feat or spell picked (a stackable feat picked twice
-   * is two), and one per skill (the last rank given wins). What a level can't hold twice, a spell or a non-stackable
-   * feat, its caller has refused or dropped (`SelectionChecks`, a preview's fitting).
+   * is two). What a level can't hold twice, a spell or a non-stackable feat, its caller has refused or dropped
+   * (`SelectionChecks`, a preview's fitting).
    */
   pick(level: { id: string }, picks: PickPlan[]) {
-    const ranks = new Map<string, PickPlan>();
-    for (const pick of picks) {
-      if (pick.step === "skills") ranks.set(pick.entityId!, pick);
-      else this.add(level.id, pick);
-    }
-    for (const rank of ranks.values()) this.add(level.id, rank);
+    for (const pick of picks) this.add(level.id, pick);
   }
 }

@@ -38,10 +38,13 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
-    { advancements, feats, classes, classLevels, spells }: Pick<
-      LoadedCharacterData,
-      "advancements" | "feats" | "classes" | "classLevels" | "spells"
-    >,
+    {
+      advancements,
+      feats,
+      classes,
+      classLevels,
+      spells,
+    }: Pick<LoadedCharacterData, "advancements" | "feats" | "classes" | "classLevels" | "spells">,
     { rulesetData }: RulesetView,
   ) {
     const classLevelsById = new Map(classLevels.map((level) => [level.id, level]));
@@ -74,9 +77,8 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
 
     // Add level-0 entries for ruleset classes the character doesn't have
-    for (const klass of Dnd52View.of(rulesetData).classes) {
+    for (const klass of Dnd52View.of(rulesetData).classes)
       this.classes[stripSeparators(klass.name)] ??= { klass, levels: [], level: 0 };
-    }
   }
 
   addProjectedLevel(className: string, classLevel: KlassLevel, advancement: StoredAdvancement): void {

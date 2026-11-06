@@ -28,14 +28,14 @@ interface IdentityData {
     /** Every language it speaks, granted then picked: its languages' component's, counted when read */
     readonly languages: Language[];
     name: string;
-    /** The race as the character reads it, its fields with it: what its size, its legs and its speed follow */
+    /** The species as the character reads it, its fields with it: what its size and its speed follow */
     species: CustomizedSpecies;
     weight: string;
   };
 }
 
 /**
- * Who a character is: its row's description, its race, the languages it speaks (its languages' component's), and its
+ * Who a character is: its row's description, its species and background, the languages it speaks (its languages' component's), and its
  * level, counted from its classes.
  */
 export default class IdentityComponent extends CharacterComponent<LoadedCharacterData> {
@@ -55,7 +55,7 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
   private privateNotes = "";
 
   /**
-   * Who the character is, from its row and its race. The languages it speaks are its languages' component's, counted
+   * Who the character is, from its row, its species and its background. The languages it speaks are its languages' component's, counted
    * when read, once modifiers apply; its level (`meta.level`) is the levels its classes hold, counted when read (one a
    * picker projects counts), and what a modifier adds to it.
    */

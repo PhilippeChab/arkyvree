@@ -6,6 +6,7 @@ import {
   FaceIcon,
   FitnessIcon,
   GavelIcon,
+  HistoryEduIcon,
   PsychologyIcon,
   ShieldIcon,
   SpokeIcon,
@@ -32,6 +33,8 @@ export function kindIcon(icon: string): SvgIconComponent {
       return FitnessIcon;
     case "gavel":
       return GavelIcon;
+    case "history":
+      return HistoryEduIcon;
     case "psychology":
       return PsychologyIcon;
     case "shield":

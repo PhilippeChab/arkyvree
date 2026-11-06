@@ -19,14 +19,14 @@ declare module "@/engine/core/view/rows.ts" {
   }
 }
 
-/** No fields: a kind whose entities hold none (an ability, an aptitude, a mechanic). */
-type NoFields = Record<never, never>;
-
 /** A kind's entity as the view holds it: its fields as its storage holds them (`HeldFieldValues`), and its single links. */
 type Dnd52Entity<T extends keyof typeof ENTITY_FIELDS | null, F extends string> = ViewEntity<
   T extends keyof typeof ENTITY_FIELDS ? HeldFieldValues<(typeof ENTITY_FIELDS)[T]> : NoFields,
   SingleRolesOf<F>
 >;
+
+/** No fields: a kind whose entities hold none (an ability, an aptitude, a mechanic). */
+type NoFields = Record<never, never>;
 
 /** The roles of a kind's single links (`fromType`'s), as its storage declares them (`LINK_ROLES`). */
 type SingleRolesOf<F extends string> = Extract<(typeof LINK_ROLES)[number], { fromType: F; single: true }>["role"];

@@ -4,7 +4,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd5.2/feats.ts";
+import type { FEAT_CATEGORIES } from "@/vocabulary/dnd5.2/feats.ts";
 
 /**
  * A class's own feature pool: its id (none while the ruleset has none), its name ("Witch Class Feature"), and what a
@@ -25,15 +25,18 @@ interface PoolRef {
 /** What a class's own feature pool is named: "Witch Class Feature". */
 const FEATURE_POOL_SUFFIX = "Class Feature";
 
+/** The pool of General feats, which a class's Ability Score Improvement picks in: its features are granted through it too. */
+const GENERAL_FEATS_POOL: (typeof FEAT_CATEGORIES)[number] = "General";
+
 /**
  * The feat pools a class (`klass`, as the view has it) is offered, by whom they belong to:
- * - a pool is a class's when its name starts with the class's ("Cleric Domain", "Fighter Bonus Feat"), the longest
+ * - a pool is a class's when its name starts with the class's ("Fighter Subclass", "Fighter Fighting Style"), the longest
  *   class name that starts it winning ("Ranger Knight Class Feature" is the Ranger Knight's);
  * - its features are granted through its own feature pool ("Witch Class Feature"), the pools its levels already grant
  *   one through, and General;
  * - its picks are given in any feat pool but a class's own feature pool, its own too ("Fighter Class Feature"), which
- *   holds the features its levels grant outright, none a pick may choose: its own pools first (Cleric Domain), then
- *   the others by name (Fighter Bonus Feat, General).
+ *   holds the features its levels grant outright, none a pick may choose: its own pools first (Fighter Subclass), then
+ *   the others by name (Fighter Fighting Style, General).
  * Feat pools are the aptitudes feats are listed in: a class's spell list is none.
  */
 export default class ClassOffers {
@@ -41,6 +44,11 @@ export default class ClassOffers {
     private readonly view: RulesetView,
     private readonly klass: Klass,
   ) {}
+
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.view.rulesetData);
+  }
 
   /** The ruleset's feat pools, by name. */
   private get featPools(): Aptitude[] {
@@ -56,7 +64,7 @@ export default class ClassOffers {
    */
   private featurePoolsOf(pools: readonly Aptitude[], own: OwnFeaturePool): Aptitude[] {
     const through = this.grantedThrough();
-    const general = this.dnd52.aptitudeIdBySlug.get(stripSeparators(GENERAL_FEATS_APTITUDE));
+    const general = this.dnd52.aptitudeIdBySlug.get(stripSeparators(GENERAL_FEATS_POOL));
     return pools.filter((pool) => pool.id === own.id || through.has(pool.id) || pool.id === general);
   }
 
@@ -76,11 +84,6 @@ export default class ClassOffers {
   private ownersOf(pools: readonly Aptitude[]): Map<string, Klass | undefined> {
     const classes = this.dnd52.classes.toSorted((a, b) => b.name.length - a.name.length);
     return new Map(pools.map((pool) => [pool.id, classes.find((klass) => pool.name.startsWith(`${klass.name} `))]));
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.view.rulesetData);
   }
 
   /**

@@ -4,13 +4,13 @@ import { stripSeparators } from "@/shared/text.ts";
 import type {
   Aptitude,
   Background,
+  Dnd52Kinds,
   Feat,
   Item,
   Klass,
   KlassLevel,
   Language,
   Mechanic,
-  Dnd52Kinds,
   RulesetAbility,
   RulesetSave,
   Skill,
@@ -256,7 +256,6 @@ export default class Dnd52View {
   get mechanics(): Mechanic[] {
     return this.declared.rows("mechanics");
   }
-
 
   get saves(): RulesetSave[] {
     return this.declared.rows("saves");

@@ -1,9 +1,10 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type CombatComponent from "@/engine/rulesets/dnd5.2/model/combat/CombatComponent.ts";
-import { SLOT_MAP, type WeaponSlot } from "@/engine/rulesets/dnd5.2/model/combat/CombatState.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/weapons.ts";
+
+import type CombatComponent from "./CombatComponent.ts";
+import { SLOT_MAP, type WeaponSlot } from "./CombatState.ts";
 
 /** Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference */
 type WeaponGroup = Record<string, WeaponSlot>;
@@ -23,11 +24,6 @@ export default class WeaponsComponent extends CharacterComponent<LoadedCharacter
 
   private readonly weapons: WeaponsData = {};
 
-  /** A weapon slot under a group, by its set and hand (`weaponKey`). */
-  private group(grouping: string, weaponKey: string, weapon: WeaponSlot): void {
-    if (grouping) (this.weapons[grouping] ??= {})[weaponKey] = weapon;
-  }
-
   /**
    * Each weapon the combat placed from the inventory, in its order, under its kind and its category, then the first
    * set's main hand when it strikes unarmed (no weapon there).
@@ -42,6 +38,11 @@ export default class WeaponsComponent extends CharacterComponent<LoadedCharacter
     const mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
     if (mainhand?.name === UNARMED_STRIKE.name && mainhand.itemId === null)
       this.group(stripSeparators(UNARMED_STRIKE.name), "0_mainhand", mainhand);
+  }
+
+  /** A weapon slot under a group, by its set and hand (`weaponKey`). */
+  private group(grouping: string, weaponKey: string, weapon: WeaponSlot): void {
+    if (grouping) (this.weapons[grouping] ??= {})[weaponKey] = weapon;
   }
 
   getWeapons(): WeaponsData {

@@ -22,14 +22,14 @@ interface CreationData {
   abilities: readonly ScoresCreation["entities"][number][];
 }
 
-/** A Pathfinder creation method, as its data writes it. */
+/** A creation method, as its data writes it. */
 type MethodData = (typeof CREATION_METHODS)[number];
 
 /** The row's own column a new character's form sends among its fields, by its key: its description, a text or none. */
 const OWN_REQUEST = z.object({ description: z.string().nullable().optional() });
 
 /**
- * What a new Pathfinder character's form offers: how its ability scores are set, their bounds and the one an unset ability
+ * What a new character's form offers: how its ability scores are set, their bounds and the one an unset ability
  * starts at, which the characters part checks a new character's scores and an ability edit's by.
  */
 export default class NewCharacters {
@@ -42,7 +42,7 @@ export default class NewCharacters {
 
   /**
    * How a new character's ability scores are set: the ruleset's abilities (`view`'s), in the order its sheet lists
-   * them, the Core Rulebook's methods, the scores' bounds and the one an unset ability shows, and each score's modifier over those
+   * them, the SRD 5.2.1's methods, the scores' bounds and the one an unset ability shows, and each score's modifier over those
    * bounds, by the abilities' one formula.
    */
   static describeCreation(data: CreationData): ScoresCreation {

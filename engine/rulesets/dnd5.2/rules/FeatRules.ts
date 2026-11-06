@@ -3,7 +3,7 @@ import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import { FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /**
- * The Pathfinder feat rules of a ruleset's view (`rulesetData`), derived once and kept with it (`FeatRules.of`): which feats
+ * The D&D 5th Edition feat rules of a ruleset's view (`rulesetData`), derived once and kept with it (`FeatRules.of`): which feats
  * stack, and which a character can take again. A feat that stacks is taken each time it's picked, a row a pick; a
  * character holds one that doesn't once. And which of a family's feats are its variants (`variantOf`).
  */

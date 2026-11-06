@@ -69,9 +69,12 @@ describe("DeclaredRows", () => {
     expectTypeOf<ReturnType<RulesetEntity<MadeUpKinds, "feats">["find"]>>().toEqualTypeOf<MadeUpFeat>();
     // Each module's contract asks for a rules class of each of its own kinds no entity owns, none of the other's
     expectTypeOf<keyof EntityKindsContract<MadeUpKinds>>().toEqualTypeOf<"feats">();
-    expectTypeOf<keyof EntityKindsContract<Dnd35Kinds, "class-levels">>().toEqualTypeOf<StandaloneKind>();
-    // The made-up module's kind adds no type 3.5's don't have
-    expectTypeOf<KindType>().toEqualTypeOf<keyof Dnd35Kinds>();
+    // 3.5's contract asks for each of its own: every module's but 5e's species and backgrounds, which 3.5 has none of
+    expectTypeOf<keyof EntityKindsContract<Dnd35Kinds, "class-levels">>().toEqualTypeOf<
+      Exclude<StandaloneKind, "backgrounds" | "species">
+    >();
+    // The made-up module's kind adds no type the registered modules don't have
+    expectTypeOf<KindType>().toEqualTypeOf<keyof Dnd35Kinds | "backgrounds" | "species">();
     expectTypeOf<OwnedKind>().toEqualTypeOf<"class-levels">();
   });
 });

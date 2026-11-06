@@ -1,5 +1,5 @@
 /**
- * The entities a Pathfinder character's load gives (`DetailedCharacterDataLoader`), each with its customizations, and what it
+ * The entities a D&D 5th Edition character's load gives (`DetailedCharacterDataLoader`), each with its customizations, and what it
  * holds of them: its levels' feats, spells and skill points, each with where it comes from.
  */
 
@@ -11,8 +11,8 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
  * A feat or a spell the character holds (`entity`), with its customizations: where it comes from (`HeldSource`), and
- * what the build makes of it. One the character holds without a level (`virtual`: a modifier's grant, a bonded
- * creature's stat block) has no advancement, class level or grant, nor a pool but a spell's. One a modifier of the
+ * what the build makes of it. One the character holds without a level (`virtual`: a modifier's
+ * grant) has no advancement, class level or grant, nor a pool but a spell's. One a modifier of the
  * character's gives is `given` once the modifier applies, whatever else holds it too.
  */
 export interface HeldPick<E> extends HeldSource<E> {
@@ -23,7 +23,7 @@ export interface HeldPick<E> extends HeldSource<E> {
 }
 
 /**
- * Where a feat or a spell the character holds (`entity`) comes from: a pick of its step's (`step`, Pathfinder's `feats` or
+ * Where a feat or a spell the character holds (`entity`) comes from: a pick of its step's (`step`, the module's `feats` or
  * `spells`), or a class level's grant (`grant`, its `grants` link), at a level (its advancement, and that advancement's
  * entry, its class level: `classLevelId`), in a pool (`viaId`).
  */
@@ -46,18 +46,14 @@ export interface LoadedLevels {
   hitPoints: Map<string, number>;
 }
 
-/**
- * A skill a level spends points on (`amount`, its `skills` pick's), at its advancement, with that advancement's class
- * level (its entry).
- */
-/** A class level as the character reads it, with its customizations: its fields its build reads off the view. */
-export type CustomizedClassLevel = KlassLevel & {
+/** A species as the character reads it: its row, its fields' values, and its customizations. */
+export type CustomizedBackground = Background & {
   modifiers: Modifier[];
   requirements: Requirement[];
 };
 
-/** A race as the character reads it: its row, its fields' values, and its customizations. */
-export type CustomizedBackground = Background & {
+/** A class level as the character reads it, with its customizations: its fields its build reads off the view. */
+export type CustomizedClassLevel = KlassLevel & {
   modifiers: Modifier[];
   requirements: Requirement[];
 };
