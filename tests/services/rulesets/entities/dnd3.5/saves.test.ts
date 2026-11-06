@@ -7,6 +7,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { addBaseBonuses } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's empty ruleset with two abilities. */
@@ -14,6 +15,7 @@ async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
   const [constitution, wisdom] = await Entities.createMany<RulesetAbility>(
     db,
+    DND35_BASE_RULES,
     "abilities",
     ["Constitution", "Wisdom"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
@@ -53,12 +55,15 @@ describe("EntitiesService: saves", () => {
       name: "Fortitude",
       links: { keyAbility: constitution.id },
     });
-    const [klass] = await Entities.create<Klass>(db, "classes", {
+    const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Saving Class",
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },
     });
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: klass.id,
+      position: 1,
+    });
     await addBaseBonuses(db, classLevel.id, [{ toId: save.id, amount: 2 }]);
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "saves", save.id)).rejects.toThrow(ConflictError);

@@ -15,6 +15,9 @@ import type { Character } from "@/shared/relations.ts";
 import { toFieldRows } from "./toFieldRows.ts";
 import { toQualified } from "./toQualified.ts";
 
+/** Each base rules' module's storage, which a character of a ruleset of those base rules is read and written by. */
+type StorageOf = (baseRules: BaseRules) => StorageEngine;
+
 /** What a write of a character's row stores past its own columns: its fields' values and its single links' entities. */
 export interface CharacterValuesWrite {
   /** Each field's values it sets, by field (3.5's `CHARACTER_XP`), null or none to clear it */
@@ -29,58 +32,90 @@ const FIELD_JSON = sql`coalesce(to_json(${fieldsInCharacter.textValue}), to_json
 /**
  * A character's row as the generic tables store it: its own columns (`character.characters`), its fields' values by
  * field (`character.fields`: 3.5's alignment, XP; a set's one a row) and its single links' entities by role
- * (`character.links`: its race), read in one query (`buildColumns`, then `toCharacter`: its fields as its module
- * declares them, as an entity's are), and written as given (`write`): its fields as every owner's are, as its own
- * module declares them (`Engine.storage().writtenFields`, `toFieldRows`), each role's entity type as the modules
- * declare it.
+ * (`character.links`: its race), read in one query (`buildColumns`, then `toCharacter`: its fields as its ruleset's
+ * base rules' module declares them, as an entity's are), and written as given (`write`): its fields as every owner's
+ * are, as its own module declares them (`Engine.storage(baseRules).writtenFields`, `toFieldRows`), each role's entity
+ * type as its module declares it, each row of its base rules.
  */
 export default class StoredCharacters {
   /**
-   * Writes the fields of characters (`ids`) a write gives (`fields`), as their module declares them (`storage`, by
-   * their ruleset's base rules): each value set replacing what they held of it, a new character's (`creating`) with its
-   * module's fields always written.
+   * Writes the fields of characters (`characterIds`, of one base rules, whose module's storage is `storage`) a write
+   * gives (`fields`), as their module declares them: each value set replacing what they held of it, a new character's
+   * (`creating`) with its module's fields always written.
    */
   private static async writeFields(
     db: Db,
-    ids: string[],
+    characterIds: string[],
     fields: Record<string, FieldWrite>,
     creating: boolean,
     storage: StorageEngine,
   ) {
     const owner = storage.characterOwnerType;
-    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
-    const modules = await db
-      .select({ id: charactersInCharacter.id, baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}` })
-      .from(charactersInCharacter)
-      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
-      .where(inArray(charactersInCharacter.id, ids));
-    for (const [baseRules, characters] of Map.groupBy(modules, (row) => row.baseRules)) {
-      const stored = Object.entries(storage.writtenFields(owner, fields, creating, baseRules));
-      if (stored.length === 0) continue;
-      const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
-      const characterIds = characters.map((character) => character.id);
-      await db.delete(fieldsInCharacter).where(
-        and(
-          inArray(fieldsInCharacter.characterId, characterIds),
-          inArray(
-            fieldsInCharacter.field,
-            stored.map(([field]) => field),
-          ),
+    const stored = Object.entries(storage.writtenFields(owner, fields, creating));
+    if (stored.length === 0) return;
+    const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
+    await db.delete(fieldsInCharacter).where(
+      and(
+        inArray(fieldsInCharacter.characterId, characterIds),
+        inArray(
+          fieldsInCharacter.field,
+          stored.map(([field]) => field),
         ),
-      );
-      const written = characterIds.flatMap((characterId) => rows.map((row) => ({ characterId, ...row })));
-      if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
-    }
+      ),
+    );
+    const { baseRules } = storage;
+    const written = characterIds.flatMap((characterId) => rows.map((row) => ({ baseRules, characterId, ...row })));
+    if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
   }
 
   /**
-   * The columns a character's read selects: its own, its fields' values (each a field and its value, typed by its
-   * column, a set's in their stored order), which `toCharacter` reads, and its single links' entities.
+   * Writes the single links of characters (`characterIds`, of one base rules, whose module's storage is `storage`) a
+   * write gives (`links`): each entity set (null, none) replacing what they held of its role.
+   */
+  private static async writeLinks(
+    db: Db,
+    characterIds: string[],
+    links: Record<string, string | null>,
+    storage: StorageEngine,
+  ) {
+    const roles = Object.keys(links);
+    if (roles.length === 0) return;
+    await db
+      .delete(linksInCharacter)
+      .where(and(inArray(linksInCharacter.characterId, characterIds), inArray(linksInCharacter.role, roles)));
+    const written = Object.entries(links).flatMap(([role, entityId]) => {
+      if (entityId === null) return [];
+      const def = storage.characterRole(role);
+      if (!def.single) throw new Error(`The character role ${role} isn't a single link`);
+      return characterIds.map((characterId) => ({
+        baseRules: storage.baseRules,
+        characterId,
+        role,
+        single: def.single,
+        entityId,
+        entityType: def.entityType,
+      }));
+    });
+    if (written.length > 0) await db.insert(linksInCharacter).values(written);
+  }
+
+  /** The base rules' entity's own (`entityId`'s, a character's row's item or link), read where it's written. */
+  static buildBaseRulesOf(entityId: string): SQL<BaseRules> {
+    return sql<BaseRules>`(SELECT ${entitiesInRules.baseRules} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`;
+  }
+
+  /**
+   * The columns a character's read selects: its own, its ruleset's base rules and its fields' values (each a field and
+   * its value, typed by its column, a set's in their stored order), which `toCharacter` reads, and its single links'
+   * entities.
    */
   static buildColumns() {
     const id = toQualified(charactersInCharacter.id);
+    const rulesetId = toQualified(charactersInCharacter.rulesetId);
     return {
       ...getTableColumns(charactersInCharacter),
+      // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
+      baseRules: sql<BaseRules>`(SELECT ${rulesetsInRules.baseRules} FROM ${rulesetsInRules} WHERE ${rulesetsInRules.id} = ${rulesetId})`,
       fields: sql<[string, FieldValue][]>`(
         SELECT coalesce(json_agg(json_build_array(${fieldsInCharacter.field}, ${FIELD_JSON}) ORDER BY ${fieldsInCharacter.field}, ${fieldsInCharacter.ordinal}), '[]')
         FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${id})`,
@@ -96,52 +131,47 @@ export default class StoredCharacters {
   }
 
   /**
-   * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its module
-   * declares them (`storage`, every registered module's unless a test gives its own: `fieldsOf`, a single field's
-   * value, a set's values in their declared order).
+   * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its ruleset's
+   * base rules' module declares them (`storageOf`, each registered module's unless a test gives its own: `fieldsOf`, a
+   * single field's value, a set's values in their declared order), its base rules left out.
    */
-  static toCharacter<R extends { fields: [string, FieldValue][] }>(
+  static toCharacter<R extends { baseRules: BaseRules; fields: [string, FieldValue][] }>(
     row: R,
-    storage: StorageEngine = Engine.storage(),
-  ): Omit<R, "fields"> & Pick<Character, "fields"> {
-    return { ...row, fields: storage.fieldsOf(storage.characterOwnerType, row.fields) };
+    storageOf: StorageOf = (baseRules) => Engine.storage(baseRules),
+  ): Omit<R, "baseRules" | "fields"> & Pick<Character, "fields"> {
+    const { baseRules, fields, ...own } = row;
+    const storage = storageOf(baseRules);
+    return { ...own, fields: storage.fieldsOf(storage.characterOwnerType, fields) };
   }
 
   /**
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
-   * they held of it, a field's as every owner's is stored (`Engine.storage().writtenFields`: an empty text, none; one
-   * always written, its default when it holds none: a new character's it leaves out too, `creating`), in its field's
-   * column by its declaration (`toFieldRows`), as its own module declares them (`writeFields`; `storage`, every
-   * registered module's unless a test gives its own).
+   * they held of it, a field's as every owner's is stored (`writtenFields`: an empty text, none; one always written, its
+   * default when it holds none: a new character's it leaves out too, `creating`), in its field's column by its
+   * declaration (`toFieldRows`), as its ruleset's base rules' module declares them (`storageOf`, each registered
+   * module's unless a test gives its own), each row of those base rules.
    */
   static async write(
     db: Db,
     ids: string[],
     { fields = {}, links = {} }: CharacterValuesWrite,
     creating = false,
-    storage: StorageEngine = Engine.storage(),
+    storageOf: StorageOf = (baseRules) => Engine.storage(baseRules),
   ) {
     if (ids.length === 0) return;
-    const roles = Object.keys(links);
-    if (roles.length > 0) {
-      await db
-        .delete(linksInCharacter)
-        .where(and(inArray(linksInCharacter.characterId, ids), inArray(linksInCharacter.role, roles)));
-      const written = Object.entries(links).flatMap(([role, entityId]) => {
-        if (entityId === null) return [];
-        const def = storage.characterRole(role);
-        if (!def.single) throw new Error(`The character role ${role} isn't a single link`);
-        return ids.map((characterId) => ({
-          characterId,
-          role,
-          single: def.single,
-          entityId,
-          entityType: def.entityType,
-        }));
-      });
-      if (written.length > 0) await db.insert(linksInCharacter).values(written);
+    if (!creating && Object.keys(fields).length === 0 && Object.keys(links).length === 0) return;
+    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
+    const modules = await db
+      .select({ id: charactersInCharacter.id, baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}` })
+      .from(charactersInCharacter)
+      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
+      .where(inArray(charactersInCharacter.id, ids));
+    for (const [baseRules, characters] of Map.groupBy(modules, (row) => row.baseRules)) {
+      const storage = storageOf(baseRules);
+      const characterIds = characters.map((character) => character.id);
+      await StoredCharacters.writeLinks(db, characterIds, links, storage);
+      if (creating || Object.keys(fields).length > 0)
+        await StoredCharacters.writeFields(db, characterIds, fields, creating, storage);
     }
-    if (creating || Object.keys(fields).length > 0)
-      await StoredCharacters.writeFields(db, ids, fields, creating, storage);
   }
 }

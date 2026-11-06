@@ -57,6 +57,7 @@ export function Plans<B extends Constructor>(Base: B) {
           // Tracks: its kind's rows in the character's ruleset, those its picker lists first (`firstIds`)
           case "tracks": {
             const filters = {
+              baseRules: scope.ruleset.baseRules,
               entityType: opened.kind,
               rulesetId: character.record.rulesetId,
               ...scope.rulesetData.cow.listFilters,
@@ -70,6 +71,7 @@ export function Plans<B extends Constructor>(Base: B) {
           }
           case "groups": {
             const filters = {
+              baseRules: scope.ruleset.baseRules,
               entityType: opened.kind,
               ...opened.picker.groupFilters,
               search,
@@ -81,6 +83,7 @@ export function Plans<B extends Constructor>(Base: B) {
           }
           case "options": {
             const filters = {
+              baseRules: scope.ruleset.baseRules,
               entityType: opened.kind,
               ...opened.picker.filters,
               search,

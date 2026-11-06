@@ -18,6 +18,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_CASTER_TYPE, CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Kind {
@@ -88,11 +89,12 @@ async function setup() {
   const rulesetId = parent.id;
   await Entities.createMany<RulesetAbility>(
     db,
+    DND35_BASE_RULES,
     "abilities",
     ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId })),
   );
 
-  const [feat] = await Entities.create<Feat>(db, "feats", {
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
     name: "Power Attack",
     description: "Parent feat",
     rulesetId,
@@ -120,12 +122,15 @@ async function setup() {
     value: "13",
   });
 
-  const [klass] = await Entities.create<Klass>(db, "classes", {
+  const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
     name: "Fighter",
     rulesetId,
     fields: { [CLASS_HD]: 10 },
   });
-  const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+  const [level] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+    ownerId: klass.id,
+    position: 1,
+  });
   for (const [sourceId, sourceType] of [
     [level.id, "class-levels"],
     [klass.id, "classes"],
@@ -247,10 +252,14 @@ describe("customizing an inherited feat", () => {
     const ruleset = await createTestRuleset(user.id);
     await Entities.createMany<RulesetAbility>(
       db,
+      DND35_BASE_RULES,
       "abilities",
       ["Strength", "Dexterity"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
     );
-    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Owned Feat", rulesetId: ruleset.id });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      name: "Owned Feat",
+      rulesetId: ruleset.id,
+    });
     const modifier = await ModifiersService.createModifier(session, ruleset.id, "feats", feat.id, dexterityBonus);
 
     expect(

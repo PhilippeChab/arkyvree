@@ -36,6 +36,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   CHARACTER_AGE,
@@ -86,7 +87,7 @@ async function refusalOf(call: Promise<unknown>) {
 async function rulesetWithSave() {
   const { session: owner, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: "Dexterity",
     description: "Agility",
     rulesetId,
@@ -363,14 +364,16 @@ describe("a ruleset's entities", () => {
 
   test("offers no write of an ability, whose description its rules seed", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
       name: "Luck",
       description: "Fortune",
       rulesetId: ruleset.id,
     });
     // A character's score in it, which would make it in use: refused first, as a write its kind has none of
     const character = await createTestCharacter(owner.userId, { rulesetId: ruleset.id });
-    await CharacterLinks.createMany(db, character.id, "score", [{ entityId: ability.id, amount: 12 }]);
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "score", [
+      { entityId: ability.id, amount: 12 },
+    ]);
     const form = { name: "Luck", description: null };
     expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");

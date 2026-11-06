@@ -89,10 +89,10 @@ const CLIENT_COMPONENTS = "client/src/components/";
 const CONTENT_REGISTRY = "database/packages/registry.ts";
 /**
  * The engine's entry's handles whose answers are what the modules declare, no operation over the data an action read:
- * the storage's (`Engine.storage().isPlayerKind(kind)`, `ownerOf(type)`) and the rules'
- * (`Engine.rules().restorableKinds()`, `describeNotFound(baseRules, type)`).
+ * a base rules' storage's (`Engine.storage(baseRules).isPlayerKind(kind)`, `ownerOf(type)`), every module's
+ * (`Engine.storages()`) and the rules' (`Engine.rules().restorableKinds()`, `describeNotFound(baseRules, type)`).
  */
-const ENGINE_DECLARATIONS = new Set(["rules", "storage"]);
+const ENGINE_DECLARATIONS = new Set(["rules", "storage", "storages"]);
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -345,7 +345,7 @@ function asksEngine(target, name) {
   const entry = source.match(/import \{[^}]*(?<!type )\bEngine\b(?:\s+as\s+(\w+))?[^}]*\} from "@\/engine\/index\.ts"/);
   if (!entry) return false;
   // Past its import, the entry under the name it's imported as, but where it reads what the modules declare
-  // (`Engine.storage()`)
+  // (`Engine.storage(baseRules)`, `Engine.storages()`)
   const declarations = [...ENGINE_DECLARATIONS].join("|");
   return new RegExp(`\\b${entry[1] ?? "Engine"}\\b(?!\\.(?:${declarations})\\()`).test(source.replace(entry[0], ""));
 }
@@ -817,7 +817,7 @@ function isNamedBy(target, pattern) {
 /**
  * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`planLanguages`,
  * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`). What
- * the modules declare (`ENGINE_DECLARATIONS`: `Engine.storage().isPlayerKind(kind)`) is no operation.
+ * the modules declare (`ENGINE_DECLARATIONS`: `Engine.storage(baseRules).isPlayerKind(kind)`) is no operation.
  */
 function isOperation(path) {
   const method = path.at(-1);

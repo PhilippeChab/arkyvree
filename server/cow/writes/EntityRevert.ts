@@ -85,7 +85,7 @@ export default class EntityRevert {
     // shared) commits first, so it moves with the rest, and the delete never meets it
     await Locks.lockRow(tx, entitiesInRules, copyId, "update");
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
-    for (const ownedType of Engine.storage().ownedKinds(entityType))
+    for (const ownedType of Engine.storage(scope.ruleset.baseRules).ownedKinds(entityType))
       await EntityRevert.repointOwned(tx, entityType, ownedType as OwnedKind, copyId, sourceEntityId, scope.ruleset);
     await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });

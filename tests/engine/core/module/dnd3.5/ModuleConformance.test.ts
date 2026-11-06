@@ -13,6 +13,7 @@ import { readCharacterInput, readChildInputs } from "@/server/services/character
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry's request to carry its item: no location, without charges. */
@@ -197,7 +198,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const input = await readCharacterInput(db, record);
     const kept = input.rows.links.speaks.map(({ entityId }) => entityId);
     const otherRuleset = await createTestRuleset(null, { baseRules: rules });
-    const [{ id: foreign }] = await Entities.create<Language>(db, "languages", {
+    const [{ id: foreign }] = await Entities.create<Language>(db, DND35_BASE_RULES, "languages", {
       rulesetId: otherRuleset.id,
       name: "Foreign",
       fields: { [LANGUAGE_TYPE]: "Common" },
@@ -244,7 +245,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   });
 
   test("describes the links a kind's page edits by the role its storage declares edited, to their kind", () => {
-    const edited = Engine.storage().editedLinks();
+    const edited = Engine.storage(DND35_BASE_RULES).editedLinks();
     const described = Engine.rules()
       .describeAll()
       [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
@@ -296,7 +297,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const written = [...Object.values(values), ...Object.values(own)];
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // Its kind is a player character's, as its start plans it, which an import's starts from too
-      expect(Engine.storage().isPlayerKind(plan.row.kind)).toBe(true);
+      expect(Engine.storage(DND35_BASE_RULES).isPlayerKind(plan.row.kind)).toBe(true);
       expect(characters.planStart(start).row.kind).toBe(plan.row.kind);
       // A field its form doesn't require can be left out
       expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();

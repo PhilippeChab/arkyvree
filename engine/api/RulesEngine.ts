@@ -32,13 +32,22 @@ import StorageEngine from "./StorageEngine.ts";
 export default class RulesEngine {
   constructor(
     private readonly modules: [BaseRules, RulesetModule][],
-    private readonly storage: StorageEngine,
+    storages: StorageEngine[],
   ) {
-    for (const [, module] of modules) this.describeModule(module);
+    this.storages = new Map(storages.map((storage) => [storage.baseRules, storage]));
+    for (const [baseRules, module] of modules) this.describeModule(baseRules, module);
   }
 
   /** Every module's rules, checked once: the modules never change. */
   private static instance: RulesEngine | undefined;
+
+  /**
+   * Refuses a field a kind's class names (`field`, what it's for: `what`) that its storage (`storage`, its module's)
+   * holds none of for it.
+   */
+  private static checkField(storage: StorageEngine, type: string, field: string, what: string) {
+    if (!storage.field(type, field)) throw new Error(`${type} name ${field} for ${what}, which they don't hold`);
+  }
 
   /**
    * A list's column as its list shows it (`declared`, of the list of `type`, whose fields are `fields`): its own, and
@@ -65,6 +74,67 @@ export default class RulesEngine {
   }
 
   /**
+   * How a kind's row copies one (`type`, a kind whose class makes copies, of `storage`'s module): its declaration's words (`words`: a
+   * duplicate's locked fields, the most variants at once), the role a copy names its template by (the one its kind
+   * reads its fields off through, `DeclaredFields.inheritance`) and its template's flag (`StoredKind.template`).
+   * Refused where its declaration or its storage says none of them.
+   */
+  private static copiesOf(
+    storage: StorageEngine,
+    type: string,
+    words: EntityKindDeclaration["copies"],
+  ): EntityKindDescription["copies"] {
+    const source = storage.declaredFields().inheritance(type)?.role;
+    const { template } = storage.kind(type);
+    if (!words || !source || !template)
+      throw new Error(`${type} make copies: their rules word them, and their storage stores a template and its source`);
+    return { ...words, source, template: { field: template } };
+  }
+
+  /**
+   * A kind as its ruleset's page shows it: its declaration's presentation (`declared`, among its module's `rules`, whose
+   * storage is `storage`), and
+   * what it can do, its class's (`capabilitiesOf`: a progression's, with the tables its rules' progression names,
+   * `tablesOf`) and its storage's (its copies' template, the links its page edits, its customization page among its
+   * module's, `pages`, its pools' kind), each key in its name's order, as a declaration writes them. Refused when its
+   * declaration words copies its class makes none of, or its class names a field its kind doesn't hold.
+   */
+  private static describeKind(
+    storage: StorageEngine,
+    module: RulesetModule,
+    rules: RulesDeclaration,
+    pages: RulesDescription["customizationPages"],
+    declared: EntityKindDeclaration,
+  ): EntityKindDescription {
+    const { copies: words, ...presentation } = declared;
+    const { type } = declared;
+    const capabilities = module.entities.capabilitiesOf(type);
+    if (words && !capabilities.copies) throw new Error(`${type} make no copies, which their rules word`);
+    if (capabilities.lockedName)
+      RulesEngine.checkField(storage, type, capabilities.lockedName.field, "the flag that locks their name");
+    if (capabilities.families) RulesEngine.checkField(storage, type, capabilities.families.field, "their family");
+    const links = RulesEngine.linksOf(storage, type);
+    const described: EntityKindDescription = {
+      ...presentation,
+      ...(capabilities.copies && { copies: RulesEngine.copiesOf(storage, type, words) }),
+      ...(capabilities.families && { families: true }),
+      ...(capabilities.tiered && { tiered: true }),
+      ...(links && { links }),
+      ...(capabilities.lockedName && { lockedName: capabilities.lockedName }),
+      opens: capabilities.progression
+        ? "progression"
+        : pages.some((page) => page.type === type)
+          ? "customization"
+          : "page",
+      ...(capabilities.partitioned && { partitioned: true }),
+      ...(capabilities.pools && { pools: RulesEngine.poolsOf(storage, type, capabilities.pools) }),
+      ...(capabilities.readOnly && { readOnly: true }),
+      ...(capabilities.progression && { tables: RulesEngine.tablesOf(rules.progression) }),
+    };
+    return RulesEngine.inNameOrder(described);
+  }
+
+  /**
    * Each owner type's fields as its form shows them (`module.fields`, its declarations: an entity type's, `rulesets` a
    * ruleset's Settings'), by type, in its name's order: a type whose form shows none left out. Its declarations alone
    * describe them, whatever ruleset a form is of.
@@ -87,6 +157,15 @@ export default class RulesEngine {
   }
 
   /**
+   * The entities a kind's page links one to (`type`), by the role its storage (`storage`) declares edited
+   * (`StoredKind.editedLinks`: 3.5's class's skills) and its links' kind: none for a kind without.
+   */
+  private static linksOf(storage: StorageEngine, type: string): EntityLinksDescription | undefined {
+    const edited = [...storage.editedLinks()].find(([, { from }]) => from === type);
+    return edited && { role: edited[0], type: edited[1].to };
+  }
+
+  /**
    * Each type's list as its ruleset's page shows it (`lists`, its rules' declaration): its columns, each with what its
    * field's declaration says of its value (`columnOf`).
    */
@@ -97,6 +176,42 @@ export default class RulesEngine {
       return [[type, { ...list, columns }] as const];
     });
     return Object.fromEntries(described);
+  }
+
+  /**
+   * The pools a kind's list narrows by (`type`; `pools`, its class's: the role of its entities' links to them and the
+   * URL's key): their kind, the one its storage's role links to (`storage`), and the scope they're picked in, its own.
+   */
+  private static poolsOf(
+    storage: StorageEngine,
+    type: string,
+    { param, role }: NonNullable<KindCapabilities["pools"]>,
+  ): EntityPoolsDescription {
+    const linked = storage.registries().linkRoles.filter((def) => def.role === role && def.fromType === type);
+    const [pool, ...others] = [...new Set(linked.map((def) => def.toType))];
+    if (!pool || others.length > 0) throw new Error(`${type} narrow by their ${role} links to no one kind`);
+    return { param, role, type: pool, scope: type };
+  }
+
+  /**
+   * How a module's classes progress (`rules`, its declaration; `storage`, its storage): its tracks, each with its field's label and bounds
+   * (`trackOf`), its levels' fields', the one kind its kind with a progression owns (3.5's class levels). Refused when
+   * it has tracks but no one such kind.
+   */
+  private static progressionOf(
+    storage: StorageEngine,
+    module: RulesetModule,
+    rules: RulesDeclaration,
+  ): RulesDescription["progression"] {
+    const { tracks } = rules.progression;
+    if (tracks.length === 0) return { ...rules.progression, tracks: [] };
+    const owners = rules.kinds.filter(({ type }) => module.entities.capabilitiesOf(type).progression);
+    const [owned, ...others] = owners.flatMap(({ type }) => storage.ownedKinds(type));
+    if (!owned || others.length > 0) throw new Error("No one owned kind holds the progression's tracks");
+    return {
+      ...rules.progression,
+      tracks: tracks.map((track) => RulesEngine.trackOf(owned, module.fields[owned], track)),
+    };
   }
 
   /**
@@ -133,68 +248,12 @@ export default class RulesEngine {
 
   /** Every registered module's rules, checked: one instance, built on its first read. */
   static shared(): RulesEngine {
-    RulesEngine.instance ??= new RulesEngine(Modules.all(), StorageEngine.shared());
+    RulesEngine.instance ??= new RulesEngine(Modules.all(), StorageEngine.all());
     return RulesEngine.instance;
   }
 
-  /** Refuses a field a kind's class names (`field`, what it's for: `what`) that its storage holds none of for it. */
-  private checkField(type: string, field: string, what: string) {
-    if (!this.storage.field(type, field)) throw new Error(`${type} name ${field} for ${what}, which they don't hold`);
-  }
-
-  /**
-   * How a kind's row copies one (`type`, a kind whose class makes copies): its declaration's words (`words`: a
-   * duplicate's locked fields, the most variants at once), the role a copy names its template by (the one its kind
-   * reads its fields off through, `DeclaredFields.inheritance`) and its template's flag (`StoredKind.template`).
-   * Refused where its declaration or its storage says none of them.
-   */
-  private copiesOf(type: string, words: EntityKindDeclaration["copies"]): EntityKindDescription["copies"] {
-    const source = this.storage.declaredFields().inheritance(type)?.role;
-    const { template } = this.storage.kind(type);
-    if (!words || !source || !template)
-      throw new Error(`${type} make copies: their rules word them, and their storage stores a template and its source`);
-    return { ...words, source, template: { field: template } };
-  }
-
-  /**
-   * A kind as its ruleset's page shows it: its declaration's presentation (`declared`, among its module's `rules`), and
-   * what it can do, its class's (`capabilitiesOf`: a progression's, with the tables its rules' progression names,
-   * `tablesOf`) and its storage's (its copies' template, the links its page edits, its customization page among its
-   * module's, `pages`, its pools' kind), each key in its name's order, as a declaration writes them. Refused when its
-   * declaration words copies its class makes none of, or its class names a field its kind doesn't hold.
-   */
-  private describeKind(
-    module: RulesetModule,
-    rules: RulesDeclaration,
-    pages: RulesDescription["customizationPages"],
-    declared: EntityKindDeclaration,
-  ): EntityKindDescription {
-    const { copies: words, ...presentation } = declared;
-    const { type } = declared;
-    const capabilities = module.entities.capabilitiesOf(type);
-    if (words && !capabilities.copies) throw new Error(`${type} make no copies, which their rules word`);
-    if (capabilities.lockedName) this.checkField(type, capabilities.lockedName.field, "the flag that locks their name");
-    if (capabilities.families) this.checkField(type, capabilities.families.field, "their family");
-    const links = this.linksOf(type);
-    const described: EntityKindDescription = {
-      ...presentation,
-      ...(capabilities.copies && { copies: this.copiesOf(type, words) }),
-      ...(capabilities.families && { families: true }),
-      ...(capabilities.tiered && { tiered: true }),
-      ...(links && { links }),
-      ...(capabilities.lockedName && { lockedName: capabilities.lockedName }),
-      opens: capabilities.progression
-        ? "progression"
-        : pages.some((page) => page.type === type)
-          ? "customization"
-          : "page",
-      ...(capabilities.partitioned && { partitioned: true }),
-      ...(capabilities.pools && { pools: this.poolsOf(type, capabilities.pools) }),
-      ...(capabilities.readOnly && { readOnly: true }),
-      ...(capabilities.progression && { tables: RulesEngine.tablesOf(rules.progression) }),
-    };
-    return RulesEngine.inNameOrder(described);
-  }
+  /** Each module's storage, by its base rules. */
+  private readonly storages: ReadonlyMap<BaseRules, StorageEngine>;
 
   /**
    * What a module's rulesets share: its rules' declaration, its kinds' with what each can do (`describeKind`: where its
@@ -202,64 +261,28 @@ export default class RulesEngine {
    * (`listsOf`, `progressionOf`), the kinds its storage declares customizable and those whose customizations have a
    * page of their own, its fields' and its importers.
    */
-  private describeModule(module: RulesetModule): RulesDescription {
+  private describeModule(baseRules: BaseRules, module: RulesetModule): RulesDescription {
+    const storage = this.storageOf(baseRules);
     const rules = module.ruleset.describeRules();
     const pages = StorageEngine.customizationPagesOf(module.storage);
     return {
       ...rules,
       advancementWord: module.advancements.advancementWord,
       customizable: StorageEngine.customizableKindsOf(module.storage),
-      kinds: rules.kinds.map((kind) => this.describeKind(module, rules, pages, kind)),
+      kinds: rules.kinds.map((kind) => RulesEngine.describeKind(storage, module, rules, pages, kind)),
       lists: RulesEngine.listsOf(module, rules.lists),
-      progression: this.progressionOf(module, rules),
+      progression: RulesEngine.progressionOf(storage, module, rules),
       customizationPages: pages,
       fields: RulesEngine.fieldsOf(module),
       importers: module.imports.describeImporters().programs,
     };
   }
 
-  /**
-   * The entities a kind's page links one to (`type`), by the role its storage declares edited
-   * (`StoredKind.editedLinks`: 3.5's class's skills) and its links' kind: none for a kind without.
-   */
-  private linksOf(type: string): EntityLinksDescription | undefined {
-    const edited = [...this.storage.editedLinks()].find(([, { from }]) => from === type);
-    return edited && { role: edited[0], type: edited[1].to };
-  }
-
-  /** The module that stores a kind (`type`). */
-  private moduleOf(type: string): RulesetModule {
-    const found = this.modules.find(([, module]) => type in module.storage.kinds);
-    if (!found) throw new Error(`No module stores the kind ${type}`);
-    return found[1];
-  }
-
-  /**
-   * The pools a kind's list narrows by (`type`; `pools`, its class's: the role of its entities' links to them and the
-   * URL's key): their kind, the one its storage's role links to, and the scope they're picked in, its own.
-   */
-  private poolsOf(type: string, { param, role }: NonNullable<KindCapabilities["pools"]>): EntityPoolsDescription {
-    const linked = this.storage.registries().linkRoles.filter((def) => def.role === role && def.fromType === type);
-    const [pool, ...others] = [...new Set(linked.map((def) => def.toType))];
-    if (!pool || others.length > 0) throw new Error(`${type} narrow by their ${role} links to no one kind`);
-    return { param, role, type: pool, scope: type };
-  }
-
-  /**
-   * How a module's classes progress (`rules`, its declaration): its tracks, each with its field's label and bounds
-   * (`trackOf`), its levels' fields', the one kind its kind with a progression owns (3.5's class levels). Refused when
-   * it has tracks but no one such kind.
-   */
-  private progressionOf(module: RulesetModule, rules: RulesDeclaration): RulesDescription["progression"] {
-    const { tracks } = rules.progression;
-    if (tracks.length === 0) return { ...rules.progression, tracks: [] };
-    const owners = rules.kinds.filter(({ type }) => module.entities.capabilitiesOf(type).progression);
-    const [owned, ...others] = owners.flatMap(({ type }) => this.storage.ownedKinds(type));
-    if (!owned || others.length > 0) throw new Error("No one owned kind holds the progression's tracks");
-    return {
-      ...rules.progression,
-      tracks: tracks.map((track) => RulesEngine.trackOf(owned, module.fields[owned], track)),
-    };
+  /** A base rules' module's storage. */
+  private storageOf(baseRules: BaseRules): StorageEngine {
+    const storage = this.storages.get(baseRules);
+    if (!storage) throw new Error(`${baseRules} is no registered module's base rules`);
+    return storage;
   }
 
   /**
@@ -270,10 +293,20 @@ export default class RulesEngine {
     return Modules.of(baseRules).advancements.advancementWord.one;
   }
 
+  /**
+   * The kinds a user customizes, every module's (`StorageEngine.customizableKinds`), each once, by type: what a
+   * customization's route takes, its ruleset's own refusing another's.
+   */
+  customizableKinds(): string[] {
+    return [...new Set(this.modules.flatMap(([baseRules]) => this.storageOf(baseRules).customizableKinds()))].toSorted(
+      (a, b) => a.localeCompare(b),
+    );
+  }
+
   /** What each base rules' rulesets share, by base rules: what the client reads once, for every ruleset it shows. */
   describeAll(): Record<BaseRules, RulesDescription> {
     return Object.fromEntries(
-      this.modules.map(([baseRules, module]) => [baseRules, this.describeModule(module)]),
+      this.modules.map(([baseRules, module]) => [baseRules, this.describeModule(baseRules, module)]),
     ) as Record<BaseRules, RulesDescription>;
   }
 
@@ -302,12 +335,38 @@ export default class RulesEngine {
     return RulesetData.takenOwnedIn(Modules.of(baseRules).ruleset.describeRules().words, ownedType, ownerType);
   }
 
+  /** Whether a character's kind is a player character's, any module's (`playerKinds`), not another's child. */
+  isPlayerKind(kind: string): boolean {
+    return this.playerKinds().includes(kind);
+  }
+
   /**
-   * The kinds a fork restores to its parent's: every kind no other owns (`StorageEngine.standaloneKinds`) but those its
-   * rules keep to themselves, which no form writes (`readOnly`: 3.5's abilities). What a revert takes and a ruleset's
-   * Local Changes offer.
+   * Every module's player character's kind (3.5's `pc`), each once: what a user's lists, shares and campaigns hold, a
+   * character of any other kind being another's child.
+   */
+  playerKinds(): string[] {
+    return [...new Set(this.modules.map(([baseRules]) => this.storageOf(baseRules).playerKind()))];
+  }
+
+  /**
+   * The kinds a fork restores to its parent's: every module's kind no other owns (`StorageEngine.standaloneKinds`) but
+   * those its rules keep to themselves, which no form writes (`readOnly`: 3.5's abilities), each once. What a revert
+   * takes and a ruleset's Local Changes offer.
    */
   restorableKinds(): EntityType[] {
-    return this.storage.standaloneKinds().filter((type) => !this.moduleOf(type).entities.capabilitiesOf(type).readOnly);
+    const kinds = this.modules.flatMap(([baseRules, module]) =>
+      this.storageOf(baseRules)
+        .standaloneKinds()
+        .filter((type) => !module.entities.capabilitiesOf(type).readOnly),
+    );
+    return [...new Set(kinds)];
+  }
+
+  /**
+   * The kinds no other owns, every module's (`StorageEngine.standaloneKinds`), each once, in their declarations' order:
+   * what the routes by kind take, a ruleset's own refusing another's.
+   */
+  standaloneKinds(): EntityType[] {
+    return [...new Set(this.modules.flatMap(([baseRules]) => this.storageOf(baseRules).standaloneKinds()))];
   }
 }

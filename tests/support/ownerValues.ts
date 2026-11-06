@@ -114,5 +114,5 @@ export async function writeValues(type: string, id: string, write: FieldsWrite) 
     return;
   }
   const [entity] = await Entities.findStored(db, { ids: [id] });
-  await Entities.update(db, type, { ...write, updatedAt: entity!.updatedAt }, { id });
+  await Entities.update(db, DND35_BASE_RULES, type, { ...write, updatedAt: entity!.updatedAt }, { id });
 }

@@ -4,4 +4,4 @@ import { Engine, type EntityKinds } from "@/engine/index.ts";
 export type RulesetEntityType = keyof EntityKinds;
 
 /** Every ruleset entity type, in the order the modules declare them: those no other type owns. */
-export const RULESET_ENTITY_TYPES: readonly RulesetEntityType[] = Engine.storage().standaloneKinds();
+export const RULESET_ENTITY_TYPES: readonly RulesetEntityType[] = Engine.rules().standaloneKinds();

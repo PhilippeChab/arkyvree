@@ -10,6 +10,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
@@ -90,10 +91,10 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
     items: [language],
   } = await Entities.findPage<Language>(
     db,
-    { entityType: "languages", rulesetId: baseId, childOnly: true },
+    { baseRules: DND35_BASE_RULES, entityType: "languages", rulesetId: baseId, childOnly: true },
     { limit: 1, page: 1 },
   );
-  await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
+  await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: language.id }]);
   const local = await EntitiesService.updateEntity(session, fork.id, "languages", language.id, {
     name: language.name,
     description: "Local",

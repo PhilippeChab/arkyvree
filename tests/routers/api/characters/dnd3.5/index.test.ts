@@ -15,6 +15,7 @@ import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CHARACTER_AGE,
   CHARACTER_ALIGNMENT,
@@ -308,7 +309,7 @@ describe("characters", () => {
 
     test("lists the abilities in the order a sheet does, each named as its ruleset names it", async () => {
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [forcePoints] = await Entities.create<RulesetAbility>(db, "abilities", {
+      const [forcePoints] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
         name: "Force Points",
         description: "",
         rulesetId: fork.id,

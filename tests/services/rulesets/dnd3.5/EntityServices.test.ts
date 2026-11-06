@@ -21,6 +21,7 @@ import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   LANGUAGE_TYPE,
   RACE_BASE_SPEED,
@@ -166,7 +167,7 @@ async function remaining(ids: string[]) {
 /** A new user's empty ruleset, holding the rows entity bodies refer to. */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
-  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     rulesetId: ruleset.id,
     name: "Strength",
     description: "Strength",
@@ -349,7 +350,7 @@ test("refuses a form naming one list twice: by its source's id and its copy's", 
 // Mechanics can't be customized, so nothing can point at them.
 describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %s", (entityType) => {
   const service = SERVICES[entityType];
-  const ownsModifiers = Engine.storage().customizableKinds().includes(entityType);
+  const ownsModifiers = Engine.storage(DND35_BASE_RULES).customizableKinds().includes(entityType);
 
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, values: 0 };
   const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1 };

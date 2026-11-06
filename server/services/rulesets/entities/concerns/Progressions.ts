@@ -86,7 +86,10 @@ export function Progressions<B extends Constructor>(Base: B) {
         if (!ownedId) throw new NotFoundError(gone.owned);
 
         const expectedUpdatedAt = target.expected(tokens.get(owned.entity.id));
-        const [row] = await Entities.update(tx, ownedType, owned.edit?.row ?? {}, { id: ownedId, expectedUpdatedAt });
+        const [row] = await Entities.update(tx, scope.ruleset.baseRules, ownedType, owned.edit?.row ?? {}, {
+          id: ownedId,
+          expectedUpdatedAt,
+        });
         if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
         writtenIds.push(ownedId);
         if (owned.edit) {

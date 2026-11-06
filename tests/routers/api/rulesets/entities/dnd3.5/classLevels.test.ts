@@ -9,6 +9,7 @@ import { Activities, Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const klass = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
@@ -183,7 +184,7 @@ describe("rulesets class levels", () => {
     expect(await Entities.findOne(db, { entityType: "classes", name: "Fighter", rulesetId: id })).toBeUndefined();
 
     // A level another save wrote after the view was read (the view cached without it) meets the database's index
-    await Entities.create(db, "class-levels", { ownerId: classId, position: 4 });
+    await Entities.create(db, DND35_BASE_RULES, "class-levels", { ownerId: classId, position: 4 });
     expect(await (await expectStatus(post(4), 409)).json()).toMatchObject({
       message: "Level Class already has a level 4",
     });
@@ -193,7 +194,7 @@ describe("rulesets class levels", () => {
     // And on an inherited class: a level its source got after the fork's view was read meets the index on its copy
     const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });
     await expectOk(levels.$get({ param: classParam(fork.id, classId) }));
-    await Entities.create(db, "class-levels", { ownerId: classId, position: 5 });
+    await Entities.create(db, DND35_BASE_RULES, "class-levels", { ownerId: classId, position: 5 });
     const raced = levels.$post({
       param: classParam(fork.id, classId),
       json: { fields: { [CLASS_LEVEL_BAB]: 5 }, position: 5 },

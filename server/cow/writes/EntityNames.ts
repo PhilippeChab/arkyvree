@@ -156,7 +156,11 @@ export default class EntityNames {
    */
   async assertExtensionNamesAvailable(tx: Db, extensionIds: string[]): Promise<void> {
     const subscribed = [...this.ruleset.extensionIds, ...extensionIds];
-    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionIds: subscribed });
+    const after = await CowDataReader.read(
+      tx,
+      { ...this.ruleset, extensionIds: subscribed },
+      this.scope.ruleset.baseRules,
+    );
     const brought = await RulesetEntities.findNames(tx, { rulesetIds: extensionIds });
     await this.refuseChainNames(
       tx,

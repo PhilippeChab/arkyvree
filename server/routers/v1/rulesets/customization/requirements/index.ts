@@ -22,7 +22,7 @@ const requirementFields = {
 /** A requirement's owner: an entity of a customized kind, or a modifier, whose requirements say when it applies. */
 const requirementOwnerParams = customizedParams.extend({
   kind: z
-    .enum([...Engine.storage().customizableKinds(), "modifiers"])
+    .enum([...Engine.rules().customizableKinds(), "modifiers"])
     .meta({ description: "The owner's kind: one of the rules' `customizable` kinds, or `modifiers` for a modifier's" }),
 });
 

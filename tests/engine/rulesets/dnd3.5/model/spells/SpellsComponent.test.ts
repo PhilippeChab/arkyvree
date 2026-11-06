@@ -9,12 +9,15 @@ import { Entities } from "@/server/repositories/index.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("SpellsComponent.addSpellEntries", () => {
   test("lists a spell's values of a field in its options' order, whatever order they were stored in", async () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
-    const [spell] = await Entities.createMany<Spell>(db, "spells", [{ name: "Probe Chant", rulesetId: ruleset.id }]);
+    const [spell] = await Entities.createMany<Spell>(db, DND35_BASE_RULES, "spells", [
+      { name: "Probe Chant", rulesetId: ruleset.id },
+    ]);
     // Stored backwards, as a copy can hold them, with a value no option names
     const stored: [string, string][] = [
       [SPELL_SCHOOL, "Enchantment"],

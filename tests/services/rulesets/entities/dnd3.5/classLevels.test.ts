@@ -26,6 +26,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
@@ -54,12 +55,12 @@ function modifier(sourceId: string, target: string, value: string) {
 }
 
 async function createSave(rulesetId: string, name: string) {
-  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: `${name} Ability`,
     description: name,
     rulesetId,
   });
-  const [save] = await Entities.create<RulesetSave>(db, "saves", {
+  const [save] = await Entities.create<RulesetSave>(db, DND35_BASE_RULES, "saves", {
     name,
     rulesetId,
     links: { keyAbility: ability.id },
@@ -73,7 +74,7 @@ async function createSave(rulesetId: string, name: string) {
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Test Class" });
-  const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+  const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
     name: "Fighter Bonus Feat",
     rulesetId: ruleset.id,
   });
@@ -147,7 +148,10 @@ describe("EntitiesService: a class's levels", () => {
       const idOf = (name: string) => ids.get(name)!;
       const fortitude = await createSave(ruleset.id, "Fortitude");
       // A pool that doesn't list the feat granted through it: the grant names none
-      const [other] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Other Pool", rulesetId: ruleset.id });
+      const [other] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+        name: "Other Pool",
+        rulesetId: ruleset.id,
+      });
       RulesetViews.invalidate(ruleset.id);
 
       const created = await createLevel(session, ruleset.id, klass.id, 1, {
@@ -296,7 +300,7 @@ describe("EntitiesService: a class's levels", () => {
 
     test("an update replaces them, keeps them when it omits them, and clears them", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [cleave, dodge] = await Entities.createMany<Feat>(db, "feats", [
+      const [cleave, dodge] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
         { name: "Cleave", rulesetId: ruleset.id },
         { name: "Dodge", rulesetId: ruleset.id },
       ]);
@@ -325,7 +329,7 @@ describe("EntitiesService: a class's levels", () => {
   // A character takes a feat that doesn't stack once, so a second level granting it would give nothing
   test("grants a feat that doesn't stack at one level, refusing a second in an edit or a new level", async () => {
     const { session, ruleset, klass, aptitude } = await setup();
-    const [aura, smite] = await Entities.createMany<Feat>(db, "feats", [
+    const [aura, smite] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
       { name: "Aura", rulesetId: ruleset.id },
       { name: "Smite", rulesetId: ruleset.id, fields: { [FEAT_STACKABLE]: true } },
     ]);
@@ -379,7 +383,9 @@ describe("EntitiesService: a class's levels", () => {
   // A class saved before the rule may grant one at two levels: its saves keep the repeat, but add no level to it
   test("keeps a repeat of a feat that doesn't stack a class had, and refuses another level of it", async () => {
     const { session, ruleset, klass, aptitude } = await setup();
-    const [aura] = await Entities.createMany<Feat>(db, "feats", [{ name: "Aura", rulesetId: ruleset.id }]);
+    const [aura] = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
+      { name: "Aura", rulesetId: ruleset.id },
+    ]);
     const grant = { toId: aura.id, viaId: aptitude.id };
     const first = await createLevel(session, ruleset.id, klass.id, 1, { links: { grants: [grant] } });
     const second = await createLevel(session, ruleset.id, klass.id, 2);
@@ -497,7 +503,7 @@ describe("EntitiesService: a class's levels", () => {
     test("count a stackable feat's picks at every level that grants it", async () => {
       // Regression: only the levels' own modifiers were read, so a pool granted through a feat was missing.
       const { session, ruleset, klass, aptitude, poolTarget } = await setup();
-      const [bonusFeat] = await Entities.create<Feat>(db, "feats", {
+      const [bonusFeat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
         name: "Bonus Feat",
         rulesetId: ruleset.id,
         fields: { [FEAT_STACKABLE]: true },
@@ -646,8 +652,14 @@ describe("EntitiesService: a class's levels", () => {
   describe("deleting a level", () => {
     test("deletes its feats, spells, saves and customizations", async () => {
       const { session, ruleset, klass, aptitude } = await setup();
-      const [feat] = await Entities.create<Feat>(db, "feats", { name: "Cleave", rulesetId: ruleset.id });
-      const [spell] = await Entities.create<Spell>(db, "spells", { name: "Rage", rulesetId: ruleset.id });
+      const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+        name: "Cleave",
+        rulesetId: ruleset.id,
+      });
+      const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", {
+        name: "Rage",
+        rulesetId: ruleset.id,
+      });
       const save = await createSave(ruleset.id, "Fortitude");
       await createLevel(session, ruleset.id, klass.id, 1);
       const level = await createLevel(session, ruleset.id, klass.id, 2, {

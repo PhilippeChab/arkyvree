@@ -30,9 +30,12 @@ export default class CustomizationCopies {
     return map;
   }
 
-  /** Whether entities of a type have modifiers: a kind a user customizes does (`customizableKinds`), any other doesn't. */
+  /**
+   * Whether entities of a type have modifiers: a kind a user customizes does (`customizableKinds`, any module's), any
+   * other doesn't.
+   */
   private static hasModifiers(entityType: string): boolean {
-    return Engine.storage().customizableKinds().includes(entityType);
+    return Engine.rules().customizableKinds().includes(entityType);
   }
 
   /**

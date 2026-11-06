@@ -17,6 +17,7 @@ import {
   type NewLink,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
 
@@ -36,10 +37,11 @@ export interface CopiedEntity {
  * own instance, which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
+  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources, baseRules: BaseRules) {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
+    this.baseRules = baseRules;
   }
 
   /**
@@ -63,10 +65,13 @@ export default class EntityCopy {
     entityId: string,
     scope: LockedRulesetScope,
   ): Promise<CopiedEntity> {
-    const copy = new EntityCopy(entityType, entityId, scope.sources);
+    const copy = new EntityCopy(entityType, entityId, scope.sources, scope.ruleset.baseRules);
     const { entity, made } = await copy.copy(tx);
     return made ? { entity, copiedIds: copy.copiedIds } : { entity };
   }
+
+  /** The ruleset's base rules, whose module's declarations the copy is written by. */
+  private readonly baseRules: BaseRules;
 
   private readonly copiedIds = new Map<string, string>();
 
@@ -108,7 +113,7 @@ export default class EntityCopy {
 
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
     // (its row's, its links' and its owned entities') are remapped by
-    const cow = await CowDataReader.read(tx, this.ruleset);
+    const cow = await CowDataReader.read(tx, this.ruleset, this.baseRules);
     const siblingIds = cow.getSiblings(this.entityId);
 
     // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
@@ -119,6 +124,7 @@ export default class EntityCopy {
     // Its rows as they're stored, its source's: a copy keeps them as they are
     const [newEntity] = await Entities.create(
       tx,
+      this.baseRules,
       entityType,
       { rulesetId: childRulesetId, name: name!, description, partition, fields, links },
       true,
@@ -153,6 +159,7 @@ export default class EntityCopy {
     const links = await EntityLinks.findMany(tx, { fromIds: [...ids.keys()] });
     await EntityLinks.createMany(
       tx,
+      this.baseRules,
       links.map((link) => EntityCopy.copyOf(link, ids.get(link.fromId)!, type, cow)),
     );
   }
@@ -165,12 +172,13 @@ export default class EntityCopy {
    */
   private async copyLinksAndOwned(tx: Db, targetEntityId: string, cow: CowData) {
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), cow);
-    for (const type of Engine.storage().ownedKinds(this.entityType)) {
+    for (const type of Engine.storage(this.baseRules).ownedKinds(this.entityType)) {
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
       // Each its position, its fields and its single links (each to what stands for its target), and its times
       const copies = await Entities.createMany(
         tx,
+        this.baseRules,
         type,
         cow.resolveLinks(owned).map(({ createdAt, fields, links, position, updatedAt }) => ({
           ownerId: targetEntityId,
@@ -205,9 +213,11 @@ export default class EntityCopy {
       siblingIds.map((id) => siblingLinks.get(id) ?? []),
       resolve,
       this.entityType,
+      this.baseRules,
     );
     await EntityLinks.createMany(
       tx,
+      this.baseRules,
       links.map((link) => EntityCopy.copyOf(link, targetEntityId, this.entityType, cow)),
     );
   }
@@ -250,6 +260,12 @@ export default class EntityCopy {
     const [own, ...sources] = sourceIds.map((id, index) =>
       id === undefined || (index > 0 && !byId.has(siblingIds[index - 1])) ? undefined : byId.get(id),
     );
-    return Engine.copyOnWrite().mergeValues(entity, siblings, this.entityType, { own, siblings: sources });
+    return Engine.copyOnWrite().mergeValues(
+      entity,
+      siblings,
+      this.entityType,
+      { own, siblings: sources },
+      this.baseRules,
+    );
   }
 }

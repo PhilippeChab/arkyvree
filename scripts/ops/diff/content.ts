@@ -47,6 +47,9 @@ const OWNERS = `,
 /** Why a registry isn't compared. */
 const REGISTRY = "a registry: what the modules declare, which every migration syncs from the code";
 
+/** Why a row's base rules isn't compared: its keys hold it to its ruleset's, which is. */
+const RULESET_BASE_RULES = "its ruleset's base rules, which its keys hold it to: the ruleset's own is compared";
+
 /** Why a field's ordinal isn't compared. */
 const SET_ORDINAL = "a set's values are compared as a set: an ordinal keys a value, it orders none";
 
@@ -81,8 +84,13 @@ export const LABELLED_COLUMNS: Record<string, string[]> = { "rules.rulesets": ["
 
 /** The columns of a compared table nothing compares, as `<table>.<column>`, and why. */
 export const UNCOMPARED_COLUMNS: Record<string, string> = {
+  "rules.entities.base_rules": RULESET_BASE_RULES,
+  "rules.entity_fields.base_rules": RULESET_BASE_RULES,
   "rules.entity_fields.ordinal": SET_ORDINAL,
+  "rules.entity_links.base_rules": RULESET_BASE_RULES,
+  "rules.ruleset_fields.base_rules": RULESET_BASE_RULES,
   "rules.ruleset_fields.ordinal": SET_ORDINAL,
+  "rules.ruleset_links.base_rules": RULESET_BASE_RULES,
   "rules.rulesets.content_version":
     "how many writes took its lock, which a database's history decides, not its content",
 };

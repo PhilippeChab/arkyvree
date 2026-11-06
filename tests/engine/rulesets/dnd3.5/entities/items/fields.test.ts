@@ -11,6 +11,7 @@ import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { heldValues, listValues, writtenValues } from "@/tests/support/ownerValues.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { DAMAGE_TYPE, ITEM_HAS_CHARGES, WEAPON_FINESSABLE, WEAPON_RANGE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("An item's fields", () => {
@@ -47,7 +48,7 @@ describe("An item's fields", () => {
     expect(held.every((item) => Object.keys(item.fields).every((field) => declared.has(field)))).toBe(true);
     expect(held.filter((item) => Object.keys(item.fields).length > 2).length).toBeGreaterThan(400);
 
-    const inherited = Engine.storage().declaredFields().inheritance("items")!;
+    const inherited = Engine.storage(DND35_BASE_RULES).declaredFields().inheritance("items")!;
     const mismatches: string[] = [];
     for (const item of held) {
       const template = item.links.madeFrom ? items.get(item.links.madeFrom) : undefined;

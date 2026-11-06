@@ -22,6 +22,7 @@ import { runWhileLocked } from "@/tests/support/database.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const pool = createTestPool();
@@ -103,7 +104,7 @@ test("an edit of an entity another write copied since the client read it is stal
     id: (await getSeedCtx()).featMap.Toughness,
   }))!;
   const { session, fork, copy } = await copiedSinceRead("feats", source.id, (copyId) =>
-    Entities.update(db, "feats", { description: "Theirs" }, { id: copyId }),
+    Entities.update(db, DND35_BASE_RULES, "feats", { description: "Theirs" }, { id: copyId }),
   );
 
   expect(
@@ -172,6 +173,7 @@ test("a progression save of a class another write copied since the client read i
   const { session, fork, copy } = await copiedSinceRead("classes", wizard.id, async (copyId) =>
     Entities.update(
       db,
+      DND35_BASE_RULES,
       "class-levels",
       { fields: { [CLASS_LEVEL_SKILL_POINTS]: 9 } },
       { id: (await firstOf(copyId)).id },

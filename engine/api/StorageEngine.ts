@@ -38,95 +38,52 @@ function compareText(a: string, b: string) {
 }
 
 /**
- * Every module's owners' fields (`owned`, each module's by owner type), by owner type: an owner type two modules declare
- * is refused, but those every module's owners share (`shared`: their characters', their rulesets' Settings'), merged
- * field by field, a field two modules declare of one refused.
- */
-function mergeFields(owned: ReadonlyMap<BaseRules, Record<string, Fields>>, shared: readonly string[]) {
-  const merged: Record<string, Record<string, Fields[string]>> = {};
-  for (const [baseRules, owners] of owned) {
-    for (const [ownerType, fields] of Object.entries(owners)) {
-      if (ownerType in merged && !shared.includes(ownerType))
-        throw new Error(`${baseRules} declares ${ownerType}, which another module stores`);
-      merged[ownerType] ??= {};
-      for (const [name, field] of Object.entries(fields)) {
-        if (name in merged[ownerType])
-          throw new Error(`${baseRules} declares the field ${name} of ${ownerType}, which another module declares`);
-        merged[ownerType][name] = field;
-      }
-    }
-  }
-  return merged as Record<string, Fields>;
-}
-
-/** The entries of every module's record (`pick`), one per name: a name two modules declare is refused. */
-function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: RulesetModule) => Record<string, T>) {
-  const merged: Record<string, T> = {};
-  for (const [baseRules, module] of modules) {
-    for (const [name, value] of Object.entries(pick(module))) {
-      if (name in merged) throw new Error(`${baseRules} declares ${name}, which another module stores`);
-      merged[name] = value;
-    }
-  }
-  return merged;
-}
-
-/**
- * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
- * kind (`kind`, a new entity's partition: `partitionOf`), an entity's record off its stored rows (`recordOf`: every
- * field it holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number
- * as its field keeps it (`storedNumber`), a player character's kind (`playerKinds`, `isPlayerKind`), the kinds a user
+ * How a base rules' module stores its data in the generic tables, which the server reads and writes them by: each kind
+ * (`kind`, a new entity's partition: `partitionOf`), an entity's record off its stored rows (`recordOf`: every field it
+ * holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number as its
+ * field keeps it (`storedNumber`), its player character's kind (`playerKind`, `isPlayerKind`), the kinds a user
  * customizes (`customizableKinds`) and those whose customizations have a page of their own (`customizationPages`), the
  * links an entity's page edits (`editedLinks`), the kinds a name is the identity of (`isIdentityKind`), an owned kind's
- * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and
- * the registries' rows (`registries`: its fields' derived from their declarations, `fieldDefsOf`). Names are global:
- * two modules declaring one kind, role, or field of one owner type is refused, as the registries' keys refuse it. What
- * a character's or a ruleset's Settings' write stores is its own module's fields' (`writtenFields`).
+ * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and the
+ * registries' rows (`registries`: its fields' derived from their declarations, `fieldDefsOf`), each of its base rules
+ * (`baseRules`). Its names are its own: another base rules' module may declare a kind, a role or a field of one name,
+ * which its own rows keep apart (the registries are keyed by base rules first). What a write of an owner's fields
+ * stores is its own declarations' (`writtenFields`). Each base rules' is built once (`of`).
  */
 export default class StorageEngine {
-  constructor(modules: [BaseRules, RulesetModule][]) {
-    this.baseRules = modules.map(([baseRules]) => baseRules);
-    this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
-    this.owned = new Map(
-      modules.map(([baseRules, module]) => {
-        if (this.characterOwnerType in module.fields)
-          throw new Error(`${baseRules} declares its characters' fields among its owners', not as theirs`);
-        return [baseRules, { ...module.fields, [this.characterOwnerType]: module.characterFields }];
-      }),
-    );
-    this.fields = mergeFields(this.owned, [this.characterOwnerType, this.settingsOwnerType]);
-    this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
+  constructor(
+    readonly baseRules: BaseRules,
+    module: RulesetModule,
+  ) {
+    if (this.characterOwnerType in module.fields)
+      throw new Error(`${baseRules} declares its characters' fields among its owners', not as theirs`);
+    this.kinds = module.storage.kinds;
+    this.fields = { ...module.fields, [this.characterOwnerType]: module.characterFields };
+    this.playerKindName = module.storage.character.playerKind;
     this.customizable = StorageEngine.customizableKindsOf({ kinds: this.kinds });
     this.identityKinds = new Set(this.namesakeKinds("identity"));
-    const registries = modules.map(([, module]) => module.storage.registries);
-    const entityTypes = registries.flatMap((registry) => registry.entityTypes);
-    this.merged = {
-      entityTypes,
-      linkRoles: registries.flatMap((registry) => registry.linkRoles),
-      fieldDefs: this.fieldDefsOf(entityTypes),
-      rulesetRoles: registries.flatMap((registry) => registry.rulesetRoles),
-      characterRoles: registries.flatMap((registry) => registry.characterRoles),
-      steps: registries.flatMap((registry) => registry.steps),
-      itemTypes: registries.flatMap((registry) => registry.itemTypes),
-    };
-    StorageEngine.checkDeclarations(this.fields, this.merged);
-    this.writes = new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
-    this.standalone = this.merged.entityTypes.flatMap((def) =>
+    const { registries } = module.storage;
+    this.declarations = { ...registries, fieldDefs: this.fieldDefsOf(registries.entityTypes) };
+    StorageEngine.checkDeclarations(this.fields, this.declarations);
+    this.writes = new FieldWrites(this.fields);
+    this.standalone = this.declarations.entityTypes.flatMap((def) =>
       def.ownerType === null ? [def.type as EntityType] : [],
     );
     this.owners = new Map(
-      this.merged.entityTypes.flatMap(({ ownerType, type }) => (ownerType ? [[type, ownerType]] : [])),
+      this.declarations.entityTypes.flatMap(({ ownerType, type }) => (ownerType ? [[type, ownerType]] : [])),
     );
     this.singleRoles = new Map(
-      this.merged.entityTypes.map(({ type }) => [
+      this.declarations.entityTypes.map(({ type }) => [
         type,
-        new Set(this.merged.linkRoles.filter((def) => def.fromType === type && def.single).map((def) => def.role)),
+        new Set(
+          this.declarations.linkRoles.filter((def) => def.fromType === type && def.single).map((def) => def.role),
+        ),
       ]),
     );
   }
 
-  /** Every module's storage, merged once: the modules never change. */
-  private static instance: StorageEngine | undefined;
+  /** Each base rules' storage, built on its first read: the modules never change. */
+  private static readonly instances = new Map<BaseRules, StorageEngine>();
 
   /**
    * Refuses a field or a link role whose merge or inheritance the engine can't read (`fields`, each owner type's, as
@@ -184,6 +141,11 @@ export default class StorageEngine {
     return [...byValue.values()];
   }
 
+  /** Every registered module's storage, each its base rules' (`of`). */
+  static all(): StorageEngine[] {
+    return Modules.all().map(([baseRules]) => StorageEngine.of(baseRules));
+  }
+
   /**
    * The kinds a storage declares customizable (`StoredKind.customizable`, of `storage`: a module's, or every module's
    * merged), by type: the order a refusal of another lists them in.
@@ -209,18 +171,23 @@ export default class StorageEngine {
       .map(({ ownerType, type }) => ({ type, ...(ownerType && { owner: ownerType }) }));
   }
 
-  /** Every registered module's storage, merged: one instance, built on its first read. */
-  static shared(): StorageEngine {
-    StorageEngine.instance ??= new StorageEngine(Modules.all());
-    return StorageEngine.instance;
+  /** A base rules' module's storage: one instance, built on its first read. */
+  static of(baseRules: BaseRules): StorageEngine {
+    let storage = StorageEngine.instances.get(baseRules);
+    if (!storage) {
+      storage = new StorageEngine(baseRules, Modules.of(baseRules));
+      StorageEngine.instances.set(baseRules, storage);
+    }
+    return storage;
   }
-
-  private readonly baseRules: BaseRules[];
 
   /** The kinds a user customizes, by type (`customizableKinds`). */
   private readonly customizable: readonly string[];
 
-  /** Every module's owners' fields, by owner type: its entity types', its rulesets' and its characters'. */
+  /** What its registries hold: its declarations', its fields' rows derived from theirs (`fieldDefsOf`). */
+  private readonly declarations: StorageRegistries;
+
+  /** Its owners' fields, by owner type: its entity types', its rulesets' and its characters'. */
   private readonly fields: Record<string, Fields>;
 
   /** The kinds a name is the identity of (`isIdentityKind`). */
@@ -228,16 +195,11 @@ export default class StorageEngine {
 
   private readonly kinds: Record<string, StoredKind>;
 
-  private readonly merged: StorageRegistries;
-
-  /** Each module's owners' fields, by owner type (its characters' among them), by its base rules (`writtenFields`). */
-  private readonly owned: ReadonlyMap<BaseRules, Record<string, Fields>>;
-
   /** Each kind another owns, by its type, and the kind that owns it, in their declarations' order (`ownerOf`). */
   private readonly owners: ReadonlyMap<string, string>;
 
-  /** Each module's player character's kind. */
-  private readonly playerKindList: readonly string[];
+  /** Its player character's kind (`playerKind`). */
+  private readonly playerKindName: string;
 
   /** The roles of each type's single links, which its record holds, by its type. */
   private readonly singleRoles: ReadonlyMap<string, ReadonlySet<string>>;
@@ -246,10 +208,10 @@ export default class StorageEngine {
   private readonly standalone: readonly EntityType[];
 
   /**
-   * What a write of each module's owners' fields stores, by its base rules (`writtenFields`): built with the modules,
-   * so a rule no write applies is refused as they register (`FieldWrites`).
+   * What a write of its owners' fields stores (`writtenFields`): built with the module, so a rule no write applies is
+   * refused as it registers (`FieldWrites`).
    */
-  private readonly writes: ReadonlyMap<BaseRules, FieldWrites>;
+  private readonly writes: FieldWrites;
 
   /** The owner type of a character's fields, which each module declares (`RulesetModule.characterFields`). */
   readonly characterOwnerType = "characters";
@@ -260,7 +222,7 @@ export default class StorageEngine {
    */
   readonly settingsOwnerType = "rulesets";
 
-  /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
+  /** The fields it declares, as views keep their values, once read (`declaredFields`). */
   private declared?: DeclaredFields;
 
   /** The roles whose links an entity's page edits, and the kinds they're from and to, once read (`editedLinks`). */
@@ -269,11 +231,21 @@ export default class StorageEngine {
   /** The kinds whose customizations have a page of their own, by type, once read (`customizationPages`). */
   private pages?: ReadonlyMap<string, RulesDescription["customizationPages"][number]>;
 
-  /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
+  /** What it declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
 
   /**
-   * The registry rows of every module's fields (`fields`), each stored field of an owner type (but a reference's, which a
+   * Refuses a write of a character's or a ruleset's Settings' fields (`fields`, of `ownerType`, which every module
+   * declares its own of) naming a field this module doesn't declare of them: another module's.
+   */
+  private checkOwnFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>) {
+    const declared = new Set(Field.storedLeavesOf(this.fields[ownerType] ?? {}).map((leaf) => leaf.field));
+    for (const field of Object.keys(fields))
+      if (!declared.has(field)) throw new Error(`${this.baseRules} declares no field ${field} of ${ownerType}`);
+  }
+
+  /**
+   * The registry rows of its fields (`fields`), each stored field of an owner type (but a reference's, which a
    * single link keeps: `Field.storedLeavesOf`) with its owner's kind, the kind of value it holds and whether it's a set:
    * an entity type's (`entityTypes`), a ruleset's Settings' (`settingsOwnerType`) or a character's
    * (`characterOwnerType`). An owner type that's none of them, or a stored field two of its fields keep, is refused.
@@ -294,25 +266,10 @@ export default class StorageEngine {
     });
   }
 
-  /**
-   * What writes a character's or a ruleset's Settings' fields (`fields`, of `ownerType`, which every module declares):
-   * its own module's (`baseRules`), refusing a field it doesn't declare of them (another module's).
-   */
-  private ownWrites(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, baseRules: BaseRules | undefined) {
-    if (!baseRules) throw new Error(`A write of the fields of ${ownerType} takes its module's base rules`);
-    const owners = this.owned.get(baseRules);
-    const writes = this.writes.get(baseRules);
-    if (!owners || !writes) throw new Error(`${baseRules} is no registered module's base rules`);
-    const declared = new Set(Field.storedLeavesOf(owners[ownerType] ?? {}).map((leaf) => leaf.field));
-    for (const field of Object.keys(fields))
-      if (!declared.has(field)) throw new Error(`${baseRules} declares no field ${field} of ${ownerType}`);
-    return writes;
-  }
-
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
   characterRole(role: string): CharacterRoleDef {
-    const found = this.merged.characterRoles.find((def) => def.role === role);
-    if (!found) throw new Error(`No module declares the character role ${role}`);
+    const found = this.declarations.characterRoles.find((def) => def.role === role);
+    if (!found) throw new Error(`${this.baseRules} declares no character role ${role}`);
     return found;
   }
 
@@ -331,7 +288,7 @@ export default class StorageEngine {
    */
   customizationPages(): ReadonlyMap<string, RulesDescription["customizationPages"][number]> {
     this.pages ??= new Map(
-      StorageEngine.customizationPagesOf({ kinds: this.kinds, registries: this.merged }).map((page) => [
+      StorageEngine.customizationPagesOf({ kinds: this.kinds, registries: this.declarations }).map((page) => [
         page.type,
         page,
       ]),
@@ -341,7 +298,7 @@ export default class StorageEngine {
 
   /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
   declaredFields(): DeclaredFields {
-    this.declared ??= new DeclaredFields(this.fields, this.merged.linkRoles);
+    this.declared ??= new DeclaredFields(this.fields, this.declarations.linkRoles);
     return this.declared;
   }
 
@@ -354,7 +311,9 @@ export default class StorageEngine {
       Object.entries(this.kinds).flatMap(([type, kind]) => {
         if (!kind.editedLinks) return [];
         const role = kind.editedLinks;
-        const [def, ...others] = this.merged.linkRoles.filter((held) => held.role === role && held.fromType === type);
+        const [def, ...others] = this.declarations.linkRoles.filter(
+          (held) => held.role === role && held.fromType === type,
+        );
         if (!def || others.length > 0) throw new Error(`The kind ${type} edits its ${role} links to no one kind`);
         return [[role, { from: type, to: def.toType }]];
       }),
@@ -364,7 +323,7 @@ export default class StorageEngine {
 
   /** A field of an owner's type (an entity type, `settingsOwnerType`, `characterOwnerType`), if a module declares it. */
   field(ownerType: string, field: string): FieldDef | undefined {
-    return this.merged.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
+    return this.declarations.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
   }
 
   /**
@@ -382,15 +341,15 @@ export default class StorageEngine {
     return this.identityKinds.has(type);
   }
 
-  /** Whether a character's kind is a player character's (`playerKinds`), not another's child (3.5's bonded creatures). */
+  /** Whether a character's kind is its player character's (`playerKind`), not another's child (3.5's bonded creatures). */
   isPlayerKind(kind: string): boolean {
-    return this.playerKindList.includes(kind);
+    return kind === this.playerKindName;
   }
 
   /** An entity kind, by its type (`feats`): its partition's default, how its entities pair, what makes a template. */
   kind(type: string): StoredKind {
     const kind = this.kinds[type];
-    if (!kind) throw new Error(`No module stores the kind ${type}`);
+    if (!kind) throw new Error(`${this.baseRules} stores no kind ${type}`);
     return kind;
   }
 
@@ -412,11 +371,6 @@ export default class StorageEngine {
     return new Map([...written].map(([type, rows]) => [type, StorageEngine.kindValuesOf(rows)]));
   }
 
-  /** The base rules of every registered module: what a ruleset's `base_rules` may name (`rules.modules`). */
-  modules(): BaseRules[] {
-    return this.baseRules;
-  }
-
   /** The kinds whose entities of one name in a ruleset's chain pair as `pairing` says (`StoredKind.namesakes`). */
   namesakeKinds(pairing: NonNullable<StoredKind["namesakes"]>): string[] {
     return Object.keys(this.kinds).filter((type) => this.kinds[type].namesakes === pairing);
@@ -424,17 +378,17 @@ export default class StorageEngine {
 
   /** The kinds a kind owns (`type`: a class's levels), whose entities go with its own. */
   ownedKinds(type: string): string[] {
-    return this.merged.entityTypes.filter((def) => def.ownerType === type).map((def) => def.type);
+    return this.declarations.entityTypes.filter((def) => def.ownerType === type).map((def) => def.type);
   }
 
   /** The kinds another owns (3.5's class levels), in their declarations' order. */
   ownedTypes(): string[] {
-    return this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.type] : []));
+    return this.declarations.entityTypes.flatMap((def) => (def.ownerType ? [def.type] : []));
   }
 
   /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
   ownerKinds(): string[] {
-    return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
+    return [...new Set(this.declarations.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
   }
 
   /** The kind that owns a kind (`type`: a class level's class), none for a kind no other owns. */
@@ -448,11 +402,11 @@ export default class StorageEngine {
   }
 
   /**
-   * Every module's player character's kind (3.5's `pc`): what a user's lists, shares and campaigns hold, a character of
-   * any other kind being another's child.
+   * Its player character's kind (3.5's `pc`): what a user's lists, shares and campaigns hold, a character of any other
+   * kind being another's child.
    */
-  playerKinds(): readonly string[] {
-    return this.playerKindList;
+  playerKind(): string {
+    return this.playerKindName;
   }
 
   /**
@@ -476,24 +430,24 @@ export default class StorageEngine {
   refusingRoles(type: string): string[] {
     return [
       ...new Set(
-        this.merged.linkRoles
+        this.declarations.linkRoles
           .filter((def) => def.toType === type && !def.single && def.onDelete === "refuse")
           .map((def) => def.role),
       ),
     ];
   }
 
-  /** What every module's registries hold. */
+  /** What its registries hold, each row of its base rules (`baseRules`). */
   registries(): StorageRegistries {
-    return this.merged;
+    return this.declarations;
   }
 
   /** A link role, from a type to another. */
   role(role: string, fromType: string, toType: string): LinkRoleDef {
-    const found = this.merged.linkRoles.find(
+    const found = this.declarations.linkRoles.find(
       (def) => def.role === role && def.fromType === fromType && def.toType === toType,
     );
-    if (!found) throw new Error(`No module declares the role ${role} from ${fromType} to ${toType}`);
+    if (!found) throw new Error(`${this.baseRules} declares no role ${role} from ${fromType} to ${toType}`);
     return found;
   }
 
@@ -518,8 +472,8 @@ export default class StorageEngine {
 
   /** An advancement's step. */
   step(step: string): StepDef {
-    const found = this.merged.steps.find((def) => def.step === step);
-    if (!found) throw new Error(`No module declares the step ${step}`);
+    const found = this.declarations.steps.find((def) => def.step === step);
+    if (!found) throw new Error(`${this.baseRules} declares no step ${step}`);
     return found;
   }
 
@@ -562,14 +516,14 @@ export default class StorageEngine {
    */
   viewSchema(): ViewSchema {
     if (this.schema) return this.schema;
-    const types = this.merged.entityTypes;
+    const types = this.declarations.entityTypes;
     const ownerOf = new Map(types.map(({ ownerType, type }) => [type, ownerType]));
     const depth = (type: string): number => {
       const owner = ownerOf.get(type);
       return owner ? depth(owner) + 1 : 0;
     };
     const tracked = new Set(types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])));
-    const items = new Set(this.merged.itemTypes);
+    const items = new Set(this.declarations.itemTypes);
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
       kinds: types
@@ -587,7 +541,7 @@ export default class StorageEngine {
             tracked: tracked.has(type),
           };
         }),
-      unionLinks: this.merged.linkRoles
+      unionLinks: this.declarations.linkRoles
         .filter((def) => !def.single && def.merge === "union")
         .map(({ fromType, role, toType }) => ({ fromType, role, toType })),
     };
@@ -597,20 +551,13 @@ export default class StorageEngine {
   /**
    * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `settingsOwnerType`,
    * `characterOwnerType`) stores, by field, whoever writes it (a seed, a form's save, an import), so the same values store
-   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's. It takes the fields of the module
-   * that declares them: an entity type's, the one module that stores it; a character's or a ruleset's Settings', which
-   * every module declares, its own (`baseRules`, its ruleset's, `ownWrites`), so a new one holds its own module's
-   * defaults alone, and a field another module declares is refused.
+   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's, by this module's declarations. A
+   * character's or a ruleset's Settings' fields, which every module declares its own of, are this module's alone: a new
+   * one holds its defaults alone, and a field it doesn't declare of them is refused (`checkOwnFields`).
    */
-  writtenFields(
-    ownerType: string,
-    fields: Readonly<Record<string, FieldWrite>>,
-    creating: boolean,
-    baseRules?: BaseRules,
-  ) {
+  writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
     if (ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType)
-      return this.ownWrites(ownerType, fields, baseRules).written(ownerType, fields, creating);
-    const module = [...this.owned].find(([, owners]) => ownerType in owners)?.[0];
-    return ((module && this.writes.get(module)) ?? new FieldWrites({})).written(ownerType, fields, creating);
+      this.checkOwnFields(ownerType, fields);
+    return this.writes.written(ownerType, fields, creating);
   }
 }

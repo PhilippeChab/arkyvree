@@ -19,6 +19,7 @@ import {
   createTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Writes that write nothing but what's given. */
@@ -30,7 +31,10 @@ function writesOf(writes: Partial<EntityWrites>): EntityWrites {
 async function createSpell() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [spell] = await Entities.create<Spell>(db, "spells", { name: "Probe Spell", rulesetId: ruleset.id });
+  const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", {
+    name: "Probe Spell",
+    rulesetId: ruleset.id,
+  });
   const policyOf = (scope: LockedRulesetScope) => new RulesetsPolicy(session, scope.ruleset);
   return { entity: { entityId: spell.id, entityType: "spells" } as const, policyOf, rulesetId: ruleset.id };
 }
@@ -42,7 +46,10 @@ async function createSpell() {
 async function deleteInheritedFeat() {
   const session = makeSession();
   const parent = await createTestRuleset(session.userId);
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Probe Inherited Feat", rulesetId: parent.id });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    name: "Probe Inherited Feat",
+    rulesetId: parent.id,
+  });
   const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
   await withRulesetScope(db, fork.id, async () => undefined);
   await Entities.delete(db, { entityType: "feats", id: feat.id });
@@ -103,12 +110,15 @@ describe("EntityWriter: an entity another write deleted after the view was cache
   test("refuses an owned entity's edit as that owned entity, not found, when another write copied its owner without it", async () => {
     const session = makeSession();
     const parent = await createTestRuleset(session.userId);
-    const [klass] = await Entities.create<Klass>(db, "classes", {
+    const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       name: "Probe Class",
       rulesetId: parent.id,
       fields: { [CLASS_HD]: 8 },
     });
-    const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+    const [level] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: klass.id,
+      position: 1,
+    });
     const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
     // The view is cached; then another write copies the class and deletes its copy's level
     await withRulesetScope(db, fork.id, async () => undefined);

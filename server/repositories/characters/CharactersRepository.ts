@@ -62,7 +62,7 @@ class CharactersRepository extends include(
     const contributes = this.contributesTo(db, userId);
     return this.where([
       accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
-      inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+      inArray(this.table.kind, [...Engine.rules().playerKinds()]),
       this.visibility(visibility),
       this.search(search, [this.table.name, this.table.description]),
     ]);
@@ -151,7 +151,7 @@ class CharactersRepository extends include(
           "userId" in where && eq(this.table.userId, where.userId),
         ],
         [
-          "userId" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "userId" in where && inArray(this.table.kind, [...Engine.rules().playerKinds()]),
           "search" in where && this.search(where.search, [this.table.name]),
           this.visibility(visibility),
         ],
@@ -179,7 +179,7 @@ class CharactersRepository extends include(
         ],
         [
           "kind" in where && eq(this.table.kind, where.kind),
-          "shareToken" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "shareToken" in where && inArray(this.table.kind, [...Engine.rules().playerKinds()]),
           this.visibility(visibility),
         ],
       ),
@@ -227,7 +227,7 @@ class CharactersRepository extends include(
       .where(
         and(
           inArray(charactersInCharacter.rulesetId, where.rulesetIds),
-          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
+          inArray(charactersInCharacter.kind, [...Engine.rules().playerKinds()]),
           or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
         ),
       );

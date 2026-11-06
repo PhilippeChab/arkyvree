@@ -16,6 +16,7 @@ import {
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CLASS_CASTER_TYPE,
   CLASS_LEVEL_BAB,
@@ -47,7 +48,12 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       ? (await Entities.findOne<Race>(db, { entityType: "races", rulesetId: baseId, name: "Human" }))!
       : entityType === "classes"
         ? (await Entities.findOne<Klass>(db, { entityType: "classes", rulesetId: baseId, name: "Fighter" }))!
-        : (await Entities.create<Item>(db, "items", { rulesetId: baseId, name: "Sibling item fixture" }))[0];
+        : (
+            await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
+              rulesetId: baseId,
+              name: "Sibling item fixture",
+            })
+          )[0];
   if (entityType === "items") invalidateSeededRuleset(baseId);
   const marker = MARKERS[entityType];
   const extensions: string[] = [];

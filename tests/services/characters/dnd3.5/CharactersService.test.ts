@@ -43,6 +43,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
@@ -71,7 +72,7 @@ async function fighterLevel() {
 async function setupPrivateRuleset() {
   const { user: owner } = await createTestUser();
   const ruleset = await createTestRuleset(owner.id);
-  const [race] = await Entities.create<Race>(db, "races", {
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Private Race",
     rulesetId: ruleset.id,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -523,7 +524,9 @@ describe("CharactersService", () => {
         skills: { [ctx.skillMap["Climb"]]: 1 },
         feats: { [ctx.aptMap["General"]]: [ctx.featMap["Toughness"]] },
       });
-      await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: ctx.langMap["Common"] }]);
+      await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [
+        { entityId: ctx.langMap["Common"] },
+      ]);
       await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
       const children = async () => ({
         levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
@@ -705,7 +708,7 @@ describe("CharactersService", () => {
       [CHARACTER_GENDER, "identity.physiology.gender", "Female", "Male"],
     ] as const)("follow a race's %s requirement, once the form gives one", async (field, target, allowed, other) => {
       const { rulesetId } = await getSeedCtx();
-      const [race] = await Entities.create<Race>(db, "races", {
+      const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -733,7 +736,7 @@ describe("CharactersService", () => {
 
     test("count what the form doesn't say as met inside an or, as alone", async () => {
       const { rulesetId } = await getSeedCtx();
-      const [race] = await Entities.create<Race>(db, "races", {
+      const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },

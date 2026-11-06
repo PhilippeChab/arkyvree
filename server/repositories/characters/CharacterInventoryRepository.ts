@@ -11,7 +11,7 @@ import type { CharacterInventory } from "@/shared/relations.ts";
 /** An inventory entry as a write gives it: its item, where it's held, its groups, its charges. */
 type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "updatedAt">>;
 
-/** An entry's columns: all its own but its item's type, which is its item's (`stored`). */
+/** An entry's columns: all its own but its item's type and base rules, which are its item's (`stored`). */
 const COLUMNS = {
   createdAt: inventoryInCharacter.createdAt,
   updatedAt: inventoryInCharacter.updatedAt,
@@ -25,11 +25,14 @@ const COLUMNS = {
   groups: inventoryInCharacter.groups,
 };
 
-/** An entry's row to write: its item's type its item's own. */
+/** An entry's row to write: its item's type and base rules its item's own. */
 function stored(values: InventoryValues) {
+  const { itemId } = values;
   return {
     ...values,
-    ...(values.itemId !== undefined ? { itemType: StoredCharacters.buildTypeOf(values.itemId) } : {}),
+    ...(itemId !== undefined
+      ? { baseRules: StoredCharacters.buildBaseRulesOf(itemId), itemType: StoredCharacters.buildTypeOf(itemId) }
+      : {}),
   };
 }
 

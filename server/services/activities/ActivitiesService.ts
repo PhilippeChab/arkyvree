@@ -21,7 +21,15 @@ import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
-import { type ContentRow, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
+import {
+  type ContentRow,
+  findContentOwner,
+  findContentRuleset,
+  findEditedLink,
+  findOwnerType,
+  isOwnerKind,
+  readCustomizationPages,
+} from "./contentRuleset.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
@@ -116,9 +124,8 @@ class ActivitiesService {
     entityType: string,
     section: "modifiers" | "requirements",
   ): Promise<string | null> {
-    const storage = Engine.storage();
-    const pages = storage.customizationPages();
-    if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
+    const pages = readCustomizationPages();
+    if (!isOwnerKind(entityType) && !hasCustomizationPage(entityType, pages)) return null;
     const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
     if (!rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
     return buildEntityPagePath(rulesetId, entityType, entityId, pages, section);
@@ -136,15 +143,14 @@ class ActivitiesService {
     targetId: string,
     written: string | undefined,
   ): Promise<string | null> {
-    const storage = Engine.storage();
     const target = { id: targetId, type: targetType };
-    const edited = storage.editedLinks().get(targetType);
+    const edited = findEditedLink(targetType);
     // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits
     // its links has a customization page (3.5's classes: their customizations are their page's tabs)
-    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
+    const page = findOwnerType(targetType) || edited ? await findContentOwner(db, target) : target;
     const stored = page && (await findContentRuleset(db, page));
     if (!page || !stored) return null;
-    const pages = storage.customizationPages();
+    const pages = readCustomizationPages();
     // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
     if (written !== undefined && written !== stored && (await this.rulesetUrl(session, written))) {
       const shownId = await this.findShownIn(written, page, stored);

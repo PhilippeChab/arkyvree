@@ -32,7 +32,9 @@ export function Links<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
         const { id: fromId } = await new EntityEdit(scope).cowToEdit(tx, type, plan.owner);
-        const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
+        const [link] = await EntityLinks.createMany(tx, scope.ruleset.baseRules, [
+          { ...plan.link, fromId, fromType: type },
+        ]);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

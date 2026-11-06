@@ -20,6 +20,7 @@ import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -65,7 +66,7 @@ describe("EntitiesService: classes", () => {
       name: "Wizard",
       fields: { [CLASS_HD]: 4 },
     });
-    const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
+    const [intelligence] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
       name: "Intelligence",
       description: "Intelligence",
       rulesetId: ruleset.id,
@@ -86,20 +87,23 @@ describe("EntitiesService: classes", () => {
   test("deletes a class's levels with their feats, spells, saves and modifiers, and its class skills", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
-    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+    const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
       name: "Strength",
       description: "Strength",
       rulesetId,
     });
-    const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Class Aptitude", rulesetId });
-    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Class Feat", rulesetId });
-    const [spell] = await Entities.create<Spell>(db, "spells", { name: "Class Spell", rulesetId });
-    const [save] = await Entities.create<RulesetSave>(db, "saves", {
+    const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+      name: "Class Aptitude",
+      rulesetId,
+    });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", { name: "Class Feat", rulesetId });
+    const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", { name: "Class Spell", rulesetId });
+    const [save] = await Entities.create<RulesetSave>(db, DND35_BASE_RULES, "saves", {
       name: "Class Save",
       rulesetId,
       links: { keyAbility: ability.id },
     });
-    const [skill] = await Entities.create<Skill>(db, "skills", {
+    const [skill] = await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
       name: "Class Skill",
       rulesetId,
       links: { keyAbility: ability.id },

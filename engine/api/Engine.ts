@@ -69,8 +69,16 @@ export default class Engine {
     return RulesEngine.shared();
   }
 
-  /** How every module stores its data in the generic tables, which the server reads and writes them by. */
-  static storage() {
-    return StorageEngine.shared();
+  /**
+   * How a base rules' module stores its data in the generic tables, which the server reads and writes its rows by: a
+   * ruleset's, its base rules'.
+   */
+  static storage(baseRules: BaseRules) {
+    return StorageEngine.of(baseRules);
+  }
+
+  /** How every module stores its data: each base rules' storage, whose declarations the registries hold. */
+  static storages() {
+    return StorageEngine.all();
   }
 }

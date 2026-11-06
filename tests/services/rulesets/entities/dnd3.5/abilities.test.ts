@@ -8,6 +8,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 describe("EntitiesService: abilities", () => {
   describe("getAbilities", () => {
@@ -28,7 +29,7 @@ describe("EntitiesService: abilities", () => {
     test("should return abilities for a ruleset", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Entities.createMany<RulesetAbility>(db, "abilities", [
+      await Entities.createMany<RulesetAbility>(db, DND35_BASE_RULES, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
@@ -48,7 +49,7 @@ describe("EntitiesService: abilities", () => {
     test("should support search filtering", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Entities.createMany<RulesetAbility>(db, "abilities", [
+      await Entities.createMany<RulesetAbility>(db, DND35_BASE_RULES, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
       ]);
@@ -68,7 +69,7 @@ describe("EntitiesService: abilities", () => {
     test("should support pagination", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      await Entities.createMany<RulesetAbility>(db, "abilities", [
+      await Entities.createMany<RulesetAbility>(db, DND35_BASE_RULES, "abilities", [
         { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
         { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },

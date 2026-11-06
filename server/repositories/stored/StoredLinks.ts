@@ -4,6 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { entityLinksInRules } from "@/drizzle/schema.ts";
 import { Engine, type LinkWrite, type ViewLink } from "@/engine/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 /** A link a write stores: the entity it's from (`fromId`, of `fromType`), and the link a plan gives. */
 export type NewLink = LinkWrite & { fromId: string; fromType: string };
@@ -27,7 +28,8 @@ const WRITE_BATCH = 2000;
 
 /**
  * Every module's entities' links of the roles they hold many of (a feat's pools, a class level's grants, a class's
- * skills), as the generic table stores them (`rules.entity_links`), by role: each answered as the view holds a link
+ * skills), as the generic table stores them (`rules.entity_links`, each of its entities' base rules), by role, as their
+ * base rules' module declares it: each answered as the view holds a link
  * (`ViewLink`). A new link comes after its entity's last of its role to its target's kind, which keeps their order. An
  * entity's single links are its row's (`Entities`).
  */
@@ -37,12 +39,12 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
   }
 
   /**
-   * Writes links (`links`, each from its entity), each after its entity's last of its role to its target's kind, in
-   * their order: answers them as written, in that order.
+   * Writes links (`links`, each from its entity, of `baseRules`), each after its entity's last of its role to its
+   * target's kind, in their order: answers them as written, in that order.
    */
-  async createMany(db: Db, links: NewLink[]): Promise<ViewLink[]> {
+  async createMany(db: Db, baseRules: BaseRules, links: NewLink[]): Promise<ViewLink[]> {
     if (links.length === 0) return [];
-    const storage = Engine.storage();
+    const storage = Engine.storage(baseRules);
     const fromIds = [...new Set(links.map((link) => link.fromId))];
     const last = await db
       .select({
@@ -62,6 +64,7 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
       next.set(keyOf(link), ordinal + 1);
       const viaId = link.viaId ?? null;
       return {
+        baseRules,
         fromId: link.fromId,
         fromType: link.fromType,
         role: link.role,
@@ -153,11 +156,11 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
   }
 
   /**
-   * Whether a link of a role that refuses its target's delete points at an entity of a kind (`toId`, of `toType`): an
-   * in-use check (a class level's base bonus to a save, whose delete the database would refuse).
+   * Whether a link of a role that refuses its target's delete points at an entity of a kind (`toId`, of `toType`, of
+   * `baseRules`): an in-use check (a class level's base bonus to a save, whose delete the database would refuse).
    */
-  async hasRefusing(db: Db, where: { toId: string; toType: string }) {
-    const roles = Engine.storage().refusingRoles(where.toType);
+  async hasRefusing(db: Db, where: { baseRules: BaseRules; toId: string; toType: string }) {
+    const roles = Engine.storage(where.baseRules).refusingRoles(where.toType);
     if (roles.length === 0) return false;
     const [link] = await db
       .select({ id: entityLinksInRules.id })

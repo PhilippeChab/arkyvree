@@ -6,12 +6,14 @@ import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 async function setup() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
   const [source, ...targets] = await Entities.createMany<Feat>(
     db,
+    DND35_BASE_RULES,
     "feats",
     ["Source", "Target A", "Target B"].map((name) => ({ name: `Copy ${name}`, rulesetId: ruleset.id })),
   );

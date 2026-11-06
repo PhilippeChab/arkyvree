@@ -3,14 +3,18 @@ import { describe, expect, test } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { CHARACTER_FLAG_AND_SET, modulesWithCharacterFlagAndSet, modulesWithSecond } from "@/tests/support/modules.ts";
+import {
+  CHARACTER_FLAG_AND_SET,
+  modulesWithCharacterFlagAndSet,
+  modulesWithSecond,
+  storagesOf,
+} from "@/tests/support/modules.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
@@ -122,7 +126,7 @@ describe("A character's fields", () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
     await registerFlagAndSet();
     // Another module's characters declare the flag, always written: a new 3.5 character holds none of it
-    const beside = new StorageEngine(modulesWithSecond({ characters: CHARACTER_FLAG_AND_SET }));
+    const beside = storagesOf(modulesWithSecond({ characters: CHARACTER_FLAG_AND_SET }));
     await StoredCharacters.write(db, [id], {}, true, beside);
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([]);
     expect(await findFieldRows(id, CHARACTER_XP)).not.toEqual([]);
@@ -142,14 +146,14 @@ describe("A character's fields", () => {
     expect((named as Error).message).toContain("declares no field TEST_RETIRED of characters");
     expect(await findFieldRows(id, "TEST_TITLES")).toEqual([]);
     // Its own module's do: it holds its default
-    await StoredCharacters.write(db, [id], {}, true, new StorageEngine(modulesWithCharacterFlagAndSet()));
+    await StoredCharacters.write(db, [id], {}, true, storagesOf(modulesWithCharacterFlagAndSet()));
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([
       { ordinal: 0, value_kind: "flag", multiple: false, text_value: null, flag_value: false },
     ]);
   });
 
   test("writes and reads a flag and a set its module declares, each row as the table's checks take it", async () => {
-    const storage = new StorageEngine(modulesWithCharacterFlagAndSet());
+    const storage = storagesOf(modulesWithCharacterFlagAndSet());
     const { id } = await createTestCharacter(SEED_USER_ID);
     await registerFlagAndSet();
     await StoredCharacters.write(db, [id], { fields: { TEST_TITLES: ["Lord", "Sir", "Lord"] } }, false, storage);

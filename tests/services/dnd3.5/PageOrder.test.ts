@@ -6,12 +6,14 @@ import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 test("rows that tie on a list's sort come in one order, by id, each on one page", async () => {
   const { ruleset } = await createTestUserAndRuleset();
   const createdAt = new Date().toISOString();
   const rows = await Entities.createMany<Language>(
     db,
+    DND35_BASE_RULES,
     "languages",
     ["Aquan", "Ignan", "Terran", "Auran", "Sylvan", "Druidic"].map((name) => ({
       rulesetId: ruleset.id,

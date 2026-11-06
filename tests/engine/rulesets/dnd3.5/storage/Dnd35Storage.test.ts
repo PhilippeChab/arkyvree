@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { Field, type Fields } from "@/engine/core/fields/index.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { BONDED_KIND_SLUGS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
@@ -18,15 +19,15 @@ import {
 
 describe("3.5's storage", () => {
   test("declares its feats, items, spells, races, classes and their levels customizable", () => {
-    expect(StorageEngine.shared().customizableKinds()).toEqual([
+    expect(StorageEngine.of(DND35_BASE_RULES).customizableKinds()).toEqual([
       ...["class-levels", "classes", "feats", "items", "races", "spells"],
     ]);
   });
 
   test("declares its player character's kind, which a new race or class is for", () => {
-    expect(StorageEngine.shared().playerKinds()).toEqual([PLAYER_CHARACTER_KIND]);
-    expect(StorageEngine.shared().isPlayerKind(PLAYER_CHARACTER_KIND)).toBe(true);
-    for (const slug of BONDED_KIND_SLUGS) expect(StorageEngine.shared().isPlayerKind(slug)).toBe(false);
+    expect(StorageEngine.of(DND35_BASE_RULES).playerKind()).toEqual(PLAYER_CHARACTER_KIND);
+    expect(StorageEngine.of(DND35_BASE_RULES).isPlayerKind(PLAYER_CHARACTER_KIND)).toBe(true);
+    for (const slug of BONDED_KIND_SLUGS) expect(StorageEngine.of(DND35_BASE_RULES).isPlayerKind(slug)).toBe(false);
     expect([DND35_STORAGE.kinds.races.partition, DND35_STORAGE.kinds.classes.partition]).toEqual([
       PLAYER_CHARACTER_KIND,
       PLAYER_CHARACTER_KIND,
@@ -34,7 +35,7 @@ describe("3.5's storage", () => {
   });
 
   test("defines each field once, as its vocabulary declares it of its entities and its characters, its kind and set as stored", () => {
-    const { fieldDefs } = StorageEngine.shared().registries();
+    const { fieldDefs } = StorageEngine.of(DND35_BASE_RULES).registries();
     const defined = fieldDefs.map(
       ({ field, multiple, ownerType, valueKind }) => `${ownerType} ${field} ${valueKind}${multiple ? "[]" : ""}`,
     );

@@ -16,6 +16,7 @@ import { carry } from "@/tests/support/dnd3.5/items.ts";
 import { textOf } from "@/tests/support/printedPages.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** The first element of a page's tree, its components called, that `matches`. */
 function findElement(
@@ -47,7 +48,13 @@ describe("InfoPage", () => {
   test("prints every ability the character has a score in, the books' six first, then the others by name, with their name", async () => {
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const ability = async (name: string) =>
-      (await Entities.create<RulesetAbility>(db, "abilities", { name, description: "", rulesetId: fork.id }))[0];
+      (
+        await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
+          name,
+          description: "",
+          rulesetId: fork.id,
+        })
+      )[0];
     const sanity = await ability("Sanity");
     const forcePoints = await ability("Force Points");
     RulesetViews.invalidate(fork.id);
@@ -55,7 +62,7 @@ describe("InfoPage", () => {
     const { abilityMap } = await getSeedCtx();
     // Written out of order: the page orders them, not the rows
     const score = (entityId: string, amount: number) => ({ entityId, amount });
-    await CharacterLinks.createMany(db, character.id, "score", [
+    await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "score", [
       score(sanity.id, 9),
       score(forcePoints.id, 14),
       ...Object.values(abilityMap).map((abilityId) => score(abilityId, 12)),

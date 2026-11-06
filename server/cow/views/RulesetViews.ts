@@ -107,11 +107,11 @@ class RulesetViews {
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
    * key readers of the newly committed chain use. Read through the shared `db`, never a transaction.
    */
-  async getCowData(ruleset: RulesetSources): Promise<CowData> {
+  async getCowData(ruleset: RulesetSources, baseRules: BaseRules): Promise<CowData> {
     const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     const entry = await this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => {
       const versions = await Rulesets.findVersions(db, { ids: dependencies });
-      return { data: { value: await CowDataReader.read(db, ruleset), versions } };
+      return { data: { value: await CowDataReader.read(db, ruleset, baseRules), versions } };
     });
     return entry.value;
   }
@@ -121,7 +121,7 @@ class RulesetViews {
    * copy-on-write data.
    */
   async getData(ruleset: RulesetSources, baseRules: BaseRules): Promise<RulesetData> {
-    const cowData = await this.getCowData(ruleset);
+    const cowData = await this.getCowData(ruleset, baseRules);
     const chain = await Promise.all(
       [ruleset.id, ...cowData.sourceChain].map((id) => this.getRawData(id, RulesetViews.rowWritersOf(id, ruleset))),
     );
@@ -146,7 +146,7 @@ class RulesetViews {
       dependencies,
       async () => ({
         data: {
-          value: await CowDataReader.read(tx, ruleset),
+          value: await CowDataReader.read(tx, ruleset, baseRules),
           versions: RulesetViews.versionsOf(dependencies, current),
         },
       }),

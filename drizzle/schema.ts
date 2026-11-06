@@ -151,6 +151,7 @@ export const rulesetsInRules = rules.table(
       foreignColumns: [usersInAccount.id],
       name: "rulesets_user_id_fkey",
     }).onDelete("cascade"),
+    unique("rulesets_id_base_rules_key").on(table.id, table.baseRules),
   ],
 );
 
@@ -215,18 +216,25 @@ export const charactersInCharacter = character.table(
 export const entityTypesInRules = rules.table(
   "entity_types",
   {
-    type: text().primaryKey().notNull(),
+    type: text().notNull(),
     ownerType: text("owner_type"),
     owned: boolean().generatedAlwaysAs(sql`(owner_type IS NOT NULL)`),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.baseRules, table.type], name: "entity_types_pkey" }),
     foreignKey({
-      columns: [table.ownerType],
-      foreignColumns: [table.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "entity_types_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.ownerType],
+      foreignColumns: [table.baseRules, table.type],
       name: "entity_types_owner_type_fkey",
     }),
-    unique("entity_types_type_owner_type_key").on(table.type, table.ownerType),
-    unique("entity_types_type_owned_key").on(table.type, table.owned),
+    unique("entity_types_type_owner_type_key").on(table.baseRules, table.type, table.ownerType),
+    unique("entity_types_type_owned_key").on(table.baseRules, table.type, table.owned),
   ],
 );
 
@@ -245,6 +253,7 @@ export const entitiesInRules = rules.table(
     partition: text().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     uniqueIndex("entities_name_unique_idx")
@@ -277,22 +286,23 @@ export const entitiesInRules = rules.table(
       name: "entities_owner_id_ruleset_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
+      columns: [table.rulesetId, table.baseRules],
+      foreignColumns: [rulesetsInRules.id, rulesetsInRules.baseRules],
       name: "entities_ruleset_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.type, table.owned],
-      foreignColumns: [entityTypesInRules.type, entityTypesInRules.owned],
+      columns: [table.baseRules, table.type, table.owned],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type, entityTypesInRules.owned],
       name: "entities_type_owned_fkey",
     }),
     foreignKey({
-      columns: [table.type, table.ownerType],
-      foreignColumns: [entityTypesInRules.type, entityTypesInRules.ownerType],
+      columns: [table.baseRules, table.type, table.ownerType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type, entityTypesInRules.ownerType],
       name: "entities_type_owner_type_fkey",
     }),
     unique("entities_id_type_key").on(table.id, table.type),
     unique("entities_id_ruleset_id_key").on(table.id, table.rulesetId),
+    unique("entities_id_base_rules_key").on(table.id, table.baseRules),
     check("entities_check", sql`(name IS NOT NULL) OR ((owner_id IS NOT NULL) AND ("position" IS NOT NULL))`),
   ],
 );
@@ -338,29 +348,36 @@ export const advancementsInCharacter = character.table(
 export const stepsInCharacter = character.table(
   "steps",
   {
-    step: text().primaryKey().notNull(),
+    step: text().notNull(),
     entityType: text("entity_type"),
     viaType: text("via_type"),
     hasEntity: boolean("has_entity").generatedAlwaysAs(sql`(entity_type IS NOT NULL)`),
     hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_type IS NOT NULL)`),
     onDelete: text("on_delete").notNull(),
     repeats: boolean().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.baseRules, table.step], name: "steps_pkey" }),
     foreignKey({
-      columns: [table.entityType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "steps_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.entityType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "steps_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.viaType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules, table.viaType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "steps_via_type_fkey",
     }),
-    unique("steps_step_has_entity_has_via_key").on(table.step, table.hasEntity, table.hasVia),
-    unique("steps_step_repeats_key").on(table.step, table.repeats),
-    unique("steps_step_entity_type_key").on(table.step, table.entityType),
-    unique("steps_step_via_type_key").on(table.step, table.viaType),
+    unique("steps_step_has_entity_has_via_key").on(table.baseRules, table.step, table.hasEntity, table.hasVia),
+    unique("steps_step_repeats_key").on(table.baseRules, table.step, table.repeats),
+    unique("steps_step_entity_type_key").on(table.baseRules, table.step, table.entityType),
+    unique("steps_step_via_type_key").on(table.baseRules, table.step, table.viaType),
     check("steps_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'delete'::text])`),
   ],
 );
@@ -385,6 +402,7 @@ export const advancementPicksInCharacter = character.table(
     repeats: boolean().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     index("advancement_picks_entity_idx")
@@ -412,23 +430,28 @@ export const advancementPicksInCharacter = character.table(
       name: "advancement_picks_entity_id_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.step, table.entityType],
-      foreignColumns: [stepsInCharacter.step, stepsInCharacter.entityType],
+      columns: [table.baseRules, table.step, table.entityType],
+      foreignColumns: [stepsInCharacter.baseRules, stepsInCharacter.step, stepsInCharacter.entityType],
       name: "advancement_picks_step_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.step, table.hasEntity, table.hasVia],
-      foreignColumns: [stepsInCharacter.step, stepsInCharacter.hasEntity, stepsInCharacter.hasVia],
+      columns: [table.baseRules, table.step, table.hasEntity, table.hasVia],
+      foreignColumns: [
+        stepsInCharacter.baseRules,
+        stepsInCharacter.step,
+        stepsInCharacter.hasEntity,
+        stepsInCharacter.hasVia,
+      ],
       name: "advancement_picks_step_has_entity_has_via_fkey",
     }),
     foreignKey({
-      columns: [table.step, table.repeats],
-      foreignColumns: [stepsInCharacter.step, stepsInCharacter.repeats],
+      columns: [table.baseRules, table.step, table.repeats],
+      foreignColumns: [stepsInCharacter.baseRules, stepsInCharacter.step, stepsInCharacter.repeats],
       name: "advancement_picks_step_repeats_fkey",
     }).onUpdate("cascade"),
     foreignKey({
-      columns: [table.step, table.viaType],
-      foreignColumns: [stepsInCharacter.step, stepsInCharacter.viaType],
+      columns: [table.baseRules, table.step, table.viaType],
+      foreignColumns: [stepsInCharacter.baseRules, stepsInCharacter.step, stepsInCharacter.viaType],
       name: "advancement_picks_step_via_type_fkey",
     }),
     // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
@@ -573,18 +596,30 @@ export const campaignsInCampaign = campaign.table(
 export const characterRolesInCharacter = character.table(
   "character_roles",
   {
-    role: text().primaryKey().notNull(),
+    role: text().notNull(),
     entityType: text("entity_type").notNull(),
     single: boolean().notNull(),
     onDelete: text("on_delete").notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.baseRules, table.role], name: "character_roles_pkey" }),
     foreignKey({
-      columns: [table.entityType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "character_roles_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.entityType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "character_roles_entity_type_fkey",
     }),
-    unique("character_roles_role_entity_type_single_key").on(table.role, table.entityType, table.single),
+    unique("character_roles_role_entity_type_single_key").on(
+      table.baseRules,
+      table.role,
+      table.entityType,
+      table.single,
+    ),
     check("character_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'delete'::text])`),
   ],
 );
@@ -747,15 +782,22 @@ END`),
     field: text().notNull(),
     valueKind: text("value_kind").notNull(),
     multiple: boolean().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.entityType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "field_defs_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.entityType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "field_defs_entity_type_fkey",
     }),
-    primaryKey({ columns: [table.ownerType, table.field], name: "field_defs_pkey" }),
+    primaryKey({ columns: [table.baseRules, table.ownerType, table.field], name: "field_defs_pkey" }),
     unique("field_defs_owner_type_field_value_kind_multiple_key").on(
+      table.baseRules,
       table.ownerType,
       table.field,
       table.valueKind,
@@ -790,8 +832,14 @@ export const entityFieldsInRules = rules.table(
     ),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.entityId, table.baseRules],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.baseRules],
+      name: "entity_fields_entity_id_base_rules_fkey",
+    }).onDelete("cascade"),
     uniqueIndex("entity_fields_set_value_idx")
       .using("btree", table.entityId.asc().nullsLast(), table.field.asc().nullsLast(), table.valueKey.asc().nullsLast())
       .where(sql`multiple`),
@@ -803,8 +851,9 @@ export const entityFieldsInRules = rules.table(
       name: "entity_fields_entity_id_entity_type_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.entityType, table.field, table.valueKind, table.multiple],
+      columns: [table.baseRules, table.entityType, table.field, table.valueKind, table.multiple],
       foreignColumns: [
+        fieldDefsInRules.baseRules,
         fieldDefsInRules.ownerType,
         fieldDefsInRules.field,
         fieldDefsInRules.valueKind,
@@ -832,15 +881,21 @@ export const linkRoleKindsInRules = rules.table(
     role: text().notNull(),
     fromType: text("from_type").notNull(),
     single: boolean().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.fromType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "link_role_kinds_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.fromType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "link_role_kinds_from_type_fkey",
     }),
-    primaryKey({ columns: [table.role, table.fromType], name: "link_role_kinds_pkey" }),
-    unique("link_role_kinds_role_from_type_single_key").on(table.role, table.fromType, table.single),
+    primaryKey({ columns: [table.baseRules, table.role, table.fromType], name: "link_role_kinds_pkey" }),
+    unique("link_role_kinds_role_from_type_single_key").on(table.baseRules, table.role, table.fromType, table.single),
   ],
 );
 
@@ -855,32 +910,56 @@ export const linkRolesInRules = rules.table(
     single: boolean().notNull(),
     onDelete: text("on_delete").notNull(),
     viaOnDelete: text("via_on_delete").notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     foreignKey({
-      columns: [table.fromType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "link_roles_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.fromType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "link_roles_from_type_fkey",
     }),
     foreignKey({
-      columns: [table.role, table.fromType, table.single],
-      foreignColumns: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType, linkRoleKindsInRules.single],
+      columns: [table.baseRules, table.role, table.fromType, table.single],
+      foreignColumns: [
+        linkRoleKindsInRules.baseRules,
+        linkRoleKindsInRules.role,
+        linkRoleKindsInRules.fromType,
+        linkRoleKindsInRules.single,
+      ],
       name: "link_roles_role_from_type_single_fkey",
     }).onUpdate("cascade"),
     foreignKey({
-      columns: [table.toType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules, table.toType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "link_roles_to_type_fkey",
     }),
     foreignKey({
-      columns: [table.viaType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules, table.viaType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "link_roles_via_type_fkey",
     }),
-    primaryKey({ columns: [table.role, table.fromType, table.toType], name: "link_roles_pkey" }),
-    unique("link_roles_role_from_type_to_type_single_key").on(table.role, table.fromType, table.toType, table.single),
-    unique("link_roles_role_from_type_to_type_has_via_key").on(table.role, table.fromType, table.toType, table.hasVia),
+    primaryKey({ columns: [table.baseRules, table.role, table.fromType, table.toType], name: "link_roles_pkey" }),
+    unique("link_roles_role_from_type_to_type_single_key").on(
+      table.baseRules,
+      table.role,
+      table.fromType,
+      table.toType,
+      table.single,
+    ),
+    unique("link_roles_role_from_type_to_type_has_via_key").on(
+      table.baseRules,
+      table.role,
+      table.fromType,
+      table.toType,
+      table.hasVia,
+    ),
     unique("link_roles_role_from_type_to_type_via_type_key").on(
+      table.baseRules,
       table.role,
       table.fromType,
       table.toType,
@@ -910,8 +989,14 @@ export const entityLinksInRules = rules.table(
     ordinal: integer().default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.fromId, table.baseRules],
+      foreignColumns: [entitiesInRules.id, entitiesInRules.baseRules],
+      name: "entity_links_from_id_base_rules_fkey",
+    }).onDelete("cascade"),
     uniqueIndex("entity_links_single_idx")
       .using("btree", table.fromId.asc().nullsLast(), table.role.asc().nullsLast())
       .where(sql`single`),
@@ -925,8 +1010,9 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_from_id_from_type_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.role, table.fromType, table.toType, table.hasVia],
+      columns: [table.baseRules, table.role, table.fromType, table.toType, table.hasVia],
       foreignColumns: [
+        linkRolesInRules.baseRules,
         linkRolesInRules.role,
         linkRolesInRules.fromType,
         linkRolesInRules.toType,
@@ -935,8 +1021,9 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_role_from_type_to_type_has_via_fkey",
     }),
     foreignKey({
-      columns: [table.role, table.fromType, table.toType, table.single],
+      columns: [table.baseRules, table.role, table.fromType, table.toType, table.single],
       foreignColumns: [
+        linkRolesInRules.baseRules,
         linkRolesInRules.role,
         linkRolesInRules.fromType,
         linkRolesInRules.toType,
@@ -945,8 +1032,9 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_role_from_type_to_type_single_fkey",
     }).onUpdate("cascade"),
     foreignKey({
-      columns: [table.role, table.fromType, table.toType, table.viaType],
+      columns: [table.baseRules, table.role, table.fromType, table.toType, table.viaType],
       foreignColumns: [
+        linkRolesInRules.baseRules,
         linkRolesInRules.role,
         linkRolesInRules.fromType,
         linkRolesInRules.toType,
@@ -1040,6 +1128,7 @@ export const fieldsInCharacter = character.table(
     ),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     uniqueIndex("fields_set_value_idx")
@@ -1056,8 +1145,9 @@ export const fieldsInCharacter = character.table(
       name: "fields_character_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.ownerType, table.field, table.valueKind, table.multiple],
+      columns: [table.baseRules, table.ownerType, table.field, table.valueKind, table.multiple],
       foreignColumns: [
+        fieldDefsInRules.baseRules,
         fieldDefsInRules.ownerType,
         fieldDefsInRules.field,
         fieldDefsInRules.valueKind,
@@ -1083,12 +1173,19 @@ export const fieldsInCharacter = character.table(
 export const itemTypesInCharacter = character.table(
   "item_types",
   {
-    entityType: text("entity_type").primaryKey().notNull(),
+    entityType: text("entity_type").notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.baseRules, table.entityType], name: "item_types_pkey" }),
     foreignKey({
-      columns: [table.entityType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "item_types_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.entityType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "item_types_entity_type_fkey",
     }),
   ],
@@ -1111,6 +1208,7 @@ export const inventoryInCharacter = character.table(
     itemType: text("item_type").notNull(),
     location: text(),
     groups: smallint().array().default([]).notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     index("character_inventory_character_id").using("btree", table.characterId.asc().nullsLast()),
@@ -1127,8 +1225,8 @@ export const inventoryInCharacter = character.table(
       name: "inventory_item_entity_fkey",
     }),
     foreignKey({
-      columns: [table.itemType],
-      foreignColumns: [itemTypesInCharacter.entityType],
+      columns: [table.baseRules, table.itemType],
+      foreignColumns: [itemTypesInCharacter.baseRules, itemTypesInCharacter.entityType],
       name: "inventory_item_type_fkey",
     }),
     check("inventory_quantity_check", sql`quantity > 0`),
@@ -1233,6 +1331,7 @@ export const linksInCharacter = character.table(
     amount: integer(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     index("links_entity_idx").using("btree", table.entityId.asc().nullsLast()),
@@ -1251,8 +1350,9 @@ export const linksInCharacter = character.table(
       name: "links_entity_id_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.role, table.entityType, table.single],
+      columns: [table.baseRules, table.role, table.entityType, table.single],
       foreignColumns: [
+        characterRolesInCharacter.baseRules,
         characterRolesInCharacter.role,
         characterRolesInCharacter.entityType,
         characterRolesInCharacter.single,
@@ -1629,8 +1729,14 @@ export const rulesetFieldsInRules = rules.table(
     ),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.rulesetId, table.baseRules],
+      foreignColumns: [rulesetsInRules.id, rulesetsInRules.baseRules],
+      name: "ruleset_fields_ruleset_id_base_rules_fkey",
+    }).onDelete("cascade"),
     uniqueIndex("ruleset_fields_set_value_idx")
       .using(
         "btree",
@@ -1640,8 +1746,9 @@ export const rulesetFieldsInRules = rules.table(
       )
       .where(sql`multiple`),
     foreignKey({
-      columns: [table.ownerType, table.field, table.valueKind, table.multiple],
+      columns: [table.baseRules, table.ownerType, table.field, table.valueKind, table.multiple],
       foreignColumns: [
+        fieldDefsInRules.baseRules,
         fieldDefsInRules.ownerType,
         fieldDefsInRules.field,
         fieldDefsInRules.valueKind,
@@ -1672,17 +1779,24 @@ export const rulesetFieldsInRules = rules.table(
 export const rulesetRolesInRules = rules.table(
   "ruleset_roles",
   {
-    role: text().primaryKey().notNull(),
+    role: text().notNull(),
     toType: text("to_type").notNull(),
     onDelete: text("on_delete").notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    primaryKey({ columns: [table.baseRules, table.role], name: "ruleset_roles_pkey" }),
     foreignKey({
-      columns: [table.toType],
-      foreignColumns: [entityTypesInRules.type],
+      columns: [table.baseRules],
+      foreignColumns: [modulesInRules.baseRules],
+      name: "ruleset_roles_base_rules_fkey",
+    }),
+    foreignKey({
+      columns: [table.baseRules, table.toType],
+      foreignColumns: [entityTypesInRules.baseRules, entityTypesInRules.type],
       name: "ruleset_roles_to_type_fkey",
     }),
-    unique("ruleset_roles_role_to_type_key").on(table.role, table.toType),
+    unique("ruleset_roles_role_to_type_key").on(table.baseRules, table.role, table.toType),
     check("ruleset_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text])`),
   ],
 );
@@ -1696,12 +1810,18 @@ export const rulesetLinksInRules = rules.table(
     toType: text("to_type").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.rulesetId, table.baseRules],
+      foreignColumns: [rulesetsInRules.id, rulesetsInRules.baseRules],
+      name: "ruleset_links_ruleset_id_base_rules_fkey",
+    }).onDelete("cascade"),
     index("ruleset_links_to_idx").using("btree", table.toId.asc().nullsLast()),
     foreignKey({
-      columns: [table.role, table.toType],
-      foreignColumns: [rulesetRolesInRules.role, rulesetRolesInRules.toType],
+      columns: [table.baseRules, table.role, table.toType],
+      foreignColumns: [rulesetRolesInRules.baseRules, rulesetRolesInRules.role, rulesetRolesInRules.toType],
       name: "ruleset_links_role_to_type_fkey",
     }),
     foreignKey({

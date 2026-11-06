@@ -4,6 +4,7 @@ import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
@@ -76,6 +77,9 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       inheritedSpellMap: {},
     };
   }
+
+  /** Its rulesets' base rules: 3.5's. */
+  protected override readonly baseRules = DND35_BASE_RULES;
 
   /**
    * Refuses an item made from a template of another type than its own, or of a type no template is of (a weapon's, an

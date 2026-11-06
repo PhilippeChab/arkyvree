@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { Activities, Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CLASS_CASTER_TYPE,
   CLASS_HD,
@@ -45,12 +46,15 @@ async function setup() {
   const aptitudes = Object.fromEntries(APTITUDES.map((name, index) => [name, aptitudeIds[index]]));
   const abilities: Record<string, string> = {};
   for (const name of ["Strength", "Intelligence"]) {
-    const [ability] = await Entities.create<RulesetAbility>(db, "abilities", { name, rulesetId: ruleset.id });
+    const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
+      name,
+      rulesetId: ruleset.id,
+    });
     abilities[name] = ability.id;
   }
   const saves: Record<string, string> = {};
   for (const name of ["Fortitude", "Will"]) {
-    const [save] = await Entities.create<RulesetSave>(db, "saves", {
+    const [save] = await Entities.create<RulesetSave>(db, DND35_BASE_RULES, "saves", {
       name,
       rulesetId: ruleset.id,
       links: { keyAbility: abilities.Strength },

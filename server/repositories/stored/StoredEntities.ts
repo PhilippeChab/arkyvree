@@ -24,15 +24,17 @@ import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdit
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import { buildLineageCondition } from "@/server/repositories/rulesets/rulesetLineage.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { toFieldRows } from "./toFieldRows.ts";
 import { toQualified } from "./toQualified.ts";
 
 /**
- * A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`, searched as its
- * kind's list is (`buildSearchCondition`).
+ * A picker's page of a kind's entities (of its ruleset's base rules, `baseRules`), among `ids`, of the values of their
+ * `fields`, but `excludeIds`, searched as its kind's list is (`buildSearchCondition`).
  */
 interface OptionWhere {
+  baseRules: BaseRules;
   entityType: string;
   excludeIds?: string[];
   fields?: EntityFilters["fields"];
@@ -52,8 +54,10 @@ interface PageBounds {
  * hides (`inherited`, `CowData.listFilters`); those of `ids`, of the values of their fields, the targets of
  * their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a race's `pc`),
  * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
+ * Its filters read their fields' declarations of its ruleset's base rules (`baseRules`).
  */
 export interface EntityListWhere extends EntityFilters {
+  baseRules: BaseRules;
   childOnly?: boolean;
   entityType: string;
   /** The entities listed first, in their order (a tracks picker's, `TrackFilters`), the others after them by name. */
@@ -108,11 +112,12 @@ function groupColumns(value: SQL<string | null>, name: SQL<string>) {
 
 /**
  * Every module's ruleset entities, as the generic tables store them (`rules.entities`, its fields in `entity_fields`,
- * its links in `entity_links`): read and written by kind (`entityType`), each as its record (`EntityRecord`: its own
- * columns, every field it holds by field, as its module declares it, `Engine.storage().fieldsOf`, its single links by
- * role), each write as its module plans it (`EntityWrite`: its fields and single links as a record holds them), a new
- * entity's partition its kind's (`partitionOf`). A kind's list filters by its fields' values, its links' targets and
- * its partition, which its module's operation names: nothing here is any module's.
+ * its links in `entity_links`, each row of its ruleset's base rules): read and written by kind (`entityType`), each as
+ * its record (`EntityRecord`: its own columns, every field it holds by field, as its base rules' module declares it,
+ * `Engine.storage(baseRules).fieldsOf`, its single links by role), each write as its module plans it (`EntityWrite`:
+ * its fields and single links as a record holds them), of its ruleset's base rules, a new entity's partition its
+ * kind's (`partitionOf`). A kind's list filters by its fields' values, its links' targets and its partition, which its
+ * module's operation names: nothing here is any module's.
  */
 class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates, Searches)<typeof entitiesInRules> {
   constructor() {
@@ -120,11 +125,16 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * The condition that an entity (of `type`) holds a field's value, or one of its values (`values`), each in the column
-   * its kind holds: a flag's, a number's or a text's; or, among them the value it reads without a row (its default, a
-   * flag's false: `DeclaredFields.absentValueOf`), that it holds no row of it, as its answer reads it.
+   * The condition that an entity (of `type`, of `baseRules`) holds a field's value, or one of its values (`values`), each
+   * in the column its kind holds: a flag's, a number's or a text's; or, among them the value it reads without a row (its
+   * default, a flag's false: `DeclaredFields.absentValueOf`), that it holds no row of it, as its answer reads it.
    */
-  private static buildFieldCondition(type: string, field: string, values: readonly FieldValue[]): SQL {
+  private static buildFieldCondition(
+    baseRules: BaseRules,
+    type: string,
+    field: string,
+    values: readonly FieldValue[],
+  ): SQL {
     const flags = values.filter((value) => typeof value === "boolean");
     const numbers = values.filter((value) => typeof value === "number").map(String);
     const texts = values.filter((value) => typeof value === "string");
@@ -134,7 +144,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       texts.length > 0 ? inArray(entityFieldsInRules.textValue, texts) : undefined,
     );
     const holds = sql`${entitiesInRules.id} IN (SELECT ${entityFieldsInRules.entityId} FROM ${entityFieldsInRules} WHERE ${entityFieldsInRules.field} = ${field} AND ${held})`;
-    const absent = Engine.storage().declaredFields().absentValueOf(type, field);
+    const absent = Engine.storage(baseRules).declaredFields().absentValueOf(type, field);
     if (absent === null || !values.includes(absent)) return holds;
     const holdsNone = sql`NOT EXISTS (SELECT 1 FROM ${entityFieldsInRules} WHERE ${entityFieldsInRules.entityId} = ${entitiesInRules.id} AND ${entityFieldsInRules.field} = ${field})`;
     return sql`(${holds} OR ${holdsNone})`;
@@ -145,12 +155,20 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.fromId} FROM ${entityLinksInRules} WHERE ${entityLinksInRules.role} = ${role} AND ${inArray(entityLinksInRules.toId, [...ids])})`;
   }
 
-  /** A list's filters' conditions (`EntityFilters`, on a kind: `entityType`): one a field, a role, the partitions. */
-  private static buildValueConditions(where: EntityFilters & { entityType: string }): SQL[] {
-    const { entityType, fields = {}, links = {}, partitions } = where;
+  /**
+   * A list's filters' conditions (`EntityFilters`, on a kind: `entityType`, of `baseRules`): one a field, a role, the
+   * partitions.
+   */
+  private static buildValueConditions(where: EntityFilters & { baseRules: BaseRules; entityType: string }): SQL[] {
+    const { baseRules, entityType, fields = {}, links = {}, partitions } = where;
     return [
       ...Object.entries(fields).map(([field, value]) =>
-        StoredEntities.buildFieldCondition(entityType, field, Array.isArray(value) ? value : [value as FieldValue]),
+        StoredEntities.buildFieldCondition(
+          baseRules,
+          entityType,
+          field,
+          Array.isArray(value) ? value : [value as FieldValue],
+        ),
       ),
       ...Object.entries(links).map(([role, ids]) => StoredEntities.buildLinkCondition(role, ids)),
       ...(partitions ? [inArray(entitiesInRules.partition, [...partitions])] : []),
@@ -227,8 +245,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * Records a condition picks (`where`), in `order`, a page of them if `page` says: each entity's own columns, every
    * field it holds by field, typed as stored (read as pairs of a field and a value, a set's in their stored order; a
-   * set's values in their declared order: `Engine.storage().fieldsOf`), and its single links' targets by role. A page is
-   * picked by its ids first, then read whole.
+   * set's values in their declared order, as its base rules' module declares them: `Engine.storage(baseRules).fieldsOf`),
+   * and its single links' targets by role. A page is picked by its ids first, then read whole.
    */
   private async read<R>(db: Db, where: SQL | undefined, order: SQL[], page?: PageBounds): Promise<R[]> {
     const picked = page
@@ -249,6 +267,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const rows = await db
       .select({
         ...OWN_COLUMNS,
+        baseRules: entitiesInRules.baseRules,
         // An entity's fields' values and its single links in the query that reads it
         fields: sql<[string, FieldValue][]>`(
           SELECT coalesce(json_agg(json_build_array(${fields.field}, ${FIELD_JSON}) ORDER BY ${fields.ordinal}), '[]')
@@ -260,8 +279,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       .from(entitiesInRules)
       .where(picked)
       .orderBy(...order);
-    const storage = Engine.storage();
-    return rows.map((row) => ({ ...row, fields: storage.fieldsOf(row.type, row.fields) })) as R[];
+    return rows.map(({ baseRules, ...row }) => ({
+      ...row,
+      fields: Engine.storage(baseRules as BaseRules).fieldsOf(row.type, row.fields),
+    })) as R[];
   }
 
   /**
@@ -346,8 +367,9 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * Writes entities' fields and single links (`writes`: each entity's ids and what it sets, by field and by role), in
-   * batches, each field as every write stores it, a seed's, a form's or an import's (`Engine.storage().writtenFields`:
+   * Writes entities' fields and single links (`writes`: each entity's ids and what it sets, by field and by role; each of
+   * `baseRules`), in batches, each field as every write stores it, a seed's, a form's or an import's
+   * (`Engine.storage(baseRules).writtenFields`:
    * a set's values once, no false flag, default number or empty text, the default of one always written that holds no
    * value, none whose condition doesn't hold), each value in its field's column by its declaration (`toFieldRows`), a
    * set's in its order, and each link to its role's kind: replacing what they held of each it names when `replacing`
@@ -356,12 +378,13 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    */
   private async writeParts(
     db: Db,
+    baseRules: BaseRules,
     entityType: string,
     writes: { ids: string[]; write: Pick<EntityWrite, "fields" | "links"> }[],
     replacing: boolean,
     copied = false,
   ) {
-    const storage = Engine.storage();
+    const storage = Engine.storage(baseRules);
     const fieldRows: PgInsertValue<typeof entityFieldsInRules>[] = [];
     const linkRows: (typeof entityLinksInRules.$inferInsert)[] = [];
     for (const { ids, write } of writes) {
@@ -392,15 +415,24 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         );
       }
       for (const [field, write] of fields) {
-        const rows = toFieldRows(entityType, field, write);
-        for (const entityId of ids) fieldRows.push(...rows.map((row) => ({ entityId, entityType, ...row })));
+        const rows = toFieldRows(entityType, field, write, storage);
+        for (const entityId of ids) fieldRows.push(...rows.map((row) => ({ baseRules, entityId, entityType, ...row })));
       }
       for (const [role, toId] of links) {
         const def = storage.registries().linkRoles.find((held) => held.role === role && held.fromType === entityType);
-        if (!def) throw new Error(`No module declares the role ${role} from ${entityType}`);
+        if (!def) throw new Error(`${baseRules} declares no role ${role} from ${entityType}`);
         if (toId === null || toId === undefined) continue;
-        for (const fromId of ids)
-          linkRows.push({ fromId, fromType: entityType, role, single: def.single, toId, toType: def.toType });
+        for (const fromId of ids) {
+          linkRows.push({
+            baseRules,
+            fromId,
+            fromType: entityType,
+            role,
+            single: def.single,
+            toId,
+            toType: def.toType,
+          });
+        }
       }
     }
     for (let i = 0; i < fieldRows.length; i += WRITE_BATCH)
@@ -411,27 +443,35 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Writes a kind's new entity (`write`, an owned one under its owner, `ownerId`; a copy's, `copied`, as `createIds`
-   * writes it): answers its record.
+   * writes it), of its ruleset's base rules (`baseRules`): answers its record.
    */
   async create<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
+    baseRules: BaseRules,
     entityType: string,
     write: EntityWrite,
     copied = false,
   ) {
-    return await this.createMany<R>(db, entityType, [write], copied);
+    return await this.createMany<R>(db, baseRules, entityType, [write], copied);
   }
 
   /**
    * Writes a kind's new entities (`writes`), each an entity, its fields (one always written it leaves out, or clears,
    * its default: `writtenFields`) and its single links, its partition its kind's default when it gives none. An owned
    * entity takes its owner's ruleset. Their fields are stored as every write stores them, but a copy's (`copied`:
-   * copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are. Answers
-   * their ids, in order.
+   * copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are. Each is of
+   * its ruleset's base rules (`baseRules`), whose module's declarations it's written by, as its rows say. Answers their
+   * ids, in order.
    */
-  async createIds(db: Db, entityType: string, writes: EntityWrite[], copied = false): Promise<string[]> {
+  async createIds(
+    db: Db,
+    baseRules: BaseRules,
+    entityType: string,
+    writes: EntityWrite[],
+    copied = false,
+  ): Promise<string[]> {
     if (writes.length === 0) return [];
-    const storage = Engine.storage();
+    const storage = Engine.storage(baseRules);
     const ownerType = storage.registries().entityTypes.find((def) => def.type === entityType)?.ownerType ?? null;
     const owners = new Map<string, { rulesetId: string }>();
     const ownerIds = [...new Set(writes.flatMap((write) => (write.ownerId ? [write.ownerId] : [])))];
@@ -447,6 +487,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       if (ownerType && !owner) throw new Error(`A ${entityType} names an owner that doesn't exist: ${write.ownerId}`);
       return {
         id: write.id,
+        baseRules,
         type: entityType,
         rulesetId: owner?.rulesetId ?? write.rulesetId!,
         name: ownerType ? null : write.name!,
@@ -469,6 +510,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     }
     await this.writeParts(
       db,
+      baseRules,
       entityType,
       writes.map((write, index) => ({ ids: [ids[index]], write })),
       false,
@@ -477,14 +519,18 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return ids;
   }
 
-  /** Writes a kind's new entities (a copy's, `copied`), as `createIds` does: answers their records, in order. */
+  /**
+   * Writes a kind's new entities (a copy's, `copied`) of a base rules, as `createIds` does: answers their records, in
+   * order.
+   */
   async createMany<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
+    baseRules: BaseRules,
     entityType: string,
     writes: EntityWrite[],
     copied = false,
   ): Promise<R[]> {
-    return await this.readRecords<R>(db, await this.createIds(db, entityType, writes, copied));
+    return await this.readRecords<R>(db, await this.createIds(db, baseRules, entityType, writes, copied));
   }
 
   /**
@@ -663,11 +709,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * The ids a character names entities of a kind by (`entityType`, `ids`): their own, or, of a kind that owns others,
-   * those of the entities they own (a class's levels, which a character advances in).
+   * The ids a character names entities of a kind by (`entityType`, of `baseRules`; `ids`): their own, or, of a kind that
+   * owns others, those of the entities they own (a class's levels, which a character advances in).
    */
-  async findPickedIds(db: Db, where: { entityType: string; ids: string[] }): Promise<string[]> {
-    const ownedKinds = Engine.storage().ownedKinds(where.entityType);
+  async findPickedIds(db: Db, where: { baseRules: BaseRules; entityType: string; ids: string[] }): Promise<string[]> {
+    const ownedKinds = Engine.storage(where.baseRules).ownedKinds(where.entityType);
     if (ownedKinds.length === 0) return where.ids;
     const owned = [];
     for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));
@@ -747,11 +793,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Writes a change to an entity of a kind (`write`: the own columns, fields and single links it sets; a field always
-   * written it clears, its default), if it's still the version the editor read (`expectedUpdatedAt`), its `updatedAt`
-   * moved as any change moves it. Answers its record as written, or nothing.
+   * written it clears, its default), of its ruleset's base rules (`baseRules`), if it's still the version the editor read
+   * (`expectedUpdatedAt`), its `updatedAt` moved as any change moves it. Answers its record as written, or nothing.
    */
   async update<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
+    baseRules: BaseRules,
     entityType: string,
     write: EntityWrite,
     where: { expectedUpdatedAt?: string; id: string },
@@ -775,7 +822,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       )
       .returning({ id: entitiesInRules.id });
     const ids = updated.map((row) => row.id);
-    await this.writeParts(db, entityType, [{ ids, write }], true);
+    await this.writeParts(db, baseRules, entityType, [{ ids, write }], true);
     return await this.readRecords<R>(db, ids);
   }
 }

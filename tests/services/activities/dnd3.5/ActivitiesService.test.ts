@@ -25,6 +25,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeededTestRuleset, createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 function resolve(targetType: string, targetId: string, session: Session = makeSession()) {
   return ActivitiesService.getActivityUrl(session, targetType, targetId);
@@ -75,7 +76,10 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links a private ruleset's content, customizations and contributors nowhere for who may not read it", async () => {
     const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id);
-    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Secret Feat", rulesetId: ruleset.id });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      name: "Secret Feat",
+      rulesetId: ruleset.id,
+    });
     const customized = { sourceId: feat.id, sourceType: "feats", target: "combat.bab", value: "1" };
     const [modifier] = await Modifiers.create(db, { ...customized, valueType: "number", operator: "add" });
     const [requirement] = await Requirements.create(db, {
@@ -150,7 +154,10 @@ describe("ActivitiesService.getActivityUrl", () => {
       abilityMap,
     } = await getSeedCtx();
     const fighter = classMap.pc["Fighter"];
-    const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
+    const [mechanic] = await Entities.create<Mechanic>(db, DND35_BASE_RULES, "mechanics", {
+      name: "Linked Mechanic",
+      rulesetId: r,
+    });
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] });
     for (const [targetType, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],

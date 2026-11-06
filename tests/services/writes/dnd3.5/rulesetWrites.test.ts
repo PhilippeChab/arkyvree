@@ -14,6 +14,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { bumpContentVersion, createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 const pool = createTestPool();
 
@@ -115,7 +116,7 @@ test("a write reads the rows another write committed after its view was cached",
   const { session, fork } = await setup();
   // The view is cached; then another write makes a feat, its lock bumping the fork's content version
   await withRulesetScope(db, fork.id, async () => undefined);
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Fresh Feat", rulesetId: fork.id });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", { name: "Fresh Feat", rulesetId: fork.id });
   await bumpContentVersion(fork.id);
 
   // The modifier's write finds the feat in its view, read fresh under its lock

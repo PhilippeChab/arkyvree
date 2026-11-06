@@ -7,6 +7,7 @@ import { CharacterInventory, Entities, fetchEveryPage } from "@/server/repositor
 import type { Character } from "@/shared/relations.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item, as the view registers it. */
@@ -41,7 +42,7 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
  */
 export async function createTestItem(values: EntityWrite = {}, fields: Record<string, FieldValue> = {}) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;
-  const [item] = await Entities.create<Item>(db, "items", {
+  const [item] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
     name: `Test Item ${uniqueId()}`,
     ...values,
     fields: { ...values.fields, ...fields },
@@ -56,7 +57,13 @@ export async function findPlainItem(rulesetId: string) {
   const items = await fetchEveryPage((pagination) =>
     Entities.findPage<Item>(
       db,
-      { entityType: "items", rulesetId, childOnly: true, fields: { [ITEM_IS_TEMPLATE]: false } },
+      {
+        baseRules: DND35_BASE_RULES,
+        entityType: "items",
+        rulesetId,
+        childOnly: true,
+        fields: { [ITEM_IS_TEMPLATE]: false },
+      },
       pagination,
     ),
   );

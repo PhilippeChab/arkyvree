@@ -56,6 +56,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CLASS_HD,
   FEAT_FAMILY,
@@ -81,27 +82,27 @@ function fork(
 
 /** A race, a class, a skill and a feat: what a ruleset needs to be published. */
 async function addPlayableContent(rulesetId: string) {
-  const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
+  const [ability] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
     name: "Strength",
     description: "Strength",
     rulesetId,
   });
-  const [race] = await Entities.create<Race>(db, "races", {
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Human",
     rulesetId,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
-  const [klass] = await Entities.create<Klass>(db, "classes", {
+  const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
     name: "Fighter",
     rulesetId,
     fields: { [CLASS_HD]: 10 },
   });
-  const [skill] = await Entities.create<Skill>(db, "skills", {
+  const [skill] = await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
     name: "Climb",
     rulesetId,
     links: { keyAbility: ability.id },
   });
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Toughness", rulesetId });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", { name: "Toughness", rulesetId });
   return { race, klass, skill, feat };
 }
 
@@ -114,7 +115,7 @@ async function createFork(userId: string, values: RulesetValues = {}) {
 /** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
 async function createParent(userId: string | null = null, values: RulesetValues = {}) {
   const ruleset = await createTestRuleset(userId, { private: false, status: "Published", ...values });
-  await Entities.create<Item>(db, "items", {
+  await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
     name: "Template",
     rulesetId: ruleset.id,
     fields: { [ITEM_IS_TEMPLATE]: true },
@@ -127,9 +128,13 @@ async function setupChanges(values: { private?: boolean } = {}) {
   const { user: owner } = await createTestUser();
   const { user, session } = await createTestUser();
   const parent = await createParent(owner.id);
-  const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
+  const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+    name: "General",
+    rulesetId: parent.id,
+  });
   const [modified, deleted, untouched] = await Entities.createMany<Feat>(
     db,
+    DND35_BASE_RULES,
     "feats",
     ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
   );
@@ -485,12 +490,15 @@ describe("RulesetsService", () => {
       const extension = await createTestRuleset(null, { private: false, status: "Published", kind: "extension" });
       const parent = await createParent(owner.id, { description: "Parent description" });
       await subscribeTestRuleset(parent.id, [extension.id]);
-      const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
+      const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+        name: "General",
+        rulesetId: parent.id,
+      });
       const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
         name: "Toughness",
         links: { listedIn: [{ toId: aptitude.id }] },
       });
-      const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
+      const [intelligence] = await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
         name: "Intelligence",
         rulesetId: parent.id,
       });
@@ -508,7 +516,13 @@ describe("RulesetsService", () => {
       });
       expect((await sourcesOf(created.id)).extensionIds).toEqual([extension.id]);
       expect(
-        (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: created.id }, firstPage)).items,
+        (
+          await Entities.findPage<Feat>(
+            db,
+            { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: created.id },
+            firstPage,
+          )
+        ).items,
       ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
       expect(
@@ -531,6 +545,7 @@ describe("RulesetsService", () => {
       const parent = await createParent();
       expect(
         await Entities.findList<Item>(db, {
+          baseRules: DND35_BASE_RULES,
           entityType: "items",
           rulesetId: (await fork(session, parent)).id,
           fields: { [ITEM_IS_TEMPLATE]: true },
@@ -555,7 +570,11 @@ describe("RulesetsService", () => {
       const { session } = await createTestUser();
       const { rulesetId } = await getSeedCtx();
       const created = await fork(session, { id: rulesetId }, { private: true });
-      const feats = await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId }, { limit: 26, page: 1 });
+      const feats = await Entities.findPage<Feat>(
+        db,
+        { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId },
+        { limit: 26, page: 1 },
+      );
       for (const feat of feats.items) expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);
 
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toHaveLength(26);
@@ -863,7 +882,10 @@ describe("RulesetsService", () => {
         description: "Changed",
       });
       await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
-      const [added] = await Entities.create<Feat>(db, "feats", { name: "Homebrew", rulesetId: fork.id });
+      const [added] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+        name: "Homebrew",
+        rulesetId: fork.id,
+      });
 
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([
         { entityType: "feats", status: "deleted", sourceEntityId: deleted.id, name: "Cleave" },
@@ -982,7 +1004,7 @@ describe("RulesetsService", () => {
       test("deletes a copied class's levels and class skills", async () => {
         const { session, parent, fork } = await setupChanges();
         const { klass, skill } = await addPlayableContent(parent.id);
-        await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+        await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", { ownerId: klass.id, position: 1 });
         await addClassSkills(db, klass.id, [skill.id]);
         const copy = await copyEntity(db, "classes", klass.id, fork);
 
@@ -996,13 +1018,13 @@ describe("RulesetsService", () => {
 
       test("points the items made from a copied template back at the original", async () => {
         const { session, parent, fork } = await setupChanges();
-        const [template] = await Entities.create<Item>(db, "items", {
+        const [template] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
           name: "Longsword",
           rulesetId: parent.id,
           fields: { [ITEM_IS_TEMPLATE]: true },
         });
         const copy = await copyEntity(db, "items", template.id, fork);
-        const [made] = await Entities.create<Item>(db, "items", {
+        const [made] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", {
           name: "Longsword +1",
           rulesetId: fork.id,
           links: { madeFrom: copy.id as string },

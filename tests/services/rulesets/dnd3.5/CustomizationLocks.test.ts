@@ -8,6 +8,7 @@ import { ModifiersService } from "@/server/services/rulesets/customization/modif
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { bumpContentVersion, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /**
  * A feat's modifier and requirement, the ruleset's view cached, then both removed by another write (its content version
@@ -16,7 +17,10 @@ import { makeSession } from "@/tests/support/users.ts";
 async function setupRemovedCustomizations() {
   const session = makeSession();
   const ruleset = await createSeededTestRuleset(session.userId);
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Removed Customizations", rulesetId: ruleset.id });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+    name: "Removed Customizations",
+    rulesetId: ruleset.id,
+  });
   const owner = { entityId: feat.id, entityType: "feats" };
   const [modifier] = await Modifiers.createMany(db, [
     {

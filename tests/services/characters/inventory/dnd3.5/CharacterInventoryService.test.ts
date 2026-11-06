@@ -20,6 +20,7 @@ import { writeValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   ITEM_COST_GP,
@@ -106,7 +107,7 @@ async function setup(race?: { size: SizeType }) {
   const raceId =
     race &&
     (
-      await Entities.create<Race>(db, "races", {
+      await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
         name: `Test Race ${uniqueId()}`,
         rulesetId: ruleset.id,
         fields: { [RACE_BASE_SPEED]: 30, [RACE_SIZE]: race.size },
@@ -430,7 +431,7 @@ describe("InventoryService", () => {
       const { user, session } = await createTestUser();
       const { user: author } = await createTestUser();
       const parent = await createTestRuleset(author.id, { status: "Published" });
-      const [race] = await Entities.create<Race>(db, "races", {
+      const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
         name: "Test Race",
         rulesetId: parent.id,
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },

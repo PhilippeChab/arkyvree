@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { entityFieldsInRules } from "@/drizzle/schema.ts";
+import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { Aptitude, Feat, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -25,6 +26,7 @@ import {
   ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   FEAT_FAMILY,
   FEAT_WEAPON_FINESSE,
@@ -53,7 +55,12 @@ const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) =>
 async function insertFieldRow(type: string, id: string, field: string, value: FieldValue) {
   await insertRows(
     entityFieldsInRules,
-    toFieldRows(type, field, value).map((row) => ({ entityId: id, entityType: type, ...row })),
+    toFieldRows(type, field, value, StorageEngine.of(DND35_BASE_RULES)).map((row) => ({
+      baseRules: DND35_BASE_RULES,
+      entityId: id,
+      entityType: type,
+      ...row,
+    })),
   );
 }
 
@@ -77,7 +84,12 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
     const copy =
       pairing === "snapshot"
         ? await copyEntity(db, entityType, base.id, extension)
-        : (await Entities.create(db, entityType, { name: "Sibling write fixture", rulesetId: extension.id }))[0];
+        : (
+            await Entities.create(db, DND35_BASE_RULES, entityType, {
+              name: "Sibling write fixture",
+              rulesetId: extension.id,
+            })
+          )[0];
     extensions.push({ extension, copy });
   }
   await RulesetExtensionsService.subscribeExtension(
@@ -113,7 +125,7 @@ for (const entityType of ["feats", "spells"] as const) {
         valueType: "number",
         operator: "greater_than_or_equal",
       });
-      const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      const [aptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
         name: "Sibling aptitude fixture",
         rulesetId: loserRulesetId,
       });
@@ -389,7 +401,7 @@ test("installing another extension preserves the local override and exposes unre
     name: "Toughness",
     fields: { [FEAT_FAMILY]: ["Luck"] },
   });
-  const [unrelated] = await Entities.create<Feat>(db, "feats", {
+  const [unrelated] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
     name: "Unrelated extension feat",
     rulesetId: loserRulesetId,
   });

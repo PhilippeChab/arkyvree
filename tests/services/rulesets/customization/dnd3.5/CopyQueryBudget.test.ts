@@ -7,6 +7,7 @@ import { Entities, Modifiers, Requirements } from "@/server/repositories/index.t
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 test("modifier and requirement copies stay batched as modifier count grows", async () => {
   const session = makeSession();
@@ -15,6 +16,7 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
   for (const width of [1, 12]) {
     const [source, target] = await Entities.createMany<Feat>(
       db,
+      DND35_BASE_RULES,
       "feats",
       ["Source", "Target"].map((name) => ({
         name: `${name} ${width}`,

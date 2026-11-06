@@ -16,26 +16,30 @@ import { Entities, Modifiers } from "@/server/repositories/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { thrownBy } from "@/tests/support/errors.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("CustomizedEntity", () => {
   test("names the entity of each type, as its ruleset's view has it", async () => {
     const { ruleset } = await createTestUserAndRuleset();
     const rulesetId = ruleset.id;
-    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: "Test Feat" });
-    const [item] = await Entities.create<Item>(db, "items", { rulesetId, name: "Test Item" });
-    const [spell] = await Entities.create<Spell>(db, "spells", { rulesetId, name: "Test Spell" });
-    const [race] = await Entities.create<Race>(db, "races", {
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", { rulesetId, name: "Test Feat" });
+    const [item] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", { rulesetId, name: "Test Item" });
+    const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", { rulesetId, name: "Test Spell" });
+    const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
       rulesetId,
       name: "Test Race",
       fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
     });
-    const [klass] = await Entities.create<Klass>(db, "classes", {
+    const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
       rulesetId,
       name: "Test Class",
       fields: { [CLASS_HD]: 10 },
     });
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: klass.id,
+      position: 1,
+    });
     const [modifier] = await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",
@@ -71,7 +75,10 @@ describe("CustomizedEntity", () => {
   test("refuses a missing entity, a type no customization is made on, and one outside the ruleset", async () => {
     const { ruleset: mine } = await createTestUserAndRuleset();
     const { ruleset: theirs } = await createTestUserAndRuleset();
-    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: theirs.id, name: "Their Feat" });
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      rulesetId: theirs.id,
+      name: "Their Feat",
+    });
 
     // Each named in its rules' word, as every refusal of an entity the view doesn't show is
     const words = {

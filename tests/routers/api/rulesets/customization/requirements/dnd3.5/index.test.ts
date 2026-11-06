@@ -6,6 +6,7 @@ import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulese
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 const charisma13 = { level: "1", target: "abilities.charisma.total", value: "13", operator: "greater_than_or_equal" };
 const customization = api.api.rulesets[":id"].customization[":entityType"][":entityId"];
@@ -69,12 +70,15 @@ describe("rulesets customization requirements", () => {
     expect((await expectOk(requirements.$get({ param }))).map((r) => r.level).sort()).toEqual(["1", "2"]);
   });
 
-  test.each([...Engine.storage().customizableKinds()])("adds a requirement to %s", async (entityType) => {
-    const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const entityId = await createEntity(id, entityType);
-    const created = await expectOk(requirements.$post({ param: { id, entityType, entityId }, json: charisma13 }));
-    expect(created).toMatchObject({ entityType, entityId });
-  });
+  test.each([...Engine.storage(DND35_BASE_RULES).customizableKinds()])(
+    "adds a requirement to %s",
+    async (entityType) => {
+      const { id } = await createSeededTestRuleset(SEED_USER_ID);
+      const entityId = await createEntity(id, entityType);
+      const created = await expectOk(requirements.$post({ param: { id, entityType, entityId }, json: charisma13 }));
+      expect(created).toMatchObject({ entityType, entityId });
+    },
+  );
 
   test("adds a requirement to a modifier", async () => {
     const { id, entityId } = await createCustomizableFeat();

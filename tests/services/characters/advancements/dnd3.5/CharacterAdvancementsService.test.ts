@@ -79,6 +79,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CHARACTER_ALIGNMENT,
   CHARACTER_XP,
@@ -262,37 +263,45 @@ async function setupRuleset({ fork = false } = {}) {
   const characterRuleset = fork ? await createTestRuleset(user.id, { rulesetId: parent.id }) : parent;
   const rulesetId = parent.id;
 
-  const [race] = await Entities.create<Race>(db, "races", {
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Test Race",
     rulesetId,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
-  const [klass] = await Entities.create<Klass>(db, "classes", {
+  const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
     name: "Test Class",
     rulesetId,
     fields: { [CLASS_HD]: 8 },
   });
   const classLevels = [];
   for (let level = 1; level <= 5; level++) {
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: level });
+    const [classLevel] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: klass.id,
+      position: level,
+    });
     await writeFieldValues("class-levels", classLevel.id, [
       [CLASS_LEVEL_BAB, level],
       [CLASS_LEVEL_SKILL_POINTS, 2 + Math.floor(level / 2)],
     ]);
     classLevels.push(classLevel);
   }
-  const [generalAptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "general", rulesetId });
+  const [generalAptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+    name: "general",
+    rulesetId,
+  });
   const [[featAptitude], [spellAptitude]] = [
-    await Entities.create<Aptitude>(db, "aptitudes", { name: "Feat Aptitude", rulesetId }),
-    await Entities.create<Aptitude>(db, "aptitudes", { name: "Spell Aptitude", rulesetId }),
+    await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", { name: "Feat Aptitude", rulesetId }),
+    await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", { name: "Spell Aptitude", rulesetId }),
   ];
   const abilities = await Entities.createMany<RulesetAbility>(
     db,
+    DND35_BASE_RULES,
     "abilities",
     ["Charisma", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId })),
   );
   const skillList = await Entities.createMany<Skill>(
     db,
+    DND35_BASE_RULES,
     "skills",
     [
       ["Diplomacy", 0],
@@ -304,13 +313,14 @@ async function setupRuleset({ fork = false } = {}) {
       links: { keyAbility: abilities[ability as number].id },
     })),
   );
-  const featList = await Entities.createMany<Feat>(db, "feats", [
+  const featList = await Entities.createMany<Feat>(db, DND35_BASE_RULES, "feats", [
     { name: "Power Attack", rulesetId, fields: { [FEAT_STACKABLE]: false } },
     { name: "Weapon Focus", rulesetId, fields: { [FEAT_STACKABLE]: true } },
     { name: "Dodge", rulesetId, fields: { [FEAT_STACKABLE]: false } },
   ]);
   const spellList = await Entities.createMany<Spell>(
     db,
+    DND35_BASE_RULES,
     "spells",
     ["Sneak Attack", "Rage", "Uncanny Dodge"].map((name) => ({ name, rulesetId })),
   );
@@ -491,12 +501,15 @@ describe("LevelsService", () => {
     test("counts any feat of a family a class requires, and only those", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Entities.create<Klass>(db, "classes", {
+      const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
         name: `Kensai ${uniqueId()}`,
         rulesetId: fork.id,
         fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+        ownerId: klass.id,
+        position: 1,
+      });
       await Requirements.create(db, {
         entityId: level.id,
         entityType: "class-levels",
@@ -524,12 +537,15 @@ describe("LevelsService", () => {
     test("checks a class's own requirements with its next level's, in the list and on saving", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const [klass] = await Entities.create<Klass>(db, "classes", {
+      const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
         name: `Duelist ${uniqueId()}`,
         rulesetId: fork.id,
         fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+        ownerId: klass.id,
+        position: 1,
+      });
       // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
       for (const [entityId, entityType, target, operator, value, valueType] of [
         [klass.id, "classes", "feats.powerattack.possessed", "equal", "true", "boolean"],
@@ -623,11 +639,11 @@ describe("LevelsService", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, classLevels, skills } = await setupRuleset();
       await addClassSkills(db, klass.id, [skills["Diplomacy"].id]);
-      const level = await createAdvancement(db, character.id, {
+      const level = await createAdvancement(db, DND35_BASE_RULES, character.id, {
         entryId: classLevels[0].id,
         picks: [{ step: "hp", amount: 8 }],
       });
-      await Picks.createMany(db, [
+      await Picks.createMany(db, DND35_BASE_RULES, [
         { advancementId: level.id, step: "skills", entityId: skills["Diplomacy"].id, amount: 1 },
       ]);
 
@@ -705,12 +721,12 @@ describe("LevelsService", () => {
       const { parent, session, character, klass, abilities } = await setupRuleset({ fork: true });
       const intelligence = abilities.find((a) => a.name === "Intelligence")!;
       const [[craft]] = [
-        await Entities.create<Skill>(db, "skills", {
+        await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
           name: "Craft",
           rulesetId: parent.id,
           links: { keyAbility: intelligence.id },
         }),
-        await Entities.create<Skill>(db, "skills", {
+        await Entities.create<Skill>(db, DND35_BASE_RULES, "skills", {
           name: "Craft (Alchemy)",
           rulesetId: parent.id,
           links: { keyAbility: intelligence.id },
@@ -899,7 +915,7 @@ describe("LevelsService", () => {
 
     test("leave out a feat the character has, unless it stacks, and those that can't be picked", async () => {
       const { session: owner, character, klass, classLevels, featAptitude, feats } = await setupRuleset();
-      const [classFeature] = await Entities.create<Feat>(db, "feats", {
+      const [classFeature] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
         name: "Class Feature",
         rulesetId: klass.rulesetId,
         fields: { [FEAT_SELECTABLE]: false },
@@ -934,7 +950,7 @@ describe("LevelsService", () => {
 
     test("flag a pool that spells share, optional to the feats step", async () => {
       const { session, character, klass, feats, spells } = await setupRuleset();
-      const [shared] = await Entities.create<Aptitude>(db, "aptitudes", {
+      const [shared] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
         name: "Shared Aptitude",
         rulesetId: klass.rulesetId,
       });
@@ -1102,6 +1118,7 @@ describe("LevelsService", () => {
       const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
       const luck = names(
         await Entities.findList<Feat>(db, {
+          baseRules: DND35_BASE_RULES,
           entityType: "feats",
           rulesetId: scoundrel.id,
           fields: { [FEAT_FAMILY]: "Luck" },
@@ -1456,7 +1473,7 @@ describe("LevelsService", () => {
     test("leave a spell the level's class level grants out of its own pool only, as once the level is saved", async () => {
       // Each pool is a list of its own: a spell known in one is offered in another that lists it
       const { session, parent, character, klass, classLevels, spellAptitude, spells } = await setupRuleset();
-      const [otherAptitude] = await Entities.create<Aptitude>(db, "aptitudes", {
+      const [otherAptitude] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
         name: "Other Spell Aptitude",
         rulesetId: parent.id,
       });
@@ -1608,7 +1625,9 @@ describe("LevelsService", () => {
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const [advancementId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await Picks.createMany(db, [{ advancementId, step: "spells", entityId: merged.loserId, viaId: wizardSpells }]);
+      await Picks.createMany(db, DND35_BASE_RULES, [
+        { advancementId, step: "spells", entityId: merged.loserId, viaId: wizardSpells },
+      ]);
 
       expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
@@ -2269,11 +2288,11 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } });
       const classLevel = async (klass: string, level: number) =>
         (await findClassLevel(ctx.classMap.pc[klass], level))!.id;
-      const fighter2 = await createAdvancement(db, characterId, {
+      const fighter2 = await createAdvancement(db, DND35_BASE_RULES, characterId, {
         entryId: await classLevel("Fighter", 2),
         picks: [{ step: "hp", amount: 10 }],
       });
-      const rogue1 = await createAdvancement(db, characterId, {
+      const rogue1 = await createAdvancement(db, DND35_BASE_RULES, characterId, {
         entryId: await classLevel("Rogue", 1),
         picks: [{ step: "hp", amount: 6 }],
       });

@@ -6,6 +6,7 @@ import { api, expectOk } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
 export async function createSeededForkWithAptitude() {
@@ -19,6 +20,7 @@ export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
   const ruleset = await createTestRuleset(user.id);
   const aptitudes = await Entities.createMany<Aptitude>(
     db,
+    DND35_BASE_RULES,
     "aptitudes",
     aptitudeNames.map((name) => ({ name, rulesetId: ruleset.id })),
   );

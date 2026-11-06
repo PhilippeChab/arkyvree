@@ -15,10 +15,11 @@ import { EntityLinks, Rulesets } from "@/server/repositories/index.ts";
 import { viewValuesOf } from "@/tests/support/ownerValues.ts";
 import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Every kind a ruleset's view holds, as the modules declare them. */
-const KINDS = StorageEngine.shared()
+const KINDS = StorageEngine.of(DND35_BASE_RULES)
   .viewSchema()
   .kinds.map(({ type }) => type as keyof ViewKinds);
 
@@ -100,7 +101,7 @@ describe("the view's links by role — parity with the stored links", () => {
     // The kind-wide index must hold every value of each entity of each kind the view holds of a field its kind reads
     // kind-wide (`kindWide`), and none more — verify by reconstructing the expected mapping from each entity's fields
     // and comparing to the kind-wide one.
-    const declared = StorageEngine.shared().declaredFields();
+    const declared = StorageEngine.of(DND35_BASE_RULES).declaredFields();
     let total = 0;
     for (const type of KINDS) {
       const expected = new Map<string, Set<string>>();

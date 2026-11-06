@@ -174,7 +174,7 @@ export async function ownerSessionOf(rulesetId: string) {
 
 /** A ruleset's copy-on-write data, by its id, as the cache keeps it (`RulesetViews.getCowData`). */
 export async function readCowData(rulesetId: string) {
-  return await RulesetViews.getCowData(await sourcesOf(rulesetId));
+  return await RulesetViews.getCowData(await sourcesOf(rulesetId), DND35_BASE_RULES);
 }
 
 /** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */

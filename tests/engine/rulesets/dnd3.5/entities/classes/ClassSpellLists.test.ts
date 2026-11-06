@@ -9,6 +9,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { thrownBy } from "@/tests/support/errors.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A seeded aptitude's id and a seeded spell's, by name. */
@@ -144,7 +145,10 @@ describe("A class's spell lists", () => {
       name: "Templar",
       fields: { [CLASS_HD]: 8 },
     });
-    const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: templar.id, position: 1 });
+    const [level] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: templar.id,
+      position: 1,
+    });
     await Modifiers.createMany(db, [
       {
         sourceId: level.id,

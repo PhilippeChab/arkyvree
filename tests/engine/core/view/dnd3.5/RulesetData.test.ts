@@ -13,6 +13,7 @@ import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   DAMAGE_TYPE,
   ITEM_COST_GP,
@@ -28,7 +29,7 @@ describe("An item's fields", () => {
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
       Dnd35View.of(rulesetData).items.find((item) => item.fields[ITEM_IS_TEMPLATE] && item.name === "Longsword"),
     );
-    const [variant] = await Entities.createMany<Item>(db, "items", [
+    const [variant] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
       {
         name: "Probe Blade",
         rulesetId: ruleset.id,

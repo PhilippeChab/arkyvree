@@ -5,6 +5,7 @@ import { Entities, Picks } from "@/server/repositories/index.ts";
 import { CharacterAdvancementsService, createAdvancement } from "@/server/services/characters/advancements/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { createTestCharacter } from "./characters.ts";
@@ -25,7 +26,7 @@ export function increasesOf(abilityId: string | null | undefined) {
 export async function addCharacterLevel(characterId: string, classLevelId: string, picks: Partial<LevelPicks> = {}) {
   const pooled = (step: string, byPool: Record<string, string[]> = {}) =>
     Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
-  return await createAdvancement(db, characterId, {
+  return await createAdvancement(db, DND35_BASE_RULES, characterId, {
     entryId: classLevelId,
     picks: [
       { step: "hp", amount: 1 },
@@ -65,12 +66,15 @@ export async function addOneLevel(
 
 /** A new class of the ruleset, with its first level. */
 export async function createTestClassLevel(rulesetId: string) {
-  const [klass] = await Entities.create<Klass>(db, "classes", {
+  const [klass] = await Entities.create<Klass>(db, DND35_BASE_RULES, "classes", {
     name: `Test Class ${uniqueId()}`,
     rulesetId,
     fields: { [CLASS_HD]: 8 },
   });
-  const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+  const [classLevel] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+    ownerId: klass.id,
+    position: 1,
+  });
   return { klass, classLevel };
 }
 
@@ -98,7 +102,7 @@ export async function findClassLevel(classId: string, level: number) {
  * stored, by the picked entity's name.
  */
 export async function findPicks(step: string, advancementIds: string[]) {
-  return (await Picks.findPerStep(db, { advancementIds }))[step];
+  return (await Picks.findPerStep(db, { baseRules: DND35_BASE_RULES, advancementIds }))[step];
 }
 
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */

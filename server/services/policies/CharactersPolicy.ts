@@ -45,13 +45,13 @@ export default class CharactersPolicy extends BasePolicy<Character> {
    * archived parent's child is read-only, as the parent is).
    */
   static async for(db: Db, session: Session, character: Character): Promise<CharactersPolicy> {
-    if (!Engine.storage().isPlayerKind(character.kind)) {
+    if (!Engine.rules().isPlayerKind(character.kind)) {
       const parent = character.parentCharacterId
         ? await Characters.findOne(db, { id: character.parentCharacterId }, Visibility.All)
         : undefined;
       const isParentEditor =
         !!parent &&
-        Engine.storage().isPlayerKind(parent.kind) &&
+        Engine.rules().isPlayerKind(parent.kind) &&
         (await CharactersPolicy.for(db, session, parent)).isEditor();
       return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
@@ -69,7 +69,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
    */
   static async forMany(db: Db, session: Session, characters: Character[]): Promise<Map<string, CharactersPolicy>> {
     const contributed = characters.filter(
-      (character) => Engine.storage().isPlayerKind(character.kind) && character.userId !== session.userId,
+      (character) => Engine.rules().isPlayerKind(character.kind) && character.userId !== session.userId,
     );
     const contributions = await CharacterContributors.findMany(db, {
       characterIds: contributed.map((character) => character.id),
@@ -79,7 +79,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
     const policies = new Map<string, CharactersPolicy>();
     for (const character of characters) {
-      const policy = Engine.storage().isPlayerKind(character.kind)
+      const policy = Engine.rules().isPlayerKind(character.kind)
         ? new CharactersPolicy(session, character, { isActiveContributor: contributedIds.has(character.id) })
         : await CharactersPolicy.for(db, session, character);
       policies.set(character.id, policy);
@@ -118,7 +118,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   private get isPlayerCharacter() {
-    return Engine.storage().isPlayerKind(this.entity.kind);
+    return Engine.rules().isPlayerKind(this.entity.kind);
   }
 
   /**

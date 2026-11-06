@@ -132,7 +132,7 @@ export default class EntityChanges {
 
   /**
    * What the write path stores of a write of its kind's fields (`FieldWrites`): its codec's fields are its module's
-   * declaration of them, which the write path's own (`Engine.storage().writtenFields`) is built of too.
+   * declaration of them, which the write path's own (`Engine.storage(baseRules).writtenFields`) is built of too.
    */
   private readonly writes: FieldWrites;
 

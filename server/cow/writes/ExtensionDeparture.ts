@@ -11,6 +11,7 @@ import {
   RulesetEntities,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import EntityUses from "./EntityUses.ts";
 import { findOwnedPairs } from "./ownedPairs.ts";
@@ -57,9 +58,11 @@ export default class ExtensionDeparture {
    * extension is gone. That is the first of the ids the view (`before`) shows it for (`CowData.getEquivalentIds`: the
    * entity a copy stands for, the other extensions' copies of it and the namesakes paired with it) that stays, as the
    * view without the extension (`after`) resolves it, when that view shows it: a copy the ruleset deleted shows nothing.
+   * Its kinds are its ruleset's base rules' (`baseRules`).
    */
   private static async findDepartures(
     tx: Db,
+    baseRules: BaseRules,
     before: CowData,
     after: CowData,
     extensionId: string,
@@ -93,7 +96,7 @@ export default class ExtensionDeparture {
     const departures = new Map<ReferencedType, ReadonlyMap<string, string | undefined>>();
     for (const [type, ids] of leaving)
       departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
-    const storage = Engine.storage();
+    const storage = Engine.storage(baseRules);
     for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
       const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
       departures.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
@@ -106,19 +109,27 @@ export default class ExtensionDeparture {
    * copy-on-write reads its snapshots (`RulesetChanges.copiesOf`), and its view without the extension.
    */
   static async read(tx: Db, scope: LockedRulesetScope, extensionId: string): Promise<ExtensionDeparture> {
-    const { sources } = scope;
+    const { ruleset, sources } = scope;
     const snapshots = await RulesetChanges.copiesOf(tx, sources.id, extensionId);
-    const after = await CowDataReader.read(tx, {
-      ...sources,
-      extensionIds: sources.extensionIds.filter((id) => id !== extensionId),
-    });
+    const after = await CowDataReader.read(
+      tx,
+      { ...sources, extensionIds: sources.extensionIds.filter((id) => id !== extensionId) },
+      ruleset.baseRules,
+    );
     const copies: Copies = new Map(
       [...Map.groupBy(snapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
         type,
         snaps.map((snap) => snap.forkedEntityId),
       ]),
     );
-    const departures = await ExtensionDeparture.findDepartures(tx, scope.rulesetData.cow, after, extensionId, copies);
+    const departures = await ExtensionDeparture.findDepartures(
+      tx,
+      ruleset.baseRules,
+      scope.rulesetData.cow,
+      after,
+      extensionId,
+      copies,
+    );
     return new ExtensionDeparture(scope, snapshots, after, copies, departures);
   }
 
@@ -147,7 +158,7 @@ export default class ExtensionDeparture {
       (await RulesetEntities.findNames(tx, { ids: targetIds })).map((entity) => [entity.id, entity.name]),
     );
     return references.map((reference) =>
-      Engine.storage().isIdentityKind(typeOf.get(reference.targetId)!)
+      Engine.storage(this.scope.ruleset.baseRules).isIdentityKind(typeOf.get(reference.targetId)!)
         ? `${names.get(reference.targetId)}, a list no other book of this ruleset has`
         : `${reference.name}, which uses ${names.get(reference.targetId)}`,
     );

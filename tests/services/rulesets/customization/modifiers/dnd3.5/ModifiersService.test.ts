@@ -22,6 +22,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, ownerSessionOf, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };
@@ -30,11 +31,15 @@ const strengthBonus = { target: "abilities.strength.misc", value: "2", operator:
 async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
-  await Entities.create<RulesetAbility>(db, "abilities", { name: "Strength", description: "Strength", rulesetId });
-  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Test Feat", rulesetId });
-  const [item] = await Entities.create<Item>(db, "items", { name: "Test Item", rulesetId });
-  const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Spell", rulesetId });
-  const [race] = await Entities.create<Race>(db, "races", {
+  await Entities.create<RulesetAbility>(db, DND35_BASE_RULES, "abilities", {
+    name: "Strength",
+    description: "Strength",
+    rulesetId,
+  });
+  const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", { name: "Test Feat", rulesetId });
+  const [item] = await Entities.create<Item>(db, DND35_BASE_RULES, "items", { name: "Test Item", rulesetId });
+  const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", { name: "Test Spell", rulesetId });
+  const [race] = await Entities.create<Race>(db, DND35_BASE_RULES, "races", {
     name: "Test Race",
     rulesetId,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
@@ -87,8 +92,11 @@ describe("ModifiersService", () => {
   test("refreshes the target paths a list's slots decide: a feat's list has no known paths", async () => {
     // A spell list with a spell; a feat giving it slots makes it the feat's, its spells no longer learned
     const { session, rulesetId, feat } = await setup();
-    const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Test Light Spells", rulesetId });
-    const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Glow", rulesetId });
+    const [list] = await Entities.create<Aptitude>(db, DND35_BASE_RULES, "aptitudes", {
+      name: "Test Light Spells",
+      rulesetId,
+    });
+    const [spell] = await Entities.create<Spell>(db, DND35_BASE_RULES, "spells", { name: "Test Glow", rulesetId });
     await addLists(db, "spells", spell.id, [{ toId: list.id, tier: 1 }]);
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
