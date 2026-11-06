@@ -4,15 +4,7 @@ import { CowData } from "@/engine/core/cow/index.ts";
 import { DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { LinkRoleDef } from "@/engine/core/module/index.ts";
 import { RulesetComposition, type RulesetData, type StandaloneKind } from "@/engine/core/view/index.ts";
-import {
-  composeView,
-  idsOf,
-  type Kind,
-  linkOf,
-  NO_FIELDS,
-  rawRows,
-  VIEW_SCHEMA,
-} from "@/tests/support/composedViews.ts";
+import { composeView, idsOf, linkOf, NO_FIELDS, rawRows, VIEW_SCHEMA } from "@/tests/support/composedViews.ts";
 
 /** The made-up module's kind its owners' ally is of, typed as the view's registry types a kind. */
 const TARGETS = "targets" as string as StandaloneKind;
@@ -43,7 +35,7 @@ const OWNER_FIELDS = new DeclaredFields(
 
 /** An entity of the view (`type`'s, by its id or a stored id it stands for): none when the view hasn't it. */
 function entityOf(view: RulesetData, type: string, id: string) {
-  return view.find(type as Kind, id) as unknown as StoredValues | undefined;
+  return view.find(type, id);
 }
 
 /** A made-up ruleset's owners (`owners`: each one's fields and single links, by id) and its kind-wide values. */
@@ -128,7 +120,7 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
       ["l2", "listedIn", "t3"],
     ]);
     // A stored id finds its winner
-    expect((view.find("listed" as Kind, "l3") as unknown as { id: string }).id).toBe("l2");
+    expect(view.find("listed", "l3")!.id).toBe("l2");
   });
 
   test("merges a sibling loser's fields into its winner's, each field and link by its declared merge", () => {

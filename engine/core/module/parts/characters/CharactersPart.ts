@@ -6,7 +6,7 @@ import type { EntityFilters } from "@/engine/core/module/parts/entities/index.ts
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import type { EntityRecord, StorageDeclaration, StoredAdvancement } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { type InventoryItem, RequestIds, type RulesetView, type ViewKinds } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetView, type ViewEntity } from "@/engine/core/view/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
@@ -231,13 +231,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * What the ruleset shows of an inventory entry (`entry`, of `item`, its fields its template's of those it holds none
    * of among them) beside its row: where its item can go, where it's worn.
    */
-  protected abstract describeInventoryEntry(entry: HeldInventoryEntry, item: InventoryItem): D["inventoryEntry"];
+  protected abstract describeInventoryEntry(entry: HeldInventoryEntry, item: ViewEntity): D["inventoryEntry"];
 
   /**
    * An inventory entry's item's fields (`item`, its template's of those it holds none of among them), as an item's
    * answer carries them: each as its kind reads it, by its stored field.
    */
-  protected abstract describeInventoryItemFields(item: InventoryItem): Record<string, unknown>;
+  protected abstract describeInventoryItemFields(item: ViewEntity): Record<string, unknown>;
 
   /**
    * What a character (`character`) has of a picked link's role (`role`), and what its picks (`entityIds`, each the
@@ -328,7 +328,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const declared = this.storage.registries.characterRoles.find((def) => def.role === role && !def.single);
     if (!declared || this.storage.character.scoredRoles.includes(role) !== scored)
       throw new RulesError("not-found", `No ${scored ? "scored" : "picked"} link ${role}`);
-    return { kind: declared.entityType as keyof ViewKinds, role };
+    return { kind: declared.entityType, role };
   }
 
   /** The scored roles the module stores of its characters, each with its entities' kind. */
@@ -554,16 +554,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const singles: Record<string, string> = {};
     for (const { entityType, role } of this.singleRoles()) {
       const picked = request.picks[role];
-      const kind = entityType as keyof ViewKinds;
       if (picked === undefined)
-        throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
-      const entity = ids.find(kind, picked);
+        throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(entityType)} is required`);
+      const entity = ids.find(entityType, picked);
       this.checkCreationPick(view, role, entity);
-      singles[role] = (entity as { id: string }).id;
+      singles[role] = entity.id;
     }
     const scores = scored.map(({ bounds, kind, role }) => {
       const given = ids.resolveKeys(kind, request.scores[role] ?? {});
-      const rows = view.rulesetData.rows(kind) as { id: string }[];
+      const rows = view.rulesetData.rows(kind);
       return [role, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
     return { links: Object.fromEntries(scores), row: { kind: this.storage.character.playerKind, links: singles } };

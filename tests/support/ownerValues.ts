@@ -6,7 +6,7 @@
 
 import { Field, type Fields, type FieldsWrite, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
-import type { RulesetData, ViewKinds } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, RulesetSettings } from "@/server/repositories/index.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -53,7 +53,7 @@ export function listValues({ fields, links }: StoredValues): string[] {
  * their order, and its single links by role. None for an entity the view hasn't.
  */
 export function viewValuesOf(data: RulesetData, id: string): HeldValues {
-  const types = Object.keys(ENTITY_FIELDS).filter((type) => type !== "rulesets") as (keyof ViewKinds)[];
+  const types = Object.keys(ENTITY_FIELDS).filter((type) => type !== "rulesets");
   const entity = types.map((type) => data.find(type, id)).find((found) => found);
   if (!entity) return { fields: {}, links: {} };
   return {

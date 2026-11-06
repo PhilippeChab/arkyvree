@@ -7,7 +7,7 @@ import {
   type StoredValues,
 } from "@/engine/core/fields/index.ts";
 import type { EntityWrite, LinkSet, LinkWrite } from "@/engine/core/module/index.ts";
-import type { RulesetData, ViewEntity, ViewKinds } from "@/engine/core/view/index.ts";
+import type { RulesetData, ViewEntity } from "@/engine/core/view/index.ts";
 import type { ActivityChange, ChangedField, ChangedLink, ChangedLinks } from "@/shared/activity.ts";
 
 /** What an edit's activity reads of a kind's fields: their declarations, and an owner's values read by stored field. */
@@ -212,7 +212,7 @@ export default class EntityChanges {
 
   /** The name of the entity of a kind (`type`) the view shows for an id: none when it shows none. */
   private nameOf(type: string, id: string): string | undefined {
-    const entity = this.rulesetData.find(type as keyof ViewKinds, id) as { name?: unknown } | undefined;
+    const entity = this.rulesetData.find(type, id);
     return typeof entity?.name === "string" ? entity.name : undefined;
   }
 

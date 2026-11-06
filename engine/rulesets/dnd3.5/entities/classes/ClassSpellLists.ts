@@ -5,7 +5,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import SpellEntity from "@/engine/rulesets/dnd3.5/entities/spells/SpellEntity.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import type ClassTable from "./ClassTable.ts";
 
@@ -111,7 +111,7 @@ export default class ClassSpellLists {
   planAdd(listId: string | undefined, spellIds: string[], tier: number | undefined): ListEntriesPlan {
     const list = listId === undefined ? this.ownList() : this.findList(listId);
     const level = RulesError.parse(SpellEntity.level, tier, ["tier"]);
-    const ids = new RequestIds(this.view.rulesetData, "this ruleset");
+    const ids = new RequestIds<Dnd35Kinds>(this.view.rulesetData, "this ruleset");
     const spells = ids.resolveAll("spells", spellIds).map((id) => ids.find("spells", id));
     const listed = spells.find((spell) => this.listingsOf(spell).some((listing) => listing.toId === list.id));
     if (listed) throw new RulesError("conflict", `${listed.name} is already on ${list.name}`);
@@ -167,7 +167,7 @@ export default class ClassSpellLists {
    */
   planRemove(listId: string, spellId: string): ListEntriesPlan {
     const list = this.findList(listId);
-    const spell = this.view.rulesetData.find("spells", spellId);
+    const spell = this.dnd35.spellsById.get(spellId);
     if (!spell) throw this.view.rulesetData.notFound("spells", { where: "in this ruleset" });
     const listings = this.listingsOf(spell);
     const listing = listings.find(({ toId }) => toId === list.id);

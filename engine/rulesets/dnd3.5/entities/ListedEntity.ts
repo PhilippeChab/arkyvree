@@ -3,6 +3,7 @@ import type { Fields } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewLink } from "@/engine/core/view/index.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /**
  * A kind a ruleset lists (a feat in a pool, a spell on a spell list: their `listedIn` links). A list holds feats or
@@ -12,7 +13,7 @@ import type { ViewLink } from "@/engine/core/view/index.ts";
 export default abstract class ListedEntity<
   K extends "feats" | "spells",
   S extends Fields,
-> extends CustomizationPageEntity<K, S> {
+> extends CustomizationPageEntity<Dnd35Kinds, K, S> {
   /** Its pools: the aptitudes its `listedIn` links name (a feat's feat pools, a spell's lists), by `?aptitude=`. */
   protected static override readonly pools = { param: "aptitude", role: "listedIn" };
 

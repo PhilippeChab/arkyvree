@@ -5,7 +5,7 @@ import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass, Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Item, Klass, Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -27,11 +27,11 @@ type LoadedParts = Omit<
 };
 
 /**
- * What a 3.5 character is built from, past what core loads (`LoadedCharacter`): its rows, as its ruleset's view
- * composes them, and what they read of the view (its classes' fields, its skills' fields). The ruleset's own lists the
- * build reads off the view itself.
+ * What a 3.5 character is built from, past what core loads (`LoadedCharacter`, its inventory's items 3.5's): its rows,
+ * as its ruleset's view composes them, and what they read of the view (its classes' fields, its skills' fields). The
+ * ruleset's own lists the build reads off the view itself.
  */
-export interface LoadedCharacterData extends LoadedCharacter {
+export interface LoadedCharacterData extends LoadedCharacter<Item> {
   /**
    * The ability increases its levels take, by its ruleset's Settings: their `abilities` picks, each its ability and
    * amount.
@@ -91,11 +91,14 @@ export default class DetailedCharacterDataLoader extends include(
   LoadsPicks,
   ReadsRuleset,
 ) {
-  /** The character's data: core's (`loaded`), its parts, its own row, and the ruleset's Settings. */
+  /**
+   * The character's data: core's (`loaded`, its inventory's items 3.5's, as its ruleset's view holds them), its parts,
+   * its own row, and the ruleset's Settings.
+   */
   protected override loadOwn(
     view: RulesetView,
     { classIds: _classIds, ...parts }: LoadedParts,
-    loaded: LoadedCharacter,
+    loaded: LoadedCharacter<Item>,
   ): LoadedCharacterData {
     return {
       ...loaded,

@@ -8,7 +8,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
-import { composeView, type Kind, rawRows } from "@/tests/support/composedViews.ts";
+import { composeView, rawRows } from "@/tests/support/composedViews.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -105,14 +105,14 @@ describe("A ruleset's view's reads", () => {
 
   test("find a kind's entity by a stored id, as resolving by id, and leave it unresolved as stored", () => {
     const copy = { fields: {}, id: "o1-copy", links: {} };
-    expect(view.byId("owners" as Kind).get("o1")).toEqual(copy as never);
-    expect(view.storedById("owners" as Kind).get("o1")).toBeUndefined();
-    expect(view.storedById("owners" as Kind).get("o1-copy")).toEqual(copy as never);
-    expect(view.find("owners" as Kind, "missing")).toBeUndefined();
+    expect(view.byId("owners").get("o1")).toEqual(copy as never);
+    expect(view.storedById("owners").get("o1")).toBeUndefined();
+    expect(view.storedById("owners").get("o1-copy")).toEqual(copy as never);
+    expect(view.find("owners", "missing")).toBeUndefined();
   });
 
   test("answer a kind the module declares none of with no rows, and an entity that holds no links with none", () => {
-    expect(view.rows("nothing" as Kind)).toEqual([]);
+    expect(view.rows("nothing")).toEqual([]);
     expect(view.linksOf("o2")).toEqual([]);
     expect(view.linksOf("missing", "any")).toEqual([]);
   });

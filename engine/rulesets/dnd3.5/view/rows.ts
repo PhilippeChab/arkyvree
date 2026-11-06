@@ -1,10 +1,10 @@
 /**
  * 3.5's kinds' entities, as the view holds them (`ViewEntity`: as stored, their fields typed by their vocabulary's
- * declarations, `ENTITY_FIELDS`, and their single links by their storage's roles, `LINK_ROLES`), which it declares into
- * the view's registry (`ViewKinds`). Its entities' links of a role they hold many of are the
- * view's (`ViewLink`, by role: a feat's `listedIn`, a class level's `grants`); a character's rows are as stored (its
- * fields and single links, its links by role, its advancements and their picks by step), its own values read as
- * `CharacterValues` reads them.
+ * declarations, `ENTITY_FIELDS`, and their single links by their storage's roles, `LINK_ROLES`), by type
+ * (`Dnd35Kinds`), which it declares into the view's registry (`ModuleKinds`), with its owned kind, and its code reads
+ * them by (`DeclaredRows`). Its entities' links of a role they hold many of are the view's (`ViewLink`, by role: a
+ * feat's `listedIn`, a class level's `grants`); a character's rows are as stored (its fields and single links, its
+ * links by role, its advancements and their picks by step), its own values read as `CharacterValues` reads them.
  */
 
 import type { ViewEntity } from "@/engine/core/view/index.ts";
@@ -13,30 +13,9 @@ import type { HeldFieldValues } from "@/shared/customization/fields.ts";
 import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 declare module "@/engine/core/view/rows.ts" {
-  /** 3.5's kind a character's inventory holds: its items. */
-  interface InventoryKinds {
-    items: Item;
-  }
-
-  /** 3.5's owned kind: a class's levels. */
-  interface OwnedKinds {
-    "class-levels": KlassLevel;
-  }
-
-  /** 3.5's kinds' entities, by type. */
-  interface ViewKinds {
-    abilities: RulesetAbility;
-    aptitudes: Aptitude;
-    "class-levels": KlassLevel;
-    classes: Klass;
-    feats: Feat;
-    items: Item;
-    languages: Language;
-    mechanics: Mechanic;
-    races: Race;
-    saves: RulesetSave;
-    skills: Skill;
-    spells: Spell;
+  /** 3.5's kinds: its kinds' entities, by type, and its owned kind, a class's levels. */
+  interface ModuleKinds {
+    "dnd3.5": { owned: "class-levels"; rows: Dnd35Kinds };
   }
 }
 
@@ -51,6 +30,22 @@ type NoFields = Record<never, never>;
 
 /** The roles of a kind's single links (`fromType`'s), as its storage declares them (`LINK_ROLES`). */
 type SingleRolesOf<F extends string> = Extract<(typeof LINK_ROLES)[number], { fromType: F; single: true }>["role"];
+
+/** 3.5's kinds' entities, by type. */
+export interface Dnd35Kinds {
+  abilities: RulesetAbility;
+  aptitudes: Aptitude;
+  "class-levels": KlassLevel;
+  classes: Klass;
+  feats: Feat;
+  items: Item;
+  languages: Language;
+  mechanics: Mechanic;
+  races: Race;
+  saves: RulesetSave;
+  skills: Skill;
+  spells: Spell;
+}
 
 export type Aptitude = Entity35<null, "aptitudes">;
 /** A feat: its pools aside (its links), whether it stacks, whether a level up picks it, whether its ruleset made it… */

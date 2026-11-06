@@ -6,11 +6,11 @@ import { type FormBody, RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import type { Aptitude } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Aptitude, Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** What an aptitude's edit may change: the rules count on a pool's name. */
-export default class AptitudeEntity extends RulesetEntity<"aptitudes"> {
+export default class AptitudeEntity extends RulesetEntity<Dnd35Kinds, "aptitudes"> {
   /** Its list's filters: a kind's pools (`scope`: the feats', the spells' lists). */
   protected static override readonly listFilters = { scope: z.enum(["feats", "spells"]) };
 

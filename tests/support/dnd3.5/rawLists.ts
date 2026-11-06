@@ -1,8 +1,9 @@
-import type { RulesetRawData, ViewKinds } from "@/engine/core/view/index.ts";
+import type { RulesetRawData } from "@/engine/core/view/index.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
-/** A ruleset's own rows of a kind (`type`), as the cache keeps them, typed by its module's registry. */
-function kindRows<K extends keyof ViewKinds>(raw: RulesetRawData, type: K) {
-  return (raw.entities[type] ?? []) as ViewKinds[K][];
+/** A ruleset's own rows of a kind (`type`), as the cache keeps them, typed as 3.5 declares its kinds. */
+function kindRows<K extends keyof Dnd35Kinds>(raw: RulesetRawData, type: K) {
+  return (raw.entities[type] ?? []) as Dnd35Kinds[K][];
 }
 
 /** A ruleset's own links of a role from entities of a kind (`type`, `role`), to a kind (`toType`) when it says. */

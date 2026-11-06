@@ -1,10 +1,10 @@
 import type { KindCapabilities, RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView, StandaloneKind, ViewKinds } from "@/engine/core/view/index.ts";
+import type { KindRows, RulesetView, ViewRows } from "@/engine/core/view/index.ts";
 
-/** A kind's rules, of its type (`K`): its `RulesetEntity`, whatever form its saves take. */
-type Kind<K extends keyof ViewKinds> = RulesetEntity<K, Fields>;
+/** A kind's rules, of its module's kinds (`V`) and its type (`K`): its `RulesetEntity`, whatever form its saves take. */
+type Kind<V extends KindRows<V>, K extends keyof V & string> = RulesetEntity<V, K, Fields>;
 
 /**
  * A kind's rules' class (`T`, what it's bound to a view as): what it can do before any view, as its statics declare it
@@ -13,16 +13,25 @@ type Kind<K extends keyof ViewKinds> = RulesetEntity<K, Fields>;
 type KindClass<T> = (new (view: RulesetView) => T) & { describeCapabilities(): KindCapabilities };
 
 /**
- * The entity kinds a ruleset answers of, by their types, those no entity owns: each its type's `RulesetEntity`, whose
- * parts a kind has or refuses (the entities it owns, the links it edits, its progression and its tables: a class's).
+ * The entity kinds a module answers of, by their types: of its kinds (`V`, its kinds' entities by type, as it declares
+ * them into `ModuleKinds`), those no entity owns (all but `O`, its owned kinds' types), each its type's
+ * `RulesetEntity`, whose parts a kind has or refuses (the entities it owns, the links it edits, its progression and its
+ * tables: a class's). Any module's, each of any type, by default.
  */
-export type EntityKindsContract = { [K in StandaloneKind]: Kind<K> };
+export type EntityKindsContract<V extends KindRows<V> = ViewRows, O extends string = never> = {
+  [K in Exclude<keyof V & string, O>]: Kind<V, K>;
+};
 
 /**
- * What a ruleset answers of its entities: each kind's rules (`E`), its class by its type (`kinds`), bound to a ruleset's
- * view, and what each can do before any view.
+ * What a ruleset answers of its entities: each kind's rules (`E`, a rules class for each of its kinds no entity owns:
+ * of its kinds, `V`, all but its owned ones, `O`), its class by its type (`kinds`), bound to a ruleset's view, and what
+ * each can do.
  */
-export default abstract class EntitiesPart<E extends EntityKindsContract> {
+export default abstract class EntitiesPart<
+  E extends EntityKindsContract<V, O>,
+  V extends KindRows<V> = ViewRows,
+  O extends string = never,
+> {
   /** Each kind's rules' class, by its type. */
   protected abstract readonly kinds: { [K in keyof E]: KindClass<E[K]> };
 

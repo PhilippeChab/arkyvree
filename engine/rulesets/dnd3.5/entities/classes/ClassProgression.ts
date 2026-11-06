@@ -16,7 +16,7 @@ import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
 import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeName, stripSeparators } from "@/shared/text.ts";
 import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -290,7 +290,7 @@ export default class ClassProgression {
 
   /** The entities a save names by id, as the view reads them: refused, naming one it shows none of. */
   private get ids() {
-    return new RequestIds(this.rulesetData, "this ruleset");
+    return new RequestIds<Dnd35Kinds>(this.rulesetData, "this ruleset");
   }
 
   /** A level's own modifiers, as the view has them, each marked when requirements gate it. */

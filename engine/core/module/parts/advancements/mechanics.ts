@@ -12,7 +12,7 @@
  */
 
 import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
-import type { ViewKinds } from "@/engine/core/view/index.ts";
+import type { KindType } from "@/engine/core/view/index.ts";
 import type { RulesWord } from "@/shared/rulesets.ts";
 
 /** The plan's answer: its advancements, in order, and each step's answer by its name. */
@@ -310,11 +310,11 @@ export interface ValueBounds {
  */
 export type AdvancementStep = {
   [M in StepMechanic]: {
-    kind?: keyof ViewKinds;
+    kind?: KindType;
     label: string;
     mechanic: M;
     name: string;
-    pools?: keyof ViewKinds;
+    pools?: KindType;
     words: StepWords[M];
   };
 }[StepMechanic];

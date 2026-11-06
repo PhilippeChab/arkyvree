@@ -1,7 +1,7 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { CLASS_SKILL_LINKS } from "./classSkillLinks.ts";
 
@@ -29,7 +29,7 @@ export default class ClassSkills {
    * already.
    */
   planAdd(skillId: string) {
-    const skill = new RequestIds(this.view.rulesetData, "this ruleset").find("skills", skillId);
+    const skill = new RequestIds<Dnd35Kinds>(this.view.rulesetData, "this ruleset").find("skills", skillId);
     if (this.dnd35.classSkillsOf(this.klass.id).some((link) => link.toId === skill.id))
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return {

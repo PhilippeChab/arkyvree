@@ -7,7 +7,7 @@
  */
 
 import type { ValidationResult } from "@/engine/core/character/index.ts";
-import type { InventoryItem } from "@/engine/core/view/index.ts";
+import type { ViewEntity } from "@/engine/core/view/index.ts";
 import type { Character, Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
 import type { FieldInput, FieldsBlock, SheetBlock } from "./blocks.ts";
@@ -269,7 +269,7 @@ export type CreationSection = { title: string } & (
  */
 export type DescribedInventoryEntry<T, X = unknown> = T &
   X & {
-    item: Omit<InventoryItem, "fields"> & {
+    item: Omit<ViewEntity, "fields"> & {
       fields: Record<string, unknown>;
       modifiers: Modifier[];
       requirements: Requirement[];

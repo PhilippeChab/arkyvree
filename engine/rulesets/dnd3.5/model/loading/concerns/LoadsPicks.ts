@@ -69,7 +69,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         advancements,
         "feats",
         (classLevelId) => dnd35.grantedFeatsOf(classLevelId),
-        (grant) => rulesetData.storedById("feats").get(grant.toId),
+        (grant) => dnd35.storedFeatsById.get(grant.toId),
       );
 
       // A grant is kept as a pick is taken (`FeatRules.canTake`): once, unless it stacks, picked or granted before
@@ -113,7 +113,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         advancements,
         "spells",
         (classLevelId) => dnd35.grantedSpellsOf(classLevelId),
-        (grant) => rulesetData.storedById("spells").get(grant.toId),
+        (grant) => dnd35.storedSpellsById.get(grant.toId),
       ).map(held);
       return { spells: [...picked, ...granted], spellGrants: granted.filter((spell) => !spell.free) };
     }

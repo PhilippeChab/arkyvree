@@ -1,4 +1,6 @@
 import { EntitiesPart } from "@/engine/core/module/index.ts";
+import type { ModuleKinds } from "@/engine/core/view/index.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import AbilityEntity from "./abilities/AbilityEntity.ts";
 import AptitudeEntity from "./aptitudes/AptitudeEntity.ts";
@@ -33,8 +35,9 @@ const ENTITY_KINDS = {
 /**
  * The 3.5 ruleset's entities, as the module answers the server of them: each kind's rules, by its type (`kinds`), bound
  * to a ruleset's view (an entity found and described, a page opened, and what saving or deleting one writes; a class's
- * levels, class skills and table, through the classes' kind, bound to the class), and what each can do.
+ * levels, class skills and table, through the classes' kind, bound to the class), and what each can do: a kind's rules
+ * for each of its kinds no entity owns.
  */
-export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
+export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds, Dnd35Kinds, ModuleKinds["dnd3.5"]["owned"]> {
   protected override readonly kinds = ENTITY_KINDS;
 }

@@ -1,6 +1,5 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
 import type { KindWord, RulesDeclaration } from "@/engine/core/module/index.ts";
-import type { ViewKinds } from "@/engine/core/view/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/lists.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -11,6 +10,7 @@ import { RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/lists.ts";
 import { SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/lists.ts";
 import { SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/lists.ts";
 import { SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/lists.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { LEVEL_WORD } from "@/vocabulary/dnd3.5/classes.ts";
 import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -103,5 +103,5 @@ export const RULES: RulesDeclaration = {
     races: { many: "Races", one: "Race" },
     saves: { many: "Saves", one: "Save" },
     skills: { many: "Skills", one: "Skill" },
-  } satisfies Record<keyof ViewKinds, KindWord>,
+  } satisfies Record<keyof Dnd35Kinds, KindWord>,
 };

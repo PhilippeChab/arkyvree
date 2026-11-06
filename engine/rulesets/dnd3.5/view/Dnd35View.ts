@@ -1,8 +1,9 @@
-import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
+import { DeclaredRows, type RulesetData, type ViewLink } from "@/engine/core/view/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type {
   Aptitude,
+  Dnd35Kinds,
   Feat,
   Item,
   Klass,
@@ -39,13 +40,16 @@ function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string
 }
 
 /**
- * 3.5's view of a ruleset (`Dnd35View.of`): its kinds' rows as its rows, its entities' links by their roles (a class's
+ * 3.5's view of a ruleset (`Dnd35View.of`): its kinds' rows as it declares them (`Dnd35Kinds`, read through
+ * `DeclaredRows`), its entities' links by their roles (a class's
  * `classSkill` links, a class level's `grants` and `baseBonus`, a feat's or a spell's `listedIn`), and the indices its
  * rules read them by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time
  * it's read; every id-keyed index takes a stored (pre-COW) id too, as the view's do.
  */
 export default class Dnd35View {
-  constructor(private readonly rulesetData: RulesetData) {}
+  constructor(private readonly rulesetData: RulesetData) {
+    this.declared = new DeclaredRows(rulesetData);
+  }
 
   /** The view's 3.5 indices, derived once with it. */
   static of(rulesetData: RulesetData): Dnd35View {
@@ -53,6 +57,9 @@ export default class Dnd35View {
   }
 
   private readonly built: Partial<Indices> = {};
+
+  /** The view's 3.5 kinds' rows, as 3.5 declares them. */
+  private readonly declared: DeclaredRows<Dnd35Kinds>;
 
   /** Each entity's links of a role, by their targets' names, by role and entity, once read (`linksByName`). */
   private readonly sortedLinks = new Map<string, readonly ViewLink[]>();
@@ -74,11 +81,11 @@ export default class Dnd35View {
   }
 
   get abilities(): RulesetAbility[] {
-    return this.rulesetData.rows("abilities");
+    return this.declared.rows("abilities");
   }
 
   get abilitiesById(): Map<string, RulesetAbility> {
-    return this.rulesetData.byId("abilities");
+    return this.declared.byId("abilities");
   }
 
   /**
@@ -104,11 +111,11 @@ export default class Dnd35View {
   }
 
   get aptitudes(): Aptitude[] {
-    return this.rulesetData.rows("aptitudes");
+    return this.declared.rows("aptitudes");
   }
 
   get aptitudesById(): Map<string, Aptitude> {
-    return this.rulesetData.byId("aptitudes");
+    return this.declared.byId("aptitudes");
   }
 
   /** A class level's base bonuses to the saves (`classLevelId`): its `baseBonus` links, each its save and its amount. */
@@ -117,11 +124,11 @@ export default class Dnd35View {
   }
 
   get classes(): Klass[] {
-    return this.rulesetData.rows("classes");
+    return this.declared.rows("classes");
   }
 
   get classesById(): Map<string, Klass> {
-    return this.rulesetData.byId("classes");
+    return this.declared.byId("classes");
   }
 
   /** Key: `${ownerId}:${position}`, a level's class and its number, the class's id resolved. */
@@ -132,7 +139,7 @@ export default class Dnd35View {
   }
 
   get classLevels(): KlassLevel[] {
-    return this.rulesetData.rows("class-levels");
+    return this.declared.rows("class-levels");
   }
 
   /** A class's id → its levels (their owner), sorted by their number (`position`): the last is the class's highest. */
@@ -146,12 +153,12 @@ export default class Dnd35View {
   }
 
   get classLevelsById(): Map<string, KlassLevel> {
-    return this.rulesetData.byId("class-levels");
+    return this.declared.byId("class-levels");
   }
 
   /** A class's class skills (`classId`): its `classSkill` links, by their skills' names, as the books list them. */
   classSkillsOf(classId: string): readonly ViewLink[] {
-    return this.linksByName(classId, "classSkill", "skills", this.rulesetData.storedById("skills"));
+    return this.linksByName(classId, "classSkill", "skills", this.declared.storedById("skills"));
   }
 
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
@@ -160,11 +167,11 @@ export default class Dnd35View {
   }
 
   get feats(): Feat[] {
-    return this.rulesetData.rows("feats");
+    return this.declared.rows("feats");
   }
 
   get featsById(): Map<string, Feat> {
-    return this.rulesetData.byId("feats");
+    return this.declared.byId("feats");
   }
 
   /**
@@ -172,7 +179,7 @@ export default class Dnd35View {
    * and whether it's free, by their feats' names, as the books list them.
    */
   grantedFeatsOf(classLevelId: string): readonly ViewLink[] {
-    return this.linksByName(classLevelId, "grants", "feats", this.rulesetData.storedById("feats"));
+    return this.linksByName(classLevelId, "grants", "feats", this.storedFeatsById);
   }
 
   /**
@@ -180,15 +187,15 @@ export default class Dnd35View {
    * (`viaId`) and whether it's free, by their spells' names.
    */
   grantedSpellsOf(classLevelId: string): readonly ViewLink[] {
-    return this.linksByName(classLevelId, "grants", "spells", this.rulesetData.storedById("spells"));
+    return this.linksByName(classLevelId, "grants", "spells", this.storedSpellsById);
   }
 
   get items(): Item[] {
-    return this.rulesetData.rows("items");
+    return this.declared.rows("items");
   }
 
   get itemsById(): Map<string, Item> {
-    return this.rulesetData.byId("items");
+    return this.declared.byId("items");
   }
 
   /**
@@ -200,11 +207,11 @@ export default class Dnd35View {
   }
 
   get languages(): Language[] {
-    return this.rulesetData.rows("languages");
+    return this.declared.rows("languages");
   }
 
   get languagesById(): Map<string, Language> {
-    return this.rulesetData.byId("languages");
+    return this.declared.byId("languages");
   }
 
   /** The spell lists a spell is on at a level: the aptitudes a link with a level points at, from any ruleset. */
@@ -248,31 +255,31 @@ export default class Dnd35View {
   }
 
   get mechanics(): Mechanic[] {
-    return this.rulesetData.rows("mechanics");
+    return this.declared.rows("mechanics");
   }
 
   get races(): Race[] {
-    return this.rulesetData.rows("races");
+    return this.declared.rows("races");
   }
 
   get racesById(): Map<string, Race> {
-    return this.rulesetData.byId("races");
+    return this.declared.byId("races");
   }
 
   get saves(): RulesetSave[] {
-    return this.rulesetData.rows("saves");
+    return this.declared.rows("saves");
   }
 
   get savesById(): Map<string, RulesetSave> {
-    return this.rulesetData.byId("saves");
+    return this.declared.byId("saves");
   }
 
   get skills(): Skill[] {
-    return this.rulesetData.rows("skills");
+    return this.declared.rows("skills");
   }
 
   get skillsById(): Map<string, Skill> {
-    return this.rulesetData.byId("skills");
+    return this.declared.byId("skills");
   }
 
   /**
@@ -289,10 +296,20 @@ export default class Dnd35View {
   }
 
   get spells(): Spell[] {
-    return this.rulesetData.rows("spells");
+    return this.declared.rows("spells");
   }
 
   get spellsById(): Map<string, Spell> {
-    return this.rulesetData.byId("spells");
+    return this.declared.byId("spells");
+  }
+
+  /** The feats by id, as stored: a stored id isn't resolved, as a class level's grants name their feats. */
+  get storedFeatsById(): Map<string, Feat> {
+    return this.declared.storedById("feats");
+  }
+
+  /** The spells by id, as stored: a stored id isn't resolved, as a class level's grants name their spells. */
+  get storedSpellsById(): Map<string, Spell> {
+    return this.declared.storedById("spells");
   }
 }

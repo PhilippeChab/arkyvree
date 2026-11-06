@@ -8,7 +8,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import { type RulesetData, type ViewKinds, type ViewLink } from "@/engine/core/view/index.ts";
+import { type RulesetData, type ViewLink } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks, Rulesets } from "@/server/repositories/index.ts";
@@ -21,7 +21,7 @@ import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 /** Every kind a ruleset's view holds, as the modules declare them. */
 const KINDS = StorageEngine.of(DND35_BASE_RULES)
   .viewSchema()
-  .kinds.map(({ type }) => type as keyof ViewKinds);
+  .kinds.map(({ type }) => type);
 
 /** Links' parts, by their target and pool, sorted. */
 function partsOf(links: readonly ViewLink[]) {
@@ -105,7 +105,7 @@ describe("the view's links by role — parity with the stored links", () => {
     let total = 0;
     for (const type of KINDS) {
       const expected = new Map<string, Set<string>>();
-      for (const { id } of rulesetData.rows(type) as { id: string }[]) {
+      for (const { id } of rulesetData.rows(type)) {
         for (const [field, values] of Object.entries(viewValuesOf(rulesetData, id).fields)) {
           if (!declared.kindWideFields(type).has(field)) continue;
           for (const value of values) {

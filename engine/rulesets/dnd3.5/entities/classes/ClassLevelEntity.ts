@@ -11,7 +11,7 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { CLASS_LEVEL_FIELDS } from "./fields.ts";
@@ -46,6 +46,7 @@ function grantedIn(plan: { links?: LinkSet[] }) {
  * class's, which the levels are taken in (`LevelRules.findNextClassLevel`): a level requires none of the one before.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
+  Dnd35Kinds,
   "class-levels",
   typeof CLASS_LEVEL_FIELDS.fields
 > {

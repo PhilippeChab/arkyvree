@@ -6,7 +6,7 @@ import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 import type { RulesWord } from "@/shared/rulesets.ts";
 import { toSentenceCase } from "@/shared/text.ts";
 
-import type { InventoryItem, NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
+import type { NamedLink, ViewEntity, ViewLink } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
@@ -71,8 +71,9 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
  * by name, each entity's links by role (`linksOf`), and their lookup indices. An index is built the first time it's
  * read, then kept: a request pays for the indices it reads, not for all of them. Every id-keyed index takes a stored
  * (pre-COW) id too: its `.get` and `.has` resolve the key (`CowData.resolve`), so consumers don't thread `cow` through
- * or call `canonicalize` on the common lookup path. What a module reads of it past its kinds' rows (3.5's indices) it
- * derives (`derive`).
+ * or call `canonicalize` on the common lookup path. Its kinds' rows are as the view holds any kind's (`ViewEntity`): a
+ * module reads its own kinds typed as it declares them (`DeclaredRows`), and what it reads of the view past them (3.5's
+ * indices) it derives (`derive`).
  */
 export default class RulesetData {
   /**
@@ -224,8 +225,8 @@ export default class RulesetData {
   }
 
   /** A kind's entities by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
-  byId<K extends keyof ViewKinds>(type: K): Map<string, ViewKinds[K]> {
-    return this.indexOf(type).resolved as Map<string, ViewKinds[K]>;
+  byId(type: string): Map<string, ViewEntity> {
+    return this.indexOf(type).resolved;
   }
 
   /**
@@ -254,7 +255,7 @@ export default class RulesetData {
    * deleting an item, reverting it or unsubscribing from its book is refused while an entry holds it. An entry it
    * doesn't is left out, as a pick is.
    */
-  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: InventoryItem }[] {
+  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: ViewEntity }[] {
     return entries.flatMap((entry) => {
       const item = this.findItem(entry.itemId);
       return item ? [{ entry, item }] : [];
@@ -265,7 +266,7 @@ export default class RulesetData {
    * The entity of `type` an id names in the view (a stored id its copy or winner): the ruleset's own, or inherited. It
    * builds the index of `type` alone.
    */
-  find<K extends keyof ViewKinds>(type: K, id: string): ViewKinds[K] | undefined {
+  find(type: string, id: string): ViewEntity | undefined {
     return this.byId(type).get(id);
   }
 
@@ -273,10 +274,10 @@ export default class RulesetData {
    * The entity of a kind a character's inventory holds (`inventoryTypes`) an id names in the view (a stored id its copy
    * or winner): the ruleset's own, or inherited.
    */
-  findItem(id: string): InventoryItem | undefined {
+  findItem(id: string): ViewEntity | undefined {
     for (const type of this.inventoryTypes()) {
       const item = this.indexOf(type).resolved.get(id);
-      if (item) return item as InventoryItem;
+      if (item) return item;
     }
     return undefined;
   }
@@ -368,7 +369,7 @@ export default class RulesetData {
    */
   nameLinks(links: readonly ViewLink[]): NamedLink[] {
     return links.flatMap((link) => {
-      const target = this.find(link.toType as keyof ViewKinds, link.toId) as ViewEntity | undefined;
+      const target = this.find(link.toType, link.toId);
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
   }
@@ -413,8 +414,8 @@ export default class RulesetData {
   }
 
   /** A kind's entities (`type`), across the chain, as the view composes them. */
-  rows<K extends keyof ViewKinds>(type: K): ViewKinds[K][] {
-    return (this.entities.get(type) ?? []) as ViewKinds[K][];
+  rows(type: string): readonly ViewEntity[] {
+    return this.entities.get(type) ?? [];
   }
 
   /**
@@ -437,8 +438,8 @@ export default class RulesetData {
    * A kind's entities by id (`type`), as stored: a stored id isn't resolved. What a module's derived indices join
    * entities by when they hold ids as stored.
    */
-  storedById<K extends keyof ViewKinds>(type: K): Map<string, ViewKinds[K]> {
-    return this.indexOf(type).stored as Map<string, ViewKinds[K]>;
+  storedById(type: string): Map<string, ViewEntity> {
+    return this.indexOf(type).stored;
   }
 
   /**
@@ -462,8 +463,7 @@ export default class RulesetData {
    */
   withInheritedFields<T extends Pick<ViewEntity, "fields" | "links">>(type: string, entity: T): T {
     const baseId = this.inheritedFrom(type, entity);
-    const base =
-      baseId === undefined ? undefined : (this.find(type as keyof ViewKinds, baseId) as ViewEntity | undefined);
+    const base = baseId === undefined ? undefined : this.find(type, baseId);
     if (!base) return entity;
     return { ...entity, fields: OwnerValues.inherit(entity.fields, base.fields, this.kinds[type].inherits!.fields) };
   }

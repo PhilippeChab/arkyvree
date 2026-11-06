@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
-import type { EntityWrite, FieldValue, ViewKinds } from "@/engine/index.ts";
+import type { EntityWrite, FieldValue } from "@/engine/index.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Entities, fetchEveryPage } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -9,9 +10,6 @@ import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
-
-/** An item, as the view registers it. */
-type Item = ViewKinds["items"];
 
 /** An inventory entry a test gives a character: a seeded item by its name, or an item's id, carried unless it has a location. */
 export interface Carried {

@@ -5,7 +5,7 @@
  */
 
 import type { FieldWrite } from "@/engine/core/module/storage.ts";
-import type { InventoryItem } from "@/engine/core/view/index.ts";
+import type { ViewEntity } from "@/engine/core/view/index.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 
@@ -81,10 +81,10 @@ export type MemberReading = "partial" | PrivateNotes;
 
 /**
  * Where an inventory entry's add or edit places its item, as a ruleset checks it: a new entry's item as the view has it
- * (`item`), or an `entry` of the character's.
+ * (`item`, typed as its module declares its kinds: `I`), or an `entry` of the character's.
  */
-export type PlacementChange =
-  | { item: InventoryItem; request: InventoryEntryRequest }
+export type PlacementChange<I extends ViewEntity = ViewEntity> =
+  | { item: I; request: InventoryEntryRequest }
   | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
 /** Whether a viewer reads a character's private notes: shown, or left out of its sheet (`hide`). */
