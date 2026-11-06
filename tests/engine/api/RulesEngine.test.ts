@@ -147,7 +147,9 @@ describe("The rules' engine", () => {
       expect(own.filter((type) => !module.storage.kinds[type]?.customizable)).toEqual([]);
       return own;
     });
-    expect(customizable.toSorted()).toEqual([...Engine.storage(DND35_BASE_RULES).customizableKinds()].toSorted());
+    expect(customizable.toSorted()).toEqual(
+      [...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()].toSorted(),
+    );
 
     const { rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {
@@ -201,7 +203,8 @@ describe("The rules' engine", () => {
   test("restores every kind no other owns that takes an edit", async () => {
     const { rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {
-      const editable = Engine.storage(DND35_BASE_RULES)
+      const editable = Engine.forRules(DND35_BASE_RULES)
+        .storage()
         .standaloneKinds()
         .filter((type) => accepts(() => Engine.for(scope).entities(type, "update")));
       expect(Engine.rules().restorableKinds()).toEqual(editable);

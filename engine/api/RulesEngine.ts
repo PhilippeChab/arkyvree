@@ -74,10 +74,10 @@ export default class RulesEngine {
   }
 
   /**
-   * How a kind's row copies one (`type`, a kind whose class makes copies, of `storage`'s module): its declaration's words (`words`: a
-   * duplicate's locked fields, the most variants at once), the role a copy names its template by (the one its kind
-   * reads its fields off through, `DeclaredFields.inheritance`) and its template's flag (`StoredKind.template`).
-   * Refused where its declaration or its storage says none of them.
+   * How a kind's row copies one (`type`, a kind whose class makes copies, stored by `storage`): its declaration's words
+   * (`words`: a duplicate's locked fields, the most variants at once), the role a copy names its template by (the one
+   * its kind reads its fields off through, `DeclaredFields.inheritance`) and its template's flag
+   * (`StoredKind.template`). Refused where its declaration or its storage says none of them.
    */
   private static copiesOf(
     storage: StorageEngine,
@@ -92,12 +92,12 @@ export default class RulesEngine {
   }
 
   /**
-   * A kind as its ruleset's page shows it: its declaration's presentation (`declared`, among its module's `rules`, whose
-   * storage is `storage`), and
+   * A kind as its ruleset's page shows it: its declaration's presentation (`declared`, among its module's `rules`), and
    * what it can do, its class's (`capabilitiesOf`: a progression's, with the tables its rules' progression names,
-   * `tablesOf`) and its storage's (its copies' template, the links its page edits, its customization page among its
-   * module's, `pages`, its pools' kind), each key in its name's order, as a declaration writes them. Refused when its
-   * declaration words copies its class makes none of, or its class names a field its kind doesn't hold.
+   * `tablesOf`) and its module's storage's (`storage`: its copies' template, the links its page edits, its
+   * customization page among its module's, `pages`, its pools' kind), each key in its name's order, as a declaration
+   * writes them. Refused when its declaration words copies its class makes none of, or its class names a field its kind
+   * doesn't hold.
    */
   private static describeKind(
     storage: StorageEngine,
@@ -194,9 +194,9 @@ export default class RulesEngine {
   }
 
   /**
-   * How a module's classes progress (`rules`, its declaration; `storage`, its storage): its tracks, each with its field's label and bounds
-   * (`trackOf`), its levels' fields', the one kind its kind with a progression owns (3.5's class levels). Refused when
-   * it has tracks but no one such kind.
+   * How a module's classes progress (`rules`, its declaration; `storage`, its storage): its tracks, each with its
+   * field's label and bounds (`trackOf`), its levels' fields', the one kind its kind with a progression owns (3.5's
+   * class levels). Refused when it has tracks but no one such kind.
    */
   private static progressionOf(
     storage: StorageEngine,

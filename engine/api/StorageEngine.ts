@@ -44,10 +44,10 @@ function compareText(a: string, b: string) {
  * field keeps it (`storedNumber`), its player character's kind (`playerKind`, `isPlayerKind`), the kinds a user
  * customizes (`customizableKinds`) and those whose customizations have a page of their own (`customizationPages`), the
  * links an entity's page edits (`editedLinks`), the kinds a name is the identity of (`isIdentityKind`), an owned kind's
- * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and the
- * registries' rows (`registries`: its fields' derived from their declarations, `fieldDefsOf`), each of its base rules
- * (`baseRules`). Its names are its own: another base rules' module may declare a kind, a role or a field of one name,
- * which its own rows keep apart (the registries are keyed by base rules first). What a write of an owner's fields
+ * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and
+ * the registries' rows (`registries`: its fields' derived from their declarations, `fieldDefsOf`), each of its base
+ * rules (`baseRules`). Its names are its own: another base rules' module may declare a kind, a role or a field of one
+ * name, which its own rows keep apart (the registries are keyed by base rules first). What a write of an owner's fields
  * stores is its own declarations' (`writtenFields`). Each base rules' is built once (`of`).
  */
 export default class StorageEngine {
@@ -341,7 +341,7 @@ export default class StorageEngine {
     return this.identityKinds.has(type);
   }
 
-  /** Whether a character's kind is its player character's (`playerKind`), not another's child (3.5's bonded creatures). */
+  /** Whether a character's kind is its player character's (`playerKind`), not a child's (3.5's bonded creatures). */
   isPlayerKind(kind: string): boolean {
     return kind === this.playerKindName;
   }

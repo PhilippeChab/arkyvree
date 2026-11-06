@@ -66,14 +66,14 @@ class StoredSettings {
    * Writes rulesets' Settings (`writes`, each a ruleset's): each field and link role a write names replaced by its
    * values (in their order, a set's ordinals 0 to n-1) and the entity it names, none for `[]` or null; what it doesn't
    * name stays. A value is written as every write stores it, as its ruleset's own module declares it
-   * (`Engine.storage(baseRules).writtenFields`, by its base rules: `SettingsUpdate.baseRules`), in its field's column by
-   * its declaration, refused when it isn't of its kind; each row of those base rules.
+   * (`Engine.forRules(baseRules).storage().writtenFields`, by its base rules: `SettingsUpdate.baseRules`), in its
+   * field's column by its declaration, refused when it isn't of its kind; each row of those base rules.
    */
   async update(db: Db, writes: SettingsUpdate[]) {
     const fields = writes.flatMap(({ id, write }) => Object.keys(write.fields).map((name) => ({ id, name })));
     const links = writes.flatMap(({ id, write }) => Object.keys(write.links).map((name) => ({ id, name })));
     const fieldRows = writes.flatMap(({ baseRules, id, write }) => {
-      const storage = Engine.storage(baseRules);
+      const storage = Engine.forRules(baseRules).storage();
       const written = storage.writtenFields(storage.settingsOwnerType, write.fields, false);
       return Object.entries(written).flatMap(([field, values]) =>
         toFieldRows(storage, storage.settingsOwnerType, field, values).map((row) => ({
@@ -85,7 +85,8 @@ class StoredSettings {
     });
     const linkRows = writes.flatMap(({ baseRules, id, write }) =>
       Object.entries(write.links).flatMap(([role, toId]) => {
-        const def = Engine.storage(baseRules)
+        const def = Engine.forRules(baseRules)
+          .storage()
           .registries()
           .rulesetRoles.find((held) => held.role === role);
         if (!def) throw new Error(`${baseRules} declares no ruleset role ${role}`);

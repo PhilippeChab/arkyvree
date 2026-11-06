@@ -35,7 +35,7 @@ function declaredRows<T>(pick: (registries: StorageRegistries) => readonly T[], 
  * `change`.
  */
 function declaredWithSecond(change: (registries: StorageRegistries) => void): DeclaredRegistries {
-  const registries = structuredClone(Engine.storage(DND35_BASE_RULES).registries());
+  const registries = structuredClone(Engine.forRules(DND35_BASE_RULES).storage().registries());
   change(registries);
   return [...declared(), { baseRules: SECOND, registries }];
 }

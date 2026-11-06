@@ -94,12 +94,19 @@ describe("architecture rules", () => {
           "server/services/n/kinds.ts":
             engine +
             "export function isOwned(x: string) {\n" +
-            "  return Engine.storage().ownerOf(x) !== undefined && Engine.rules().describeNotFound(x, x) !== x;\n}\n",
+            "  const owner = Engine.forRules(String(x))\n    .storage()\n    .ownerOf(x);\n" +
+            "  return owner !== undefined && Engine.rules().describeNotFound(x, x) !== x;\n}\n",
           "server/services/o.ts":
             engine +
             'import { isOwned } from "./n/kinds.ts";\n' +
-            "export function o(x: T) {\n  const storage = Engine.storage();\n" +
-            `  return [isOwned(x), storage.isPlayerKind(x), Engine.storage().editedLinks().get(x), ${plan}];\n}\n`,
+            "export function o(x: T) {\n  const storage = Engine.forRules(x).storage();\n" +
+            "  return [isOwned(x), storage.isPlayerKind(x), Engine.forRules(x).storage().editedLinks().get(x), " +
+            `${plan}];\n}\n`,
+          // A base rules' copy-on-write is a handle, whose verbs are operations
+          "server/services/r.ts":
+            engine +
+            "export function r(x: T) {\n  const copyOnWrite = Engine.forRules(x).copyOnWrite();\n" +
+            `  return [copyOnWrite.buildView(x), ${plan}];\n}\n`,
           // A module's function that asks the engine through the entry imported under another name
           "server/services/p/aliased.ts":
             'import { Engine as E, type T } from "@/engine/index.ts";\n' +
@@ -128,6 +135,7 @@ describe("architecture rules", () => {
       "one-engine-op server/services/g.ts",
       "one-engine-op server/services/m.ts",
       "one-engine-op server/services/q.ts",
+      "one-engine-op server/services/r.ts",
     ]);
   });
 

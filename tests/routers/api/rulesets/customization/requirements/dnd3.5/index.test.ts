@@ -70,7 +70,7 @@ describe("rulesets customization requirements", () => {
     expect((await expectOk(requirements.$get({ param }))).map((r) => r.level).sort()).toEqual(["1", "2"]);
   });
 
-  test.each([...Engine.storage(DND35_BASE_RULES).customizableKinds()])(
+  test.each([...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()])(
     "adds a requirement to %s",
     async (entityType) => {
       const { id } = await createSeededTestRuleset(SEED_USER_ID);

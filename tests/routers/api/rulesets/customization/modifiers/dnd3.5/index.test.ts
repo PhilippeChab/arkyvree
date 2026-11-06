@@ -58,17 +58,20 @@ describe("rulesets customization modifiers", () => {
     await expectStatus(modifier.$get({ param: modifierParam }), 404);
   });
 
-  test.each([...Engine.storage(DND35_BASE_RULES).customizableKinds()])("adds a modifier to %s", async (entityType) => {
-    const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const entityId = await createEntity(id, entityType);
-    const created = await expectOk(
-      modifiers.$post({
-        param: { id, entityType, entityId },
-        json: { target: "combat.hp.misc", value: "5", operator: "add" },
-      }),
-    );
-    expect(created).toMatchObject({ sourceType: entityType, sourceId: entityId });
-  });
+  test.each([...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()])(
+    "adds a modifier to %s",
+    async (entityType) => {
+      const { id } = await createSeededTestRuleset(SEED_USER_ID);
+      const entityId = await createEntity(id, entityType);
+      const created = await expectOk(
+        modifiers.$post({
+          param: { id, entityType, entityId },
+          json: { target: "combat.hp.misc", value: "5", operator: "add" },
+        }),
+      );
+      expect(created).toMatchObject({ sourceType: entityType, sourceId: entityId });
+    },
+  );
 
   test("refuses a value that isn't of its target's type, on create, duplicate and update", async () => {
     const { id, entityId } = await createCustomizableFeat();

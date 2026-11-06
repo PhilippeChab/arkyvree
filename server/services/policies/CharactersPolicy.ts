@@ -32,7 +32,7 @@ const ARCHIVED_CHARACTER = "This character is archived";
  * player character's (`StorageEngine.isPlayerKind`).
  */
 function isPlayerCharacter(character: Character) {
-  return Engine.storage(character.baseRules).isPlayerKind(character.kind);
+  return Engine.forRules(character.baseRules).storage().isPlayerKind(character.kind);
 }
 
 export default class CharactersPolicy extends BasePolicy<Character> {

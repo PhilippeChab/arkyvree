@@ -29,9 +29,9 @@ const WRITE_BATCH = 2000;
 /**
  * Every module's entities' links of the roles they hold many of (a feat's pools, a class level's grants, a class's
  * skills), as the generic table stores them (`rules.entity_links`, each of its entities' base rules), by role, as their
- * base rules' module declares it: each answered as the view holds a link
- * (`ViewLink`). A new link comes after its entity's last of its role to its target's kind, which keeps their order. An
- * entity's single links are its row's (`Entities`).
+ * base rules' module declares it: each answered as the view holds a link (`ViewLink`). A new link comes after its
+ * entity's last of its role to its target's kind, which keeps their order. An entity's single links are its row's
+ * (`Entities`).
  */
 class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
   constructor() {
@@ -44,7 +44,7 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
    */
   async createMany(db: Db, baseRules: BaseRules, links: NewLink[]): Promise<ViewLink[]> {
     if (links.length === 0) return [];
-    const storage = Engine.storage(baseRules);
+    const storage = Engine.forRules(baseRules).storage();
     const fromIds = [...new Set(links.map((link) => link.fromId))];
     const last = await db
       .select({
@@ -160,7 +160,7 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
    * `baseRules`): an in-use check (a class level's base bonus to a save, whose delete the database would refuse).
    */
   async hasRefusing(db: Db, where: { baseRules: BaseRules; toId: string; toType: string }) {
-    const roles = Engine.storage(where.baseRules).refusingRoles(where.toType);
+    const roles = Engine.forRules(where.baseRules).storage().refusingRoles(where.toType);
     if (roles.length === 0) return false;
     const [link] = await db
       .select({ id: entityLinksInRules.id })

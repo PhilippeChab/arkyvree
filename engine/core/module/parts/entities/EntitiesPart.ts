@@ -38,8 +38,8 @@ export default abstract class EntitiesPart<E extends EntityKindsContract> {
   }
 
   /**
-   * A kind's rules (`type`), bound to a ruleset's view: refused as not found for a kind its module doesn't have (another
-   * base rules' kind, which a request may name).
+   * A kind's rules (`type`), bound to a ruleset's view: refused as not found for a kind its module doesn't have
+   * (another base rules' kind, which a request may name).
    */
   of<K extends keyof E>(view: RulesetView, type: K): E[K] {
     if (!Object.hasOwn(this.kinds, type))

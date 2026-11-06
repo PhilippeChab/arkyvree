@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
+import { and, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import {
@@ -34,8 +34,8 @@ const FIELD_JSON = sql`coalesce(to_json(${fieldsInCharacter.textValue}), to_json
  * field (`character.fields`: 3.5's alignment, XP; a set's one a row) and its single links' entities by role
  * (`character.links`: its race), read in one query (`buildColumns`, then `toCharacter`: its fields as its ruleset's
  * base rules' module declares them, as an entity's are), and written as given (`write`): its fields as every owner's
- * are, as its own module declares them (`Engine.storage(baseRules).writtenFields`, `toFieldRows`), each role's entity
- * type as its module declares it, each row of its base rules.
+ * are, as its own module declares them (`Engine.forRules(baseRules).storage().writtenFields`, `toFieldRows`), each
+ * role's entity type as its module declares it, each row of its base rules.
  */
 export default class StoredCharacters {
   /**
@@ -99,7 +99,14 @@ export default class StoredCharacters {
     if (written.length > 0) await db.insert(linksInCharacter).values(written);
   }
 
-  /** The base rules' entity's own (`entityId`'s, a character's row's item or link), read where it's written. */
+  /** A character's base rules, read in the query that reads or filters its row: its ruleset's. */
+  static buildBaseRules(): SQL<BaseRules> {
+    const rulesetId = toQualified(charactersInCharacter.rulesetId);
+    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
+    return sql<BaseRules>`(SELECT ${rulesetsInRules.baseRules} FROM ${rulesetsInRules} WHERE ${rulesetsInRules.id} = ${rulesetId})`;
+  }
+
+  /** The base rules of an entity a character's row names (its item's), read where it's written: its own. */
   static buildBaseRulesOf(entityId: string): SQL<BaseRules> {
     return sql<BaseRules>`(SELECT ${entitiesInRules.baseRules} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`;
   }
@@ -111,11 +118,9 @@ export default class StoredCharacters {
    */
   static buildColumns() {
     const id = toQualified(charactersInCharacter.id);
-    const rulesetId = toQualified(charactersInCharacter.rulesetId);
     return {
       ...getTableColumns(charactersInCharacter),
-      // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
-      baseRules: sql<BaseRules>`(SELECT ${rulesetsInRules.baseRules} FROM ${rulesetsInRules} WHERE ${rulesetsInRules.id} = ${rulesetId})`,
+      baseRules: StoredCharacters.buildBaseRules(),
       fields: sql<[string, FieldValue][]>`(
         SELECT coalesce(json_agg(json_build_array(${fieldsInCharacter.field}, ${FIELD_JSON}) ORDER BY ${fieldsInCharacter.field}, ${fieldsInCharacter.ordinal}), '[]')
         FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${id})`,
@@ -131,13 +136,13 @@ export default class StoredCharacters {
   }
 
   /**
-   * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its ruleset's
-   * base rules' module declares them (`storageOf`, each registered module's unless a test gives its own: `fieldsOf`, a
-   * single field's value, a set's values in their declared order), its base rules kept.
+   * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its
+   * ruleset's base rules' module declares them (`storageOf`, each registered module's unless a test gives its own:
+   * `fieldsOf`, a single field's value, a set's values in their declared order), its base rules kept.
    */
   static toCharacter<R extends { baseRules: BaseRules; fields: [string, FieldValue][] }>(
     row: R,
-    storageOf: StorageOf = (baseRules) => Engine.storage(baseRules),
+    storageOf: StorageOf = (baseRules) => Engine.forRules(baseRules).storage(),
   ): Omit<R, "fields"> & Pick<Character, "fields"> {
     const storage = storageOf(row.baseRules);
     return { ...row, fields: storage.fieldsOf(storage.characterOwnerType, row.fields) };
@@ -145,8 +150,8 @@ export default class StoredCharacters {
 
   /**
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
-   * they held of it, a field's as every owner's is stored (`writtenFields`: an empty text, none; one always written, its
-   * default when it holds none: a new character's it leaves out too, `creating`), in its field's column by its
+   * they held of it, a field's as every owner's is stored (`writtenFields`: an empty text, none; one always written,
+   * its default when it holds none: a new character's it leaves out too, `creating`), in its field's column by its
    * declaration (`toFieldRows`), as its ruleset's base rules' module declares them (`storageOf`, each registered
    * module's unless a test gives its own), each row of those base rules.
    */
@@ -155,19 +160,17 @@ export default class StoredCharacters {
     ids: string[],
     { fields = {}, links = {} }: CharacterValuesWrite,
     creating = false,
-    storageOf: StorageOf = (baseRules) => Engine.storage(baseRules),
+    storageOf: StorageOf = (baseRules) => Engine.forRules(baseRules).storage(),
   ) {
     if (ids.length === 0) return;
     if (!creating && Object.keys(fields).length === 0 && Object.keys(links).length === 0) return;
-    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
-    const modules = await db
-      .select({ id: charactersInCharacter.id, baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}` })
+    const characters = await db
+      .select({ id: charactersInCharacter.id, baseRules: StoredCharacters.buildBaseRules() })
       .from(charactersInCharacter)
-      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
       .where(inArray(charactersInCharacter.id, ids));
-    for (const [baseRules, characters] of Map.groupBy(modules, (row) => row.baseRules)) {
+    for (const [baseRules, ofRules] of Map.groupBy(characters, (character) => character.baseRules)) {
       const storage = storageOf(baseRules);
-      const characterIds = characters.map((character) => character.id);
+      const characterIds = ofRules.map((character) => character.id);
       await StoredCharacters.writeLinks(db, characterIds, links, storage);
       if (creating || Object.keys(fields).length > 0)
         await StoredCharacters.writeFields(db, characterIds, fields, creating, storage);

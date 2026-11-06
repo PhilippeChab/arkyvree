@@ -90,7 +90,8 @@ const OWNED_POSITION_INDEX = "entities_owner_position_unique_idx";
 
 /** An entity's type, as a plan names it: refused when it isn't one of its ruleset's base rules' kinds (`baseRules`). */
 function entityTypeOf(baseRules: BaseRules, type: string): RulesetEntityType {
-  const entityType = Engine.storage(baseRules)
+  const entityType = Engine.forRules(baseRules)
+    .storage()
     .standaloneKinds()
     .find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);
@@ -172,8 +173,8 @@ export default class EntityWriter {
   }
 
   /**
-   * Records what a save did to an entity of a kind (`type`, by `verb`) in the ruleset it wrote (`ruleset`), with what the
-   * activity carries.
+   * Records what a save did to an entity of a kind (`type`, by `verb`) in the ruleset it wrote (`ruleset`), with what
+   * the activity carries.
    */
   private static async recordActivity(
     tx: Db,
@@ -244,8 +245,8 @@ export default class EntityWriter {
 
   /**
    * Writes the links a plan sets on an entity (of `baseRules`), each set in its order, at once: on an entity it had
-   * written before (`replacing`: an edit's), each set replaces the entity's links of its role to its kind, and a role it
-   * leaves out keeps its links (none given: every one). A new entity holds none to replace.
+   * written before (`replacing`: an edit's), each set replaces the entity's links of its role to its kind, and a role
+   * it leaves out keeps its links (none given: every one). A new entity holds none to replace.
    */
   static async setLinks(
     tx: Db,
@@ -511,7 +512,7 @@ export default class EntityWriter {
       const { ruleset } = scope;
       const uses = new EntityUses(scope);
       let inUse = false;
-      for (const ownedType of Engine.storage(ruleset.baseRules).ownedKinds(this.type))
+      for (const ownedType of Engine.forRules(ruleset.baseRules).storage().ownedKinds(this.type))
         inUse ||= await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId);
       policy.canDeleteEntity({ inUse });
       const { plan: planned, type } = plan(scope);

@@ -5,7 +5,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * Writes an advancement a plan makes after the character's last (`plan`: its entry, and its picks under it, its value
- * step's among them: 3.5's hit points), its picks of its ruleset's base rules' steps (`baseRules`). Answers it as stored.
+ * step's among them: 3.5's hit points), its picks of its base rules' steps (`baseRules`). Answers it as stored.
  */
 export async function createAdvancement(tx: Db, baseRules: BaseRules, characterId: string, plan: AdvancementWrite) {
   const [created] = await CharacterAdvancements.create(tx, { characterId, entryId: plan.entryId });

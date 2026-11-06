@@ -24,7 +24,7 @@ import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { withCharacterCreate, withCharacterWrite, withLockedCharacter } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Character, Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
 import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
@@ -51,22 +51,22 @@ type CharacterEditPlan = ReturnType<ReturnType<ReturnType<typeof Engine.for>["ch
 
 class CharactersService extends include(Object, Archives, Imports) {
   /**
-   * Writes a character's edit (`edit`) under its write's lock: its own columns, refused as stale when its token is
-   * behind (`updatedAt`), and what its ruleset planned of its fields and its picked links (`planned`, of its ruleset's
-   * base rules), and an activity.
+   * Writes a character's edit (`edit`, of `character`, its row read under its write's lock): its own columns, refused
+   * as stale when its token is behind (`updatedAt`), and what its ruleset planned of its fields and its picked links
+   * (`planned`), and an activity.
    */
   private async applyEdit(
     tx: Db,
     session: Session,
-    characterId: string,
+    character: Character,
     edit: CharacterEdit,
-    planned?: CharacterEditPlan & { baseRules: BaseRules },
+    planned?: CharacterEditPlan,
   ) {
     const { fields: _fields, links: _links, updatedAt: expectedUpdatedAt, ...characterFields } = edit;
     const updatedRows = await Characters.update(
       tx,
       { ...characterFields, ...planned?.own, fields: planned?.fields },
-      { id: characterId, expectedUpdatedAt },
+      { id: character.id, expectedUpdatedAt },
     );
     if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
@@ -74,11 +74,11 @@ class CharactersService extends include(Object, Archives, Imports) {
 
     // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
     for (const [role, plan] of Object.entries(planned?.links ?? {}))
-      await this.writeLinkPicks(tx, planned!.baseRules, characterId, role, plan);
+      await this.writeLinkPicks(tx, character.baseRules, character.id, role, plan);
 
     await Activities.create(tx, {
       userId: session.userId,
-      targetId: characterId,
+      targetId: character.id,
       targetType: TARGET_TYPES.characters,
       type: "updateCharacter",
     });
@@ -277,9 +277,9 @@ class CharactersService extends include(Object, Archives, Imports) {
     // columns alone (its name, its notes) take the character's lock alone, reading none of its ruleset
     if (!updateData.fields && !updateData.links) {
       // Archived or not: an archived one is its policy's to refuse
-      return await withLockedCharacter(session, characterId, async (tx, policy) => {
+      return await withLockedCharacter(session, characterId, async (tx, policy, character) => {
         policy.canEdit();
-        return await this.applyEdit(tx, session, characterId, updateData);
+        return await this.applyEdit(tx, session, character, updateData);
       });
     }
 
@@ -293,10 +293,7 @@ class CharactersService extends include(Object, Archives, Imports) {
         const planned = Engine.for(scope)
           .character(await readCharacterInput(tx, characterRecord))
           .planEdit({ fields, links });
-        return await this.applyEdit(tx, session, characterId, updateData, {
-          ...planned,
-          baseRules: scope.ruleset.baseRules,
-        });
+        return await this.applyEdit(tx, session, characterRecord, updateData, planned);
       },
       { access: "canEdit" },
     );

@@ -72,14 +72,14 @@ class ActivitiesService {
   }
 
   /**
-   * The id an entity of a ruleset's content (`entity`, of `baseRules`, its row in the ruleset `stored`) shows by in another ruleset
-   * (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's spell list's):
-   * the row its view shows in its place (its own, or its copy where the ruleset copied it since), read as a write finds
-   * it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for it, its row
-   * gone), nor for an entity it doesn't inherit.
+   * The id an entity of a ruleset's content (`entity`, of `baseRules`, its row in the ruleset `stored`) shows by in
+   * another ruleset (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's
+   * spell list's): the row its view shows in its place (its own, or its copy where the ruleset copied it since), read
+   * as a write finds it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for
+   * it, its row gone), nor for an entity it doesn't inherit.
    */
   private async findShownIn(baseRules: BaseRules, written: string, entity: ContentRow, stored: string) {
-    if (!isOneOf(entity.type, Engine.storage(baseRules).standaloneKinds())) return undefined;
+    if (!isOneOf(entity.type, Engine.forRules(baseRules).storage().standaloneKinds())) return undefined;
     const view = await withRulesetScope(db, written, async (scope) => {
       const cow = scope.rulesetData.cow;
       return { chain: [written, ...cow.sourceChain], shownId: cow.resolve(entity.id) };
@@ -117,7 +117,7 @@ class ActivitiesService {
   ): Promise<string | null> {
     const baseRules = await findContentBaseRules(db, { id: entityId, type: entityType });
     if (!baseRules) return null;
-    const storage = Engine.storage(baseRules);
+    const storage = Engine.forRules(baseRules).storage();
     const pages = storage.customizationPages();
     if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
     const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
@@ -140,7 +140,7 @@ class ActivitiesService {
   ): Promise<string | null> {
     const baseRules = await Entities.findBaseRules(db, { id: targetId });
     if (!baseRules) return null;
-    const storage = Engine.storage(baseRules);
+    const storage = Engine.forRules(baseRules).storage();
     const target = { id: targetId, type: targetType };
     const edited = storage.editedLinks().get(targetType);
     // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits

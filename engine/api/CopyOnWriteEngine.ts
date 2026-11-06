@@ -67,8 +67,8 @@ export default class CopyOnWriteEngine {
   /**
    * A ruleset's own rows as its view composes them, off its stored rows (`stored`, read by its module's storage): each
    * kind's entities by its type, each its record (`StorageEngine.recordOf`: its own columns, its fields, its single
-   * links), an owned kind's by position and owner; each entity's links (`StorageEngine.viewLinksOf`); each kind's values
-   * kind-wide (`StorageEngine.kindValues`), its own Settings (`StorageEngine.settingsOf`), its modifiers and
+   * links), an owned kind's by position and owner; each entity's links (`StorageEngine.viewLinksOf`); each kind's
+   * values kind-wide (`StorageEngine.kindValues`), its own Settings (`StorageEngine.settingsOf`), its modifiers and
    * requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {

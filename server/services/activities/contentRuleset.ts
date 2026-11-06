@@ -42,8 +42,8 @@ const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<Con
 ]);
 
 /**
- * The base rules of a row of a ruleset's content: its entity's, as its row names them, a customization's the entity's it
- * belongs to (a requirement's of a modifier, the modifier's). None once a row on the way is gone, or for a row of no
+ * The base rules of a row of a ruleset's content: its entity's, as its row names them, a customization's the entity's
+ * it belongs to (a requirement's of a modifier, the modifier's). None once a row on the way is gone, or for a row of no
  * ruleset's (a character's own modifier).
  */
 export async function findContentBaseRules(db: Db, { id, type }: ContentRow): Promise<BaseRules | undefined> {
@@ -54,17 +54,17 @@ export async function findContentBaseRules(db: Db, { id, type }: ContentRow): Pr
 }
 
 /**
- * The row a row of a ruleset's content beside its entities belongs to: a customization's entity, an owned entity's owner
- * (a class level's class), an edited link's owner (a class's skills' activity targets the class), each by the
- * declarations of the base rules its entity's row names. None for a ruleset's entity, a row that's gone, or what belongs
- * to no row of a ruleset (a character's own modifiers).
+ * The row a row of a ruleset's content beside its entities belongs to: a customization's entity, an owned entity's
+ * owner (a class level's class), an edited link's owner (a class's skills' activity targets the class), each by the
+ * declarations of the base rules its entity's row names. None for a ruleset's entity, a row that's gone, or what
+ * belongs to no row of a ruleset (a character's own modifiers).
  */
 export async function findContentOwner(db: Db, { id, type }: ContentRow): Promise<ContentRow | undefined> {
   const customization = CUSTOMIZATION_OWNERS.get(type);
   if (customization) return await customization(db, id);
   const baseRules = await Entities.findBaseRules(db, { id });
   if (!baseRules) return undefined;
-  const storage = Engine.storage(baseRules);
+  const storage = Engine.forRules(baseRules).storage();
   const ownerType = storage.ownerOf(type);
   if (ownerType) {
     const [owned] = await Entities.findPositions(db, { entityType: type, ids: [id] });
@@ -87,7 +87,7 @@ export async function findContentRuleset(db: Db, { id, type }: ContentRow): Prom
   const baseRules = await Entities.findBaseRules(db, { id });
   if (!baseRules) return undefined;
   // A kind no other owns, of its row's base rules: the ruleset's own entity
-  if (isOneOf(type, Engine.storage(baseRules).standaloneKinds()))
+  if (isOneOf(type, Engine.forRules(baseRules).storage().standaloneKinds()))
     return (await Entities.findOne(db, { entityType: type, id }))?.rulesetId;
   const owner = await findContentOwner(db, { id, type });
   return owner && (await findContentRuleset(db, owner));

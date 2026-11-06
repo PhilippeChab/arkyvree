@@ -64,7 +64,7 @@ export default class CustomizationCopies {
    * other doesn't.
    */
   private hasModifiers(entityType: string): boolean {
-    return Engine.storage(this.baseRules).customizableKinds().includes(entityType);
+    return Engine.forRules(this.baseRules).storage().customizableKinds().includes(entityType);
   }
 
   /** Copies customizations onto one entity, each copy's id recorded by its source's (`copiedIds`). */

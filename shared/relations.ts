@@ -38,8 +38,8 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
  */
 export type CharacterFieldValue = boolean | number | string | readonly (boolean | number | string)[];
 /**
- * An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. Its item's
- * type and base rules, which its row keeps for its keys, its writer fills in.
+ * An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. Its
+ * item's type and base rules, which its row keeps for its keys, its writer fills in.
  */
 export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "baseRules" | "itemType">;
 export type Invite = typeof invitesInCampaign.$inferSelect;

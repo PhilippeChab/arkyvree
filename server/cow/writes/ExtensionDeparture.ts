@@ -72,7 +72,8 @@ export default class ExtensionDeparture {
       (entity) => entity.entityType,
     );
     const leaving = new Map(
-      Engine.storage(baseRules)
+      Engine.forRules(baseRules)
+        .storage()
         .standaloneKinds()
         .map((type) => [type, [...(own.get(type) ?? []).map((entity) => entity.id), ...(copies.get(type) ?? [])]]),
     );
@@ -94,7 +95,7 @@ export default class ExtensionDeparture {
     const departures = new Map<ReferencedType, ReadonlyMap<string, string | undefined>>();
     for (const [type, ids] of leaving)
       departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
-    const storage = Engine.storage(baseRules);
+    const storage = Engine.forRules(baseRules).storage();
     for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
       const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
       departures.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
@@ -144,7 +145,7 @@ export default class ExtensionDeparture {
    */
   private async findLostReferences(tx: Db): Promise<string[]> {
     const typeOf = new Map<string, RulesetEntityType>();
-    for (const type of Engine.storage(this.scope.ruleset.baseRules).standaloneKinds())
+    for (const type of Engine.forRules(this.scope.ruleset.baseRules).storage().standaloneKinds())
       for (const [id, fallbackId] of this.departures.get(type) ?? []) if (!fallbackId) typeOf.set(id, type);
     const deleted = new Set(this.copyIds);
     const references = (
@@ -155,7 +156,7 @@ export default class ExtensionDeparture {
       (await RulesetEntities.findNames(tx, { ids: targetIds })).map((entity) => [entity.id, entity.name]),
     );
     return references.map((reference) =>
-      Engine.storage(this.scope.ruleset.baseRules).isIdentityKind(typeOf.get(reference.targetId)!)
+      Engine.forRules(this.scope.ruleset.baseRules).storage().isIdentityKind(typeOf.get(reference.targetId)!)
         ? `${names.get(reference.targetId)}, a list no other book of this ruleset has`
         : `${reference.name}, which uses ${names.get(reference.targetId)}`,
     );

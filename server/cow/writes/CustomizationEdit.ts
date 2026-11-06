@@ -46,7 +46,7 @@ export default class CustomizationEdit {
    */
   private async cowEntityOwner(tx: Db, entityType: string, entityId: string): Promise<EditTarget> {
     const notFound = this.notFound(entityType);
-    if (!Engine.storage(this.scope.ruleset.baseRules).customizableKinds().includes(entityType))
+    if (!Engine.forRules(this.scope.ruleset.baseRules).storage().customizableKinds().includes(entityType))
       throw new NotFoundError(notFound);
     return await new EntityEdit(this.scope).cowById(tx, entityType, entityId, notFound);
   }

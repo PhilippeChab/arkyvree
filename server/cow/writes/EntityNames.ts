@@ -43,7 +43,8 @@ export default class EntityNames {
   private static namesByType(baseRules: BaseRules, entities: { entityType: RulesetEntityType; name: string }[]) {
     const byType = Map.groupBy(entities, (entity) => entity.entityType);
     return new Map(
-      Engine.storage(baseRules)
+      Engine.forRules(baseRules)
+        .storage()
         .standaloneKinds()
         .map((type) => [type, [...new Set((byType.get(type) ?? []).map((entity) => entity.name))]]),
     );

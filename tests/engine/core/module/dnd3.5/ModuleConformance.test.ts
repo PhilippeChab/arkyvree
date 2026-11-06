@@ -245,7 +245,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   });
 
   test("describes the links a kind's page edits by the role its storage declares edited, to their kind", () => {
-    const edited = Engine.storage(DND35_BASE_RULES).editedLinks();
+    const edited = Engine.forRules(DND35_BASE_RULES).storage().editedLinks();
     const described = Engine.rules()
       .describeAll()
       [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
@@ -297,7 +297,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const written = [...Object.values(values), ...Object.values(own)];
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // Its kind is a player character's, as its start plans it, which an import's starts from too
-      expect(Engine.storage(DND35_BASE_RULES).isPlayerKind(plan.row.kind)).toBe(true);
+      expect(Engine.forRules(DND35_BASE_RULES).storage().isPlayerKind(plan.row.kind)).toBe(true);
       expect(characters.planStart(start).row.kind).toBe(plan.row.kind);
       // A field its form doesn't require can be left out
       expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();

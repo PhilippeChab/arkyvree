@@ -33,7 +33,7 @@ class RulesetChangesService {
     ];
 
     // One order, whatever the rows' storage: by kind, in its module's order, then by name
-    const kinds = Engine.storage(ruleset.baseRules).standaloneKinds();
+    const kinds = Engine.forRules(ruleset.baseRules).storage().standaloneKinds();
     return changes.toSorted(
       (a, b) => kinds.indexOf(a.entityType) - kinds.indexOf(b.entityType) || a.name.localeCompare(b.name),
     );

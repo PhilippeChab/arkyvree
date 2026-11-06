@@ -9,7 +9,8 @@ import type { BaseRules } from "@/shared/enums.ts";
 /**
  * Every module's character links of a role a character holds many of (3.5's `score`, its ability scores, and `speaks`,
  * its languages), as the generic tables store them (`character.links`, each of its character's base rules, whose module
- * declares its role), read as stored, by role: each its entity, and its amount if its role holds one. A character's single links (its race) are its row's (`StoredCharacters`).
+ * declares its role), read as stored, by role: each its entity, and its amount if its role holds one. A character's
+ * single links (its race) are its row's (`StoredCharacters`).
  */
 class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
   constructor() {
@@ -33,7 +34,7 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
    */
   async createMany(db: Db, baseRules: BaseRules, characterId: string, role: string, links: LinkPlan[]) {
     if (links.length === 0) return;
-    const { entityType, single } = Engine.storage(baseRules).characterRole(role);
+    const { entityType, single } = Engine.forRules(baseRules).storage().characterRole(role);
     await db.insert(this.table).values(
       links.map(({ amount, entityId }) => ({
         baseRules,
@@ -55,10 +56,12 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
 
   /**
    * A character's links of every role it holds many of, by role: every such role its base rules' module declares
-   * (`Engine.storage(baseRules).registries().characterRoles`), each one's in the order they were made, read in one query.
+   * (`Engine.forRules(baseRules).storage().registries().characterRoles`), each one's in the order they were made, read
+   * in one query.
    */
   async findPerRole(db: Db, where: { baseRules: BaseRules; characterId: string }): Promise<CharacterRows["links"]> {
-    const roles = Engine.storage(where.baseRules)
+    const roles = Engine.forRules(where.baseRules)
+      .storage()
       .registries()
       .characterRoles.filter((def) => !def.single)
       .map(({ role }) => role);

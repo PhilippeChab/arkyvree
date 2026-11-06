@@ -69,8 +69,8 @@ export function modulesWithSecond(fields: Record<string, Fields>): [BaseRules, R
 }
 
 /**
- * Each module's storage (`modules`, a test's own: `modulesWith`, `modulesWithSecond`), by its base rules: what a write a
- * test makes reads a character's module's declarations by, never the shared ones.
+ * Each module's storage (`modules`, a test's own: `modulesWith`, `modulesWithSecond`), by its base rules: what a write
+ * a test makes reads a character's module's declarations by, never the shared ones.
  */
 export function storagesOf(modules: [BaseRules, RulesetModule][]): (baseRules: BaseRules) => StorageEngine {
   const storages = new Map(modules.map(([baseRules, module]) => [baseRules, new StorageEngine(baseRules, module)]));

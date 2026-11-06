@@ -3,8 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
-import ContentEngine from "./ContentEngine.ts";
-import CopyOnWriteEngine from "./CopyOnWriteEngine.ts";
+import BaseRulesEngine from "./BaseRulesEngine.ts";
 import ImportsEngine from "./ImportsEngine.ts";
 import Modules from "./Modules.ts";
 import RulesEngine from "./RulesEngine.ts";
@@ -14,19 +13,12 @@ import StorageEngine from "./StorageEngine.ts";
 /**
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
  * rules answer through a handle bound to its view (`Engine.for(scope)`), and through it to what they're about
- * (`.character(input)`, `.entities(type)`, `.skills()`); a base rules' content before any view (`forRules`); what
- * every base rules' rulesets share (`rules`); a list's card, its ruleset read or not (`describeCard`); and
- * copy-on-write, which builds the view (`copyOnWrite`). Which ruleset answers is the engine's to know.
+ * (`.character(input)`, `.entities(type)`, `.skills()`); a base rules' before any view (`forRules`: its content, how it
+ * stores its data, and copy-on-write, which builds the view); what every base rules' rulesets share (`rules`,
+ * `storages`); and a list's card, its ruleset read or not (`describeCard`). Which ruleset answers is the engine's to
+ * know.
  */
 export default class Engine {
-  /**
-   * The copy-on-write of a base rules' rulesets: what the cache builds a ruleset's view with, and its writes copy an
-   * entity by.
-   */
-  static copyOnWrite(baseRules: BaseRules) {
-    return new CopyOnWriteEngine(baseRules);
-  }
-
   /**
    * A character's card (`character`, with its advancements, `advancements`), as a list shows it, partly seen or not
    * (`partial`): as its ruleset's view (`view`) describes it (`characters().describeCard`), or the core's for a
@@ -49,11 +41,11 @@ export default class Engine {
   }
 
   /**
-   * The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view: its
-   * own module's, by the base rules it's handed.
+   * The engine bound to a base rules, before any of its rulesets has a view: their copy-on-write (`copyOnWrite()`), how
+   * its module stores their data (`storage()`), and its content, which the seeders and the codegen ask.
    */
   static forRules<B extends BaseRules>(baseRules: B) {
-    return new ContentEngine(Modules.of(baseRules).content);
+    return new BaseRulesEngine(baseRules);
   }
 
   /**
@@ -70,14 +62,6 @@ export default class Engine {
    */
   static rules() {
     return RulesEngine.shared();
-  }
-
-  /**
-   * How a base rules' module stores its data in the generic tables, which the server reads and writes its rows by: a
-   * ruleset's, its base rules'.
-   */
-  static storage(baseRules: BaseRules) {
-    return StorageEngine.of(baseRules);
   }
 
   /** How every module stores its data: each base rules' storage, whose declarations the registries hold. */

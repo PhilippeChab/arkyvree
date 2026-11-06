@@ -164,7 +164,9 @@ async function recordActivity(tx: Db, changed: Ruleset | undefined, values: Acti
   noteNotified(recipientIds);
 }
 
-/** Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns. */
+/**
+ * Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns.
+ */
 export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
   await recordActivity(tx, undefined, values);
 }

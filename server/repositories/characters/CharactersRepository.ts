@@ -1,7 +1,7 @@
 import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter, contributorsInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
+import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -57,14 +57,13 @@ class CharactersRepository extends include(
   }
 
   /**
-   * The condition that a character is a player character, not another's child (3.5's bonded creatures): its kind its own
-   * ruleset's base rules' player character's (`StorageEngine.playerKind`), each base rules' paired with its own.
+   * The condition that a character is a player character, not another's child (3.5's bonded creatures): its kind its
+   * base rules' player character's (`StorageEngine.playerKind`), each base rules' paired with its own.
    */
   private isPlayerCharacter(): SQL {
-    const own = Engine.storages().map((storage) => sql`(${storage.baseRules}, ${storage.playerKind()})`);
-    const rulesetId = toQualified(charactersInCharacter.rulesetId);
+    const playerKinds = Engine.storages().map((storage) => sql`(${storage.baseRules}, ${storage.playerKind()})`);
     const kind = toQualified(charactersInCharacter.kind);
-    return sql`((SELECT ${rulesetsInRules.baseRules} FROM ${rulesetsInRules} WHERE ${rulesetsInRules.id} = ${rulesetId}), ${kind}) IN (${sql.join(own, sql`, `)})`;
+    return sql`(${StoredCharacters.buildBaseRules()}, ${kind}) IN (${sql.join(playerKinds, sql`, `)})`;
   }
 
   /** What the user's characters list keeps: its pages and its total share it. */

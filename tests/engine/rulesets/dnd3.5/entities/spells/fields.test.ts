@@ -47,7 +47,9 @@ describe("A spell's fields", () => {
     const written = (values: typeof SPELL_FIELDS.defaults) => writtenValues(SPELL_FIELDS.write(values));
     // What its write path stores of the fields its codec writes (`writtenFields`), those it holds a value of
     const stored = (values: typeof SPELL_FIELDS.defaults) => {
-      const fields = Engine.storage(DND35_BASE_RULES).writtenFields("spells", SPELL_FIELDS.write(values).fields, true);
+      const fields = Engine.forRules(DND35_BASE_RULES)
+        .storage()
+        .writtenFields("spells", SPELL_FIELDS.write(values).fields, true);
       return Object.fromEntries(Object.entries(fields).filter(([, held]) => Array.isArray(held) && held.length > 0));
     };
     // Without a school, none of the fields its form shows

@@ -350,7 +350,7 @@ test("refuses a form naming one list twice: by its source's id and its copy's", 
 // Mechanics can't be customized, so nothing can point at them.
 describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %s", (entityType) => {
   const service = SERVICES[entityType];
-  const ownsModifiers = Engine.storage(DND35_BASE_RULES).customizableKinds().includes(entityType);
+  const ownsModifiers = Engine.forRules(DND35_BASE_RULES).storage().customizableKinds().includes(entityType);
 
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, values: 0 };
   const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1 };

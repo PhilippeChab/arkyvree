@@ -35,7 +35,10 @@ export type DeclaredRegistries = { baseRules: BaseRules; registries: StorageRegi
 /** Postgres's code for a foreign key a delete would break. */
 const FOREIGN_KEY_VIOLATION = "23503";
 
-/** The character's registry tables (its items' types, its advancements' steps, its roles), as `registriesOf` orders them. */
+/**
+ * The character's registry tables (its items' types, its advancements' steps, its roles), as `registriesOf` orders
+ * them.
+ */
 function characterRegistriesOf(declared: DeclaredRegistries): Registry[] {
   return [
     {

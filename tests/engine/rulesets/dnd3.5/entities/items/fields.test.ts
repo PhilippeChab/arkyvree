@@ -48,7 +48,7 @@ describe("An item's fields", () => {
     expect(held.every((item) => Object.keys(item.fields).every((field) => declared.has(field)))).toBe(true);
     expect(held.filter((item) => Object.keys(item.fields).length > 2).length).toBeGreaterThan(400);
 
-    const inherited = Engine.storage(DND35_BASE_RULES).declaredFields().inheritance("items")!;
+    const inherited = Engine.forRules(DND35_BASE_RULES).storage().declaredFields().inheritance("items")!;
     const mismatches: string[] = [];
     for (const item of held) {
       const template = item.links.madeFrom ? items.get(item.links.madeFrom) : undefined;

@@ -80,7 +80,7 @@ describe("A ruleset's own fields", () => {
 
   test("of every seeded ruleset rebuild its Settings", async () => {
     const rulesets = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules);
-    const storage = Engine.storage(DND35_BASE_RULES);
+    const storage = Engine.forRules(DND35_BASE_RULES).storage();
     const held = (await RulesetSettings.findMany(db, { ids: rulesets.map(({ id }) => id) }))
       .map((ruleset) => storage.settingsOf(ruleset))
       .filter((stored) => listValues(stored).length > 0);

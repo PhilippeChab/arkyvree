@@ -1,13 +1,13 @@
 /**
  * The D&D 3.5 entities' fields: each entity type's, and a ruleset's Settings', in the order a stat block shows them
  * (and its form its fields), each declared once, as data the engine stores, reads and takes from a form by (its kind's
- * codec, `FieldCodec`, and its storage, `Engine.storage()`; `FieldSpec` is a declaration's shape): its name, the stored
- * field that keeps it (a link's, the role of its owner's links: a reference's single link, a list of links its form
- * edits), its label and what it's for, its kind, its closed list of values or the entity its value names, its default,
- * scale and bounds, whether a form must give it (`required`), how sibling copies merge it, the role its entity reads it
- * off another through (an item's, its template's), when it counts (`when`), and how its form shows it: where
- * (`placement`, `shownIn`), on what (`shownWhen`), in its unit, by its values' labels, or not at all (`form`). A field
- * merges by what its value is:
+ * codec, `FieldCodec`, and its storage, `Engine.forRules(baseRules).storage()`; `FieldSpec` is a declaration's shape):
+ * its name, the stored field that keeps it (a link's, the role of its owner's links: a reference's single link, a list
+ * of links its form edits), its label and what it's for, its kind, its closed list of values or the entity its value
+ * names, its default, scale and bounds, whether a form must give it (`required`), how sibling copies merge it, the role
+ * its entity reads it off another through (an item's, its template's), when it counts (`when`), and how its form shows
+ * it: where (`placement`, `shownIn`), on what (`shownWhen`), in its unit, by its values' labels, or not at all
+ * (`form`). A field merges by what its value is:
  * - a set (a list, a progression) holds every copy's values (`union`);
  * - a value that reads apart from the others falls back to a sibling's when the winning copy holds none (`fallback`);
  * - a value its entity is read by, with its others, is the winning copy's alone (`winner`), so no stat line mixes two

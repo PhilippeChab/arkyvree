@@ -8,21 +8,17 @@ import {
   Modifiers,
   Picks,
   Requirements,
-  Rulesets,
   Visibility,
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
  * The character's own rows (`CharacterRows`), read as stored through `database`: its links of each role it holds many
- * of, its inventory, its advancements and their picks by step (each role and step its ruleset's base rules' module
- * declares), and the modifiers set on the character, then their requirements.
+ * of, its inventory, its advancements and their picks by step (each role and step its base rules' module declares), and
+ * the modifiers set on the character, then their requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
-  const characterId = character.id;
-  const ruleset = await Rulesets.findOne(database, { id: character.rulesetId });
-  if (!ruleset) throw new Error(`A character's ruleset not found: ${character.rulesetId}`);
-  const { baseRules } = ruleset;
+  const { baseRules, id: characterId } = character;
   const links = await CharacterLinks.findPerRole(database, { baseRules, characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const advancements = await CharacterAdvancements.findMany(database, { characterId });

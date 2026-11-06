@@ -25,7 +25,7 @@
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
  *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
  *   a noun-named one hands out a handle (`character(input)`, `skills()`). What the modules declare is none
- *   (`Engine.storage().isPlayerKind(kind)`).
+ *   (`Engine.forRules(baseRules).storage().isPlayerKind(kind)`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
  *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Copy-on-write's
  *   views build the view (`server/cow/views/`).
@@ -88,13 +88,17 @@ const CLIENT_COMPONENTS = "client/src/components/";
  */
 const CONTENT_REGISTRY = "database/packages/registry.ts";
 /**
- * The engine's entry's handles whose answers are what the modules declare, no operation over the data an action read:
- * a base rules' storage's (`Engine.storage(baseRules).isPlayerKind(kind)`, `ownerOf(type)`), every module's
- * (`Engine.storages()`) and the rules' (`Engine.rules().restorableKinds()`, `describeNotFound(baseRules, type)`).
+ * The engine's handles whose answers are what the modules declare, no operation over the data an action read, each by
+ * the path it's reached by: a base rules' storage's (`Engine.forRules(baseRules).storage().isPlayerKind(kind)`,
+ * `ownerOf(type)`), every module's (`Engine.storages()`) and the rules' (`Engine.rules().restorableKinds()`,
+ * `describeNotFound(baseRules, type)`).
  */
-const ENGINE_DECLARATIONS = new Set(["rules", "storage", "storages"]);
-/** The engine's entry's own methods, which hand out its handles. */
-const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
+const ENGINE_DECLARATIONS = [["forRules", "storage"], ["rules"], ["storages"]];
+/**
+ * The calls on the engine that hand out a handle, though a verb could start their name: the entry's own (`for`,
+ * `forRules`) and a base rules' copy-on-write (`Engine.forRules(baseRules).copyOnWrite()`).
+ */
+const ENGINE_HANDLES = new Set(["copyOnWrite", "for", "forRules"]);
 
 /** What a folder's entry with code of its own is told. */
 const ENTRY_ONLY_RE_EXPORTS =
@@ -345,9 +349,12 @@ function asksEngine(target, name) {
   const entry = source.match(/import \{[^}]*(?<!type )\bEngine\b(?:\s+as\s+(\w+))?[^}]*\} from "@\/engine\/index\.ts"/);
   if (!entry) return false;
   // Past its import, the entry under the name it's imported as, but where it reads what the modules declare
-  // (`Engine.storage(baseRules)`, `Engine.storages()`)
-  const declarations = [...ENGINE_DECLARATIONS].join("|");
-  return new RegExp(`\\b${entry[1] ?? "Engine"}\\b(?!\\.(?:${declarations})\\()`).test(source.replace(entry[0], ""));
+  // (`Engine.forRules(baseRules).storage()`, `Engine.storages()`): each call of a path, its arguments nested once, a
+  // call on a line of its own
+  const declarations = ENGINE_DECLARATIONS.map((path) =>
+    path.map((name) => String.raw`\s*\.${name}\(`).join(String.raw`(?:[^()]|\([^()]*\))*\)`),
+  ).join("|");
+  return new RegExp(`\\b${entry[1] ?? "Engine"}\\b(?!${declarations})`).test(source.replace(entry[0], ""));
 }
 
 function createEngineFrontDoor(context) {
@@ -816,13 +823,15 @@ function isNamedBy(target, pattern) {
 
 /**
  * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`planLanguages`,
- * `planCreate`), past the entry's own (`Engine.copyOnWrite(baseRules)`); a noun's hands out a handle (`character`, `skills`). What
- * the modules declare (`ENGINE_DECLARATIONS`: `Engine.storage(baseRules).isPlayerKind(kind)`) is no operation.
+ * `planCreate`), past those that hand out a handle (`ENGINE_HANDLES`: `Engine.forRules(baseRules).copyOnWrite()`); a
+ * noun's hands out a handle (`character`, `skills`). What the modules declare (`ENGINE_DECLARATIONS`:
+ * `Engine.forRules(baseRules).storage().isPlayerKind(kind)`) is no operation.
  */
 function isOperation(path) {
   const method = path.at(-1);
-  if (method === undefined || ENGINE_DECLARATIONS.has(path[0])) return false;
-  return !ENGINE_ENTRIES.has(method) && isVerbName(method);
+  if (method === undefined) return false;
+  if (ENGINE_DECLARATIONS.some((declaration) => declaration.every((name, at) => path[at] === name))) return false;
+  return !ENGINE_HANDLES.has(method) && isVerbName(method);
 }
 
 /**
