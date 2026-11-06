@@ -100,22 +100,28 @@ export function groupClasses(files: ClassFiles): GroupedClass[] {
 
 /**
  * Each species with its traits and its subspecies read whole, each subspecies with its own traits, in the database's
- * order: a reference to a trait or a subspecies the database lacks throws.
+ * order: a species' traits are those it lists, then those that name it and that neither it nor a subspecies lists (a
+ * dragonborn's Draconic Ancestry, which the database links from the trait's side alone). A reference to a trait or a
+ * subspecies the database lacks throws.
  */
 export function groupSpecies(species: ListedSpecies[], subspecies: ListedSubspecies[], traits: ListedTrait[]) {
   const traitsBySlug = bySlug(traits);
   const subspeciesBySlug = bySlug(subspecies);
-  const resolveTraits = (refs: Ref[]) =>
-    resolveRefs(refs, traitsBySlug, "trait").map(
-      ({ species: _species, subspecies: _subspecies, ...trait }): TraitEntry => trait,
+  const listed = new Set([...species, ...subspecies].flatMap((entry) => entry.traits.map((trait) => trait.index)));
+  const withoutHolders = ({ species: _species, subspecies: _subspecies, ...trait }: ListedTrait): TraitEntry => trait;
+  const resolveTraits = (refs: Ref[]) => resolveRefs(refs, traitsBySlug, "trait").map(withoutHolders);
+  return species.map((entry): SpeciesEntry => {
+    const naming = traits.filter(
+      (trait) => !listed.has(trait.index) && trait.species?.some((holder) => holder.index === entry.index),
     );
-  return species.map((entry): SpeciesEntry => ({
-    ...entry,
-    traits: resolveTraits(entry.traits),
-    subspecies: resolveRefs(entry.subspecies ?? [], subspeciesBySlug, "subspecies").map(
-      ({ species: _species, ...sub }): SubspeciesEntry => ({ ...sub, traits: resolveTraits(sub.traits) }),
-    ),
-  }));
+    return {
+      ...entry,
+      traits: [...resolveTraits(entry.traits), ...naming.map(withoutHolders)],
+      subspecies: resolveRefs(entry.subspecies ?? [], subspeciesBySlug, "subspecies").map(
+        ({ species: _species, ...sub }): SubspeciesEntry => ({ ...sub, traits: resolveTraits(sub.traits) }),
+      ),
+    };
+  });
 }
 
 /**
