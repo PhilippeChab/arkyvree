@@ -1,0 +1,243 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.180Z",
+    "sourceUrl": "https://aonprd.com/PrestigeClassesDisplay.aspx?ItemName=Loremaster",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A prestige class for scholarly spellcasters: it advances its spellcasting at every level, learns a secret at each odd level (a bonus to its saves, its skills or its abilities), adds to its Knowledge checks, and picks up bonus languages."
+  },
+  "raw": {
+    "classSkills": "The Loremaster's class skills are Appraise (Int), Diplomacy (Cha), Handle Animals (Cha), Heal (Wis), Knowledge (all skills taken individually) (Int), Linguistics (Int), Perform (Cha), Spellcraft (Int), and Use Magic Device (Cha).",
+    "details": [
+      {
+        "label": "Skill Points at each Level",
+        "text": "4 + Int modifier."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d6."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Loremasters gain no proficiency with any weapon or armor."
+      },
+      {
+        "label": "Spells per Day/Spells Known",
+        "text": "When a new loremaster level is gained, the character gains new spells per day as if he had also gained a level in a spellcasting class he belonged to before adding the prestige class. He does not, however, gain other benefits a character of that class would have gained, except for additional spells per day, spells known (if he is a spontaneous spellcaster), and an increased effective level of spellcasting. If a character had more than one spellcasting class before becoming a loremaster, he must decide to which class he adds the new level for purposes of determining spells per day."
+      },
+      {
+        "label": "Secret",
+        "text": "At 1st level and every two levels higher than 1st (3rd, 5th, 7th, and 9th), the loremaster chooses one secret from the Loremaster Secrets table. His level plus Intelligence modifier determines which secrets he can choose. He can't choose the same secret twice."
+      },
+      {
+        "label": "Lore",
+        "text": "At 2nd level, a loremaster adds half his level to all Knowledge skill checks and may make such checks untrained. The bonuses gained from this ability stack with those gained from Bardic Knowledge."
+      },
+      {
+        "label": "Bonus Languages",
+        "text": "A loremaster can learn any new language at 4th and 8th level."
+      },
+      {
+        "label": "Greater Lore (Ex)",
+        "text": "At 6th level, a loremaster gains the ability to understand magic items. Whenever a loremaster examines a magic item to determine its properties, he gains a +10 circumstance bonus on his Spellcraft skill check."
+      },
+      {
+        "label": "True Lore (Ex)",
+        "text": "At 10th level, a loremaster's knowledge becomes vast indeed. Once per day a loremaster can use his knowledge to gain the effect of a legend lore spell or an analyze dweomer spell. If used to create a legend lore effect, this ability has a casting time of 1 minute, regardless of how much information is already known about the subject in question."
+      }
+    ],
+    "name": "Loremaster",
+    "prestige": true,
+    "requirements": [
+      {
+        "label": "Skills",
+        "text": "Knowledge (any two) 7 ranks in each."
+      },
+      {
+        "label": "Feats",
+        "text": "Any three metamagic or item creation feats, plus Skill Focus (Knowledge [any individual Knowledge skill])."
+      },
+      {
+        "label": "Spells",
+        "text": "Able to cast seven different divination spells, one of which must be 3rd level or higher."
+      }
+    ],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 385
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special",
+          "Spells Per Day"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+0",
+            "+1",
+            "Secret",
+            "+1 level of existing class"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+1",
+            "+1",
+            "+1",
+            "Lore",
+            "+1 level of existing class"
+          ],
+          [
+            "3rd",
+            "+1",
+            "+1",
+            "+1",
+            "+2",
+            "Secret",
+            "+1 level of existing class"
+          ],
+          [
+            "4th",
+            "+2",
+            "+1",
+            "+1",
+            "+2",
+            "Bonus language",
+            "+1 level of existing class"
+          ],
+          [
+            "5th",
+            "+2",
+            "+2",
+            "+2",
+            "+3",
+            "Secret",
+            "+1 level of existing class"
+          ],
+          [
+            "6th",
+            "+3",
+            "+2",
+            "+2",
+            "+3",
+            "Greater lore",
+            "+1 level of existing class"
+          ],
+          [
+            "7th",
+            "+3",
+            "+2",
+            "+2",
+            "+4",
+            "Secret",
+            "+1 level of existing class"
+          ],
+          [
+            "8th",
+            "+4",
+            "+3",
+            "+3",
+            "+4",
+            "Bonus language",
+            "+1 level of existing class"
+          ],
+          [
+            "9th",
+            "+4",
+            "+3",
+            "+3",
+            "+5",
+            "Secret",
+            "+1 level of existing class"
+          ],
+          [
+            "10th",
+            "+5",
+            "+3",
+            "+3",
+            "+5",
+            "True lore",
+            "+1 level of existing class"
+          ]
+        ]
+      },
+      {
+        "columns": [
+          "Level + Int Modifier",
+          "Secret",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "1",
+            "Instant mastery",
+            "4 ranks of a skill in which the character has no ranks"
+          ],
+          [
+            "2",
+            "Secret health",
+            "Toughness bonus feat"
+          ],
+          [
+            "3",
+            "Secrets of inner strength",
+            "+2 bonus on Will saves"
+          ],
+          [
+            "4",
+            "The lore of true stamina",
+            "+2 bonus on Fortitude saves"
+          ],
+          [
+            "5",
+            "Secret knowledge of avoidance",
+            "+2 bonus on Reflex saves"
+          ],
+          [
+            "6",
+            "Weapon trick",
+            "+1 bonus on attack rolls"
+          ],
+          [
+            "7",
+            "Dodge trick",
+            "+1 dodge bonus to AC"
+          ],
+          [
+            "8",
+            "Applicable knowledge",
+            "Any one feat"
+          ],
+          [
+            "9",
+            "Newfound arcana",
+            "1 bonus 1st-level spell*"
+          ],
+          [
+            "10",
+            "More newfound arcana",
+            "1 bonus 2nd-level spell*"
+          ],
+          [
+            "* As if gained through having a high ability score."
+          ]
+        ]
+      }
+    ]
+  }
+}

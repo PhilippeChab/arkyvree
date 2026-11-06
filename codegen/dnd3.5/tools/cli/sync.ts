@@ -11,10 +11,10 @@ import { basename, join } from "node:path";
 
 import { $ } from "bun";
 
+import { CommandLine } from "@/codegen/core/cli/CommandLine.ts";
+import type { ReferenceFile } from "@/codegen/core/references/types.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
-import type { ReferenceFile } from "@/codegen/dnd3.5/tools/types/reference.ts";
-
-import { CommandLine } from "./CommandLine.ts";
+import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 const GENERATOR = join(import.meta.dirname!, "generate.ts");
 const SCRAPER = join(import.meta.dirname!, "scrape.ts");
@@ -23,7 +23,7 @@ const SCRAPER = join(import.meta.dirname!, "scrape.ts");
  * The scraper's arguments to re-scrape a reference: its type and book, and a class's page, the URL its reference
  * stores. None for a reference the scraper doesn't scrape (the wizard schools).
  */
-function buildScrapeArgs(ref: ReferenceFile): string[] | null {
+function buildScrapeArgs(ref: ReferenceFile<ReferenceType>): string[] | null {
   // wizardSchool has no parser — skip
   if (ref.type === "wizardSchool") return null;
 

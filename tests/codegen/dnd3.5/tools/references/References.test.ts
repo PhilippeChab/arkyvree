@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { CommandLine } from "@/codegen/core/cli/CommandLine.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import type { ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
@@ -23,6 +24,12 @@ describe("A book's class references", () => {
   test("are none for a book without classes", () => {
     expect(References.loadClasses("a-book-without-classes")).toEqual([]);
   });
+});
+
+test("The reference a command's book and name name is its file, as a command hands them on whole", () => {
+  expect(References.files(CommandLine.filters(["srd", "Wizard"])).map(({ path }) => path)).toEqual([
+    join(References.dir, "srd/classes/wizard.json"),
+  ]);
 });
 
 test("The books with references are their folders, sorted", () => {

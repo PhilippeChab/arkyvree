@@ -134,14 +134,6 @@ export function stripOrdinalPrefix(name: string): string {
   return name.replace(ORDINAL_PREFIX, "");
 }
 
-export function toCamelCase(name: string): string {
-  return name
-    .replace(/['']/g, "")
-    .split(/[\s-]+/)
-    .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
-    .join("");
-}
-
 /** A name as a constant's: "Arcane Archer" → "ARCANE_ARCHER". */
 export function toConstName(name: string): string {
   return name

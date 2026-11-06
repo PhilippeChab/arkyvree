@@ -79,18 +79,20 @@ content/dnd3.5/
 
 codegen/core/             # What every ruleset's codegen runs on
 ├── GeneratedFolder.ts    # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote, each naming the ruleset's command that generates it
+├── cli/                  # CommandLine (a command's line: its options, its reference filters), ScrapeCommand (a parser's scrape command: its types, book and page)
 ├── code/GeneratedCode.ts # A generated file's code: its lines, its imports, how a value is written, the customization values (its content types' and names' modules are the ruleset's)
-├── scraper/              # HttpClient (a site's pages, cached, paced, retried; a site's clean-up its own), Page (a page's document, sections, headings)
-└── text/                 # Stable JSON, whitespace
+├── references/           # ReferenceStore (a ruleset's references: a folder per book, a file per reference, written, read and loaded), the types every reference shares
+├── scraper/              # HttpClient (a site's pages, cached, paced, retried; a site's clean-up its own), Page (a page's document, sections, headings), BookScraper (a book's scraper: its book, its client, its references saved with their overrides kept)
+└── text/                 # Stable JSON, whitespace, a name in camel case
 
 codegen/dnd3.5/
 ├── reference/            # Scraped JSON (raw + overrides)
 └── tools/                # Scraper, generator, validate, overrides
-    ├── cli/              # The commands (parser:dnd3.5:scrape, generate, sync, overrides, validate), each reading its line through CommandLine
+    ├── cli/              # The commands (parser:dnd3.5:scrape, generate, sync, overrides, validate), each reading its line through core's CommandLine
     ├── types/            # A reference's types, a module per kind of reference
     ├── references/       # The reference files (References): finding, reading, writing and loading them, what's derived resolved by each kind's detector
     ├── scraper/          # Pages → reference/
-    │   ├── BaseScraper.ts    # A scraper's core: its book and its slug, its HttpClient (codegen/core), the listings, a reference's meta, saving it
+    │   ├── BaseScraper.ts    # A scraper's core, on core's BookScraper: its book's slug, the listings, its text sanitized
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
     │   └── pages/            # A page's HTML → what its reference stores: a class per kind of page on core's Page (DndToolsPage, FeatPage…; class/ClassPage with its concerns)
     ├── detect/           # A reference's raw → its detected and mapping: a detector per kind on a BaseDetector (ClassDetector in classes/, with its concerns, its ClassTable and FeatureText readers, its ClassMapping and ClassPools; FeatDetector, SpellDetector…)
@@ -106,6 +108,8 @@ codegen/dnd3.5/
         ├── ClassFiles.ts     # A class's files, composed once: the generator writes them, parser:dnd3.5:validate checks an override against them
         ├── BookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile, on core's GeneratedCode: where the 3.5 content types and names come from), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
+
+codegen/pf1/              # The Pathfinder 1 scraper (aonprd.com), on the same core: reference/ and tools/ (cli/, references/, scraper/, types/); its detection and generator come with its engine module and content: see codegen/pf1/README.md
 ```
 
 `content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/root-folders`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). Neither do the runner and the scripts, the dev and test seeds among them (`database/packages/`, `scripts/`, `scripts/db/seeds/`): they reach a ruleset's packages, seeder and test characters through the registry alone (`database/packages/registry.ts`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.

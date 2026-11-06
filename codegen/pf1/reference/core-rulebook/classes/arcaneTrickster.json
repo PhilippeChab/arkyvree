@@ -1,0 +1,189 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.178Z",
+    "sourceUrl": "https://aonprd.com/PrestigeClassesDisplay.aspx?ItemName=Arcane%20Trickster",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A prestige class that blends arcane spellcasting with sneak attacks: it advances its spellcasting at every level, adds sneak attack dice, disarms traps and picks pockets from a distance, and turns its spells into surprise attacks."
+  },
+  "raw": {
+    "classSkills": "The Arcane Trickster's class skills are Acrobatics (Dex), Appraise (Int), Bluff (Cha), Climb (Str), Diplomacy (Cha), Disable Device (Int), Disguise (Cha), Escape Artist (Dex), Knowledge (all skills taken individually) (Int), Perception (Wis), Sense Motive (Wis), Sleight of Hand (Dex), Spellcraft (Int), Stealth (Dex), and Swim (Str).",
+    "details": [
+      {
+        "label": "Skill Points at each Level",
+        "text": "4 + Int modifier."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d6."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Arcane tricksters gain no proficiency with any weapon or armor."
+      },
+      {
+        "label": "Spells per Day",
+        "text": "When a new arcane trickster level is gained, the character gains new spells per day as if she had also gained a level in a spellcasting class she belonged to before adding the prestige class. She does not, however, gain other benefits a character of that class would have gained, except for additional spells per day, spells known (if she is a spontaneous spellcaster), and an increased effective level of spellcasting. If a character had more than one spellcasting class before becoming an arcane trickster, she must decide to which class she adds the new level for purposes of determining spells per day."
+      },
+      {
+        "label": "Ranged Legerdemain (Su)",
+        "text": "An arcane trickster can use Disable Device and Sleight of Hand at a range of 30 feet. Working at a distance increases the normal skill check DC by 5, and an arcane trickster cannot take 10 on this check. Any object to be manipulated must weigh 5 pounds or less. She can only use this ability if she has at least 1 rank in the skill being used."
+      },
+      {
+        "label": "Sneak Attack",
+        "text": "This is exactly like the rogue ability of the same name. The extra damage dealt increases by +1d6 every other level (2nd, 4th, 6th, 8th, and 10th). If an arcane trickster gets a sneak attack bonus from another source, the bonuses on damage stack."
+      },
+      {
+        "label": "Impromptu Sneak Attack (Ex)",
+        "text": "Beginning at 3rd level, once per day an arcane trickster can declare one melee or ranged attack she makes to be a sneak attack (the target can be no more than 30 feet distant if the impromptu sneak attack is a ranged attack). The target of an impromptu sneak attack loses any Dexterity bonus to AC, but only against that attack. The power can be used against any target, but creatures that are not subject to critical hits take no extra damage (though they still lose any Dexterity bonus to AC against the attack). At 7th level, an arcane trickster can use this ability twice per day."
+      },
+      {
+        "label": "Tricky Spells (Su)",
+        "text": "Starting at 5th level, an arcane trickster can cast her spells without their somatic or verbal components, as if using the Still Spell and Silent Spell feats. Spells cast using this ability do not increase in spell level or casting time. She can use this ability 3 times per day at 5th level and one additional time per every two levels thereafter, to a maximum of 5 times per day at 9th level. The arcane trickster decides to use this ability at the time of casting."
+      },
+      {
+        "label": "Invisible Thief (Su)",
+        "text": "At 9th level, an arcane trickster can become invisible, as if under the effects of greater invisibility, as a free action. She can remain invisible for a number of rounds per day equal to her arcane trickster level. Her caster level for this effect is equal to her caster level. These rounds need not be consecutive."
+      },
+      {
+        "label": "Surprise Spells",
+        "text": "At 10th level, an arcane trickster can add her sneak attack damage to any spell that deals damage, if the targets are flat-footed. This additional damage only applies to spells that deal hit point damage, and the additional damage is of the same type as the spell. If the spell allows a saving throw to negate or halve the damage, it also negates or halves the sneak attack damage."
+      }
+    ],
+    "name": "Arcane Trickster",
+    "prestige": true,
+    "requirements": [
+      {
+        "label": "Alignment",
+        "text": "Any nonlawful."
+      },
+      {
+        "label": "Skills",
+        "text": "Disable Device 4 ranks, Escape Artist 4 ranks, Knowledge (arcana) 4 ranks."
+      },
+      {
+        "label": "Spells",
+        "text": "Ability to cast mage hand and at least one arcane spell of 2nd level or higher."
+      },
+      {
+        "label": "Special",
+        "text": "Sneak attack +2d6."
+      }
+    ],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 376
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special",
+          "Spells Per Day"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+1",
+            "+1",
+            "Ranged legerdemain",
+            "+1 level of existing class"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+1",
+            "+1",
+            "+1",
+            "Sneak attack +1d6",
+            "+1 level of existing class"
+          ],
+          [
+            "3rd",
+            "+1",
+            "+1",
+            "+2",
+            "+2",
+            "Impromptu sneak attack 1/day",
+            "+1 level of existing class"
+          ],
+          [
+            "4th",
+            "+2",
+            "+1",
+            "+2",
+            "+2",
+            "Sneak attack +2d6",
+            "+1 level of existing class"
+          ],
+          [
+            "5th",
+            "+2",
+            "+2",
+            "+3",
+            "+3",
+            "Tricky spells 3/day",
+            "+1 level of existing class"
+          ],
+          [
+            "6th",
+            "+3",
+            "+2",
+            "+3",
+            "+3",
+            "Sneak attack +3d6",
+            "+1 level of existing class"
+          ],
+          [
+            "7th",
+            "+3",
+            "+2",
+            "+4",
+            "+4",
+            "Impromptu sneak attack 2/day, tricky spells 4/day",
+            "+1 level of existing class"
+          ],
+          [
+            "8th",
+            "+4",
+            "+3",
+            "+4",
+            "+4",
+            "Sneak attack +4d6",
+            "+1 level of existing class"
+          ],
+          [
+            "9th",
+            "+4",
+            "+3",
+            "+5",
+            "+5",
+            "Invisible thief, tricky spells 5/day",
+            "+1 level of existing class"
+          ],
+          [
+            "10th",
+            "+5",
+            "+3",
+            "+5",
+            "+5",
+            "Sneak attack +5d6, surprise spells",
+            "+1 level of existing class"
+          ]
+        ]
+      }
+    ]
+  }
+}

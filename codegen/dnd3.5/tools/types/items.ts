@@ -1,4 +1,4 @@
-import type { Overrides, ScrapedMeta } from "./reference.ts";
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 
 /**
  * An item as the seeds make it: its cost in gold pieces and its weight in pounds, its override's or else as detected,

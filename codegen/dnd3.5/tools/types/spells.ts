@@ -1,6 +1,5 @@
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { SpellFields } from "@/content/dnd3.5/builders/spells/types.ts";
-
-import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /**
  * A spell's overrides: its description, the class/level entries its page leaves out, and the stat block's fields its

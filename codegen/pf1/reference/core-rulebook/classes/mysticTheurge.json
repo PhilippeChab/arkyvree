@@ -1,0 +1,165 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.180Z",
+    "sourceUrl": "https://aonprd.com/PrestigeClassesDisplay.aspx?ItemName=Mystic%20Theurge",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A prestige class for characters who cast both arcane and divine spells: it advances both kinds of spellcasting at every level, can prepare spells of one kind in the other's slots, and ends able to cast an arcane and a divine spell together."
+  },
+  "raw": {
+    "classSkills": "The Mystic Theurge's class skills are Knowledge (arcana) (Int), Knowledge (religion) (Int), Sense Motive (Wis), and Spellcraft (Int).",
+    "details": [
+      {
+        "label": "Skill Points at each Level",
+        "text": "2 + Int modifier."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d6."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Mystic theurges gain no proficiency with any weapon or armor."
+      },
+      {
+        "label": "Spells per Day",
+        "text": "When a new mystic theurge level is gained, the character gains new spells per day as if he had also gained a level in any one arcane spellcasting class he belonged to before he added the prestige class and any one divine spellcasting class he belonged to previously. He does not, however, gain other benefits a character of that class would have gained. This essentially means that he adds the level of mystic theurge to the level of whatever other arcane spellcasting class and divine spellcasting class the character has, then determines spells per day, spells known, and caster level accordingly. If a character had more than one arcane spellcasting class or more than one divine spellcasting class before he became a mystic theurge, he must decide to which class he adds each level of mystic theurge for the purpose of determining spells per day."
+      },
+      {
+        "label": "Combined Spells (Su)",
+        "text": "A mystic theurge can prepare and cast spells from one of his spellcasting classes using the available slots from any of his other spellcasting classes. Spells prepared or cast in this way take up a slot one level higher than they originally occupied. This ability cannot be used to cast a spell at a lower level if that spell exists on both spell lists. At 1st level, a mystic theurge can prepare 1st-level spells from one of his spellcasting classes using the 2nd-level slots of the other spellcasting class. Every two levels thereafter, the level of spells that can be cast in this way increases by one, to a maximum of 5th-level spells at 9th level (these spells would take up 6th-level spell slots). The components of these spells do not change, but they otherwise follow the rules for the spellcasting class used to cast the spell. Spontaneous spellcasters can only select spells that they have prepared that day using non-spontaneous classes for this ability, even if the spells have already been cast. For example, a cleric/sorcerer/mystic theurge can use this ability to spontaneously cast a bless spell using a 2nd-level sorcerer spell slot, if the character had a prepared bless spell using a 1st-level cleric spell slot, even if that spell had already been cast that day."
+      },
+      {
+        "label": "Spell Synthesis (Su)",
+        "text": "At 10th level, a mystic theurge can cast two spells, one from each of his spellcasting classes, using one action. Both of the spells must have the same casting time. The mystic theurge can make any decisions concerning the spells independently. Any target affected by both of the spells takes a –2 penalty on saves made against each spell. The mystic theurge receives a +2 bonus on caster level checks made to overcome spell resistance with these two spells. A mystic theurge may use this ability once per day."
+      }
+    ],
+    "name": "Mystic Theurge",
+    "prestige": true,
+    "requirements": [
+      {
+        "label": "Skills",
+        "text": "Knowledge (arcana) 3 ranks, Knowledge (religion) 3 ranks."
+      },
+      {
+        "label": "Spells",
+        "text": "Able to cast 2nd-level divine spells and 2nd-level arcane spells."
+      }
+    ],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 387
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special",
+          "Spells Per Day"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+0",
+            "+1",
+            "Combined spells (1st)",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+1",
+            "+1",
+            "+1",
+            "—",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "3rd",
+            "+1",
+            "+1",
+            "+1",
+            "+2",
+            "Combined spells (2nd)",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "4th",
+            "+2",
+            "+1",
+            "+1",
+            "+2",
+            "—",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "5th",
+            "+2",
+            "+2",
+            "+2",
+            "+3",
+            "Combined spells (3rd)",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "6th",
+            "+3",
+            "+2",
+            "+2",
+            "+3",
+            "—",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "7th",
+            "+3",
+            "+2",
+            "+2",
+            "+4",
+            "Combined spells (4th)",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "8th",
+            "+4",
+            "+3",
+            "+3",
+            "+4",
+            "—",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "9th",
+            "+4",
+            "+3",
+            "+3",
+            "+5",
+            "Combined spells (5th)",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ],
+          [
+            "10th",
+            "+5",
+            "+3",
+            "+3",
+            "+5",
+            "Spell synthesis",
+            "+1 level of existing arcane spellcasting class/+1 level of existing divine spellcasting class"
+          ]
+        ]
+      }
+    ]
+  }
+}

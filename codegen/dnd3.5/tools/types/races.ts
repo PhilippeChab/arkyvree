@@ -1,7 +1,8 @@
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 
-import type { DetectedModifiers, NamedText, Overrides, ScrapedMeta } from "./reference.ts";
+import type { DetectedModifiers, NamedText } from "./reference.ts";
 
 export interface RaceReference {
   _meta: ScrapedMeta<"race">;

@@ -10,10 +10,9 @@
  *   bun run parser:dnd3.5:overrides complete-warrior --type feat  # combine filters
  */
 
+import { CommandLine } from "@/codegen/core/cli/CommandLine.ts";
 import { type OverrideEntry, ReferenceOverrides } from "@/codegen/dnd3.5/tools/references/ReferenceOverrides.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
-
-import { CommandLine } from "./CommandLine.ts";
 
 function main() {
   const { filters, keyFilter } = CommandLine.overrides();

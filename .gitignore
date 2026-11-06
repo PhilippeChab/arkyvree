@@ -52,6 +52,7 @@ migrate-bin
 
 # Scraper cache
 codegen/dnd3.5/tools/scraper/.cache/
+codegen/pf1/tools/scraper/.cache/
 
 # The parser's generation in progress (generated/'s copy, swapped in when it succeeds, and its lock)
 content/dnd3.5/generated.next/

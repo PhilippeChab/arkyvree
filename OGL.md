@@ -1,6 +1,7 @@
 # Open Game License
 
-This project uses content from the d20 System Reference Document (SRD v3.5), which is licensed under the Open Game License v1.0a.
+This project uses content from the d20 System Reference Document (SRD v3.5) and from the Pathfinder Roleplaying Game
+Core Rulebook, both licensed under the Open Game License v1.0a.
 
 ## Open Game Content Designation
 
@@ -11,6 +12,26 @@ The relevant upstream grant, exclusions, and copyright notices determine coverag
 
 Game data is stored under `content/dnd3.5/`, and the pages it is generated
 from under `codegen/dnd3.5/reference/`.
+
+### Pathfinder Roleplaying Game
+
+Paizo designates the game mechanics of its Pathfinder Roleplaying Game products
+as Open Game Content, and identifies as Product Identity "all trademarks,
+registered trademarks, proper names (characters, deities, etc.), dialogue,
+plots, storylines, locations, characters, artworks, and trade dress". Only the
+game mechanics of the Core Rulebook are used here. The parser leaves out what
+isn't: a class's description and role, a prestige class's alignment paragraph,
+a race's description, a feat's opening line, and a domain's deities. A name
+that carries Paizo's trademark is renamed (the Pathfinder Chronicler is the
+Chronicler), and the ruleset is shown as "Core PSD 1". The descriptions the
+project gives classes and races are its own writing, from their rules. Text the Archives of Nethys (aonprd.com) prints for a Core Rulebook
+entry from a later book is Ultimate Equipment's for some gear, whose notice is
+below; other later books' additions are left out.
+
+The pages read are stored under `codegen/pf1/reference/`, and the pages the
+parser's tests read under `tests/codegen/pf1/fixtures/`, trimmed the same way.
+Naming the books below is the notice the license requires; it indicates no
+compatibility with, or endorsement by, Paizo.
 
 ## Software and other material
 
@@ -58,5 +79,9 @@ The following text is the property of Wizards of the Coast, Inc. and is Copyrigh
 Open Game License v 1.0a Copyright 2000, Wizards of the Coast, Inc.
 
 System Reference Document Copyright 2000-2003, Wizards of the Coast, Inc.; Authors Jonathan Tweet, Monte Cook, Skip Williams, Rich Baker, Andy Collins, David Noonan, Rich Redman, Bruce R. Cordell, John D. Rateliff, Thomas Reid, James Wyatt, based on original material by E. Gary Gygax and Dave Arneson.
+
+Pathfinder Roleplaying Game Core Rulebook. © 2009, Paizo Publishing, LLC; Author: Jason Bulmahn, based on material by Jonathan Tweet, Monte Cook, and Skip Williams.
+
+Pathfinder Roleplaying Game Ultimate Equipment. © 2012 Paizo Publishing, LLC; Authors: Dennis Baker, Jesse Benner, Benjamin Bruck, Ross Byers, Brian J. Cortijo, Ryan Costello, Mike Ferguson, Matt Goetz, Jim Groves, Tracy Hurley, Matt James, Jonathan H. Keith, Michael Kenway, Hal MacLean, Jason Nelson, Tork Shaw, Owen KC Stephens, and Russ Taylor.
 
 END OF LICENSE

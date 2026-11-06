@@ -1,6 +1,7 @@
 import { basename } from "node:path";
 
-import type { ReferenceFile } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import type { ReferenceFile } from "@/codegen/core/references/types.ts";
+import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 import References from "./References.ts";
 
@@ -22,10 +23,10 @@ export interface OverrideEntry {
  * description, and the review list.
  */
 export class ReferenceOverrides {
-  constructor(private readonly file: ReferenceFile) {}
+  constructor(private readonly file: ReferenceFile<ReferenceType>) {}
 
   /** The overrides of the reference files `files` (`References.files`), each file's in turn. */
-  static of(files: ReferenceFile[]): OverrideEntry[] {
+  static of(files: ReferenceFile<ReferenceType>[]): OverrideEntry[] {
     return files.flatMap((file) => new ReferenceOverrides(file).list());
   }
 

@@ -1,0 +1,169 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.179Z",
+    "sourceUrl": "https://aonprd.com/PrestigeClassesDisplay.aspx?ItemName=Eldritch%20Knight",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A prestige class for warriors who cast arcane spells: a full base attack bonus, bonus combat feats, arcane spellcasting advanced at most levels, and, at its last level, a spell cast swiftly after a critical hit."
+  },
+  "raw": {
+    "classSkills": "The Eldritch Knight's class skills are Climb (Str), Knowledge (arcana) (Int), Knowledge (nobility and royalty) (Int), Linguistics (Int), Ride (Dex), Sense Motive (Wis), Spellcraft (Int), and Swim (Str).",
+    "details": [
+      {
+        "label": "Skill Points at each Level",
+        "text": "2 + Int modifier."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d10."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Eldritch knights gain no proficiency with any weapon or armor."
+      },
+      {
+        "label": "Bonus Feat",
+        "text": "At 1st level, an eldritch knight may choose a bonus combat feat. This is in addition to the feats that a character of any class normally gets from advancing levels. The character must still meet any prerequisites for these bonus feats. An eldritch knight gains an additional combat feat at 5th and 9th level."
+      },
+      {
+        "label": "Diverse Training",
+        "text": "An eldritch knight adds his level to any levels of fighter he might have for the purpose of meeting the prerequisites for feats (if he has no fighter levels, treat his eldritch knight levels as levels of fighter). He also adds his level to any levels in an arcane spellcasting class for the purpose of meeting the prerequisites for feats."
+      },
+      {
+        "label": "Spells per Day",
+        "text": "At the indicated levels, an eldritch knight gains new spells per day as if he had also gained a level in an arcane spellcasting class he belonged to before adding the prestige class. He does not, however, gain any other benefit a character of that class would have gained, except for additional spells per day, spells known (if he is a spontaneous spellcaster), and an increased effective level of spellcasting. If a character had more than one arcane spellcasting class before becoming an eldritch knight, he must decide to which class he adds the new level for purposes of determining spells per day."
+      },
+      {
+        "label": "Spell Critical (Su)",
+        "text": "At 10th level, whenever an eldritch knight successfully confirms a critical hit, he can cast a spell as a swift action. The spell must include the target of the attack as one of its targets or in its area of effect. Casting this spell does not provoke an attack of opportunity. The caster must still meet all of the spell's components and must roll for arcane spell failure if necessary."
+      }
+    ],
+    "name": "Eldritch Knight",
+    "prestige": true,
+    "requirements": [
+      {
+        "label": "Weapon Proficiency",
+        "text": "Must be proficient with all martial weapons."
+      },
+      {
+        "label": "Spells",
+        "text": "Able to cast 3rd-level arcane spells."
+      }
+    ],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 384
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special",
+          "Spells Per Day"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+1",
+            "+1",
+            "+0",
+            "+0",
+            "Bonus combat feat, diverse training",
+            "—"
+          ],
+          [
+            "2nd",
+            "+2",
+            "+1",
+            "+1",
+            "+1",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "3rd",
+            "+3",
+            "+2",
+            "+1",
+            "+1",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "4th",
+            "+4",
+            "+2",
+            "+1",
+            "+1",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "5th",
+            "+5",
+            "+3",
+            "+2",
+            "+2",
+            "Bonus combat feat",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "6th",
+            "+6",
+            "+3",
+            "+2",
+            "+2",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "7th",
+            "+7",
+            "+4",
+            "+2",
+            "+2",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "8th",
+            "+8",
+            "+4",
+            "+3",
+            "+3",
+            "—",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "9th",
+            "+9",
+            "+5",
+            "+3",
+            "+3",
+            "Bonus combat feat",
+            "+1 level of existing arcane spellcasting class"
+          ],
+          [
+            "10th",
+            "+10",
+            "+5",
+            "+3",
+            "+3",
+            "Spell critical",
+            "+1 level of existing arcane spellcasting class"
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -1,7 +1,6 @@
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-
-import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A feat's fields a mapping derives and an override sets. */
 interface FeatFields {

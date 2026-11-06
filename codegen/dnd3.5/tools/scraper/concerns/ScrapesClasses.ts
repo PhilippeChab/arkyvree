@@ -1,8 +1,8 @@
 import { HttpError } from "@/codegen/core/scraper/HttpError.ts";
+import { toCamelCase } from "@/codegen/core/text/names.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { BaseScraper } from "@/codegen/dnd3.5/tools/scraper/BaseScraper.ts";
 import { ClassPage } from "@/codegen/dnd3.5/tools/scraper/pages/class/ClassPage.ts";
-import { toCamelCase } from "@/codegen/dnd3.5/tools/text/names.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Scraping a book's classes (dndtools.net): a reference per class. */

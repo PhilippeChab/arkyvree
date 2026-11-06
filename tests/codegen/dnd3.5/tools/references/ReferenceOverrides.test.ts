@@ -3,9 +3,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import type { ReferenceFilters } from "@/codegen/core/references/types.ts";
 import { ReferenceOverrides } from "@/codegen/dnd3.5/tools/references/ReferenceOverrides.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
-import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 const folders: string[] = [];
 
