@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Community conduct concern
-    url: https://github.com/PhilippeChab/arkyvree/blob/develop/CODE_OF_CONDUCT.md
+    url: https://github.com/PhilippeChab/arkyvree/blob/main/CODE_OF_CONDUCT.md
     about: Use the private reporting address, not a public issue.

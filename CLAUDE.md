@@ -8,11 +8,11 @@ here, locally and in cloud sessions.
 - **Startup:** a SessionStart hook ([.claude/settings.json](./.claude/settings.json), running
   [scripts/cloud/session-start.sh](./scripts/cloud/session-start.sh)) readies every cloud session. It starts
   PostgreSQL, installs the dependencies, writes `.env.test` from `.env.test.example`, seeds the test database (again
-  only when its seeds change), and fetches `origin/develop`, the base `bun run test:changed` diffs against. Its first
+  only when its seeds change), and fetches `origin/main`, the base `bun run test:changed` diffs against. Its first
   message says what's ready; its log is `/tmp/cloud-session-start.log`. Locally it does nothing.
 - **GitHub:** requests go through Anthropic's proxy, which rejects GitHub's GraphQL API, so `gh pr …` and `gh issue …`
   fail with a 403. Use the REST API instead:
-  - open a pull request: `gh api repos/PhilippeChab/arkyvree/pulls -f title="…" -f head="$(git branch --show-current)" -f base=develop -F body=@body.md`
+  - open a pull request: `gh api repos/PhilippeChab/arkyvree/pulls -f title="…" -f head="$(git branch --show-current)" -f base=main -F body=@body.md`
   - open an issue: `gh api repos/PhilippeChab/arkyvree/issues -f title="…" -F body=@body.md -f "labels[]=bug"`
   - comment on one: `gh api repos/PhilippeChab/arkyvree/issues/<number>/comments -F body=@comment.md`
   - read a commit's checks: `gh api repos/PhilippeChab/arkyvree/commits/$(git rev-parse HEAD)/check-runs --jq '.check_runs[] | .name + " " + (.conclusion // .status)'`
@@ -23,7 +23,7 @@ here, locally and in cloud sessions.
   and the end-to-end server binds IPv6 (`HOST=::`), which the container lacks.
 - **Screenshots:** a Chromium is installed (`/opt/pw-browsers/chromium`): Playwright drives it with
   `launchOptions: { executablePath: "/opt/pw-browsers/chromium" }`, against a server bound to `127.0.0.1`. Take each
-  change's before (a `develop` worktree) and after in the same state, put them side by side on an Artifact page, and
+  change's before (a `main` worktree) and after in the same state, put them side by side on an Artifact page, and
   link the page from the pull request: `--attach` doesn't work in the cloud. The page is private until it's shared from
   its Share menu.
 
@@ -34,7 +34,7 @@ A change's checks follow what its diff touches, not one list for every change:
 | The diff touches | Checks |
 |---|---|
 | Any code | AGENTS.md's checks before finishing a task (TypeScript, lint, format, `bun run test:changed`); CI runs the changed tests on a pull request and the whole suite once it's merged |
-| Specific routes' answers | those routes' answers before (a `develop` worktree) and after, on copies of one seeded database |
+| Specific routes' answers | those routes' answers before (a `main` worktree) and after, on copies of one seeded database |
 | The level-up engine | a level-up's save, edit and removal, before and after, on the tests' characters |
 | Writes, or a migration | the writes it changes, before and after; a migration also runs on a Neon branch of production first |
 | What users see | screenshots of the pages it changes, as **Screenshots** says |
@@ -49,7 +49,7 @@ A seeded database is copied (`scripts/db/clone-database.ts <suffix>`), not seede
 - **Issues:** an issue's title starts with its area (`Engine:`, `Client:`, `Server:`, `Codegen:`…), and it's labeled
   `bug` or `enhancement`.
 - **Pull requests:**
-  - A pull request targets `develop`, and its title starts with its area too.
+  - A pull request targets `main`, and its title starts with its area too.
   - Its body opens with a **Premise** (the behavior reproduced before changing it), then what changed and the checks
     run.
   - A user interface change attaches before and after screenshots (`--attach` on `gh pr create`, `gh pr edit` or

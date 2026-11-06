@@ -9,7 +9,7 @@ For UI changes, attach desktop and mobile screenshots directly to the PR with pr
 
 ## Checklist
 
-- [ ] Targets `develop` and stays focused on the described change.
+- [ ] Targets `main` and stays focused on the described change.
 - [ ] Relevant tests and documentation are updated.
 - [ ] Migrations, package updates, or deployment implications are described, if applicable.
 - [ ] No credentials, `.env` files, dumps, or private user data are included.

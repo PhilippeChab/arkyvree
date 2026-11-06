@@ -72,7 +72,7 @@ seed_test_database() {
 
 log "session start in $(pwd)"
 # The diff base `bun run test:changed` reads (scripts/parent-branch.sh), absent from a shallow or single-branch clone
-git fetch -q origin develop >> "$LOG" 2>&1 || problems+=("git fetch origin develop failed")
+git fetch -q origin main >> "$LOG" 2>&1 || problems+=("git fetch origin main failed")
 
 if start_postgres; then
   if install_dependencies; then
