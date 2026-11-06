@@ -1,8 +1,8 @@
 import { relative, resolve } from "node:path";
 
 import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
+import type { ReferenceFilters } from "@/codegen/core/references/types.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
-import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 import { BookGenerator } from "./BookGenerator.ts";
 

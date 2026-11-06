@@ -1,0 +1,213 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:09:30.972Z",
+    "sourceUrl": "https://aonprd.com/ClassDisplay.aspx?ItemName=Commoner",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "An NPC class for ordinary folk: a d6 hit die, a poor base attack bonus and poor saves, 2 skill points per level, and proficiency with one simple weapon and no armor."
+  },
+  "raw": {
+    "classSkills": "The Commoner's class skills are Climb (Str), Craft (Int), Handle Animal (Cha), Perception (Wis), Profession (Wis), Ride (Dex), and Swim (Str).",
+    "details": [
+      {
+        "label": "Hit Die",
+        "text": "d6."
+      },
+      {
+        "label": "Skill Points at each Level",
+        "text": "2 + Int modifier."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "The commoner is proficient with one simple weapon. He is not proficient with any other weapons, nor is he proficient with any type of armor or shield."
+      }
+    ],
+    "name": "Commoner",
+    "prestige": false,
+    "requirements": [],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 449
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+0",
+            "+0",
+            "—"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+0",
+            "+0",
+            "+0",
+            "—"
+          ],
+          [
+            "3rd",
+            "+1",
+            "+1",
+            "+1",
+            "+1",
+            "—"
+          ],
+          [
+            "4th",
+            "+2",
+            "+1",
+            "+1",
+            "+1",
+            "—"
+          ],
+          [
+            "5th",
+            "+2",
+            "+1",
+            "+1",
+            "+1",
+            "—"
+          ],
+          [
+            "6th",
+            "+3",
+            "+2",
+            "+2",
+            "+2",
+            "—"
+          ],
+          [
+            "7th",
+            "+3",
+            "+2",
+            "+2",
+            "+2",
+            "—"
+          ],
+          [
+            "8th",
+            "+4",
+            "+2",
+            "+2",
+            "+2",
+            "—"
+          ],
+          [
+            "9th",
+            "+4",
+            "+3",
+            "+3",
+            "+3",
+            "—"
+          ],
+          [
+            "10th",
+            "+5",
+            "+3",
+            "+3",
+            "+3",
+            "—"
+          ],
+          [
+            "11th",
+            "+5",
+            "+3",
+            "+3",
+            "+3",
+            "—"
+          ],
+          [
+            "12th",
+            "+6/+1",
+            "+4",
+            "+4",
+            "+4",
+            "—"
+          ],
+          [
+            "13th",
+            "+6/+1",
+            "+4",
+            "+4",
+            "+4",
+            "—"
+          ],
+          [
+            "14th",
+            "+7/+2",
+            "+4",
+            "+4",
+            "+4",
+            "—"
+          ],
+          [
+            "15th",
+            "+7/+2",
+            "+5",
+            "+5",
+            "+5",
+            "—"
+          ],
+          [
+            "16th",
+            "+8/+3",
+            "+5",
+            "+5",
+            "+5",
+            "—"
+          ],
+          [
+            "17th",
+            "+8/+3",
+            "+5",
+            "+5",
+            "+5",
+            "—"
+          ],
+          [
+            "18th",
+            "+9/+4",
+            "+6",
+            "+6",
+            "+6",
+            "—"
+          ],
+          [
+            "19th",
+            "+9/+4",
+            "+6",
+            "+6",
+            "+6",
+            "—"
+          ],
+          [
+            "20th",
+            "+10/+5",
+            "+6",
+            "+6",
+            "+6",
+            "—"
+          ]
+        ]
+      }
+    ]
+  }
+}

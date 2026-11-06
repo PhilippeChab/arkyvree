@@ -1,8 +1,8 @@
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 
 import type { ItemFields } from "./items.ts";
-import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A magic item's fields an override sets. */
 type MagicItemFields = ItemFields & {

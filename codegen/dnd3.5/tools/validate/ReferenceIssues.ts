@@ -1,8 +1,9 @@
+import type { ReferenceFile } from "@/codegen/core/references/types.ts";
 import { ItemDetector } from "@/codegen/dnd3.5/tools/detect/ItemDetector.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import type { ReferenceFile } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 import { ClassOverridesCheck } from "./ClassOverridesCheck.ts";
 import { ReviewList } from "./ReviewList.ts";
@@ -65,20 +66,20 @@ function detectedIssues(d: DetectedEntry): Found[] {
  * reference, each reporting what its review list (`ReviewList`) doesn't cover, then the list's stale entries.
  */
 export class ReferenceIssues {
-  constructor(file: ReferenceFile) {
+  constructor(file: ReferenceFile<ReferenceType>) {
     this.file = file;
     this.at = { book: file.book, file: file.path };
   }
 
   /** The issues of the reference files `files` (`References.files`), each file's in turn. */
-  static of(files: ReferenceFile[]): Issue[] {
+  static of(files: ReferenceFile<ReferenceType>[]): Issue[] {
     return files.flatMap((file) => new ReferenceIssues(file).list());
   }
 
   /** Where its issues are: its book and its file. */
   private readonly at: Pick<Issue, "book" | "file">;
   /** The reference file. */
-  readonly file: ReferenceFile;
+  readonly file: ReferenceFile<ReferenceType>;
 
   /**
    * A class's: its detections, its features' (each by its feature), the columns of its table no modifier reads (what

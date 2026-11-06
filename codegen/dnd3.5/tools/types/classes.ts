@@ -1,8 +1,9 @@
+import type { ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { CasterLevelAdvancement } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { BabType, CasterType, SaveType } from "@/vocabulary/dnd3.5/classes.ts";
 
-import type { DetectedModifiers, ScrapedMeta } from "./reference.ts";
+import type { DetectedModifiers } from "./reference.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
 interface ClassFeatureFields {

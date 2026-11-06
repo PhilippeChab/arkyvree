@@ -10,10 +10,9 @@
 
 import { join } from "node:path";
 
+import { CommandLine } from "@/codegen/core/cli/CommandLine.ts";
 import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
 import { Generator } from "@/codegen/dnd3.5/tools/generator/Generator.ts";
-
-import { CommandLine } from "./CommandLine.ts";
 
 /** What the generator writes: the content package's seed data. */
 const GENERATED_DIR = join(import.meta.dirname!, "../../../../content/dnd3.5/generated");

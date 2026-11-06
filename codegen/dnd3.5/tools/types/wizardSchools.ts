@@ -1,4 +1,4 @@
-import type { Overrides, ScrapedMeta } from "./reference.ts";
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 
 export interface WizardSchoolReference {
   _meta: ScrapedMeta<"wizardSchool">;

@@ -1,0 +1,434 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:51.284Z",
+    "sourceUrl": "https://aonprd.com/SourceDisplay.aspx?FixedSource=PRPG%20Core%20Rulebook",
+    "type": "race"
+  },
+  "overrides": {
+    "Dwarf": {
+      "description": "Medium, slow and steady: +2 Constitution and Wisdom, –2 Charisma, a 20-foot speed that armor and load never lower, darkvision, bonuses against giants, poison and spells, a knack for stonework and for appraising treasure, and proficiency with battleaxes, heavy picks and warhammers."
+    },
+    "Elf": {
+      "description": "Medium and quick-witted: +2 Dexterity and Intelligence, –2 Constitution, low-light vision, immunity to magic sleep and a bonus against enchantments, keen senses, a bonus to overcome spell resistance, and proficiency with longbows, longswords, rapiers and shortbows."
+    },
+    "Gnome": {
+      "description": "Small and hardy: +2 Constitution and Charisma, –2 Strength, a 20-foot speed, low-light vision, bonuses against giants and illusions, a few minor spell-like abilities, keen senses, a bonus on one Craft or Profession skill, and familiarity with gnome weapons."
+    },
+    "Half-Elf": {
+      "description": "Medium and adaptable: +2 to one ability score, low-light vision, immunity to magic sleep and a bonus against enchantments, keen senses, Skill Focus as a bonus feat, two favored classes, and kinship with both elves and humans."
+    },
+    "Half-Orc": {
+      "description": "Medium and fierce: +2 to one ability score, darkvision, a bonus on Intimidate, the ferocity to keep fighting for a round below 0 hit points, kinship with both orcs and humans, and proficiency with greataxes and falchions and familiarity with orc weapons."
+    },
+    "Halfling": {
+      "description": "Small and lucky: +2 Dexterity and Charisma, –2 Strength, a 20-foot speed, a bonus on every save and against fear, keen senses, a bonus on Acrobatics and Climb, and proficiency with slings and familiarity with halfling weapons."
+    },
+    "Human": {
+      "description": "Medium and versatile: +2 to one ability score, a bonus feat at 1st level, and an extra skill point at every level."
+    }
+  },
+  "raw": [
+    {
+      "name": "Dwarf",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 236
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 21
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 10
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 Constitution, +2 Wisdom, –2 Charisma",
+          "text": "Dwarves are both tough and wise, but also a bit gruff."
+        },
+        {
+          "label": "Medium",
+          "text": "Dwarves are Medium creatures and have no bonuses or penalties due to their size."
+        },
+        {
+          "label": "Slow and Steady",
+          "text": "Dwarves have a base speed of 20 feet, but their speed is never modified by armor or encumbrance."
+        },
+        {
+          "label": "Darkvision",
+          "text": "Dwarves can see in the dark up to 60 feet."
+        },
+        {
+          "label": "Defensive Training",
+          "text": "Dwarves get a +4 dodge bonus to their AC against monsters of the giant subtype."
+        },
+        {
+          "label": "Greed",
+          "text": "Dwarves receive a +2 racial bonus on Appraise checks made to determine the price of nonmagical goods that contain precious metals or gemstones."
+        },
+        {
+          "label": "Hatred",
+          "text": "Dwarves receive a +1 bonus on attack rolls against humanoid creatures of the orc and goblinoid subtypes because of their special training against these hated foes."
+        },
+        {
+          "label": "Hardy",
+          "text": "Dwarves receive a +2 racial bonus on saving throws against poison, spells, and spell-like abilities."
+        },
+        {
+          "label": "Stability",
+          "text": "Dwarves receive a +4 racial bonus to their Combat Maneuver Defense when resisting a bull rush or trip attempt while standing on the ground."
+        },
+        {
+          "label": "Stonecunning",
+          "text": "Dwarves receive a +2 bonus on Perception checks to potentially notice unusual stonework, such as traps and hidden doors located in stone walls or floors. They receive a check to notice any such features that they pass within 10 feet of, whether or not they are actively looking."
+        },
+        {
+          "label": "Weapon Familiarity",
+          "text": "Dwarves are proficient with battleaxes, heavy picks, and warhammers, and treat any weapon with the word “dwarven” in its name as a martial weapon."
+        },
+        {
+          "label": "Languages",
+          "text": "Dwarves begin play speaking Common and Dwarven. Dwarves with high Intelligence scores can choose from the following languages: Giant, Gnome, Goblin, Orc, Terran, and Undercommon."
+        }
+      ]
+    },
+    {
+      "name": "Elf",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 236
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 20
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 22
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 Dexterity, +2 Intelligence, –2 Constitution",
+          "text": "Elves are nimble, both in body and mind, but their forms are frail."
+        },
+        {
+          "label": "Medium",
+          "text": "Elves are Medium creatures and have no bonuses or penalties due to their size."
+        },
+        {
+          "label": "Normal Speed",
+          "text": "Elves have a base speed of 30 feet."
+        },
+        {
+          "label": "Low-Light Vision",
+          "text": "Elves can see twice as far as humans in conditions of dim light."
+        },
+        {
+          "label": "Elven Immunities",
+          "text": "Elves are immune to magic sleep effects and get a +2 racial bonus on saving throws against enchantment spells and effects."
+        },
+        {
+          "label": "Elven Magic",
+          "text": "Elves receive a +2 racial bonus on caster level checks made to overcome spell resistance. In addition, elves receive a +2 racial bonus on Spellcraft checks made to identify the properties of magic items."
+        },
+        {
+          "label": "Keen Senses",
+          "text": "Elves receive a +2 racial bonus on Perception checks."
+        },
+        {
+          "label": "Weapon Familiarity",
+          "text": "Elves are proficient with longbows (including composite longbows), longswords, rapiers, and shortbows (including composite shortbows), and treat any weapon with the word “elven” in its name as a martial weapon."
+        },
+        {
+          "label": "Languages",
+          "text": "Elves begin play speaking Common and Elven. Elves with high Intelligence scores can choose from the following languages: Celestial, Draconic, Gnoll, Gnome, Goblin, Orc, and Sylvan."
+        }
+      ]
+    },
+    {
+      "name": "Gnome",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 237
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 23
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 30
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 Constitution, +2 Charisma, –2 Strength",
+          "text": "Gnomes are physically weak but surprisingly hardy, and their enthusiastic attitudes make them naturally agreeable."
+        },
+        {
+          "label": "Small",
+          "text": "Gnomes are Small creatures and gain a +1 size bonus to their AC, a +1 size bonus on attack rolls, a –1 penalty on combat maneuver checks and to their Combat Maneuver Defense, and a +4 size bonus on Stealth checks."
+        },
+        {
+          "label": "Slow Speed",
+          "text": "Gnomes have a base speed of 20 feet."
+        },
+        {
+          "label": "Low-Light Vision",
+          "text": "Gnomes can see twice as far as humans in conditions of dim light."
+        },
+        {
+          "label": "Defensive Training",
+          "text": "Gnomes get a +4 dodge bonus to their AC against monsters of the giant type."
+        },
+        {
+          "label": "Gnome Magic",
+          "text": "Gnomes add 1 to the DCs of any saving throws to resist illusion spells that they cast. Gnomes with a Charisma of 11 or higher also gain the following spell-like abilities: 1/day—dancing lights, ghost sound, prestidigitation, and speak with animals. The caster level for these effects is equal to the gnome’s character level. The DC for these spells is equal to 10 + the spell’s level + the gnome’s Charisma modifier."
+        },
+        {
+          "label": "Hatred",
+          "text": "Gnomes receive a +1 bonus on attack rolls against humanoid creatures of the reptilian and goblinoid subtypes because of their special training against these hated foes."
+        },
+        {
+          "label": "Illusion Resistance",
+          "text": "Gnomes get a +2 racial bonus on saving throws against illusion spells or effects."
+        },
+        {
+          "label": "Keen Senses",
+          "text": "Gnomes receive a +2 racial bonus on Perception checks."
+        },
+        {
+          "label": "Obsessive",
+          "text": "Gnomes receive a +2 racial bonus on a Craft or Profession skill of their choice."
+        },
+        {
+          "label": "Weapon Familiarity",
+          "text": "Gnomes treat any weapon with the word “gnome” in its name as a martial weapon."
+        },
+        {
+          "label": "Languages",
+          "text": "Gnomes begin play speaking Common, Gnome, and Sylvan. Gnomes with high Intelligence scores can choose from the following languages: Draconic, Dwarven, Elven, Giant, Goblin, and Orc."
+        }
+      ]
+    },
+    {
+      "name": "Half-Elf",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 237
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 40
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 24
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 to One Ability Score",
+          "text": "Half-elf characters get a +2 bonus to one ability score of their choice at creation to represent their varied nature."
+        },
+        {
+          "label": "Medium",
+          "text": "Half-elves are Medium creatures and have no bonuses or penalties due to their size."
+        },
+        {
+          "label": "Normal Speed",
+          "text": "Half-elves have a base speed of 30 feet."
+        },
+        {
+          "label": "Low-Light Vision",
+          "text": "Half-elves can see twice as far as humans in conditions of dim light."
+        },
+        {
+          "label": "Adaptability",
+          "text": "Half-elves receive Skill Focus as a bonus feat at 1st level."
+        },
+        {
+          "label": "Elf Blood",
+          "text": "Half-elves count as both elves and humans for any effect related to race."
+        },
+        {
+          "label": "Elven Immunities",
+          "text": "Half-elves are immune to magic sleep effects and get a +2 racial bonus on saving throws against enchantment spells and effects."
+        },
+        {
+          "label": "Keen Senses",
+          "text": "Half-elves receive a +2 racial bonus on Perception checks."
+        },
+        {
+          "label": "Multitalented",
+          "text": "Half-elves choose two favored classes at 1st level and gain 1 additional hit point or skill point whenever they take a level in either one of those classes."
+        },
+        {
+          "label": "Languages",
+          "text": "Half-elves begin play speaking Common and Elven. Half-elves with high Intelligence scores can choose any languages they want (except secret languages, such as Druidic)."
+        }
+      ]
+    },
+    {
+      "name": "Halfling",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 238
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 26
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 60
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 Dexterity, +2 Charisma, –2 Strength",
+          "text": "Halflings are nimble and strong-willed, but their small statures make them weaker than other races."
+        },
+        {
+          "label": "Small",
+          "text": "Halflings are Small creatures and gain a +1 size bonus to their AC, a +1 size bonus on attack rolls, a –1 penalty on combat maneuver checks and to their Combat Maneuver Defense, and a +4 size bonus on Stealth checks."
+        },
+        {
+          "label": "Slow Speed",
+          "text": "Halflings have a base speed of 20 feet."
+        },
+        {
+          "label": "Fearless",
+          "text": "Halflings receive a +2 racial bonus on all saving throws against fear. This bonus stacks with the bonus granted by halfling luck."
+        },
+        {
+          "label": "Halfling Luck",
+          "text": "Halflings receive a +1 racial bonus on all saving throws."
+        },
+        {
+          "label": "Keen Senses",
+          "text": "Halflings receive a +2 racial bonus on Perception checks."
+        },
+        {
+          "label": "Sure-Footed",
+          "text": "Halflings receive a +2 racial bonus on Acrobatics and Climb checks."
+        },
+        {
+          "label": "Weapon Familiarity",
+          "text": "Halflings are proficient with slings and treat any weapon with the word “halfling” in its name as a martial weapon."
+        },
+        {
+          "label": "Languages",
+          "text": "Halflings begin play speaking Common and Halfling. Halflings with high Intelligence scores can choose from the following languages: Dwarven, Elven, Gnome, and Goblin."
+        }
+      ]
+    },
+    {
+      "name": "Half-Orc",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 237
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 50
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 25
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 to One Ability Score",
+          "text": "Half-orc characters get a +2 bonus to one ability score of their choice at creation to represent their varied nature."
+        },
+        {
+          "label": "Medium",
+          "text": "Half-orcs are Medium creatures and have no bonuses or penalties due to their size."
+        },
+        {
+          "label": "Normal Speed",
+          "text": "Half-orcs have a base speed of 30 feet."
+        },
+        {
+          "label": "Darkvision",
+          "text": "Half-orcs can see in the dark up to 60 feet."
+        },
+        {
+          "label": "Intimidating",
+          "text": "Half-orcs receive a +2 racial bonus on Intimidate checks because of their fearsome nature."
+        },
+        {
+          "label": "Orc Blood",
+          "text": "Half-orcs count as both humans and orcs for any effect related to race."
+        },
+        {
+          "label": "Orc Ferocity",
+          "text": "Once per day, when a half-orc is brought below 0 hit points but not killed, he can fight on for 1 more round as if disabled. At the end of his next turn, unless brought to 1 or more hit points, he immediately falls unconscious and begins dying."
+        },
+        {
+          "label": "Weapon Familiarity",
+          "text": "Half-orcs are proficient with greataxes and falchions, and treat any weapon with the word “orc” in its name as a martial weapon."
+        },
+        {
+          "label": "Languages",
+          "text": "Half-orcs begin play speaking Common and Orc. Half-orcs with high Intelligence scores can choose from the following languages: Abyssal, Draconic, Giant, Gnoll, and Goblin."
+        }
+      ]
+    },
+    {
+      "name": "Human",
+      "sources": [
+        {
+          "book": "Inner Sea Races",
+          "page": 238
+        },
+        {
+          "book": "Advanced Race Guide",
+          "page": 70
+        },
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 27
+        }
+      ],
+      "traits": [
+        {
+          "label": "+2 to One Ability Score",
+          "text": "Human characters get a +2 bonus to one ability score of their choice at creation to represent their varied nature."
+        },
+        {
+          "label": "Medium",
+          "text": "Humans are Medium creatures and have no bonuses or penalties due to their size."
+        },
+        {
+          "label": "Normal Speed",
+          "text": "Humans have a base speed of 30 feet."
+        },
+        {
+          "label": "Bonus Feat",
+          "text": "Humans select one extra feat at 1st level."
+        },
+        {
+          "label": "Skilled",
+          "text": "Humans gain 1 additional skill rank at 1st level and 1 additional rank whenever they gain a level."
+        },
+        {
+          "label": "Languages",
+          "text": "Humans begin play speaking Common and their ethnic language. Humans whose ethnic language is Common (or Taldane, in the case of Chelaxians or Taldans) do not receive an additional ethnic language. Humans with high Intelligence scores can choose any languages they want (except secret languages, such as Druidic)."
+        }
+      ]
+    }
+  ]
+}

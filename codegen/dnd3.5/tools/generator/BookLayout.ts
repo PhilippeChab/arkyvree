@@ -1,6 +1,7 @@
 /** A book's generated tree: each file's path in the book's folder, and the list it exports. */
 
-import { toCamelCase, toConstName } from "@/codegen/dnd3.5/tools/text/names.ts";
+import { toCamelCase } from "@/codegen/core/text/names.ts";
+import { toConstName } from "@/codegen/dnd3.5/tools/text/names.ts";
 
 /** A generated file: its path in the book's folder, and the list it exports. */
 export interface BookFile {

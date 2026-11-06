@@ -19,10 +19,9 @@
  *   bun run parser:dnd3.5:validate srd wizard                    # only a book's reference, by its file's name
  */
 
+import { CommandLine } from "@/codegen/core/cli/CommandLine.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type Issue, ReferenceIssues } from "@/codegen/dnd3.5/tools/validate/ReferenceIssues.ts";
-
-import { CommandLine } from "./CommandLine.ts";
 
 function main() {
   const refs = References.files(CommandLine.filters());

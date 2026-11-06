@@ -1,0 +1,934 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:51.522Z",
+    "sourceUrl": "https://aonprd.com/SourceDisplay.aspx?FixedSource=PRPG%20Core%20Rulebook",
+    "type": "domain"
+  },
+  "raw": [
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can manipulate lightning, mist, and wind, traffic with air creatures, and are resistant to electricity damage."
+        },
+        {
+          "label": "Lightning Arc (Sp)",
+          "text": "As a standard action, you can unleash an arc of electricity targeting any foe within 30 feet as a ranged touch attack. This arc of electricity deals 1d6 points of electricity damage + 1 point for every two cleric levels you possess. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Electricity Resistance (Ex)",
+          "text": "At 6th level, you gain resist electricity 10. This resistance increases to 20 at 12th level. At 20th level, you gain immunity to electricity."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—obscuring mist, 2nd—wind wall, 3rd—gaseous form, 4th—air walk, 5th—control winds, 6th—chain lightning, 7th—elemental body IV (air only), 8th—whirlwind, 9th—elemental swarm (air spell only)."
+        }
+      ],
+      "name": "Air",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 41
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can speak with and befriend animals with ease. In addition, you treat Knowledge (nature) as a class skill."
+        },
+        {
+          "label": "Speak with Animals (Sp)",
+          "text": "You can speak with animals, as per the spell, for a number of rounds per day equal to 3 + your cleric level."
+        },
+        {
+          "label": "Animal Companion (Ex)",
+          "text": "At 4th level, you gain the service of an animal companion. Your effective druid level for this animal companion is equal to your cleric level – 3. (Druids who take this ability through their nature bond class feature use their druid level – 3 to determine the abilities of their animal companions)."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—calm animals, 2nd—hold animal, 3rd—dominate animal, 4th—summon nature's ally IV (animals only), 5th—beast shape III (animals only), 6th—antilife shell, 7th—animal shapes, 8th—summon nature's ally VIII (animals only), 9th—shapechange."
+        }
+      ],
+      "name": "Animal",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 41
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can repair damage to objects, animate objects with life, and create objects from nothing."
+        },
+        {
+          "label": "Artificer's Touch (Sp)",
+          "text": "You can cast mending at will, using your cleric level as the caster level to repair damaged objects. In addition, you can cause damage to objects and construct creatures by striking them with a melee touch attack. Objects and constructs take 1d6 points of damage +1 for every two cleric levels you possess. This attack bypasses an amount of damage reduction and hardness equal to your cleric level. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Dancing Weapons (Su)",
+          "text": "At 8th level, you can give a weapon touched the dancing special weapon quality for 4 rounds. You can use this ability once per day at 8th level, and an additional time per day for every four levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—animate rope, 2nd—wood shape, 3rd—stone shape, 4th—minor creation, 5th—fabricate, 6th—major creation, 7th—wall of iron, 8th—statue, 9th—prismatic sphere."
+        }
+      ],
+      "name": "Artifice",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 41
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "Your touch infuses life and weapons with chaos, and you revel in all things anarchic."
+        },
+        {
+          "label": "Touch of Chaos (Sp)",
+          "text": "You can imbue a target with chaos as a melee touch attack. For the next round, anytime the target rolls a d20, he must roll twice and take the less favorable result. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Chaos Blade (Su)",
+          "text": "At 8th level, you can give a weapon touched the anarchic special weapon quality for a number of rounds equal to 1/2 your cleric level. You can use this ability once per day at 8th level, and an additional time per day for every four levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—protection from law, 2nd—align weapon (chaos only), 3rd—magic circle against law, 4th—chaos hammer, 5th—dispel law, 6th—animate objects, 7th—word of chaos, 8th—cloak of chaos, 9th—summon monster IX (chaos spell only)."
+        }
+      ],
+      "name": "Chaos",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 42
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can baffle and befuddle foes with a touch or a smile, and your beauty and grace are divine."
+        },
+        {
+          "label": "Dazing Touch (Sp)",
+          "text": "You can cause a living creature to become dazed for 1 round as a melee touch attack. Creatures with more Hit Dice than your cleric level are unaffected. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Charming Smile (Sp)",
+          "text": "At 8th level, you can cast charm person as a swift action, with a DC of 10 + 1/2 your cleric level + your Wisdom modifier. You can only have one creature charmed in this way at a time. The total number of rounds of this effect per day is equal to your cleric level. The rounds do not need to be consecutive, and you can dismiss the charm at any time as a free action. Each attempt to use this ability consumes 1 round of its duration, whether or not the creature succeeds on its save to resist the effect."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—charm person, 2nd—calm emotions, 3rd—suggestion, 4th—heroism, 5th—charm monster, 6th—geas/quest, 7th—insanity, 8th—demand, 9th—dominate monster."
+        }
+      ],
+      "name": "Charm",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 42
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "Your touch can heal wounds, and your presence instills unity and strengthens emotional bonds."
+        },
+        {
+          "label": "Calming Touch (Sp)",
+          "text": "You can touch a creature as a standard action to heal it of 1d6 points of nonlethal damage + 1 point per cleric level. This touch also removes the fatigued, shaken, and sickened conditions (but has no effect on more severe conditions). You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Unity (Su)",
+          "text": "At 8th level, whenever a spell or effect targets you and one or more allies within 30 feet, you can use this ability to allow your allies to use your saving throw against the effect in place of their own. Each ally must decide individually before the rolls are made. Using this ability is an immediate action. You can use this ability once per day at 8th level, and one additional time per day for every four cleric levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—bless, 2nd—shield other, 3rd—prayer, 4th—imbue with spell ability, 5th—telepathic bond, 6th—heroes' feast, 7th—refuge, 8th—mass cure critical wounds, 9th—miracle."
+        }
+      ],
+      "name": "Community",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 42
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You manipulate shadows and darkness. In addition, you receive Blind-Fight as a bonus feat."
+        },
+        {
+          "label": "Touch of Darkness (Sp)",
+          "text": "As a melee touch attack, you can cause a creature's vision to be fraught with shadows and darkness. The creature touched treats all other creatures as if they had concealment, suffering a 20% miss chance on all attack rolls. This effect lasts for a number of rounds equal to 1/2 your cleric level (minimum 1). You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Eyes of Darkness (Su)",
+          "text": "At 8th level, your vision is not impaired by lighting conditions, even in absolute darkness and magic darkness. You can use this ability for a number of rounds per day equal to 1/2 your cleric level. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—obscuring mist, 2nd—blindness/deafness (only to cause blindness), 3rd—deeper darkness, 4th—shadow conjuration, 5th—summon monster V (summons 1d3 shadows), 6th—shadow walk, 7th—power word blind, 8th—greater shadow evocation, 9th—shades."
+        }
+      ],
+      "name": "Darkness",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 42
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can cause the living to bleed at a touch, and find comfort in the presence of the dead."
+        },
+        {
+          "label": "Bleeding Touch (Sp)",
+          "text": "As a melee touch attack, you can cause a living creature to take 1d6 points of damage per round. This effect persists for a number of rounds equal to 1/2 your cleric level (minimum 1) or until stopped with a DC 15 Heal check or any spell or effect that heals damage. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Death's Embrace (Ex)",
+          "text": "At 8th level, you heal damage instead of taking damage from channeled negative energy. If the channeled negative energy targets undead, you heal hit points just like undead in the area."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—cause fear, 2nd—death knell, 3rd—animate dead, 4th—death ward, 5th—slay living, 6th—create undead, 7th—destruction, 8th—create greater undead, 9th—wail of the banshee. Pharasma-Friendly Death Domain (Source: Paizo Blog, PFS-Legal) 3rd-level domain spell: Replace animate dead with speak with dead. 6th-level domain spell: Replace create undead with antilife shell. 8th-level domain spell: Replace create greater undead with symbol of death."
+        }
+      ],
+      "name": "Death",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 42
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You revel in ruin and devastation, and can deliver particularly destructive attacks."
+        },
+        {
+          "label": "Destructive Smite (Su)",
+          "text": "You gain the destructive smite power: the supernatural ability to make a single melee attack with a morale bonus on damage rolls equal to 1/2 your cleric level (minimum 1). You must declare the destructive smite before making the attack. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Destructive Aura (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura of destruction for a number of rounds per day equal to your cleric level. All attacks made against targets in this aura (including you) gain a morale bonus on damage equal to 1/2 your cleric level and all critical threats are automatically confirmed. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—true strike, 2nd—shatter, 3rd—rage, 4th—inflict critical wounds, 5th—shout, 6th—harm, 7th—disintegrate, 8th—earthquake, 9th—implosion."
+        }
+      ],
+      "name": "Destruction",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 43
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You have mastery over earth, metal, and stone, can fire darts of acid, and command earth creatures."
+        },
+        {
+          "label": "Acid Dart (Sp)",
+          "text": "As a standard action, you can unleash an acid dart targeting any foe within 30 feet as a ranged touch attack. This acid dart deals 1d6 points of acid damage + 1 point for every two cleric levels you possess. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Acid Resistance (Ex)",
+          "text": "At 6th level, you gain resist acid 10. This resistance increases to 20 at 12th level. At 20th level, you gain immunity to acid."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—magic stone, 2nd—soften earth and stone, 3rd—stone shape, 4th—spike stones, 5th—wall of stone, 6th—stoneskin, 7th—elemental body IV (earth only), 8th—earthquake, 9th—elemental swarm (earth spell only)."
+        }
+      ],
+      "name": "Earth",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 43
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are sinister and cruel, and have wholly pledged your soul to the cause of evil."
+        },
+        {
+          "label": "Touch of Evil (Sp)",
+          "text": "You can cause a creature to become sickened as a melee touch attack. Creatures sickened by your touch count as good for the purposes of spells with the evil descriptor. This ability lasts for a number of rounds equal to 1/2 your cleric level (minimum 1). You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Scythe of Evil (Su)",
+          "text": "At 8th level, you can give a weapon touched the unholy special weapon quality for a number of rounds equal to 1/2 your cleric level. You can use this ability once per day at 8th level, and an additional time per day for every four levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—protection from good, 2nd—align weapon (evil only), 3rd—magic circle against good, 4th—unholy blight, 5th—dispel good, 6th—create undead, 7th—blasphemy, 8th—unholy aura, 9th—summon monster IX (evil spell only)."
+        }
+      ],
+      "name": "Evil",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 43
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can call forth fire, command creatures of the inferno, and your flesh does not burn."
+        },
+        {
+          "label": "Fire Bolt (Sp)",
+          "text": "As a standard action, you can unleash a scorching bolt of divine fire from your outstretched hand. You can target any single foe within 30 feet as a ranged touch attack with this bolt of fire. If you hit the foe, the fire bolt deals 1d6 points of fire damage + 1 point for every two cleric levels you possess. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Fire Resistance (Ex)",
+          "text": "At 6th level, you gain resist fire 10. This resistance increases to 20 at 12th level. At 20th level, you gain immunity to fire."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—burning hands, 2nd—produce flame, 3rd—fireball, 4th—wall of fire, 5th—fire shield, 6th—fire seeds, 7th—elemental body IV (fire only), 8th—incendiary cloud, 9th—elemental swarm (fire spell only)."
+        }
+      ],
+      "name": "Fire",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 44
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are infused with the glory of the divine, and are a true foe of the undead. In addition, when you channel positive energy to harm undead creatures, the save DC to halve the damage is increased by 2."
+        },
+        {
+          "label": "Touch of Glory (Sp)",
+          "text": "You can cause your hand to shimmer with divine radiance, allowing you to touch a creature as a standard action and give it a bonus equal to your cleric level on a single Charisma-based skill check or Charisma ability check. This ability lasts for 1 hour or until the creature touched elects to apply the bonus to a roll. You can use this ability to grant the bonus a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Divine Presence (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura of divine presence for a number of rounds per day equal to your cleric level. All allies within this aura are treated as if under the effects of a sanctuary spell with a DC equal to 10 + 1/2 your cleric level + your Wisdom modifier. These rounds do not need to be consecutive. Activating this ability is a standard action. If an ally leaves the area or makes an attack, the effect ends for that ally. If you make an attack, the effect ends for you and your allies."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—shield of faith, 2nd—bless weapon, 3rd—searing light, 4th—holy smite, 5th—righteous might, 6th—undeath to death, 7th—holy sword, 8th—holy aura, 9th—gate."
+        }
+      ],
+      "name": "Glory",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 44
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You have pledged your life and soul to goodness and purity."
+        },
+        {
+          "label": "Touch of Good (Sp)",
+          "text": "You can touch a creature as a standard action, granting a sacred bonus on attack rolls, skill checks, ability checks, and saving throws equal to half your cleric level (minimum 1) for 1 round. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Holy Lance (Su)",
+          "text": "At 8th level, you can give a weapon you touch the holy special weapon quality for a number of rounds equal to 1/2 your cleric level. You can use this ability once per day at 8th level, and an additional time per day for every four levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—protection from evil, 2nd—align weapon (good only), 3rd—magic circle against evil, 4th—holy smite, 5th—dispel evil, 6th—blade barrier, 7th—holy word, 8th—holy aura, 9th—summon monster IX (good spell only)."
+        }
+      ],
+      "name": "Good",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 44
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "Your touch staves off pain and death, and your healing magic is particularly vital and potent."
+        },
+        {
+          "label": "Rebuke Death (Sp)",
+          "text": "You can touch a living creature as a standard action, healing it for 1d4 points of damage plus 1 for every two cleric levels you possess. You can only use this ability on a creature that is below 0 hit points. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Healer's Blessing (Su)",
+          "text": "At 6th level, all of your cure spells are treated as if they were empowered, increasing the amount of damage healed by half (+50%). This does not apply to damage dealt to undead with a cure spell. This does not stack with the Empower Spell metamagic feat."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—cure light wounds, 2nd—cure moderate wounds, 3rd—cure serious wounds, 4th—cure critical wounds, 5th—breath of life, 6th—heal, 7th—regenerate, 8th—mass cure critical wounds, 9th—mass heal."
+        }
+      ],
+      "name": "Healing",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 44
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a scholar and a sage of legends. In addition, you treat all Knowledge skills as class skills."
+        },
+        {
+          "label": "Lore Keeper (Sp)",
+          "text": "You can touch a creature to learn about its abilities and weaknesses. With a successful touch attack, you gain information as if you made the appropriate Knowledge skill check with a result equal to 15 + your cleric level + your Wisdom modifier."
+        },
+        {
+          "label": "Remote Viewing (Sp)",
+          "text": "Starting at 6th level, you can use clairvoyance/clairaudience at will as a spell-like ability using your cleric level as the caster level. You can use this ability for a number of rounds per day equal to your cleric level. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—comprehend languages, 2nd—detect thoughts, 3rd—speak with dead, 4th—divination, 5th—true seeing, 6th—find the path, 7th—legend lore, 8th—discern location, 9th—foresight."
+        }
+      ],
+      "name": "Knowledge",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 45
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You follow a strict and ordered code of laws, and in so doing, achieve enlightenment."
+        },
+        {
+          "label": "Touch of Law (Sp)",
+          "text": "You can touch a willing creature as a standard action, infusing it with the power of divine order and allowing it to treat all attack rolls, skill checks, ability checks, and saving throws for 1 round as if the natural d20 roll resulted in an 11. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Staff of Order (Su)",
+          "text": "At 8th level, you can give a weapon touched the axiomatic special weapon quality for a number of rounds equal to 1/2 your cleric level. You can use this ability once per day at 8th level, and an additional time per day for every four levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—protection from chaos, 2nd—align weapon (law only), 3rd—magic circle against chaos, 4th—order's wrath, 5th—dispel chaos, 6th—hold monster, 7th—dictum, 8th—shield of law, 9th—summon monster IX (law spell only)."
+        }
+      ],
+      "name": "Law",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 45
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a spirit of freedom and a staunch foe against all who would enslave and oppress."
+        },
+        {
+          "label": "Liberation (Su)",
+          "text": "You have the ability to ignore impediments to your mobility. For a number of rounds per day equal to your cleric level, you can move normally regardless of magical effects that impede movement, as if you were affected by freedom of movement. This effect occurs automatically as soon as it applies. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Freedom's Call (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura of freedom for a number of rounds per day equal to your cleric level. Allies within this aura are not affected by the confused, grappled, frightened, panicked, paralyzed, pinned, or shaken conditions. This aura only suppresses these effects, and they return once a creature leaves the aura or when the aura ends, if applicable. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—remove fear, 2nd—remove paralysis, 3rd—remove curse, 4th—freedom of movement, 5th—break enchantment, 6th—greater dispel magic, 7th—refuge, 8th—mind blank, 9th—freedom."
+        }
+      ],
+      "name": "Liberation",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 45
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are infused with luck, and your mere presence can spread good fortune."
+        },
+        {
+          "label": "Bit of Luck (Sp)",
+          "text": "You can touch a willing creature as a standard action, giving it a bit of luck. For the next round, any time the target rolls a d20, he may roll twice and take the more favorable result. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Good Fortune (Ex)",
+          "text": "At 6th level, as an immediate action, you can reroll any one d20 roll you have just made before the results of the roll are revealed. You must take the result of the reroll, even if it's worse than the original roll. You can use this ability once per day at 6th level, and one additional time per day for every six cleric levels beyond 6th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—true strike, 2nd—aid, 3rd—protection from energy, 4th—freedom of movement, 5th—break enchantment, 6th—mislead, 7th—spell turning, 8th—moment of prescience, 9th—miracle."
+        }
+      ],
+      "name": "Luck",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 45
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You embrace the madness that lurks deep in your heart, and can unleash it to drive your foes insane or to sacrifice certain abilities to hone others."
+        },
+        {
+          "label": "Vision of Madness (Sp)",
+          "text": "You can give a creature a vision of madness as a melee touch attack. Choose one of the following: attack rolls, saving throws, or skill checks. The target receives a bonus to the chosen rolls equal to 1/2 your cleric level (minimum +1) and a penalty to the other two types of rolls equal to 1/2 your cleric level (minimum –1). This effect fades after 3 rounds. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Aura of Madness (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura of madness for a number of rounds per day equal to your cleric level. Enemies within this aura are affected by confusion unless they make a Will save with a DC equal to 10 + 1/2 your cleric level + your Wisdom modifier. The confusion effect ends immediately when the creature leaves the area or the aura expires. Creatures that succeed on their saving throw are immune to this aura for 24 hours. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—lesser confusion, 2nd—touch of idiocy, 3rd—rage, 4th—confusion, 5th—nightmare, 6th—phantasmal killer, 7th—insanity, 8th—scintillating pattern, 9th—weird."
+        }
+      ],
+      "name": "Madness",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 45
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a true student of all things mystical, and see divinity in the purity of magic."
+        },
+        {
+          "label": "Hand of the Acolyte (Su)",
+          "text": "You can cause your melee weapon to fly from your grasp and strike a foe before instantly returning. As a standard action, you can make a single attack using a melee weapon at a range of 30 feet. This attack is treated as a ranged attack with a thrown weapon, except that you add your Wisdom modifier to the attack roll instead of your Dexterity modifier (damage still relies on Strength). This ability cannot be used to perform a combat maneuver. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Dispelling Touch (Sp)",
+          "text": "At 8th level, you can use a targeted dispel magic effect as a melee touch attack. You can use this ability once per day at 8th level and one additional time per day for every four cleric levels beyond 8th."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—identify, 2nd—magic mouth, 3rd—dispel magic, 4th—imbue with spell ability, 5th—spell resistance, 6th—antimagic field, 7th—spell turning, 8th—protection from spells, 9th—mage's disjunction."
+        }
+      ],
+      "name": "Magic",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 46
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a great leader, an inspiration to all who follow the teachings of your faith."
+        },
+        {
+          "label": "Inspiring Word (Sp)",
+          "text": "As a standard action, you can speak an inspiring word to a creature within 30 feet. That creature receives a +2 morale bonus on attack rolls, skill checks, ability checks, and saving throws for a number of rounds equal to 1/2 your cleric level (minimum 1). You can use this power a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Leadership (Ex)",
+          "text": "At 8th level, you receive Leadership as a bonus feat. In addition, you gain a +2 bonus on your leadership score as long as you uphold the tenets of your deity (or divine concept if you do not venerate a deity)."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—divine favor, 2nd—enthrall, 3rd—magic vestment, 4th—discern lies, 5th—greater command, 6th—geas/quest, 7th—repulsion, 8th—demand, 9th—storm of vengeance."
+        }
+      ],
+      "name": "Nobility",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 46
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You find solace in the green, can grow defensive thorns, and can communicate with plants."
+        },
+        {
+          "label": "Wooden Fist (Su)",
+          "text": "As a free action, your hands can become as hard as wood, covered in tiny thorns. While you have wooden fists, your unarmed strikes do not provoke attacks of opportunity, deal lethal damage, and gain a bonus on damage rolls equal to 1/2 your cleric level (minimum +1). You can use this ability for a number of rounds per day equal to 3 + your Wisdom modifier. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Bramble Armor (Su)",
+          "text": "At 6th level, you can cause a host of wooden thorns to burst from your skin as a free action. While bramble armor is in effect, any foe striking you with an unarmed strike or a melee weapon without reach takes 1d6 points of piercing damage + 1 point per two cleric levels you possess. You can use this ability for a number of rounds per day equal to your cleric level. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—entangle, 2nd—barkskin, 3rd—plant growth, 4th—command plants, 5th—wall of thorns, 6th—repel wood, 7th—animate plants, 8th—control plants, 9th—shambler."
+        }
+      ],
+      "name": "Plant",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 46
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "Your faith is your greatest source of protection, and you can use that faith to defend others. In addition, you receive a +1 resistance bonus on saving throws. This bonus increases by 1 for every 5 levels you possess."
+        },
+        {
+          "label": "Resistant Touch (Sp)",
+          "text": "As a standard action, you can touch an ally to grant him your resistance bonus for 1 minute. When you use this ability, you lose your resistance bonus granted by the Protection domain for 1 minute. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Aura of Protection (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura of protection for a number of rounds per day equal to your cleric level. You and your allies within this aura gain a +1 deflection bonus to AC and resistance 5 against all elements (acid, cold, electricity, fire, and sonic). The deflection bonus increases by +1 for every four cleric levels you possess beyond 8th. At 14th level, the resistance against all elements increases to 10. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—sanctuary, 2nd—shield other, 3rd—protection from energy, 4th—spell immunity, 5th—spell resistance, 6th—antimagic field, 7th—repulsion, 8th—mind blank, 9th—prismatic sphere."
+        }
+      ],
+      "name": "Protection",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 46
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You see death not as something to be feared, but as a final rest and reward for a life well spent. The taint of undeath is a mockery of what you hold dear."
+        },
+        {
+          "label": "Gentle Rest (Sp)",
+          "text": "Your touch can fill a creature with lethargy, causing a living creature to become staggered for 1 round as a melee touch attack. If you touch a staggered living creature, that creature falls asleep for 1 round instead. Undead creatures touched are staggered for a number of rounds equal to your Wisdom modifier. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Ward Against Death (Su)",
+          "text": "At 8th level, you can emit a 30-foot aura that wards against death for a number of rounds per day equal to your cleric level. Living creatures in this area are immune to all death effects, energy drain, and effects that cause negative levels. This ward does not remove negative levels that a creature has already gained, but the negative levels have no effect while the creature is inside the warded area. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—deathwatch, 2nd—gentle repose, 3rd—speak with dead, 4th—death ward, 5th—slay living, 6th—undeath to death, 7th—destruction, 8th—waves of exhaustion, 9th—wail of the banshee."
+        }
+      ],
+      "name": "Repose",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 46
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "In strange and eldritch runes you find potent magic. You gain Scribe Scroll as a bonus feat."
+        },
+        {
+          "label": "Blast Rune (Sp)",
+          "text": "As a standard action, you can create a blast rune in any adjacent square. Any creature entering this square takes 1d6 points of damage + 1 point for every two cleric levels you possess. This rune deals either acid, cold, electricity, or fire damage, decided when you create the rune. The rune is invisible and lasts a number of rounds equal to your cleric level or until discharged. You cannot create a blast rune in a square occupied by another creature. This rune counts as a 1st-level spell for the purposes of dispelling. It can be discovered with a DC 26 Perception skill check and disarmed with a DC 26 Disable Device skill check. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Spell Rune (Sp)",
+          "text": "At 8th level, you can attach another spell that you cast to one of your blast runes, causing that spell to affect the creature that triggers the rune, in addition to the damage. This spell must be of at least one level lower than the highest-level cleric spell you can cast and it must target one or more creatures. Regardless of the number of targets the spell can normally affect, it only affects the creature that triggers the rune."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—erase, 2nd—secret page, 3rd—glyph of warding, 4th—explosive runes, 5th—lesser planar binding, 6th—greater glyph of warding, 7th—instant summons, 8th—symbol of death, 9th—teleportation circle."
+        }
+      ],
+      "name": "Rune",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 47
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "In strength and brawn there is truth—your faith gives you incredible might and power."
+        },
+        {
+          "label": "Strength Surge (Sp)",
+          "text": "As a standard action, you can touch a creature to give it great strength. For 1 round, the target gains an enhancement bonus equal to 1/2 your cleric level (minimum +1) to melee attacks, combat maneuver checks that rely on Strength, Strength-based skills, and Strength checks. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Might of the Gods (Su)",
+          "text": "At 8th level, you can add your cleric level as an enhancement bonus to your Strength score for a number of rounds per day equal to your cleric level. This bonus only applies on Strength checks and Strength-based skill checks. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—enlarge person, 2nd—bull's strength, 3rd—magic vestment, 4th—spell immunity, 5th—righteous might, 6th—stoneskin, 7th—grasping hand, 8th—clenched fist, 9th—crushing hand."
+        }
+      ],
+      "name": "Strength",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 47
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You see truth in the pure and burning light of the sun, and can call upon its blessing or wrath to work great deeds."
+        },
+        {
+          "label": "Sun's Blessing (Su)",
+          "text": "Whenever you channel positive energy to harm undead creatures, add your cleric level to the damage dealt. Undead do not add their channel resistance to their saves when you channel positive energy."
+        },
+        {
+          "label": "Nimbus of Light (Su)",
+          "text": "At 8th level, you can emit a 30-foot nimbus of light for a number of rounds per day equal to your cleric level. This acts as a daylight spell. In addition, undead within this radius take an amount of damage equal to your cleric level each round that they remain inside the nimbus. Spells and spell-like abilities with the darkness descriptor are automatically dispelled if brought inside this nimbus. These rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—endure elements, 2nd—heat metal, 3rd—searing light, 4th—fire shield, 5th—flame strike, 6th—fire seeds, 7th—sunbeam, 8th—sunburst, 9th—prismatic sphere."
+        }
+      ],
+      "name": "Sun",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 47
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are an explorer and find enlightenment in the simple joy of travel, be it by foot or conveyance or magic. Increase your base speed by 10 feet."
+        },
+        {
+          "label": "Agile Feet (Su)",
+          "text": "As a free action, you can gain increased mobility for 1 round. For the next round, you ignore all difficult terrain and do not take any penalties for moving through it. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Dimensional Hop (Sp)",
+          "text": "At 8th level, you can teleport up to 10 feet per cleric level per day as a move action. This teleportation must be used in 5-foot increments and such movement does not provoke attacks of opportunity. You must have line of sight to your destination to use this ability. You can bring other willing creatures with you, but you must expend an equal amount of distance for each creature brought."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—longstrider, 2nd—locate object, 3rd—fly, 4th—dimension door, 5th—teleport, 6th—find the path, 7th—greater teleport, 8th—phase door, 9th—astral projection."
+        }
+      ],
+      "name": "Travel",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 47
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a master of illusions and deceptions. Bluff, Disguise, and Stealth are class skills."
+        },
+        {
+          "label": "Copycat (Sp)",
+          "text": "You can create an illusory double of yourself as a move action. This double functions as a single mirror image and lasts for a number of rounds equal to your cleric level, or until the illusory duplicate is dispelled or destroyed. You can have no more than one copycat at a time. This ability does not stack with the mirror image spell. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Master's Illusion (Sp)",
+          "text": "At 8th level, you can create an illusion that hides the appearance of yourself and any number of allies within 30 feet for 1 round per cleric level. This ability otherwise functions like the spell veil. The save DC to disbelieve this effect is equal to 10 + 1/2 your cleric level + your Wisdom modifier. The rounds do not need to be consecutive."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—disguise self, 2nd—invisibility, 3rd—nondetection, 4th—confusion, 5th—false vision, 6th—mislead, 7th—screen, 8th—mass invisibility, 9th—time stop."
+        }
+      ],
+      "name": "Trickery",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 48
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You are a crusader for your god, always ready and willing to fight to defend your faith."
+        },
+        {
+          "label": "Battle Rage (Sp)",
+          "text": "You can touch a creature as a standard action to give it a bonus on melee damage rolls equal to 1/2 your cleric level for 1 round (minimum +1). You can do so a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Weapon Master (Su)",
+          "text": "At 8th level, as a swift action, you gain the use of one combat feat for a number of rounds per day equal to your cleric level. These rounds do not need to be consecutive and you can change the feat chosen each time you use this ability. You must meet the prerequisites to use this feat."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—magic weapon, 2nd—spiritual weapon, 3rd—magic vestment, 4th—divine power, 5th—flame strike, 6th—blade barrier, 7th—power word blind, 8th—power word stun, 9th—power word kill."
+        }
+      ],
+      "name": "War",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 48
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "You can manipulate water and mist and ice, conjure creatures of water, and resist cold."
+        },
+        {
+          "label": "Icicle (Sp)",
+          "text": "As a standard action, you can fire an icicle from your finger, targeting any foe within 30 feet as a ranged touch attack. The icicle deals 1d6 points of cold damage + 1 point for every two cleric levels you possess. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Cold Resistance (Ex)",
+          "text": "At 6th level, you gain resist cold 10. This resistance increases to 20 at 12th level. At 20th level, you gain immunity to cold."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—obscuring mist, 2nd—fog cloud, 3rd—water breathing, 4th—control water, 5th—ice storm, 6th—cone of cold, 7th—elemental body IV (water only), 8th—horrid wilting, 9th—elemental swarm (water spell only)."
+        }
+      ],
+      "name": "Water",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 48
+        }
+      ],
+      "subdomain": false
+    },
+    {
+      "details": [
+        {
+          "label": "Granted Powers",
+          "text": "With power over storm and sky, you can call down the wrath of the gods upon the world below."
+        },
+        {
+          "label": "Storm Burst (Sp)",
+          "text": "As a standard action, you can create a storm burst targeting any foe within 30 feet as a ranged touch attack. The storm burst deals 1d6 points of nonlethal damage + 1 point for every two cleric levels you possess. In addition, the target is buffeted by winds and rain, causing it to take a –2 penalty on attack rolls for 1 round. You can use this ability a number of times per day equal to 3 + your Wisdom modifier."
+        },
+        {
+          "label": "Lightning Lord (Sp)",
+          "text": "At 8th level, you can call down a number of bolts of lightning per day equal to your cleric level. You can call down as many bolts as you want with a single standard action, but no creature can be the target of more than one bolt and no two targets can be more than 30 feet apart. This ability otherwise functions as call lightning."
+        },
+        {
+          "label": "Domain Spells",
+          "text": "1st—obscuring mist, 2nd—fog cloud, 3rd—call lightning, 4th—sleet storm, 5th—ice storm, 6th—control winds, 7th—control weather, 8th—whirlwind, 9th—storm of vengeance."
+        }
+      ],
+      "name": "Weather",
+      "sources": [
+        {
+          "book": "PRPG Core Rulebook",
+          "page": 48
+        }
+      ],
+      "subdomain": false
+    }
+  ]
+}

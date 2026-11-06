@@ -1,0 +1,257 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.175Z",
+    "sourceUrl": "https://aonprd.com/ClassDisplay.aspx?ItemName=Rogue",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A skilled infiltrator: a d8 hit die, a good Reflex save, 8 skill points per level, sneak attack dice that rise every other level, a knack for finding and disarming traps, evasion, uncanny dodge, and rogue talents it picks every other level."
+  },
+  "raw": {
+    "classSkills": "The Rogue's class skills are Acrobatics (Dex), Appraise (Int), Bluff (Cha), Climb (Str), Craft (Int), Diplomacy (Cha), Disable Device (Dex), Disguise (Cha), Escape Artist (Dex), Intimidate (Cha), Knowledge (dungeoneering) (Int), Knowledge (local) (Int), Linguistics (Int), Perception (Wis), Perform (Cha), Profession (Wis), Sense Motive (Wis), Sleight of Hand (Dex), Stealth (Dex), Swim (Str), and Use Magic Device (Cha).",
+    "details": [
+      {
+        "label": "Alignment",
+        "text": "Any."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d8."
+      },
+      {
+        "label": "Starting Wealth",
+        "text": "4d6 x 10 gp (average 140 gp)."
+      },
+      {
+        "label": "Skill Points at each Level",
+        "text": "8 + Int modifier."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Rogues are proficient with all simple weapons, plus the hand crossbow, rapier, sap, shortbow, and short sword. They are proficient with light armor, but not with shields."
+      },
+      {
+        "label": "Sneak Attack",
+        "text": "If a rogue can catch an opponent when he is unable to defend himself effectively from her attack, she can strike a vital spot for extra damage. The rogue's attack deals extra damage anytime her target would be denied a Dexterity bonus to AC (whether the target actually has a Dexterity bonus or not), or when the rogue flanks her target. This extra damage is 1d6 at 1st level, and increases by 1d6 every two rogue levels thereafter. Should the rogue score a critical hit with a sneak attack, this extra damage is not multiplied. Ranged attacks can count as sneak attacks only if the target is within 30 feet. With a weapon that deals nonlethal damage (like a sap, whip, or an unarmed strike), a rogue can make a sneak attack that deals nonlethal damage instead of lethal damage. She cannot use a weapon that deals lethal damage to deal nonlethal damage in a sneak attack, not even with the usual –4 penalty. The rogue must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a creature with concealment."
+      },
+      {
+        "label": "Trapfinding",
+        "text": "A rogue adds 1/2 her level to Perception skill checks made to locate traps and to Disable Device skill checks (minimum +1). A rogue can use Disable Device to disarm magic traps."
+      },
+      {
+        "label": "Evasion (Ex)",
+        "text": "At 2nd level and higher, a rogue can avoid even magical and unusual attacks with great agility. If she makes a successful Reflex saving throw against an attack that normally deals half damage on a successful save, she instead takes no damage. Evasion can be used only if the rogue is wearing light armor or no armor. A helpless rogue does not gain the benefit of evasion."
+      },
+      {
+        "label": "Rogue Talents",
+        "text": "As a rogue gains experience, she learns a number of talents that aid her and confound her foes. Starting at 2nd level, a rogue gains one rogue talent. She gains an additional rogue talent for every 2 levels of rogue attained after 2nd level. A rogue cannot select an individual talent more than once. Note from Nethys: The full list of rogue talents is available here."
+      },
+      {
+        "label": "Trap Sense (Ex)",
+        "text": "At 3rd level, a rogue gains an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps. These bonuses rise to +2 when the rogue reaches 6th level, to +3 when she reaches 9th level, to +4 when she reaches 12th level, to +5 at 15th, and to +6 at 18th level. Trap sense bonuses gained from multiple classes stack."
+      },
+      {
+        "label": "Uncanny Dodge (Ex)",
+        "text": "Starting at 4th level, a rogue can react to danger before her senses would normally allow her to do so. She cannot be caught flat-footed, nor does she lose her Dex bonus to AC if the attacker is invisible. She still loses her Dexterity bonus to AC if immobilized. A rogue with this ability can still lose her Dexterity bonus to AC if an opponent successfully uses the feint action (see Combat) against her. If a rogue already has uncanny dodge from a different class, she automatically gains improved uncanny dodge (see below) instead."
+      },
+      {
+        "label": "Improved Uncanny Dodge (Ex)",
+        "text": "A rogue of 8th level or higher can no longer be flanked. This defense denies another rogue the ability to sneak attack the character by flanking her, unless the attacker has at least four more rogue levels than the target does. If a character already has uncanny dodge (see above) from another class, the levels from the classes that grant uncanny dodge stack to determine the minimum rogue level required to flank the character."
+      },
+      {
+        "label": "Advanced Talents",
+        "text": "At 10th level, and every two levels thereafter, a rogue can choose one of the following advanced talents in place of a rogue talent. Note from Nethys: The full list of rogue talents is available here."
+      },
+      {
+        "label": "Master Strike (Ex)",
+        "text": "Upon reaching 20th level, a rogue becomes incredibly deadly when dealing sneak attack damage. Each time the rogue deals sneak attack damage, she can choose one of the following three effects: the target can be put to sleep for 1d4 hours, paralyzed for 2d6 rounds, or slain. Regardless of the effect chosen, the target receives a Fortitude save to negate the additional effect. The DC of this save is equal to 10 + 1/2 the rogue's level + the rogue's Intelligence modifier. Once a creature has been the target of a master strike, regardless of whether or not the save is made, that creature is immune to that rogue's master strike for 24 hours. Creatures that are immune to sneak attack damage are also immune to this ability."
+      }
+    ],
+    "name": "Rogue",
+    "prestige": false,
+    "requirements": [],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 67
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+2",
+            "+0",
+            "Sneak attack +1d6, trapfinding"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+0",
+            "+3",
+            "+0",
+            "Evasion, rogue talent"
+          ],
+          [
+            "3rd",
+            "+2",
+            "+1",
+            "+3",
+            "+1",
+            "Sneak attack +2d6, trap sense +1"
+          ],
+          [
+            "4th",
+            "+3",
+            "+1",
+            "+4",
+            "+1",
+            "Rogue talent, uncanny dodge"
+          ],
+          [
+            "5th",
+            "+3",
+            "+1",
+            "+4",
+            "+1",
+            "Sneak attack +3d6"
+          ],
+          [
+            "6th",
+            "+4",
+            "+2",
+            "+5",
+            "+2",
+            "Rogue talent, trap sense +2"
+          ],
+          [
+            "7th",
+            "+5",
+            "+2",
+            "+5",
+            "+2",
+            "Sneak attack +4d6"
+          ],
+          [
+            "8th",
+            "+6/+1",
+            "+2",
+            "+6",
+            "+2",
+            "Improved uncanny dodge, rogue talent"
+          ],
+          [
+            "9th",
+            "+6/+1",
+            "+3",
+            "+6",
+            "+3",
+            "Sneak attack +5d6, trap sense +3"
+          ],
+          [
+            "10th",
+            "+7/+2",
+            "+3",
+            "+7",
+            "+3",
+            "Advanced talents, rogue talent"
+          ],
+          [
+            "11th",
+            "+8/+3",
+            "+3",
+            "+7",
+            "+3",
+            "Sneak attack +6d6"
+          ],
+          [
+            "12th",
+            "+9/+4",
+            "+4",
+            "+8",
+            "+4",
+            "Rogue talent, trap sense +4"
+          ],
+          [
+            "13th",
+            "+9/+4",
+            "+4",
+            "+8",
+            "+4",
+            "Sneak attack +7d6"
+          ],
+          [
+            "14th",
+            "+10/+5",
+            "+4",
+            "+9",
+            "+4",
+            "Rogue talent"
+          ],
+          [
+            "15th",
+            "+11/+6/+1",
+            "+5",
+            "+9",
+            "+5",
+            "Sneak attack +8d6, trap sense +5"
+          ],
+          [
+            "16th",
+            "+12/+7/+2",
+            "+5",
+            "+10",
+            "+5",
+            "Rogue talent"
+          ],
+          [
+            "17th",
+            "+12/+7/+2",
+            "+5",
+            "+10",
+            "+5",
+            "Sneak attack +9d6"
+          ],
+          [
+            "18th",
+            "+13/+8/+3",
+            "+6",
+            "+11",
+            "+6",
+            "Rogue talent, trap sense +6"
+          ],
+          [
+            "19th",
+            "+14/+9/+4",
+            "+6",
+            "+11",
+            "+6",
+            "Sneak attack +10d6"
+          ],
+          [
+            "20th",
+            "+15/+10/+5",
+            "+6",
+            "+12",
+            "+6",
+            "Master strike, rogue talent"
+          ]
+        ]
+      }
+    ]
+  }
+}

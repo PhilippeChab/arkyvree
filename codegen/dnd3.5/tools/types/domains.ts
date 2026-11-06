@@ -1,6 +1,7 @@
+import type { Overrides, ScrapedMeta } from "@/codegen/core/references/types.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 
-import type { DetectedModifiers, Overrides, ScrapedMeta } from "./reference.ts";
+import type { DetectedModifiers } from "./reference.ts";
 
 /** A domain's pool of feats (e.g. War Domain Weapon: a feat per martial weapon). */
 interface DomainFeatPool {

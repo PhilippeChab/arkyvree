@@ -1,0 +1,194 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:08:49.178Z",
+    "sourceUrl": "https://aonprd.com/PrestigeClassesDisplay.aspx?ItemName=Assassin",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "A prestige class for evil killers: sneak attack dice that rise as it advances, a death attack that paralyzes or kills a foe it has studied, skill with poisons, defenses such as uncanny dodge, and, at its highest levels, killing strikes that need no study."
+  },
+  "raw": {
+    "classSkills": "The Assassin's class skills are Acrobatics (Dex), Bluff (Cha), Climb (Str), Diplomacy (Cha), Disable Device (Int), Disguise (Cha), Escape Artist (Dex), Intimidate (Cha), Linguistics (Int), Perception (Wis), Sense Motive (Wis), Sleight of Hand (Dex), Stealth (Dex), Swim (Str), and Use Magic Device (Cha).",
+    "details": [
+      {
+        "label": "Skill Points at each Level",
+        "text": "4 + Int modifier."
+      },
+      {
+        "label": "Hit Die",
+        "text": "d8."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "Assassins are proficient with the crossbow (hand, light, or heavy), dagger (any type), dart, rapier, sap, shortbow (normal and composite), and short sword. Assassins are proficient with light armor but not with shields."
+      },
+      {
+        "label": "Sneak Attack",
+        "text": "This is exactly like the rogue ability of the same name. The extra damage dealt increases by +1d6 every other level (1st, 3rd, 5th, 7th, and 9th). If an assassin gets a sneak attack bonus from another source, the bonuses on damage stack."
+      },
+      {
+        "label": "Death Attack (Ex)",
+        "text": "If an assassin studies his victim for 3 rounds and then makes a sneak attack with a melee weapon that successfully deals damage, the sneak attack has the additional effect of possibly either paralyzing or killing the target (assassin's choice). Studying the victim is a standard action. The death attack fails if the target detects the assassin or recognizes the assassin as an enemy (although the attack might still be a sneak attack if the target is denied his Dexterity bonus to his Armor Class or is flanked). If the victim of such a death attack fails a Fortitude save (DC 10 + the assassin's class level + the assassin's Int modifier) against the kill effect, she dies. If the saving throw fails against the paralysis effect, the victim is rendered helpless and unable to act for 1d6 rounds plus 1 round per level of the assassin. If the victim's saving throw succeeds, the attack is just a normal sneak attack. Once the assassin has completed the 3 rounds of study, he must make the death attack within the next 3 rounds. If a death attack is attempted and fails (the victim makes her save) or if the assassin does not launch the attack within 3 rounds of completing the study, 3 new rounds of study are required before he can attempt another death attack."
+      },
+      {
+        "label": "Poison Use",
+        "text": "Assassins are trained in the use of poison and cannot accidentally poison themselves when applying poison to a blade (see Poison)."
+      },
+      {
+        "label": "Save Bonus against Poison",
+        "text": "At 2nd level, the assassin gains a +1 saving throw bonus against poisons. This bonus increase by +1 every two levels."
+      },
+      {
+        "label": "Uncanny Dodge (Ex)",
+        "text": "At 2nd level, an assassin cannot be caught flat-footed, even if the attacker is invisible. He still loses his Dexterity bonus to AC if immobilized. An assassin with this ability can still lose his Dexterity bonus to AC if an opponent successfully uses the feint action against him. If an assassin already has uncanny dodge from a different class, he automatically gains improved uncanny dodge instead."
+      },
+      {
+        "label": "Hidden Weapons (Ex)",
+        "text": "At 4th level, an assassin becomes a master at hiding weapons on his body. He adds his assassin level to all Sleight of Hand skill checks made to prevent others from noticing them."
+      },
+      {
+        "label": "True Death (Su)",
+        "text": "Starting at 4th level, anyone slain by an assassin's death attack becomes more difficult to bring back from the dead. Spellcasters attempting to bring a creature back from the dead using raise dead or similar magic must make a caster level check with a DC equal to 15 + the assassin's level or the spell fails and the material component is wasted. Casting remove curse the round before attempting to bring the creature back from the dead negates this chance. The DC of the remove curse is 10 + the assassin's level."
+      },
+      {
+        "label": "Improved Uncanny Dodge (Ex)",
+        "text": "At 5th level and higher, an assassin can no longer be flanked. This defense denies a rogue the ability to sneak attack the assassin by flanking him, unless the attacker has at least four more rogue levels than the target has assassin levels. If a character already has uncanny dodge from another class, the levels from the classes that grant uncanny dodge stack to determine the minimum rogue level required to flank the character."
+      },
+      {
+        "label": "Quiet Death (Ex)",
+        "text": "At 6th level, whenever an assassin kills a creature using his death attack during a surprise round, he can also make a Stealth check, opposed by Perception checks of those in the vicinity to prevent them from identifying him as the assailant. If successful, those nearby might not even notice that the target is dead for a few moments, allowing the assassin to avoid detection."
+      },
+      {
+        "label": "Hide in Plain Sight (Su)",
+        "text": "At 8th level, an assassin can use the Stealth skill even while being observed. As long as he is within 10 feet of an area of dim light, an assassin can hide himself from view in the open without having anything to actually hide behind. He cannot, however, hide in his own shadow."
+      },
+      {
+        "label": "Swift Death (Ex)",
+        "text": "At 9th level, once per day, an assassin can make a death attack against a foe without studying the foe beforehand. He must still sneak attack his foe using a melee weapon that deals damage."
+      },
+      {
+        "label": "Angel of Death (Su)",
+        "text": "At 10th level, the assassin becomes a master of death. Once per day, when the assassin makes a successful death attack, he can cause the target's body to crumble to dust. This prevents raise dead and resurrection (although true resurrection works as normal). The assassin must declare the use of this ability before the attack is made. If the attack misses or the target successfully saves against the death attack, this ability is wasted with no effect."
+      }
+    ],
+    "name": "Assassin",
+    "prestige": true,
+    "requirements": [
+      {
+        "label": "Alignment",
+        "text": "Any evil."
+      },
+      {
+        "label": "Skills",
+        "text": "Disguise 2 ranks, Stealth 5 ranks."
+      },
+      {
+        "label": "Special",
+        "text": "The character must kill someone for no other reason than to become an assassin."
+      }
+    ],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 378
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+1",
+            "+0",
+            "Sneak attack +1d6, death attack, poison use"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+1",
+            "+1",
+            "+1",
+            "+1 save bonus against poison, uncanny dodge"
+          ],
+          [
+            "3rd",
+            "+2",
+            "+1",
+            "+2",
+            "+1",
+            "Sneak attack +2d6"
+          ],
+          [
+            "4th",
+            "+3",
+            "+1",
+            "+2",
+            "+1",
+            "+2 save bonus against poison, hidden weapons, true death"
+          ],
+          [
+            "5th",
+            "+3",
+            "+2",
+            "+3",
+            "+2",
+            "Improved uncanny dodge, sneak attack +3d6"
+          ],
+          [
+            "6th",
+            "+4",
+            "+2",
+            "+3",
+            "+2",
+            "+3 save bonus against poison, quiet death"
+          ],
+          [
+            "7th",
+            "+5",
+            "+2",
+            "+4",
+            "+2",
+            "Sneak attack +4d6"
+          ],
+          [
+            "8th",
+            "+6",
+            "+3",
+            "+4",
+            "+3",
+            "+4 save bonus against poison, hide in plain sight"
+          ],
+          [
+            "9th",
+            "+6",
+            "+3",
+            "+5",
+            "+3",
+            "Sneak attack +5d6, swift death"
+          ],
+          [
+            "10th",
+            "+7",
+            "+3",
+            "+5",
+            "+3",
+            "+5 save bonus against poison, angel of death"
+          ]
+        ]
+      }
+    ]
+  }
+}

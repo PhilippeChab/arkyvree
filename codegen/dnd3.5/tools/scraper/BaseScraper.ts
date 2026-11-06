@@ -1,7 +1,7 @@
-import type { HttpClient } from "@/codegen/core/scraper/HttpClient.ts";
+import { BookScraper } from "@/codegen/core/scraper/BookScraper.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import type { ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import type { ReferenceByType, ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 import { ListingPage } from "./pages/ListingPage.ts";
 
@@ -23,40 +23,27 @@ const BOOK_SLUGS: Record<string, string> = {
 const LISTING_PAGE_SIZE = 20;
 
 /**
- * A scraper's core, which its concerns (`concerns/`) build on: the book it scrapes, the client it fetches pages with,
- * dndtools.net's listings it finds a book's entries in (`listing`), and the reference files it writes what it read to
- * (`meta`, `saveReference`), keeping the overrides they had.
+ * The 3.5 scraper's core, on core's (`BookScraper`: the book it scrapes, the client it fetches pages with, the
+ * references it saves what it read to, their overrides kept), which its concerns (`concerns/`) build on:
+ * dndtools.net's listings it finds a book's entries in (`listing`), and what it stores of a page's text, sanitized.
  */
-export class BaseScraper {
-  constructor(
-    readonly book: string,
-    readonly http: HttpClient,
-  ) {}
-
+export class BaseScraper extends BookScraper<ReferenceByType> {
   /** dndtools.net, which the books' classes, feats, races and spells are scraped from. */
   static readonly site = "https://dndtools.net";
+
+  /** The 3.5 books' references, which the scraper saves what it read to. */
+  protected override readonly references = References;
+
+  /** What a reference stores of what was scraped: its text sanitized (the site's HTML and the books' references). */
+  protected override cleanStored<S>(stored: S): S {
+    return sanitizeJsonValues(stored);
+  }
 
   /** A book's id in dndtools.net, which its slug ends with (`complete-divine--56`: 56). */
   private bookId(slug: string): string {
     const match = slug.match(/--(\d+)$/);
     if (!match) throw new Error(`Could not extract book ID from slug "${slug}"`);
     return match[1];
-  }
-
-  /** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
-  private scrapedReference<T extends ReferenceType>(
-    outPath: string,
-    _meta: StoredReference<T>["_meta"] & { type: T },
-    raw: StoredReference<T>["raw"],
-  ): StoredReference<T> {
-    const overrides = References.overrides(outPath, _meta.type);
-    if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-    return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
-  }
-
-  /** Writes a reference to its file, unless all that changed is when it was scraped. */
-  private writeReference(outPath: string, reference: StoredReference) {
-    console.log(`${References.write(outPath, reference) ? "Written" : "Unchanged"}: ${outPath}`);
   }
 
   /**
@@ -93,23 +80,6 @@ export class BaseScraper {
     return slug;
   }
 
-  /** Where and when a reference of `type` is scraped from: its page (`sourceUrl`), or its pages (`sourceUrls`). */
-  protected meta<T extends ReferenceType, S extends { sourceUrl: string } | { sourceUrls: Record<string, string> }>(
-    type: T,
-    source: S,
-  ): { book: string; scrapedAt: string; type: T } & S {
-    return Object.assign({ type, book: this.book, scrapedAt: new Date().toISOString() }, source);
-  }
-
-  /** Saves a reference as scraped (its `_meta` and `raw`), keeping the overrides its file had. */
-  protected saveReference<T extends ReferenceType>(
-    outPath: string,
-    _meta: StoredReference<T>["_meta"] & { type: T },
-    raw: StoredReference<T>["raw"],
-  ) {
-    this.writeReference(outPath, this.scrapedReference(outPath, _meta, raw));
-  }
-
   /**
    * Saves a reference as scraped (`saveReference`), and returns it with what the generator reads derived from it. A
    * reference that can't be derived isn't written.
@@ -119,7 +89,7 @@ export class BaseScraper {
     _meta: StoredReference<T>["_meta"] & { type: T },
     raw: StoredReference<T>["raw"],
   ) {
-    const reference = this.scrapedReference(outPath, _meta, raw);
+    const reference = this.scrapedReference<T>(outPath, _meta, raw);
     const resolved = References.resolve(_meta.type, reference);
     this.writeReference(outPath, reference);
     return resolved;

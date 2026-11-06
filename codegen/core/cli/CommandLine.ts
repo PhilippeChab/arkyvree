@@ -1,7 +1,6 @@
-import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import type { ReferenceFilters } from "@/codegen/core/references/types.ts";
 
-/** What `parser:dnd3.5:scrape` is asked: the type of reference to scrape, its book, one page, how it fetches pages. */
+/** What a ruleset's `parser:<ruleset>:scrape` is asked: the type of reference to scrape, its book, one page, how it fetches pages. */
 interface ScrapeRequest {
   book: string;
   delay?: number;
@@ -11,11 +10,11 @@ interface ScrapeRequest {
 }
 
 /**
- * A parser command's line, read one way by every command: its options (`--type <type>`, a flag such as `--no-cache`)
- * are taken out wherever they stand, an option given without its value or one the command doesn't take is refused
- * (it would be read as nothing, or as a word), and the words left are what the command names. Each command's grammar
- * is a static method: the reference filters most commands take (`filters`), what `parser:dnd3.5:overrides` takes
- * (`overrides`: those and an override key), and what `parser:dnd3.5:scrape` takes (`scrape`).
+ * A parser command's line, every ruleset's parser's read one way: its options (`--type <type>`, a flag such as
+ * `--no-cache`) are taken out wherever they stand, an option given without its value or one the command doesn't take is
+ * refused (it would be read as nothing, or as a word), and the words left are what the command names. Each command's
+ * grammar is a static method: the reference filters most commands take (`filters`), what a parser's `overrides` command
+ * takes (`overrides`: those and an override key), and what its `scrape` command takes (`scrape`).
  */
 export class CommandLine {
   private constructor(argv: string[]) {
@@ -31,8 +30,8 @@ export class CommandLine {
   }
 
   /**
-   * What `parser:dnd3.5:overrides` is asked (the command line's by default): the reference filters (`filters`) and the
-   * key of the overrides it lists, `<book> [<name>] [--type <type>] [--key <key>]`.
+   * What a parser's `overrides` command is asked (the command line's by default): the reference filters (`filters`) and
+   * the key of the overrides it lists, `<book> [<name>] [--type <type>] [--key <key>]`.
    */
   static overrides(argv = process.argv.slice(2)): { filters: ReferenceFilters; keyFilter?: string } {
     const line = new CommandLine(argv);
@@ -41,18 +40,18 @@ export class CommandLine {
   }
 
   /**
-   * What `parser:dnd3.5:scrape` is asked (the command line's by default): `<type> [--book <slug>] [--url <url>]
-   * [--no-cache] [--delay <ms>]`, the core rules' book by default. A delay that isn't a whole number of milliseconds is
-   * refused.
+   * What a parser's `scrape` command is asked (the command line's by default): `<type> [--book <slug>] [--url <url>]
+   * [--no-cache] [--delay <ms>]`, its ruleset's core rules' book by default (`coreBook`). A delay that isn't a whole
+   * number of milliseconds is refused.
    */
-  static scrape(argv = process.argv.slice(2)): ScrapeRequest {
+  static scrape(coreBook: string, argv = process.argv.slice(2)): ScrapeRequest {
     const line = new CommandLine(argv);
     const noCache = line.flag("no-cache");
     const delay = line.option("delay");
     if (delay !== undefined && !(Number.isInteger(Number(delay)) && Number(delay) >= 0))
       throw new Error(`--delay takes a whole number of milliseconds, not "${delay}"`);
     const url = line.option("url");
-    const book = line.option("book") ?? CORE_BOOK;
+    const book = line.option("book") ?? coreBook;
     const [type] = line.words("<type> [--book <slug>] [--url <url>] [--no-cache] [--delay <ms>]");
     return { type, book, url, noCache, ...(delay !== undefined ? { delay: Number(delay) } : {}) };
   }

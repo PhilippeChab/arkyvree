@@ -1,0 +1,213 @@
+{
+  "_meta": {
+    "book": "core-rulebook",
+    "scrapedAt": "2026-11-06T00:09:30.971Z",
+    "sourceUrl": "https://aonprd.com/ClassDisplay.aspx?ItemName=Aristocrat",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "An NPC class for nobles and courtiers: a d8 hit die, a medium base attack bonus, a good Will save, 4 skill points per level, and proficiency with all simple and martial weapons, every armor and shields."
+  },
+  "raw": {
+    "classSkills": "The Aristocrat's class skills are Appraise (Int), Bluff (Cha), Craft (Int), Diplomacy (Cha), Disguise (Cha), Handle Animal (Cha), Intimidate (Cha), Knowledge (all skills taken individually) (Int), Linguistics (Int), Perception (Wis), Perform (Cha), Profession (Wis), Ride (Dex), Sense Motive (Wis), Swim (Str), and Survival (Wis).",
+    "details": [
+      {
+        "label": "Hit Die",
+        "text": "d8."
+      },
+      {
+        "label": "Skill Points at each Level",
+        "text": "4 + Int modifier."
+      }
+    ],
+    "features": [
+      {
+        "label": "Weapon and Armor Proficiency",
+        "text": "The aristocrat is proficient in the use of all simple and martial weapons and with all types of armor and shields."
+      }
+    ],
+    "name": "Aristocrat",
+    "prestige": false,
+    "requirements": [],
+    "sources": [
+      {
+        "book": "PRPG Core Rulebook",
+        "page": 449
+      }
+    ],
+    "tables": [
+      {
+        "columns": [
+          "Level",
+          "Base Attack Bonus",
+          "Fort Save",
+          "Ref Save",
+          "Will Save",
+          "Special"
+        ],
+        "rows": [
+          [
+            "1st",
+            "+0",
+            "+0",
+            "+0",
+            "+2",
+            "—"
+          ],
+          [
+            "2nd",
+            "+1",
+            "+0",
+            "+0",
+            "+3",
+            "—"
+          ],
+          [
+            "3rd",
+            "+2",
+            "+1",
+            "+1",
+            "+3",
+            "—"
+          ],
+          [
+            "4th",
+            "+3",
+            "+1",
+            "+1",
+            "+4",
+            "—"
+          ],
+          [
+            "5th",
+            "+3",
+            "+1",
+            "+1",
+            "+4",
+            "—"
+          ],
+          [
+            "6th",
+            "+4",
+            "+2",
+            "+2",
+            "+5",
+            "—"
+          ],
+          [
+            "7th",
+            "+5",
+            "+2",
+            "+2",
+            "+5",
+            "—"
+          ],
+          [
+            "8th",
+            "+6/+1",
+            "+2",
+            "+2",
+            "+6",
+            "—"
+          ],
+          [
+            "9th",
+            "+6/+1",
+            "+3",
+            "+3",
+            "+6",
+            "—"
+          ],
+          [
+            "10th",
+            "+7/+2",
+            "+3",
+            "+3",
+            "+7",
+            "—"
+          ],
+          [
+            "11th",
+            "+8/+3",
+            "+3",
+            "+3",
+            "+7",
+            "—"
+          ],
+          [
+            "12th",
+            "+9/+4",
+            "+4",
+            "+4",
+            "+8",
+            "—"
+          ],
+          [
+            "13th",
+            "+9/+4",
+            "+4",
+            "+4",
+            "+8",
+            "—"
+          ],
+          [
+            "14th",
+            "+10/+5",
+            "+4",
+            "+4",
+            "+9",
+            "—"
+          ],
+          [
+            "15th",
+            "+11/+6/+1",
+            "+5",
+            "+5",
+            "+9",
+            "—"
+          ],
+          [
+            "16th",
+            "+12/+7/+2",
+            "+5",
+            "+5",
+            "+10",
+            "—"
+          ],
+          [
+            "17th",
+            "+12/+7/+2",
+            "+5",
+            "+5",
+            "+10",
+            "—"
+          ],
+          [
+            "18th",
+            "+13/+8/+3",
+            "+6",
+            "+6",
+            "+11",
+            "—"
+          ],
+          [
+            "19th",
+            "+14/+9/+4",
+            "+6",
+            "+6",
+            "+11",
+            "—"
+          ],
+          [
+            "20th",
+            "+15/+10/+5",
+            "+6",
+            "+6",
+            "+12",
+            "—"
+          ]
+        ]
+      }
+    ]
+  }
+}
