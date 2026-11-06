@@ -1,0 +1,68 @@
+import type { CorePackageDefinition, ExtensionPackageDefinition } from "@/content/core/builders/packages/types.ts";
+import type { AbilitySeed } from "@/content/pf1/builders/abilities/types.ts";
+import type { BondContent } from "@/content/pf1/builders/bonds/types.ts";
+import type { ClassSeed } from "@/content/pf1/builders/classes/types.ts";
+import type { DomainSeed } from "@/content/pf1/builders/domains/types.ts";
+import type { FeatSeed } from "@/content/pf1/builders/feats/types.ts";
+import type { Pf1ItemSeed } from "@/content/pf1/builders/items/types.ts";
+import type { LanguageSeed } from "@/content/pf1/builders/languages/types.ts";
+import type { RaceSeed } from "@/content/pf1/builders/races/types.ts";
+import type { SaveSeed } from "@/content/pf1/builders/saves/types.ts";
+import type { SkillSeed } from "@/content/pf1/builders/skills/types.ts";
+import type { LeveledSpellSeed } from "@/content/pf1/builders/spells/types.ts";
+import type { WizardSchoolSeed } from "@/content/pf1/builders/wizardSchools/types.ts";
+
+/** An extension's book, as the parser generates it (`generated/<book>/index.ts`). */
+export interface BookContent {
+  aptitudes: string[];
+  classes: ClassSeed[];
+  classFeats: FeatSeed[];
+  /** Core feats the book changes. */
+  cowFeats: CowFeatEntry[];
+  /** Core spells the book adds to its spell lists. */
+  cowSpells: CowSpellEntry[];
+  domains: DomainSeed[];
+  spells: LeveledSpellSeed[];
+  standaloneFeats: FeatSeed[];
+}
+
+/**
+ * The core rules' content: the Core Rulebook's, as the generator wrote it, and the hand-written core rules, template items and
+ * bonded creatures.
+ */
+export interface CoreContent {
+  abilities: AbilitySeed[];
+  aptitudes: string[];
+  bonds: BondContent[];
+  classes: ClassSeed[];
+  domains: DomainSeed[];
+  feats: FeatSeed[];
+  items: Pf1ItemSeed[];
+  languages: LanguageSeed[];
+  races: RaceSeed[];
+  saves: SaveSeed[];
+  skills: SkillSeed[];
+  spells: LeveledSpellSeed[];
+  /** The items others are made from, which a new ruleset starts with. */
+  templateItems: Pf1ItemSeed[];
+  wizardSchools: WizardSchoolSeed[];
+}
+
+/** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
+export interface CowFeatEntry {
+  aptitudes: string[];
+  feat: string;
+  requirements: { className: string; level: number }[];
+}
+
+/** A core spell an extension adds to its spell lists, each at its level there. */
+export interface CowSpellEntry {
+  aptitudes: { aptitude: string; level: number }[];
+  spell: string;
+}
+
+/** The core rules' package: the base ruleset it creates, and the core rules' content it seeds. */
+export type CorePackage = CorePackageDefinition<CoreContent>;
+
+/** An extension's package: the extension of the core rules it creates, and the book it seeds. */
+export type ExtensionPackage = ExtensionPackageDefinition<BookContent>;
