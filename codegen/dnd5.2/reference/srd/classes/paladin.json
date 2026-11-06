@@ -1,0 +1,1366 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-11-06T21:06:18.371Z",
+    "sourceUrls": {
+      "Classes": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Classes.json",
+      "Features": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Features.json",
+      "Levels": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Levels.json",
+      "Subclasses": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Subclasses.json"
+    },
+    "type": "class"
+  },
+  "raw": {
+    "class": {
+      "hit_die": 10,
+      "index": "paladin",
+      "multi_classing": {
+        "prerequisites": [
+          {
+            "ability_score": {
+              "index": "str",
+              "name": "STR"
+            },
+            "minimum_score": 13
+          },
+          {
+            "ability_score": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "minimum_score": 13
+          }
+        ],
+        "proficiencies": [
+          {
+            "index": "light-armor",
+            "name": "Light Armor"
+          },
+          {
+            "index": "medium-armor",
+            "name": "Medium Armor"
+          },
+          {
+            "index": "shields",
+            "name": "Shields"
+          },
+          {
+            "index": "martial-weapons",
+            "name": "Martial Weapons"
+          }
+        ]
+      },
+      "name": "Paladin",
+      "primary_ability": {
+        "ability_scores": [
+          {
+            "index": "str",
+            "name": "STR"
+          },
+          {
+            "index": "cha",
+            "name": "CHA"
+          }
+        ],
+        "desc": "Strength and Charisma"
+      },
+      "proficiencies": [
+        {
+          "index": "all-armor",
+          "name": "All armor"
+        },
+        {
+          "index": "shields",
+          "name": "Shields"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "saving-throw-wis",
+          "name": "Saving Throw: WIS"
+        },
+        {
+          "index": "saving-throw-cha",
+          "name": "Saving Throw: CHA"
+        }
+      ],
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: Athletics, Insight, Intimidation, Medicine, Persuasion, or Religion",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-intimidation",
+                  "name": "Skill: Intimidation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-medicine",
+                  "name": "Skill: Medicine"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-persuasion",
+                  "name": "Skill: Persuasion"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-religion",
+                  "name": "Skill: Religion"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ],
+      "saving_throws": [
+        {
+          "index": "wis",
+          "name": "WIS"
+        },
+        {
+          "index": "cha",
+          "name": "CHA"
+        }
+      ],
+      "spellcasting": {
+        "info": [
+          {
+            "desc": [
+              "The Paladin Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest."
+            ],
+            "name": "Spell Slots"
+          },
+          {
+            "desc": [
+              "You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Paladin spells. Heroism and Searing Smite are recommended.",
+              "The number of spells on your list increases as you gain Paladin levels, as shown in the Prepared Spells column of the Paladin Features table. Whenever that number increases, choose additional Paladin spells until the number of spells on your list matches the number in the Paladin Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Paladin, your list of prepared spells can include six Paladin spells of level 1 or 2 in any combination.",
+              "If another Paladin feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Paladin spells for you."
+            ],
+            "name": "Prepared Spells of Level 1+"
+          },
+          {
+            "desc": [
+              "Whenever you finish a Long Rest, you can replace one spell on your list with another Paladin spell for which you have spell slots."
+            ],
+            "name": "Changing Your Prepared Spells"
+          },
+          {
+            "desc": [
+              "Charisma is your spellcasting ability for your Paladin spells."
+            ],
+            "name": "Spellcasting Ability"
+          },
+          {
+            "desc": [
+              "You can use a Holy Symbol as a Spellcasting Focus for your Paladin spells."
+            ],
+            "name": "Spellcasting Focus"
+          }
+        ],
+        "level": 1,
+        "spellcasting_ability": {
+          "index": "cha",
+          "name": "CHA"
+        }
+      },
+      "starting_equipment_options": [
+        {
+          "choose": 1,
+          "desc": "(a) Chain Mail, Shield, Longsword, 6 Javelins, Holy Symbol, Priest’s Pack, and 9 GP; or (b) 150 GP",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "items": [
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "chain-mail",
+                      "name": "Chain Mail"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "shield",
+                      "name": "Shield"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "longsword",
+                      "name": "Longsword"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 6,
+                    "of": {
+                      "index": "javelin",
+                      "name": "Javelin"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "holy-symbols",
+                      "name": "Holy Symbols"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "priests-pack",
+                      "name": "Priest's Pack"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 9,
+                    "option_type": "money",
+                    "unit": "gp"
+                  }
+                ],
+                "option_type": "multiple"
+              },
+              {
+                "count": 150,
+                "option_type": "money",
+                "unit": "gp"
+              }
+            ]
+          },
+          "type": "equipment"
+        }
+      ],
+      "subclasses": [
+        {
+          "index": "oath-of-devotion",
+          "name": "Oath of Devotion"
+        }
+      ]
+    },
+    "features": [
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "Your blessed touch can heal wounds. You have a pool of healing power that replenishes when you finish a Long Rest. With that pool, you can restore a total number of Hit Points equal to five times your Paladin level.\n  As a Bonus Action, you can touch a creature (which could be yourself) and draw power from the pool of healing to restore a number of Hit Points to that creature, up to the maximum amount remaining in the pool.\n  You can also expend 5 Hit Points from the pool of healing power to remove the Poisoned condition from the creature; those points don't also restore Hit Points to the creature.",
+        "index": "paladin-lay-on-hands",
+        "level": {
+          "index": "paladin-1",
+          "name": "Paladin 1"
+        },
+        "name": "Lay On Hands"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You have learned to cast spells through prayer and meditation. See \"Spells\" for the rules on spellcasting. The information below details how you use those rules with Paladin spells, which appear in the Paladin spell list later in the class's description.\n  Spell Slots. The Paladin Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n  Prepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Paladin spells. Heroism and Searing Smite are recommended.\n  The number of spells on your list increases as you gain Paladin levels, as shown in the Prepared Spells column of the Paladin Features table. Whenever that number increases, choose additional Paladin spells until the number of spells on your list matches the number in the Paladin Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Paladin, your list of prepared spells can include six Paladin spells of level 1 or 2 in any combination.\n  If another Paladin feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Paladin spells for you.\n  Changing Your Prepared Spells. Whenever you finish a Long Rest, you can replace one spell on your list with another Paladin spell for which you have spell slots.\n  Spellcasting Ability. Charisma is your spellcasting ability for your Paladin spells.\n  Spellcasting Focus. You can use a Holy Symbol as a Spellcasting Focus for your Paladin spells.",
+        "index": "paladin-spellcasting",
+        "level": {
+          "index": "paladin-1",
+          "name": "Paladin 1"
+        },
+        "name": "Spellcasting"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "Your training with weapons allows you to use the mastery properties of two kinds of weapons of your choice with which you have proficiency, such as Longswords and Javelins.\nWhenever you finish a Long Rest, you can change the kinds of weapons you chose. For example, you could switch to using the mastery properties of Halberds and Flails.",
+        "index": "paladin-weapon-mastery",
+        "level": {
+          "index": "paladin-1",
+          "name": "Paladin 1"
+        },
+        "name": "Weapon Mastery"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You gain a Fighting Style feat of your choice (see \"Feats\" for feats). Instead of choosing one of those feats, you can choose the option below.\n  Blessed Warrior. You learn two Cleric cantrips of your choice (see the Cleric class's section for a list of Cleric spells). Guidance and Sacred Flame are recommended. The chosen cantrips count as Paladin spells for you, and Charisma is your spellcasting ability for them. Whenever you gain a Paladin level, you can replace one of these cantrips with another Cleric cantrip.",
+        "index": "paladin-fighting-style",
+        "level": {
+          "index": "paladin-2",
+          "name": "Paladin 2"
+        },
+        "name": "Fighting Style"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You always have the Divine Smite spell prepared. In addition, you can cast it without expending a spell slot, but you must finish a Long Rest before you can cast it in this way again.",
+        "index": "paladin-paladins-smite",
+        "level": {
+          "index": "paladin-2",
+          "name": "Paladin 2"
+        },
+        "name": "Paladin's Smite"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You can channel divine energy directly from the Outer Planes, using it to fuel magical effects. You start with one such effect: Divine Sense, which is described below. Other Paladin features give additional Channel Divinity effect options. Each time you use this class's Channel Divinity, you choose which effect from this class to create.\n  You can use this class's Channel Divinity twice. You regain one of its expended uses when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest. You gain an additional use when you reach Paladin level 11.\n  If a Channel Divinity effect requires a saving throw, the DC equals the spell save DC from this class's Spellcasting feature.\n  Divine Sense. As a Bonus Action, you can open your awareness to detect Celestials, Fiends, and Undead. For the next 10 minutes or until you have the Incapacitated condition, you know the location of any creature of those types within 60 feet of yourself, and you know its creature type. Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the Hallow spell.",
+        "index": "paladin-channel-divinity",
+        "level": {
+          "index": "paladin-3",
+          "name": "Paladin 3"
+        },
+        "name": "Channel Divinity"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You gain a Paladin subclass of your choice. A subclass is a specialization that grants you features at certain Paladin levels. For the rest of your career, you gain each of your subclass's features that are of your Paladin level or lower.",
+        "index": "paladin-subclass",
+        "level": {
+          "index": "paladin-3",
+          "name": "Paladin 3"
+        },
+        "name": "Paladin Subclass"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Paladin levels 8, 12, and 16.",
+        "index": "paladin-ability-score-improvement",
+        "level": {
+          "index": "paladin-4",
+          "name": "Paladin 4"
+        },
+        "name": "Ability Score Improvement"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You can attack twice instead of once whenever you take the Attack action on your turn.",
+        "index": "paladin-extra-attack",
+        "level": {
+          "index": "paladin-5",
+          "name": "Paladin 5"
+        },
+        "name": "Extra Attack"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You can call on the aid of an otherworldly steed. You always have the Find Steed spell prepared.\n  You can also cast the spell once without expending a spell slot, and you regain the ability to do so when you finish a Long Rest.",
+        "index": "paladin-faithful-steed",
+        "level": {
+          "index": "paladin-5",
+          "name": "Paladin 5"
+        },
+        "name": "Faithful Steed"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You radiate a protective, unseeable aura in a 10-foot Emanation that originates from you. The aura is inactive while you have the Incapacitated condition.\n  You and your allies in the aura gain a bonus to saving throws equal to your Charisma modifier (minimum bonus of +1).\n  If another Paladin is present, a creature can benefit from only one Aura of Protection at a time; the creature chooses which aura while in them.",
+        "index": "paladin-aura-of-protection",
+        "level": {
+          "index": "paladin-6",
+          "name": "Paladin 6"
+        },
+        "name": "Aura of Protection"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "As a Magic action, you can expend one use of this class's Channel Divinity to overwhelm foes with awe. As you present your Holy Symbol or weapon, you can target a number of creatures equal to your Charisma modifier (minimum of one creature) that you can see within 60 feet of yourself. Each target must succeed on a Wisdom saving throw or have the Frightened condition for 1 minute or until it takes any damage. While Frightened in this way, a target can do only one of the following on its turns: move, take an action, or take a Bonus Action.",
+        "index": "paladin-abjure-foes",
+        "level": {
+          "index": "paladin-9",
+          "name": "Paladin 9"
+        },
+        "name": "Abjure Foes"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You and your allies have Immunity to the Frightened condition while in your Aura of Protection. If a Frightened ally enters the aura, that condition has no effect on that ally while there.",
+        "index": "paladin-aura-of-courage",
+        "level": {
+          "index": "paladin-10",
+          "name": "Paladin 10"
+        },
+        "name": "Aura of Courage"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "Your strikes now carry supernatural power. When you hit a target with an attack roll using a Melee weapon or an Unarmed Strike, the target takes an extra 1d8 Radiant damage.",
+        "index": "paladin-radiant-strikes",
+        "level": {
+          "index": "paladin-11",
+          "name": "Paladin 11"
+        },
+        "name": "Radiant Strikes"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "When you use Lay On Hands on a creature, you can also remove one or more of the following conditions from the creature: Blinded, Charmed, Deafened, Frightened, Paralyzed, or Stunned. You must expend 5 Hit Points from the healing pool of Lay On Hands for each of these conditions you remove; those points don't also restore Hit Points to the creature.",
+        "index": "paladin-restoring-touch",
+        "level": {
+          "index": "paladin-14",
+          "name": "Paladin 14"
+        },
+        "name": "Restoring Touch"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "Your Aura of Protection is now a 30-foot Emanation.",
+        "index": "paladin-aura-expansion",
+        "level": {
+          "index": "paladin-18",
+          "name": "Paladin 18"
+        },
+        "name": "Aura Expansion"
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "description": "You gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Truesight is recommended.",
+        "index": "paladin-epic-boon",
+        "level": {
+          "index": "paladin-19",
+          "name": "Paladin 19"
+        },
+        "name": "Epic Boon"
+      }
+    ],
+    "levels": [
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 0
+        },
+        "features": [
+          {
+            "index": "paladin-lay-on-hands",
+            "name": "Lay On Hands"
+          },
+          {
+            "index": "paladin-spellcasting",
+            "name": "Spellcasting"
+          },
+          {
+            "index": "paladin-weapon-mastery",
+            "name": "Weapon Mastery"
+          }
+        ],
+        "index": "paladin-1",
+        "level": 1,
+        "name": "Paladin 1",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 2,
+          "spell_slots_level_1": 2,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 0
+        },
+        "features": [
+          {
+            "index": "paladin-fighting-style",
+            "name": "Fighting Style"
+          },
+          {
+            "index": "paladin-paladins-smite",
+            "name": "Paladin's Smite"
+          }
+        ],
+        "index": "paladin-2",
+        "level": 2,
+        "name": "Paladin 2",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 3,
+          "spell_slots_level_1": 2,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-channel-divinity",
+            "name": "Channel Divinity"
+          },
+          {
+            "index": "paladin-subclass",
+            "name": "Paladin Subclass"
+          }
+        ],
+        "index": "paladin-3",
+        "level": 3,
+        "name": "Paladin 3",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 4,
+          "spell_slots_level_1": 3,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "paladin-4",
+        "level": 4,
+        "name": "Paladin 4",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 5,
+          "spell_slots_level_1": 3,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-extra-attack",
+            "name": "Extra Attack"
+          },
+          {
+            "index": "paladin-faithful-steed",
+            "name": "Faithful Steed"
+          }
+        ],
+        "index": "paladin-5",
+        "level": 5,
+        "name": "Paladin 5",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 6,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-aura-of-protection",
+            "name": "Aura of Protection"
+          }
+        ],
+        "index": "paladin-6",
+        "level": 6,
+        "name": "Paladin 6",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 6,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-subclass",
+            "name": "Paladin Subclass"
+          }
+        ],
+        "index": "paladin-7",
+        "level": 7,
+        "name": "Paladin 7",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 7,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "paladin-8",
+        "level": 8,
+        "name": "Paladin 8",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 7,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-abjure-foes",
+            "name": "Abjure Foes"
+          }
+        ],
+        "index": "paladin-9",
+        "level": 9,
+        "name": "Paladin 9",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 9,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 2
+        },
+        "features": [
+          {
+            "index": "paladin-aura-of-courage",
+            "name": "Aura of Courage"
+          }
+        ],
+        "index": "paladin-10",
+        "level": 10,
+        "name": "Paladin 10",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 9,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-radiant-strikes",
+            "name": "Radiant Strikes"
+          }
+        ],
+        "index": "paladin-11",
+        "level": 11,
+        "name": "Paladin 11",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "paladin-12",
+        "level": 12,
+        "name": "Paladin 12",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [],
+        "index": "paladin-13",
+        "level": 13,
+        "name": "Paladin 13",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 1,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-restoring-touch",
+            "name": "Restoring Touch"
+          }
+        ],
+        "index": "paladin-14",
+        "level": 14,
+        "name": "Paladin 14",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 1,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-subclass",
+            "name": "Paladin Subclass"
+          }
+        ],
+        "index": "paladin-15",
+        "level": 15,
+        "name": "Paladin 15",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "paladin-16",
+        "level": 16,
+        "name": "Paladin 16",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [],
+        "index": "paladin-17",
+        "level": 17,
+        "name": "Paladin 17",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 1,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-aura-expansion",
+            "name": "Aura Expansion"
+          }
+        ],
+        "index": "paladin-18",
+        "level": 18,
+        "name": "Paladin 18",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 1,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-epic-boon",
+            "name": "Epic Boon"
+          }
+        ],
+        "index": "paladin-19",
+        "level": 19,
+        "name": "Paladin 19",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "paladin",
+          "name": "Paladin"
+        },
+        "class_specific": {
+          "channel_divinity_charges": 3
+        },
+        "features": [
+          {
+            "index": "paladin-subclass",
+            "name": "Paladin Subclass"
+          }
+        ],
+        "index": "paladin-20",
+        "level": 20,
+        "name": "Paladin 20",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      }
+    ],
+    "subclasses": [
+      {
+        "features": [
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of Devotion Spells table, you thereafter always have the listed spells prepared.\n\nOath of Devotion Spells\nPaladin Level / Spells\n3 / Protection from Evil and Good, Shielf of Faith\n5 / Aid, Zone of Truth\n9 / Beacon of Hope, Dispel Magic\n13 / Freedom of Movement, Guardian of Faith\n17 / Commune, Flame Strike",
+            "index": "devotion-oath-of-devotion-spells",
+            "level": {
+              "index": "paladin-3",
+              "name": "Paladin 3"
+            },
+            "name": "Oath of Devotion Spells",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "description": "When you take the Attack action, you can expend one use of your Channel Divinity to imbue one Melee weapon that you are holding with positive energy. For 10 minutes or until you use this feature again, you add your Charisma modifier to attack rolls you make with that weapon (minimum bonus of +1), and each time you hit with it, you cause it to deal its normal damage type or Radiant damage.\n  The weapon also emits Bright Light in a 20-foot radius and Dim Light 20 feet beyond that.\n  You can end this effect early (no action required). This effect also ends if you aren't carrying the weapon.",
+            "index": "devotion-sacred-weapon",
+            "level": {
+              "index": "paladin-3",
+              "name": "Paladin 3"
+            },
+            "name": "Sacred Weapon",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "description": "You and your allies have Immunity to the Charmed condition while in your Aura of Protection. If a Charmed ally enters the aura, that condition has no effect on that ally while there.",
+            "index": "devotion-aura-of-devotion",
+            "level": {
+              "index": "paladin-7",
+              "name": "Paladin 7"
+            },
+            "name": "Aura of Devotion",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "description": "Your magical smite now radiates protective energy. Whenever you cast Divine Smite, you and your allies have Half Cover while in your Aura of Protection.\nThe aura has this benefit until the start of your next turn.",
+            "index": "devotion-smite-of-protection",
+            "level": {
+              "index": "paladin-15",
+              "name": "Paladin 15"
+            },
+            "name": "Smite of Protection",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "description": "As a Bonus Action, you can imbue your Aura of Protection with holy power, granting the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\n  Holy Ward. You have Advantage on any saving throw you are forced to make by a Fiend or an Undead.\n  Radiant Damage. Whenever an enemy starts its turn in the aura, that creature takes Radiant damage equal to your Charisma modifier plus your Proficiency Bonus.\n  Sunlight. The aura is filled with Bright Light that is sunlight.",
+            "index": "devotion-holy-nimbus",
+            "level": {
+              "index": "paladin-20",
+              "name": "Paladin 20"
+            },
+            "name": "Holy Nimbus",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          }
+        ],
+        "levels": [
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "features": [
+              {
+                "index": "devotion-oath-of-devotion-spells",
+                "name": "Oath of Devotion Spells"
+              },
+              {
+                "index": "devotion-sacred-weapon",
+                "name": "Sacred Weapon"
+              }
+            ],
+            "index": "devotion-3",
+            "level": 3,
+            "name": "Devotion 3",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "features": [
+              {
+                "index": "devotion-aura-of-devotion",
+                "name": "Aura of Devotion"
+              }
+            ],
+            "index": "devotion-7",
+            "level": 7,
+            "name": "Devotion 7",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "features": [
+              {
+                "index": "devotion-smite-of-protection",
+                "name": "Smite of Protection"
+              }
+            ],
+            "index": "devotion-15",
+            "level": 15,
+            "name": "Devotion 15",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          },
+          {
+            "class": {
+              "index": "paladin",
+              "name": "Paladin"
+            },
+            "features": [
+              {
+                "index": "devotion-holy-nimbus",
+                "name": "Holy Nimbus"
+              }
+            ],
+            "index": "devotion-20",
+            "level": 20,
+            "name": "Devotion 20",
+            "subclass": {
+              "index": "oath-of-devotion",
+              "name": "Oath of Devotion"
+            }
+          }
+        ],
+        "subclass": {
+          "class": {
+            "index": "paladin",
+            "name": "Paladin"
+          },
+          "description": "The Oath of Devotion binds Paladins to the ideals of justice and order. These Paladins meet the archetype of the knight in shining armor. They hold themselves to the highest standards of conduct, and some-for better or worse-hold the rest of the world to the same standards.\n  Many who swear this oath are devoted to gods of law and good and use their gods' tenets as the\nmeasure of personal devotion. Others hold angels as their ideals and incorporate images of angelic wings into their helmets or coats of arms.\nThese paladins share the following tenets:\n- Let your word be your promise.\n- Protect the weak and never fear to act.\n- Let your honorable deeds be an example.",
+          "features": [
+            {
+              "description": "The magic of your oath ensures you always have certain spells ready; when you reach a Paladin level specified in the Oath of Devotion Spells table, you thereafter always have the listed spells prepared.\n   Oath of Devotion Spells\nPaladin Level Spells\nLevel 3 Paladin Spells\nSpell School Special\n5 Aid, Zone of Truth\n \nDaylight Evocation -\nMagic Circle Abjuration M\nRevivify Necromancy M\nLevel 4 Paladin Spells\nSpell School Special\nBanishment Abjuration C\nLocate Creature Divination C\nLevel 5 Paladin Spells\nSpell School Special\nGeas Enchantment -\nRaise Dead Necromancy M\n13 Freedom of Movement, Guardian of Faith",
+              "level": 3,
+              "name": "Oath of Devotion Spells"
+            },
+            {
+              "description": "When you take the Attack action, you can expend one use of your Channel Divinity to imbue one Melee weapon that you are holding with positive energy. For 10 minutes or until you use this feature again, you add your Charisma modifier to attack rolls you make with that weapon (minimum bonus of +1), and each time you hit with it, you cause it to deal its normal damage type or Radiant damage.\n  The weapon also emits Bright Light in a 20-foot radius and Dim Light 20 feet beyond that.\n  You can end this effect early (no action required). This effect also ends if you aren't carrying the weapon.",
+              "level": 3,
+              "name": "Sacred Weapon"
+            },
+            {
+              "description": "You and your allies have Immunity to the Charmed condition while in your Aura of Protection. If a Charmed ally enters the aura, that condition has no effect on that ally while there.",
+              "level": 7,
+              "name": "Aura of Devotion"
+            },
+            {
+              "description": "Your magical smite now radiates protective energy. Whenever you cast Divine Smite, you and your allies have Half Cover while in your Aura of Protection.\nThe aura has this benefit until the start of your next turn.",
+              "level": 15,
+              "name": "Smite of Protection"
+            },
+            {
+              "description": "As a Bonus Action, you can imbue your Aura of Protection with holy power, granting the benefits below for 10 minutes or until you end them (no action required). Once you use this feature, you can't use it again until you finish a Long Rest. You can also restore your use of it by expending a level 5 spell slot (no action required).\n  Holy Ward. You have Advantage on any saving throw you are forced to make by a Fiend or an Undead.\n  Radiant Damage. Whenever an enemy starts its turn in the aura, that creature takes Radiant damage equal to your Charisma modifier plus your Proficiency Bonus.\n  Sunlight. The aura is filled with Bright Light that is sunlight.",
+              "level": 20,
+              "name": "Holy Nimbus"
+            }
+          ],
+          "index": "oath-of-devotion",
+          "name": "Oath of Devotion",
+          "summary": "Uphold the Ideals of Justice and Order"
+        }
+      }
+    ]
+  }
+}

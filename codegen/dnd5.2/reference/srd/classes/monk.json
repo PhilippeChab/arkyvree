@@ -1,0 +1,1407 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-11-06T21:06:18.370Z",
+    "sourceUrls": {
+      "Classes": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Classes.json",
+      "Features": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Features.json",
+      "Levels": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Levels.json",
+      "Subclasses": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Subclasses.json"
+    },
+    "type": "class"
+  },
+  "raw": {
+    "class": {
+      "hit_die": 8,
+      "index": "monk",
+      "multi_classing": {
+        "prerequisites": [
+          {
+            "ability_score": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "minimum_score": 13
+          },
+          {
+            "ability_score": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "minimum_score": 13
+          }
+        ],
+        "proficiencies": []
+      },
+      "name": "Monk",
+      "primary_ability": {
+        "ability_scores": [
+          {
+            "index": "dex",
+            "name": "DEX"
+          },
+          {
+            "index": "wis",
+            "name": "WIS"
+          }
+        ],
+        "desc": "Dexterity and Wisdom"
+      },
+      "proficiencies": [
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "scimitars",
+          "name": "Scimitars"
+        },
+        {
+          "index": "shortswords",
+          "name": "Shortswords"
+        },
+        {
+          "index": "hand-crossbows",
+          "name": "Hand crossbows"
+        },
+        {
+          "index": "saving-throw-dex",
+          "name": "Saving Throw: DEX"
+        },
+        {
+          "index": "saving-throw-str",
+          "name": "Saving Throw: STR"
+        }
+      ],
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-acrobatics",
+                  "name": "Skill: Acrobatics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-history",
+                  "name": "Skill: History"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-religion",
+                  "name": "Skill: Religion"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-stealth",
+                  "name": "Skill: Stealth"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        },
+        {
+          "choose": 1,
+          "desc": "Choose one type of artisanâ€™s tools or one musical instrument",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "choice": {
+                  "choose": 1,
+                  "desc": "artisan's tools",
+                  "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                      {
+                        "item": {
+                          "index": "alchemists-supplies",
+                          "name": "Alchemist's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "brewers-supplies",
+                          "name": "Brewer's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "tool-calligraphers-supplies",
+                          "name": "Tool: Calligrapher's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "carpenters-tools",
+                          "name": "Carpenter's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cartographers-tools",
+                          "name": "Cartographer's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cobblers-tools",
+                          "name": "Cobbler's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cooks-utensils",
+                          "name": "Cook's Utensils"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "glassblowers-tools",
+                          "name": "Glassblower's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "jewelers-tools",
+                          "name": "Jeweler's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "leatherworkers-tools",
+                          "name": "Leatherworker's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "masons-tools",
+                          "name": "Mason's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "painters-supplies",
+                          "name": "Painter's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "potters-tools",
+                          "name": "Potter's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "smiths-tools",
+                          "name": "Smith's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "tinkers-tools",
+                          "name": "Tinker's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "weavers-tools",
+                          "name": "Weaver's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "woodcarvers-tools",
+                          "name": "Woodcarver's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "disguise-kit",
+                          "name": "Disguise Kit"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "forgery-kit",
+                          "name": "Forgery Kit"
+                        },
+                        "option_type": "reference"
+                      }
+                    ]
+                  },
+                  "type": "proficiencies"
+                },
+                "option_type": "choice"
+              },
+              {
+                "choice": {
+                  "choose": 1,
+                  "desc": "musical instrument",
+                  "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                      {
+                        "item": {
+                          "index": "bagpipes",
+                          "name": "Bagpipes"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "drum",
+                          "name": "Drum"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "dulcimer",
+                          "name": "Dulcimer"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "flute",
+                          "name": "Flute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "lute",
+                          "name": "Lute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "lyre",
+                          "name": "Lyre"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "horn",
+                          "name": "Horn"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "pan-flute",
+                          "name": "Pan flute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "shawm",
+                          "name": "Shawm"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "viol",
+                          "name": "Viol"
+                        },
+                        "option_type": "reference"
+                      }
+                    ]
+                  },
+                  "type": "proficiencies"
+                },
+                "option_type": "choice"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ],
+      "saving_throws": [
+        {
+          "index": "str",
+          "name": "STR"
+        },
+        {
+          "index": "dex",
+          "name": "DEX"
+        }
+      ],
+      "starting_equipment_options": [
+        {
+          "choose": 1,
+          "desc": "(a) Spear, 5 Daggers, Artisan’s Tools or Musical Instrument chosen for the tool proficiency above, Explorer’s Pack, and 11 GP; or (b) 50 GP",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "items": [
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "spear",
+                      "name": "Spear"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 5,
+                    "of": {
+                      "index": "dagger",
+                      "name": "Dagger"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "choice": {
+                      "choose": 1,
+                      "desc": "Artisan’s Tools or Musical Instrument",
+                      "from": {
+                        "option_set_type": "options_array",
+                        "options": [
+                          {
+                            "choice": {
+                              "choose": 1,
+                              "desc": "An Artisan's Tool",
+                              "from": {
+                                "equipment_category": {
+                                  "index": "artisans-tools",
+                                  "name": "Artisan's Tools"
+                                },
+                                "option_set_type": "equipment_category"
+                              },
+                              "type": "equipment"
+                            },
+                            "option_type": "choice"
+                          },
+                          {
+                            "choice": {
+                              "choose": 1,
+                              "desc": "A Musical Instrument",
+                              "from": {
+                                "equipment_category": {
+                                  "index": "musical-instruments",
+                                  "name": "Musical Instruments"
+                                },
+                                "option_set_type": "equipment_category"
+                              },
+                              "type": "equipment"
+                            },
+                            "option_type": "choice"
+                          }
+                        ]
+                      },
+                      "type": "equipment"
+                    },
+                    "option_type": "choice"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "explorers-pack",
+                      "name": "Explorer's Pack"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 11,
+                    "option_type": "money",
+                    "unit": "gp"
+                  }
+                ],
+                "option_type": "multiple"
+              },
+              {
+                "count": 50,
+                "option_type": "money",
+                "unit": "gp"
+              }
+            ]
+          },
+          "type": "equipment"
+        }
+      ],
+      "subclasses": [
+        {
+          "index": "warrior-of-the-open-hand",
+          "name": "Warrior of the Open Hand"
+        }
+      ]
+    },
+    "features": [
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Your practice of martial arts gives you mastery of combat styles that use your Unarmed Strike and Monk weapons, which are the following:\n• Simple Melee weapons\n• Martial Melee weapons that have the Light property\nYou gain the following benefits while you are unarmed or wielding only Monk weapons and you aren't wearing armor or wielding a Shield.\n  Bonus Unarmed Strike. You can make an Unarmed Strike as a Bonus Action.\n  Martial Arts Die. You can roll 1d6 in place of the normal damage of your Unarmed Strike or Monk weapons. This die changes as you gain Monk levels, as shown in the Martial Arts column of the Monk Features table.\n  Dexterous Attacks. You can use your Dexterity modifier instead of your Strength modifier for the attack and damage rolls of your Unarmed Strikes and Monk weapons. In addition, when you use the Grapple or Shove option of your Unarmed Strike, you can use your Dexterity modifier instead of your Strength modifier to determine the save DC.\n",
+        "index": "monk-martial-arts",
+        "level": {
+          "index": "monk-1",
+          "name": "Monk 1"
+        },
+        "name": "Martial Arts"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "While you aren't wearing armor or wielding a Shield, your base Armor Class equals 10 plus your Dexterity and Wisdom modifiers.",
+        "index": "monk-unarmored-defense",
+        "level": {
+          "index": "monk-1",
+          "name": "Monk 1"
+        },
+        "name": "Unarmored Defense"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Your focus and martial training allow you to harness a well of extraordinary energy within yourself. This energy is represented by Focus Points. Your Monk level determines the number of points you have, as shown in the Focus Points column of the Monk Features table.\n  You can expend these points to enhance or fuel certain Monk features. You start knowing three such features: Flurry of Blows, Patient Defense, and Step of the Wind, each of which is detailed below.\n  When you expend a Focus Point, it is unavailable until you finish a Short or Long Rest, at the end of which you regain all your expended points.\n Some features that use Focus Points require your target to make a saving throw. The save DC equals 8 plus your Wisdom modifier and Proficiency Bonus.\n  Flurry of Blows. You can expend 1 Focus Point to make two Unarmed Strikes as a Bonus Action.\n  Patient Defense. You can take the Disengage action as a Bonus Action. Alternatively, you can expend 1 Focus Point to take both the Disengage and the Dodge actions as a Bonus Action.\n  Step of the Wind. You can take the Dash action as a Bonus Action. Alternatively, you can expend 1 Focus Point to take both the Disengage and Dash\nactions as a Bonus Action, and your jump distance is doubled for the turn.",
+        "index": "monk-monks-focus",
+        "level": {
+          "index": "monk-2",
+          "name": "Monk 2"
+        },
+        "name": "Monk's Focus"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Your speed increases by 10 feet while you aren't wearing armor or wielding a Shield. This bonus increases when you reach certain Monk levels, as shown on the Monk Features table.",
+        "index": "monk-unarmored-movement",
+        "level": {
+          "index": "monk-2",
+          "name": "Monk 2"
+        },
+        "name": "Unarmored Movement"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "When you roll Initiative, you can regain all expended Focus Points. When you do so, roll your Martial Arts die, and regain a number of Hit Points equal to your Monk level plus the number rolled.\n  Once you use this feature, you can't use it again until you finish a Long Rest.",
+        "index": "monk-uncanny-metabolism",
+        "level": {
+          "index": "monk-2",
+          "name": "Monk 2"
+        },
+        "name": "Uncanny Metabolism"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "When an attack roll hits you and its damage includes Bludgeoning, Piercing, or Slashing damage, you can take a Reaction to reduce the attack's total damage against you. The reduction equals 1d10 plus your Dexterity modifier and Monk level.\n  If you reduce the damage to 0, you can expend 1 Focus Point to redirect some of the attack's force. If you do so, choose a creature you can see within 5 feet of yourself if the attack was a melee attack or a creature you can see within 60 feet of yourself that isn't behind Total Cover if the attack was a ranged attack. That creature must succeed on a Dexterity saving throw or take damage equal to two rolls of your Martial Arts die plus your Dexterity modifier. The damage is the same type dealt by the attack.",
+        "index": "monk-deflect-attacks",
+        "level": {
+          "index": "monk-3",
+          "name": "Monk 3"
+        },
+        "name": "Deflect Attacks"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You gain a Monk subclass of your choice. A subclass is a specialization that grants you features at certain Monk levels. For the rest of your career, you gain each of your subclass's features that are of your Monk level or lower.",
+        "index": "monk-subclass",
+        "level": {
+          "index": "monk-3",
+          "name": "Monk 3"
+        },
+        "name": "Monk Subclass"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Monk levels 8, 12, and 16.",
+        "index": "monk-ability-score-improvement",
+        "level": {
+          "index": "monk-4",
+          "name": "Monk 4"
+        },
+        "name": "Ability Score Improvement"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You can take a Reaction when you fall to reduce any damage you take from the fall by an amount equal to five times your Monk level.",
+        "index": "monk-slow-fall",
+        "level": {
+          "index": "monk-4",
+          "name": "Monk 4"
+        },
+        "name": "Slow Fall"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You can attack twice instead of once whenever you take the Attack action on your turn.",
+        "index": "monk-extra-attack",
+        "level": {
+          "index": "monk-5",
+          "name": "Monk 5"
+        },
+        "name": "Extra Attack"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Once per turn when you hit a creature with a Monk weapon or an Unarmed Strike, you can expend 1 Focus Point to attempt a stunning strike. The target must make a Constitution saving throw. On a failed save, the target has the Stunned condition until the start of your next turn. On a successful save, the target's Speed is halved until the start of your next turn, and the next attack roll made against the target before then has Advantage.",
+        "index": "monk-stunning-strike",
+        "level": {
+          "index": "monk-5",
+          "name": "Monk 5"
+        },
+        "name": "Stunning Strike"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Whenever you deal damage with your Unarmed Strike, it can deal your choice of Force damage or its normal damage type.",
+        "index": "monk-empowered-strikes",
+        "level": {
+          "index": "monk-6",
+          "name": "Monk 6"
+        },
+        "name": "Empowered Strikes"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "When you're subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw and only half damage if you fail.\n  You don't benefit from this feature if you have the Incapacitated condition.",
+        "index": "monk-evasion",
+        "level": {
+          "index": "monk-7",
+          "name": "Monk 7"
+        },
+        "name": "Evasion"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "While you aren't wearing armor or wielding a Shield, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the movement.",
+        "index": "monk-acrobatic-movement",
+        "level": {
+          "index": "monk-9",
+          "name": "Monk 9"
+        },
+        "name": "Acrobatic Movement"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Your Flurry of Blows, Patient Defense, and Step of the Wind gain the following benefits.\n  Flurry of Blows. You can expend 1 Focus Point to use Flurry of Blows and make three Unarmed Strikes with it instead of two.\n  Patient Defense. When you expend a Focus Point to use Patient Defense, you gain a number of Temporary Hit Points equal to two rolls of your Martial Arts die.\n  Step of the Wind. When you expend a Focus Point to use Step of the Wind, you can choose a willing creature within 5 feet of yourself that is Large or smaller. You move the creature with you until the end of your turn. The creature's movement doesn't provoke Opportunity Attacks.",
+        "index": "monk-heightened-focus",
+        "level": {
+          "index": "monk-10",
+          "name": "Monk 10"
+        },
+        "name": "Heightened Focus"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Through sheer force of will, you can remove one of the following conditions from yourself at the\nend of each of your turns: Charmed, Frightened, or Poisoned.\n  In addition, forgoing food and drink doesn't give you levels of Exhaustion.",
+        "index": "monk-self-restoration",
+        "level": {
+          "index": "monk-10",
+          "name": "Monk 10"
+        },
+        "name": "Self-Restoration"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You can now use your Deflect Attacks feature against attacks that deal any damage type, not just Bludgeoning, Piercing, or Slashing.",
+        "index": "monk-deflect-energy",
+        "level": {
+          "index": "monk-13",
+          "name": "Monk 13"
+        },
+        "name": "Deflect Energy"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "Your physical and mental discipline grant you proficiency in all saving throws.\n  Additionally, whenever you make a saving throw and fail, you can expend 1 Focus Point to reroll it, and you must use the new roll.",
+        "index": "monk-disciplined-survivor",
+        "level": {
+          "index": "monk-14",
+          "name": "Monk 14"
+        },
+        "name": "Disciplined Survivor"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "When you roll Initiative and don't use Uncanny Metabolism, you regain expended Focus Points until you have 4 if you have 3 or fewer.",
+        "index": "monk-perfect-focus",
+        "level": {
+          "index": "monk-15",
+          "name": "Monk 15"
+        },
+        "name": "Perfect Focus"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "At the start of your turn, you can expend 3 Focus Points to bolster yourself against harm for 1 minute or until you have the Incapacitated condition. During that time, you have Resistance to all damage except Force damage.",
+        "index": "monk-superior-defense",
+        "level": {
+          "index": "monk-18",
+          "name": "Monk 18"
+        },
+        "name": "Superior Defense"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Irresistible Offense is recommended.",
+        "index": "monk-epic-boon",
+        "level": {
+          "index": "monk-19",
+          "name": "Monk 19"
+        },
+        "name": "Epic Boon"
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "description": "You have developed your body and mind to new heights. Your Dexterity and Wisdom scores increase by 4, to a maximum of 25.",
+        "index": "monk-body-and-mind",
+        "level": {
+          "index": "monk-20",
+          "name": "Monk 20"
+        },
+        "name": "Body and Mind"
+      }
+    ],
+    "levels": [
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 0,
+          "martial_arts_die": 6,
+          "unarmored_movement_bonus": 0
+        },
+        "features": [
+          {
+            "index": "monk-martial-arts",
+            "name": "Martial Arts"
+          },
+          {
+            "index": "monk-unarmored-defense",
+            "name": "Unarmored Defense"
+          }
+        ],
+        "index": "monk-1",
+        "level": 1,
+        "name": "Monk 1",
+        "prof_bonus": 2
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 2,
+          "martial_arts_die": 6,
+          "unarmored_movement_bonus": 10
+        },
+        "features": [
+          {
+            "index": "monk-monks-focus",
+            "name": "Monk's Focus"
+          },
+          {
+            "index": "monk-unarmored-movement",
+            "name": "Unarmored Movement"
+          },
+          {
+            "index": "monk-uncanny-metabolism",
+            "name": "Uncanny Metabolism"
+          }
+        ],
+        "index": "monk-2",
+        "level": 2,
+        "name": "Monk 2",
+        "prof_bonus": 2
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 3,
+          "martial_arts_die": 6,
+          "unarmored_movement_bonus": 10
+        },
+        "features": [
+          {
+            "index": "monk-subclass",
+            "name": "Monk Subclass"
+          },
+          {
+            "index": "monk-deflect-attacks",
+            "name": "Deflect Attacks"
+          }
+        ],
+        "index": "monk-3",
+        "level": 3,
+        "name": "Monk 3",
+        "prof_bonus": 2
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 4,
+          "martial_arts_die": 6,
+          "unarmored_movement_bonus": 10
+        },
+        "features": [
+          {
+            "index": "monk-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          },
+          {
+            "index": "monk-slow-fall",
+            "name": "Slow Fall"
+          }
+        ],
+        "index": "monk-4",
+        "level": 4,
+        "name": "Monk 4",
+        "prof_bonus": 2
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 5,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 10
+        },
+        "features": [
+          {
+            "index": "monk-extra-attack",
+            "name": "Extra Attack"
+          },
+          {
+            "index": "monk-stunning-strike",
+            "name": "Stunning Strike"
+          }
+        ],
+        "index": "monk-5",
+        "level": 5,
+        "name": "Monk 5",
+        "prof_bonus": 3
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 6,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 15
+        },
+        "features": [
+          {
+            "index": "monk-subclass",
+            "name": "Monk Subclass"
+          },
+          {
+            "index": "monk-empowered-strikes",
+            "name": "Empowered Strikes"
+          }
+        ],
+        "index": "monk-6",
+        "level": 6,
+        "name": "Monk 6",
+        "prof_bonus": 3
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 7,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 15
+        },
+        "features": [
+          {
+            "index": "monk-evasion",
+            "name": "Evasion"
+          }
+        ],
+        "index": "monk-7",
+        "level": 7,
+        "name": "Monk 7",
+        "prof_bonus": 3
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 8,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 15
+        },
+        "features": [
+          {
+            "index": "monk-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "monk-8",
+        "level": 8,
+        "name": "Monk 8",
+        "prof_bonus": 3
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 9,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 15
+        },
+        "features": [
+          {
+            "index": "monk-acrobatic-movement",
+            "name": "Acrobatic Movement"
+          }
+        ],
+        "index": "monk-9",
+        "level": 9,
+        "name": "Monk 9",
+        "prof_bonus": 4
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 10,
+          "martial_arts_die": 8,
+          "unarmored_movement_bonus": 20
+        },
+        "features": [
+          {
+            "index": "monk-heightened-focus",
+            "name": "Heightened Focus"
+          },
+          {
+            "index": "monk-self-restoration",
+            "name": "Self-Restoration"
+          }
+        ],
+        "index": "monk-10",
+        "level": 10,
+        "name": "Monk 10",
+        "prof_bonus": 4
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 11,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 20
+        },
+        "features": [
+          {
+            "index": "monk-subclass",
+            "name": "Monk Subclass"
+          }
+        ],
+        "index": "monk-11",
+        "level": 11,
+        "name": "Monk 11",
+        "prof_bonus": 4
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 12,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 20
+        },
+        "features": [
+          {
+            "index": "monk-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "monk-12",
+        "level": 12,
+        "name": "Monk 12",
+        "prof_bonus": 4
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 13,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 20
+        },
+        "features": [
+          {
+            "index": "monk-deflect-energy",
+            "name": "Deflect Energy"
+          }
+        ],
+        "index": "monk-13",
+        "level": 13,
+        "name": "Monk 13",
+        "prof_bonus": 5
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 14,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 25
+        },
+        "features": [
+          {
+            "index": "monk-disciplined-survivor",
+            "name": "Disciplined Survivor"
+          }
+        ],
+        "index": "monk-14",
+        "level": 14,
+        "name": "Monk 14",
+        "prof_bonus": 5
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 15,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 25
+        },
+        "features": [
+          {
+            "index": "monk-perfect-focus",
+            "name": "Perfect Focus"
+          }
+        ],
+        "index": "monk-15",
+        "level": 15,
+        "name": "Monk 15",
+        "prof_bonus": 5
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 16,
+          "martial_arts_die": 10,
+          "unarmored_movement_bonus": 25
+        },
+        "features": [
+          {
+            "index": "monk-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "monk-16",
+        "level": 16,
+        "name": "Monk 16",
+        "prof_bonus": 5
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 17,
+          "martial_arts_die": 12,
+          "unarmored_movement_bonus": 25
+        },
+        "features": [
+          {
+            "index": "monk-subclass",
+            "name": "Monk Subclass"
+          }
+        ],
+        "index": "monk-17",
+        "level": 17,
+        "name": "Monk 17",
+        "prof_bonus": 6
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 18,
+          "martial_arts_die": 12,
+          "unarmored_movement_bonus": 30
+        },
+        "features": [
+          {
+            "index": "monk-superior-defense",
+            "name": "Superior Defense"
+          }
+        ],
+        "index": "monk-18",
+        "level": 18,
+        "name": "Monk 18",
+        "prof_bonus": 6
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 19,
+          "martial_arts_die": 12,
+          "unarmored_movement_bonus": 30
+        },
+        "features": [
+          {
+            "index": "monk-epic-boon",
+            "name": "Epic Boon"
+          }
+        ],
+        "index": "monk-19",
+        "level": 19,
+        "name": "Monk 19",
+        "prof_bonus": 6
+      },
+      {
+        "class": {
+          "index": "monk",
+          "name": "Monk"
+        },
+        "class_specific": {
+          "focus_points": 20,
+          "martial_arts_die": 12,
+          "unarmored_movement_bonus": 30
+        },
+        "features": [
+          {
+            "index": "monk-body-and-mind",
+            "name": "Body and Mind"
+          }
+        ],
+        "index": "monk-20",
+        "level": 20,
+        "name": "Monk 20",
+        "prof_bonus": 6
+      }
+    ],
+    "subclasses": [
+      {
+        "features": [
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "description": "Whenever you hit a creature with an attack granted by your Flurry of Blows, you can impose one of the following effects on that target.\n  Addle. The target can't make Opportunity Attacks until the start of its next turn.\n  Push. The target must succeed on a Strength saving throw or be pushed up to 15 feet away from you.\n  Topple. The target must succeed on a Dexterity saving throw or have the Prone condition.",
+            "index": "open-hand-technique",
+            "level": {
+              "index": "monk-3",
+              "name": "Monk 3"
+            },
+            "name": "Open Hand Technique",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "description": "You gain the ability to heal yourself. As a Bonus Action, you can roll your Martial Arts die. You regain a number of Hit Points equal to the number rolled plus your Wisdom modifier (minimum of 1 Hit Point regained).\n  You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.",
+            "index": "open-hand-wholeness-of-body",
+            "level": {
+              "index": "monk-6",
+              "name": "Monk 6"
+            },
+            "name": "Wholeness of Body",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "description": "When you take a Bonus Action other than Step of the Wind, you can also use Step of the Wind immediately after that Bonus Action.",
+            "index": "open-hand-fleet-step",
+            "level": {
+              "index": "monk-11",
+              "name": "Monk 11"
+            },
+            "name": "Fleet Step",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "description": "You gain the ability to set up lethal vibrations in someone's body. When you hit a creature with an Unarmed Strike, you can expend 4 Focus Points to start these imperceptible vibrations, which last for a number of days equal to your Monk level. The vibrations are harmless unless you take an action to end them. Alternatively, when you take the Attack action on your turn, you can forgo one of the attacks to end the vibrations. To end them, you and the target must be on the same plane of existence. When you end them, the target must make a Constitution saving throw, taking 10d12 Force damage on a failed save or half as much damage on a successful one.\n  You can have only one creature under the effect of this feature at a time. You can end the vibrations harmlessly (no action required).",
+            "index": "open-hand-quivering-palm",
+            "level": {
+              "index": "monk-17",
+              "name": "Monk 17"
+            },
+            "name": "Quivering Palm",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          }
+        ],
+        "levels": [
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "features": [
+              {
+                "index": "open-hand-technique",
+                "name": "Open Hand Technique"
+              }
+            ],
+            "index": "open-hand-3",
+            "level": 3,
+            "name": "Open Hand 3",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "features": [
+              {
+                "index": "open-hand-wholeness-of-body",
+                "name": "Wholeness of Body"
+              }
+            ],
+            "index": "open-hand-6",
+            "level": 6,
+            "name": "Open Hand 6",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "features": [
+              {
+                "index": "open-hand-fleet-step",
+                "name": "Fleet Step"
+              }
+            ],
+            "index": "open-hand-11",
+            "level": 11,
+            "name": "Open Hand 11",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          },
+          {
+            "class": {
+              "index": "monk",
+              "name": "Monk"
+            },
+            "features": [
+              {
+                "index": "open-hand-quivering-palm",
+                "name": "Quivering Palm"
+              }
+            ],
+            "index": "open-hand-17",
+            "level": 17,
+            "name": "Open Hand 17",
+            "subclass": {
+              "index": "warrior-of-the-open-hand",
+              "name": "Warrior of the Open Hand"
+            }
+          }
+        ],
+        "subclass": {
+          "class": {
+            "index": "monk",
+            "name": "Monk"
+          },
+          "description": "Warriors of the Open Hand are masters of unarmed combat. They learn techniques to push and trip their opponents and manipulate their own energy to protect themselves from harm.",
+          "features": [
+            {
+              "description": "Whenever you hit a creature with an attack granted by your Flurry of Blows, you can impose one of the following effects on that target.\n  Addle. The target can't make Opportunity Attacks until the start of its next turn.\n Push. The target must succeed on a Strength saving throw or be pushed up to 15 feet away from you.\n  Topple. The target must succeed on a Dexterity saving throw or have the Prone condition.",
+              "level": 3,
+              "name": "Open Hand Technique"
+            },
+            {
+              "description": "You gain the ability to heal yourself. As a Bonus Action, you can roll your Martial Arts die. You regain a number of Hit Points equal to the number rolled\nplus your Wisdom modifier (minimum of 1 Hit Point regained).\n  You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.",
+              "level": 6,
+              "name": "Wholeness of Body"
+            },
+            {
+              "description": "When you take a Bonus Action other than Step of the Wind, you can also use Step of the Wind immediately after that Bonus Action.",
+              "level": 11,
+              "name": "Fleet Step"
+            },
+            {
+              "description": "You gain the ability to set up lethal vibrations in someone's body. When you hit a creature with an Unarmed Strike, you can expend 4 Focus Points to start these imperceptible vibrations, which last\nfor a number of days equal to your Monk level. The vibrations are harmless unless you take an action to end them. Alternatively, when you take the Attack action on your turn, you can forgo one of the attacks to end the vibrations. To end them, you and the target must be on the same plane of existence. When you end them, the target must make a Constitution saving throw, taking 10d12 Force damage on a failed save or half as much damage on a successful one.\n  You can have only one creature under the effect of this feature at a time. You can end the vibrations harmlessly (no action required).",
+              "level": 17,
+              "name": "Quivering Palm"
+            }
+          ],
+          "index": "warrior-of-the-open-hand",
+          "name": "Warrior of the Open Hand",
+          "summary": "Master Unarmed Combat Techniques"
+        }
+      }
+    ]
+  }
+}

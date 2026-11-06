@@ -1,0 +1,1469 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-11-06T21:06:18.372Z",
+    "sourceUrls": {
+      "Classes": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Classes.json",
+      "Features": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Features.json",
+      "Levels": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Levels.json",
+      "Subclasses": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Subclasses.json"
+    },
+    "type": "class"
+  },
+  "raw": {
+    "class": {
+      "hit_die": 10,
+      "index": "ranger",
+      "multi_classing": {
+        "prerequisites": [
+          {
+            "ability_score": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "minimum_score": 13
+          },
+          {
+            "ability_score": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "minimum_score": 13
+          }
+        ],
+        "proficiencies": [
+          {
+            "index": "light-armor",
+            "name": "Light Armor"
+          },
+          {
+            "index": "medium-armor",
+            "name": "Medium Armor"
+          },
+          {
+            "index": "shields",
+            "name": "Shields"
+          },
+          {
+            "index": "martial-weapons",
+            "name": "Martial Weapons"
+          }
+        ],
+        "proficiency_choices": [
+          {
+            "choose": 1,
+            "from": {
+              "option_set_type": "options_array",
+              "options": [
+                {
+                  "item": {
+                    "index": "skill-animal-handling",
+                    "name": "Skill: Animal Handling"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-athletics",
+                    "name": "Skill: Athletics"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-insight",
+                    "name": "Skill: Insight"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-investigation",
+                    "name": "Skill: Investigation"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-nature",
+                    "name": "Skill: Nature"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-perception",
+                    "name": "Skill: Perception"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-stealth",
+                    "name": "Skill: Stealth"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-survival",
+                    "name": "Skill: Survival"
+                  },
+                  "option_type": "reference"
+                }
+              ]
+            },
+            "type": "proficiencies"
+          }
+        ]
+      },
+      "name": "Ranger",
+      "primary_ability": {
+        "ability_scores": [
+          {
+            "index": "dex",
+            "name": "DEX"
+          },
+          {
+            "index": "wis",
+            "name": "WIS"
+          }
+        ],
+        "desc": "Dexterity and Wisdom"
+      },
+      "proficiencies": [
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        },
+        {
+          "index": "shields",
+          "name": "Shields"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "saving-throw-dex",
+          "name": "Saving Throw: DEX"
+        },
+        {
+          "index": "saving-throw-str",
+          "name": "Saving Throw: STR"
+        }
+      ],
+      "proficiency_choices": [
+        {
+          "choose": 3,
+          "desc": "Choose 3: Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, or Survival",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-animal-handling",
+                  "name": "Skill: Animal Handling"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-investigation",
+                  "name": "Skill: Investigation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-nature",
+                  "name": "Skill: Nature"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-perception",
+                  "name": "Skill: Perception"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-stealth",
+                  "name": "Skill: Stealth"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-survival",
+                  "name": "Skill: Survival"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ],
+      "saving_throws": [
+        {
+          "index": "str",
+          "name": "STR"
+        },
+        {
+          "index": "dex",
+          "name": "DEX"
+        }
+      ],
+      "spellcasting": {
+        "info": [
+          {
+            "desc": [
+              "The Ranger Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest."
+            ],
+            "name": "Spell Slots"
+          },
+          {
+            "desc": [
+              "You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Ranger spells. Cure Wounds and Ensnaring Strike are recommended.",
+              "The number of spells on your list increases as you gain Ranger levels, as shown in the Prepared Spells column of the Ranger Features table. Whenever that number increases, choose additional Ranger spells until the number of spells on your list matches the number in the Ranger Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Ranger, your list of prepared spells can include six Ranger spells of level 1 or 2 in any combination.",
+              "If another Ranger feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Ranger spells for you."
+            ],
+            "name": "Prepared Spells of Level 1+"
+          },
+          {
+            "desc": [
+              "Whenever you finish a Long Rest, you can replace one spell on your list with another Ranger spell for which you have spell slots."
+            ],
+            "name": "Changing Your Prepared Spells"
+          },
+          {
+            "desc": [
+              "Wisdom is your spellcasting ability for your Ranger spells."
+            ],
+            "name": "Spellcasting Ability"
+          },
+          {
+            "desc": [
+              "You can use a Druidic Focus as a Spellcasting Focus for your Ranger spells."
+            ],
+            "name": "Spellcasting Focus"
+          }
+        ],
+        "level": 1,
+        "spellcasting_ability": {
+          "index": "wis",
+          "name": "WIS"
+        }
+      },
+      "starting_equipment_options": [
+        {
+          "choose": 1,
+          "desc": "(a) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Druidic Focus (sprig of mistletoe), Explorer's Pack, and 7 GP; or (b) 150 GP",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "items": [
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "studded-leather-armor",
+                      "name": "Studded Leather Armor"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "scimitar",
+                      "name": "Scimitar"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "shortsword",
+                      "name": "Shortsword"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "longbow",
+                      "name": "Longbow"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 20,
+                    "of": {
+                      "index": "arrows",
+                      "name": "Arrows"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "quiver",
+                      "name": "Quiver"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "sprig-of-mistletoe",
+                      "name": "Sprig of Mistletoe"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "explorers-pack",
+                      "name": "Explorer's Pack"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 7,
+                    "option_type": "money",
+                    "unit": "gp"
+                  }
+                ],
+                "option_type": "multiple"
+              },
+              {
+                "count": 150,
+                "option_type": "money",
+                "unit": "gp"
+              }
+            ]
+          },
+          "type": "equipment"
+        }
+      ],
+      "subclasses": [
+        {
+          "index": "hunter",
+          "name": "Hunter"
+        }
+      ]
+    },
+    "features": [
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You always have the Hunter's Mark spell prepared. You can cast it twice without expending a spell slot, and you regain all expended uses of this ability when you finish a Long Rest.\n  The number of times you can cast the spell without a spell slot increases when you reach certain Ranger levels, as shown in the Favored Enemy column of the Ranger Features table.",
+        "index": "ranger-favored-enemy",
+        "level": {
+          "index": "ranger-1",
+          "name": "Ranger 1"
+        },
+        "name": "Favored Enemy"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You have learned to channel the magical essence of nature to cast spells. See \"Spells\" for the rules on spellcasting. The information below details how you use those rules with Ranger spells, which appear in the Ranger spell list later in the class's description.\n  Spell Slots. The Ranger Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n  Prepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1\nRanger spells. Cure Wounds and Ensnaring Strike are recommended.\n  The number of spells on your list increases as you gain Ranger levels, as shown in the Prepared Spells column of the Ranger Features table. Whenever that number increases, choose additional Ranger spells until the number of spells on your list matches the number in the Ranger Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Ranger, your list of prepared spells can include six Ranger spells of level 1 or 2 in any combination.\n  If another Ranger feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Ranger spells for you.\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can replace one spell on your list with another Ranger spell for which you have spell slots.\n  Spellcasting Ability. Wisdom is your spellcasting ability for your Ranger spells.\n  Spellcasting Focus. You can use a Druidic Focus as a Spellcasting Focus for your Ranger spells.",
+        "index": "ranger-spellcasting",
+        "level": {
+          "index": "ranger-1",
+          "name": "Ranger 1"
+        },
+        "name": "Spellcasting"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Your training with weapons allows you to use the mastery properties of two kinds of weapons of your choice with which you have proficiency, such as Longbows and Shortswords.\n  Whenever you finish a Long Rest, you can change the kinds of weapons you chose. For example, you could switch to using the mastery properties of Scimitars and Longswords.",
+        "index": "ranger-weapon-mastery",
+        "level": {
+          "index": "ranger-1",
+          "name": "Ranger 1"
+        },
+        "name": "Weapon Mastery"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Thanks to your travels, you gain the following benefits.\n  Expertise. Choose one of your skill proficiencies with which you lack Expertise. You gain Expertise in that skill.\n  Languages. You know two languages of your choice from the language tables in \"Character Creation.\"",
+        "index": "ranger-deft-explorer",
+        "level": {
+          "index": "ranger-2",
+          "name": "Ranger 2"
+        },
+        "name": "Deft Explorer"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You gain a Fighting Style feat of your choice (see \"Feats\"). Instead of choosing one of those feats, you can choose the option below.\n  Druidic Warrior. You learn two Druid cantrips of your choice (see the Druid class's section for a list of Druid spells). Guidance and Starry Wisp are recommended. The chosen cantrips count as Ranger spells for you, and Wisdom is your spellcasting ability for them. Whenever you gain a Ranger level, you can replace one of these cantrips with another Druid cantrip.",
+        "index": "ranger-fighting-style",
+        "level": {
+          "index": "ranger-2",
+          "name": "Ranger 2"
+        },
+        "name": "Fighting Style"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You gain a Ranger subclass of your choice. A subclass is a specialization that grants you features at certain Ranger levels. For the rest of your career, you gain each of your subclass's features that are of your Ranger level or lower.",
+        "index": "ranger-subclass",
+        "level": {
+          "index": "ranger-3",
+          "name": "Ranger 3"
+        },
+        "name": "Ranger Subclass"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Ranger levels 8, 12, and 16.",
+        "index": "ranger-ability-score-improvement",
+        "level": {
+          "index": "ranger-4",
+          "name": "Ranger 4"
+        },
+        "name": "Ability Score Improvement"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You can attack twice instead of once whenever you take the Attack action on your turn.",
+        "index": "ranger-extra-attack",
+        "level": {
+          "index": "ranger-5",
+          "name": "Ranger 5"
+        },
+        "name": "Extra Attack"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Your Speed increases by 10 feet while you aren't wearing Heavy armor. You also have a Climb Speed and a Swim Speed equal to your Speed.",
+        "index": "ranger-roving",
+        "level": {
+          "index": "ranger-6",
+          "name": "Ranger 6"
+        },
+        "name": "Roving"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Choose two of your skill proficiencies with which you lack Expertise. You gain Expertise in those skills.",
+        "index": "ranger-expertise",
+        "level": {
+          "index": "ranger-9",
+          "name": "Ranger 9"
+        },
+        "name": "Expertise"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Primal forces now help fuel you on your journeys, granting you the following benefits.\n  Temporary Hit Points. As a Magic action, you can give yourself a number of Temporary Hit Points equal to 1d8 plus your Wisdom modifier (minimum of 1). You can use this action a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.\n  Decrease Exhaustion. Whenever you finish a Short Rest, your Exhaustion level, if any, decreases by 1.",
+        "index": "ranger-tireless",
+        "level": {
+          "index": "ranger-10",
+          "name": "Ranger 10"
+        },
+        "name": "Tireless"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Taking damage can't break your Concentration on Hunter's Mark.",
+        "index": "ranger-relentless-hunter",
+        "level": {
+          "index": "ranger-13",
+          "name": "Ranger 13"
+        },
+        "name": "Relentless Hunter"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You invoke spirits of nature to magically hide yourself. As a Bonus Action, you can give yourself the Invisible condition until the end of your next turn.\n  You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.",
+        "index": "ranger-natures-veil",
+        "level": {
+          "index": "ranger-14",
+          "name": "Ranger 14"
+        },
+        "name": "Nature's Veil"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You have Advantage on attack rolls against the creature currently marked by your Hunter's Mark.",
+        "index": "ranger-precise-hunter",
+        "level": {
+          "index": "ranger-17",
+          "name": "Ranger 17"
+        },
+        "name": "Precise Hunter"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "Your connection to the forces of nature grants you Blindsight with a range of 30 feet.",
+        "index": "ranger-feral-senses",
+        "level": {
+          "index": "ranger-18",
+          "name": "Ranger 18"
+        },
+        "name": "Feral Senses"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "You gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Dimensional Travel is recommended.",
+        "index": "ranger-epic-boon",
+        "level": {
+          "index": "ranger-19",
+          "name": "Ranger 19"
+        },
+        "name": "Epic Boon"
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "description": "The damage die of your Hunter's Mark is a d10 rather than a d6.",
+        "index": "ranger-foe-slayer",
+        "level": {
+          "index": "ranger-20",
+          "name": "Ranger 20"
+        },
+        "name": "Foe Slayer"
+      }
+    ],
+    "levels": [
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 2
+        },
+        "features": [
+          {
+            "index": "ranger-favored-enemy",
+            "name": "Favored Enemy"
+          },
+          {
+            "index": "ranger-spellcasting",
+            "name": "Spellcasting"
+          },
+          {
+            "index": "ranger-weapon-mastery",
+            "name": "Weapon Mastery"
+          }
+        ],
+        "index": "ranger-1",
+        "level": 1,
+        "name": "Ranger 1",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 2,
+          "spell_slots_level_1": 2,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 2
+        },
+        "features": [
+          {
+            "index": "ranger-deft-explorer",
+            "name": "Deft Explorer"
+          },
+          {
+            "index": "ranger-fighting-style",
+            "name": "Fighting Style"
+          }
+        ],
+        "index": "ranger-2",
+        "level": 2,
+        "name": "Ranger 2",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 3,
+          "spell_slots_level_1": 2,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 2
+        },
+        "features": [
+          {
+            "index": "ranger-subclass",
+            "name": "Ranger Subclass"
+          }
+        ],
+        "index": "ranger-3",
+        "level": 3,
+        "name": "Ranger 3",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 4,
+          "spell_slots_level_1": 3,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 2
+        },
+        "features": [
+          {
+            "index": "ranger-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "ranger-4",
+        "level": 4,
+        "name": "Ranger 4",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 5,
+          "spell_slots_level_1": 3,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 3
+        },
+        "features": [
+          {
+            "index": "ranger-extra-attack",
+            "name": "Extra Attack"
+          }
+        ],
+        "index": "ranger-5",
+        "level": 5,
+        "name": "Ranger 5",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 6,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 3
+        },
+        "features": [
+          {
+            "index": "ranger-roving",
+            "name": "Roving"
+          }
+        ],
+        "index": "ranger-6",
+        "level": 6,
+        "name": "Ranger 6",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 6,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 3
+        },
+        "features": [
+          {
+            "index": "ranger-subclass",
+            "name": "Ranger Subclass"
+          }
+        ],
+        "index": "ranger-7",
+        "level": 7,
+        "name": "Ranger 7",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 7,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 3
+        },
+        "features": [
+          {
+            "index": "ranger-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "ranger-8",
+        "level": 8,
+        "name": "Ranger 8",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 7,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 4
+        },
+        "features": [
+          {
+            "index": "ranger-expertise",
+            "name": "Expertise"
+          }
+        ],
+        "index": "ranger-9",
+        "level": 9,
+        "name": "Ranger 9",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 9,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 4
+        },
+        "features": [
+          {
+            "index": "ranger-tireless",
+            "name": "Tireless"
+          }
+        ],
+        "index": "ranger-10",
+        "level": 10,
+        "name": "Ranger 10",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 9,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 4
+        },
+        "features": [
+          {
+            "index": "ranger-subclass",
+            "name": "Ranger Subclass"
+          }
+        ],
+        "index": "ranger-11",
+        "level": 11,
+        "name": "Ranger 11",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 4
+        },
+        "features": [
+          {
+            "index": "ranger-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "ranger-12",
+        "level": 12,
+        "name": "Ranger 12",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 5
+        },
+        "features": [
+          {
+            "index": "ranger-relentless-hunter",
+            "name": "Relentless Hunter"
+          }
+        ],
+        "index": "ranger-13",
+        "level": 13,
+        "name": "Ranger 13",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 1,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 5
+        },
+        "features": [
+          {
+            "index": "ranger-natures-veil",
+            "name": "Nature's Veil"
+          }
+        ],
+        "index": "ranger-14",
+        "level": 14,
+        "name": "Ranger 14",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 1,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 5
+        },
+        "features": [
+          {
+            "index": "ranger-subclass",
+            "name": "Ranger Subclass"
+          }
+        ],
+        "index": "ranger-15",
+        "level": 15,
+        "name": "Ranger 15",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 5
+        },
+        "features": [
+          {
+            "index": "ranger-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "ranger-16",
+        "level": 16,
+        "name": "Ranger 16",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 6
+        },
+        "features": [
+          {
+            "index": "ranger-precise-hunter",
+            "name": "Precise Hunter"
+          }
+        ],
+        "index": "ranger-17",
+        "level": 17,
+        "name": "Ranger 17",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 1,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 6
+        },
+        "features": [
+          {
+            "index": "ranger-feral-senses",
+            "name": "Feral Senses"
+          }
+        ],
+        "index": "ranger-18",
+        "level": 18,
+        "name": "Ranger 18",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 1,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 6
+        },
+        "features": [
+          {
+            "index": "ranger-epic-boon",
+            "name": "Epic Boon"
+          }
+        ],
+        "index": "ranger-19",
+        "level": 19,
+        "name": "Ranger 19",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "ranger",
+          "name": "Ranger"
+        },
+        "class_specific": {
+          "favored_enemies": 6
+        },
+        "features": [
+          {
+            "index": "ranger-foe-slayer",
+            "name": "Foe Slayer"
+          }
+        ],
+        "index": "ranger-20",
+        "level": 20,
+        "name": "Ranger 20",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 0,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 4,
+          "spell_slots_level_2": 3,
+          "spell_slots_level_3": 3,
+          "spell_slots_level_4": 3,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      }
+    ],
+    "subclasses": [
+      {
+        "features": [
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "description": "You can call on the forces of nature to reveal certain strengths and weaknesses of your prey. While a creature is marked by your Hunter's Mark, you know whether that creature has any Immunities, Resistances, or Vulnerabilities, and if the creature has any, you know what they are.",
+            "index": "hunter-hunters-lore",
+            "level": {
+              "index": "ranger-3",
+              "name": "Ranger 3"
+            },
+            "name": "Hunter's Lore",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "description": "You gain one of the following feature options of your choice. Whenever you finish a Short or Long Rest, you can replace the chosen option with the other one.\n  Colossus Slayer. Your tenacity can wear down even the most resilient foes. When you hit a creature with a weapon, the weapon deals an extra 1d8 damage to the target if it's missing any of its Hit Points. You can deal this extra damage only once per turn.\n  Horde Breaker. Once on each of your turns when you make an attack with a weapon, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target, that is within the weapon's range, and that you haven't attacked this turn.",
+            "index": "hunter-hunters-prey",
+            "level": {
+              "index": "ranger-3",
+              "name": "Ranger 3"
+            },
+            "name": "Hunter's Prey",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "description": "You gain one of the following feature options of your choice. Whenever you finish a Short or Long Rest, you can replace the chosen option with the other one.\n  Escape the Horde. Opportunity Attacks have Disadvantage against you.\n  Multiattack Defense. When a creature hits you with an attack roll, that creature has Disadvantage on all other attack rolls against you this turn.",
+            "index": "hunter-defensive-tactics",
+            "level": {
+              "index": "ranger-7",
+              "name": "Ranger 7"
+            },
+            "name": "Defensive Tactics",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "description": "Once per turn when you deal damage to a creature marked by your Hunter's Mark, you can also deal that spell's extra damage to a different creature that you can see within 30 feet of the first creature.",
+            "index": "hunter-superior-hunters-prey",
+            "level": {
+              "index": "ranger-11",
+              "name": "Ranger 11"
+            },
+            "name": "Superior Hunter's Prey",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "description": "When you take damage, you can take a Reaction to give yourself Resistance to that damage and any other damage of the same type until the end of the current turn.",
+            "index": "hunter-superior-hunters-defense",
+            "level": {
+              "index": "ranger-15",
+              "name": "Ranger 15"
+            },
+            "name": "Superior Hunter's Defense",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          }
+        ],
+        "levels": [
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "features": [
+              {
+                "index": "hunter-hunters-lore",
+                "name": "Hunter's Lore"
+              },
+              {
+                "index": "hunter-hunters-prey",
+                "name": "Hunter's Prey"
+              }
+            ],
+            "index": "hunter-3",
+            "level": 3,
+            "name": "Hunter 3",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "features": [
+              {
+                "index": "hunter-defensive-tactics",
+                "name": "Defensive Tactics"
+              }
+            ],
+            "index": "hunter-7",
+            "level": 7,
+            "name": "Hunter 7",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "features": [
+              {
+                "index": "hunter-superior-hunters-prey",
+                "name": "Superior Hunter's Prey"
+              }
+            ],
+            "index": "hunter-11",
+            "level": 11,
+            "name": "Hunter 11",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          },
+          {
+            "class": {
+              "index": "ranger",
+              "name": "Ranger"
+            },
+            "features": [
+              {
+                "index": "hunter-superior-hunters-defense",
+                "name": "Superior Hunter's Defense"
+              }
+            ],
+            "index": "hunter-15",
+            "level": 15,
+            "name": "Hunter 15",
+            "subclass": {
+              "index": "hunter",
+              "name": "Hunter"
+            }
+          }
+        ],
+        "subclass": {
+          "class": {
+            "index": "ranger",
+            "name": "Ranger"
+          },
+          "description": "You stalk prey in the wilds and elsewhere, using your abilities as a Hunter to protect nature and people everywhere from forces that would destroy them.",
+          "features": [
+            {
+              "description": "You can call on the forces of nature to reveal certain strengths and weaknesses of your prey. While a creature is marked by your Hunter's Mark, you know whether that creature has any Immunities, Resistances, or Vulnerabilities, and if the creature has any, you know what they are.",
+              "level": 3,
+              "name": "Hunter's Lore"
+            },
+            {
+              "description": "You gain one of the following feature options of your choice. Whenever you finish a Short or Long Rest, you can replace the chosen option with the other one.\n  Colossus Slayer. Your tenacity can wear down even the most resilient foes. When you hit a creature with a weapon, the weapon deals an extra 1d8 damage to the target if it's missing any of its Hit Points. You can deal this extra damage only once per turn.\n  Horde Breaker. Once on each of your turns when you make an attack with a weapon, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target, that is within the weapon's range, and that you haven't attacked this turn.",
+              "level": 3,
+              "name": "Hunter's Prey"
+            },
+            {
+              "description": "You gain one of the following feature options of your choice. Whenever you finish a Short or Long Rest, you can replace the chosen option with the other one.\n  Escape the Horde. Opportunity Attacks have Disadvantage against you.\n  Multiattack Defense. When a creature hits you with an attack roll, that creature has Disadvantage on all other attack rolls against you this turn.",
+              "level": 7,
+              "name": "Defensive Tactics"
+            },
+            {
+              "description": "Once per turn when you deal damage to a creature marked by your Hunter's Mark, you can also deal that spell's extra damage to a different creature that you can see within 30 feet of the first creature.",
+              "level": 11,
+              "name": "Superior Hunter's Prey"
+            },
+            {
+              "description": "When you take damage, you can take a Reaction to give yourself Resistance to that damage and any other damage of the same type until the end of the current turn.",
+              "level": 15,
+              "name": "Superior Hunter's Defense"
+            }
+          ],
+          "index": "hunter",
+          "name": "Hunter",
+          "summary": "Protect Nature and People from Destruction"
+        }
+      }
+    ]
+  }
+}
