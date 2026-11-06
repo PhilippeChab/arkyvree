@@ -1,4 +1,4 @@
-/** A feat's possession, as the Pathfinder content names and grants it: the path of having a feat, and its grant. */
+/** A feat's possession, as the content names and grants it: the path of having a feat, and its grant. */
 
 import { setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";

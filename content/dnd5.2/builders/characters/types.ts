@@ -45,7 +45,7 @@ export interface CharacterSeed {
 
 /** An item in a seeded character's inventory, by name: how many, and where it's equipped (none to carry it). */
 export interface InventorySeed {
-  /** The groups it's held in (Pathfinder's weapon sets a hand holds it in), from 0 */
+  /** The groups it's held in (the weapon sets a hand holds it in), from 0 */
   groups?: number[];
   location?: ItemLocation;
   name: string;

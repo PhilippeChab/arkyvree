@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
@@ -71,7 +71,8 @@ describe("A spell's fields", () => {
     const spells = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(eq(entitiesInRules.type, "spells"));
+      // 3.5's own: another base rules' spells hold their own fields
+      .where(and(eq(entitiesInRules.type, "spells"), eq(entitiesInRules.baseRules, DND35_BASE_RULES)));
     const held = (await Entities.findMany(db, { entityType: "spells", ids: spells.map(({ id }) => id) })).filter(
       (spell) => Object.keys(spell.fields).length > 0,
     );

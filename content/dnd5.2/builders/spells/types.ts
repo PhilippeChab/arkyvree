@@ -24,7 +24,7 @@ export interface SpellSeed {
 export type LeveledSpellSeed = SpellSeed & { level: number };
 
 /**
- * A spell's fields a seed gives, as stored: some of those Pathfinder declares a spell's (`ENTITY_FIELDS.spells`), by stored
+ * A spell's fields a seed gives, as stored: some of its rules' (`ENTITY_FIELDS.spells`), by stored
  * field, each of its kind.
  */
 export type SpellFields = StoredFieldValues<typeof ENTITY_FIELDS.spells>;
