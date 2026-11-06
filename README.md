@@ -145,6 +145,7 @@ content/
 codegen/
   core/                 # What every ruleset's parser runs on: the commands' line, the references' store, a book's scraper, the HTTP client and page, the generated folder and code
   dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
+  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) reader: the 5e-bits database's files into reference files; its generator comes with its engine module
   pf1/                  # The Pathfinder 1 scraper (aonprd.com): reference files; its generator comes with its engine module
 
 database/
@@ -159,6 +160,7 @@ drizzle/
 shared/                 # Types and pure helpers shared by the client, the server and the database packages
 vocabulary/
   dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the content, the codegen and the seeders read
+  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) vocabulary, data only: its lists, tables and bounds, which its codegen reads, and its engine and content will
   pf1/                  # The Pathfinder 1 vocabulary, data only: so far the core rules' book, which its codegen reads
 emails/                 # Email templates (React Email)
 scripts/                # Database scripts (reset, migrate, seed; db/seeds/, the dev and test data: users, each base rules' test characters) and ops scripts (prod diff, impersonate, validation)
@@ -210,4 +212,5 @@ and bug reports. Report security issues privately as described in [SECURITY.md](
 The code is under the [Elastic License 2.0](./LICENSE): you may use, copy, modify and distribute it, but not provide
 it to others as a hosted or managed service. The game content from the System Reference Document, and the game
 mechanics of the Pathfinder Roleplaying Game Core Rulebook, are Open Game Content under the
-[Open Game License 1.0a](./OGL.md).
+[Open Game License 1.0a](./OGL.md). The System Reference Document 5.2.1's material is under the Creative Commons
+Attribution 4.0 International License, attributed in [OGL.md](./OGL.md#system-reference-document-521).

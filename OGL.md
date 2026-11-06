@@ -1,7 +1,8 @@
 # Open Game License
 
 This project uses content from the d20 System Reference Document (SRD v3.5) and from the Pathfinder Roleplaying Game
-Core Rulebook, both licensed under the Open Game License v1.0a.
+Core Rulebook, both licensed under the Open Game License v1.0a, and from the System Reference Document 5.2.1, licensed
+under the Creative Commons Attribution 4.0 International License ([below](#system-reference-document-521)).
 
 ## Open Game Content Designation
 
@@ -32,6 +33,33 @@ The pages read are stored under `codegen/pf1/reference/`, and the pages the
 parser's tests read under `tests/codegen/pf1/fixtures/`, trimmed the same way.
 Naming the books below is the notice the license requires; it indicates no
 compatibility with, or endorsement by, Paizo.
+
+## System Reference Document 5.2.1
+
+This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC,
+available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0
+International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
+
+Its text is read from the 5e-bits database's JSON transcription of it (https://github.com/5e-bits/5e-srd-api), stored
+under `codegen/dnd5.2/reference/` with the database's own links left out; nothing else of its text is changed. The
+Open Game License below doesn't apply to it. The 5e-bits database's license:
+
+> MIT License
+>
+> Copyright (c) [2018-2020] [Adrian Padua, Christopher Ward]
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+> documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+> rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+> persons to whom the Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+> Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+> WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+> COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+> OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Software and other material
 
