@@ -17,7 +17,7 @@ export interface FeatSeed {
 }
 
 /**
- * A feat's fields a seed gives, as stored: some of those Pathfinder declares a feat's (`ENTITY_FIELDS.feats`), by stored
+ * A feat's fields a seed gives, as stored: some of those its rules declare a feat's (`ENTITY_FIELDS.feats`), by stored
  * field, each of its kind.
  */
 export type FeatFields = StoredFieldValues<typeof ENTITY_FIELDS.feats>;

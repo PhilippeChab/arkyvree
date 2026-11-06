@@ -1,5 +1,5 @@
 /**
- * A language's knowledge, as the Pathfinder content names and grants it: the path of speaking a language, its grant, and one
+ * A language's knowledge, as the content names and grants it: the path of speaking a language, its grant, and one
  * more language to pick.
  */
 

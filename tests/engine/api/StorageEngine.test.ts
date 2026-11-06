@@ -408,7 +408,9 @@ describe("A module's storage", () => {
     });
     expect(buildEach(throughMany)).toThrow(`is read off another through ${inherits}`);
     const notAnEntity = modulesWith((_, fields) => {
-      leafOf({ rulesets: fields.rulesets! }, () => true).inherits = inherits;
+      // A module whose rulesets hold no field of their own (D&D 5th Edition's) has none to change
+      const leaf = leafOf({ rulesets: fields.rulesets ?? {} }, () => true) as Record<string, unknown> | undefined;
+      if (leaf) leaf.inherits = inherits;
     });
     expect(buildEach(notAnEntity)).toThrow(`is read off another through ${inherits}`);
   });
