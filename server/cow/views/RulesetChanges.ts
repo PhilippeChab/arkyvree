@@ -1,8 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import type { Ruleset } from "@/shared/relations.ts";
 
 import type { RulesetScope } from "./scope.ts";
 
@@ -27,11 +27,11 @@ type NamedEntity = ChangedEntity & { rulesetId: string };
  */
 export default class RulesetChanges {
   /**
-   * Whether a restore brings back an entity of the kind (`entityType`, of `baseRules`): one a route writes
-   * (`restorableKindsOf`).
+   * Whether a restore brings back an entity of the kind (`entityType`) in a ruleset (`ruleset`): one a route writes, of
+   * its base rules (`restorableKindsOf`).
    */
-  private static isRestorable(baseRules: BaseRules, entityType: string) {
-    return isOneOf(entityType, Engine.rules().restorableKindsOf(baseRules));
+  private static isRestorable(ruleset: Pick<Ruleset, "baseRules">, entityType: string) {
+    return isOneOf(entityType, Engine.rules().restorableKindsOf(ruleset.baseRules));
   }
 
   /** The ruleset's snapshots, each with its source, if it's still there. */
@@ -61,10 +61,10 @@ export default class RulesetChanges {
     );
   }
 
-  /** The ruleset's changes (`rulesetId`, of `baseRules`), by what each is. */
-  static async read(db: Db, rulesetId: string, baseRules: BaseRules) {
-    const snapshots = await RulesetChanges.readSources(db, rulesetId);
-    const local: NamedEntity[] = await RulesetEntities.findNames(db, { rulesetId });
+  /** The ruleset's changes (`ruleset`'s), by what each is. */
+  static async read(db: Db, ruleset: Pick<Ruleset, "baseRules" | "id">) {
+    const snapshots = await RulesetChanges.readSources(db, ruleset.id);
+    const local: NamedEntity[] = await RulesetEntities.findNames(db, { rulesetId: ruleset.id });
     const localById = new Map(local.map((row) => [row.id, row]));
     const of = ({ entityType, id, name }: ChangedEntity) => ({ entityType, id, name });
 
@@ -75,9 +75,9 @@ export default class RulesetChanges {
       const copy = localById.get(forkedEntityId);
       if (copy && source) {
         copiedIds.add(copy.id);
-        if (RulesetChanges.isRestorable(baseRules, copy.entityType))
+        if (RulesetChanges.isRestorable(ruleset, copy.entityType))
           modified.push({ ...of(copy), sourceEntityId: source.id });
-      } else if (source && RulesetChanges.isRestorable(baseRules, source.entityType)) {
+      } else if (source && RulesetChanges.isRestorable(ruleset, source.entityType)) {
         deleted.push({ ...of(source), sourceEntityId: source.id });
       }
     }
@@ -98,7 +98,7 @@ export default class RulesetChanges {
     entityType: string,
     entity: { id: string; rulesetId: string },
   ) {
-    if (!ruleset.rulesetId || !RulesetChanges.isRestorable(ruleset.baseRules, entityType)) return false;
+    if (!ruleset.rulesetId || !RulesetChanges.isRestorable(ruleset, entityType)) return false;
     if (entity.rulesetId !== ruleset.id) return true;
     const sourceId = rulesetData.cow.sourceOf(entity.id);
     if (!sourceId) return false;

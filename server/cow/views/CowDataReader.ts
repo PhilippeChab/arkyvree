@@ -16,7 +16,7 @@ export default class CowDataReader {
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
-    const ownerIds = Engine.copyOnWrite().getPairedOwnerIds({ ownNamesakes, snapshots }, ruleset.baseRules);
+    const ownerIds = Engine.copyOnWrite().getPairedOwnerIds(ruleset, { ownNamesakes, snapshots });
     const owned: CowRows["owned"] = [];
     for (const entityType of reads.owned.entityTypes) {
       const positions = await Entities.findPositions(database, { entityType, ownerIds });

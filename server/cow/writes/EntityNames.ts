@@ -5,7 +5,6 @@ import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import type ExtensionDeparture from "./ExtensionDeparture.ts";
 
@@ -37,13 +36,13 @@ export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}
 
   /**
-   * The names of `entities`, each once, by their type, in the order their base rules' module declares the types
-   * (`baseRules`).
+   * The names of `entities` (in `ruleset`), each once, by their type, in the order its base rules' module declares the
+   * types.
    */
-  private static namesByType(baseRules: BaseRules, entities: { entityType: RulesetEntityType; name: string }[]) {
+  private static namesByType(ruleset: RulesetSources, entities: { entityType: RulesetEntityType; name: string }[]) {
     const byType = Map.groupBy(entities, (entity) => entity.entityType);
     return new Map(
-      Engine.storage(baseRules)
+      Engine.storage(ruleset.baseRules)
         .standaloneKinds()
         .map((type) => [type, [...new Set((byType.get(type) ?? []).map((entity) => entity.name))]]),
     );
@@ -161,7 +160,7 @@ export default class EntityNames {
     await this.refuseChainNames(
       tx,
       after,
-      EntityNames.namesByType(this.scope.ruleset.baseRules, brought),
+      EntityNames.namesByType(this.ruleset, brought),
       new Set(),
       (entityType, name) =>
         `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
@@ -243,7 +242,7 @@ export default class EntityNames {
       tx,
       after,
       EntityNames.namesByType(
-        this.scope.ruleset.baseRules,
+        this.ruleset,
         shown.filter((entity) => remaining.has(entity.rulesetId)),
       ),
       new Set(copyIds),

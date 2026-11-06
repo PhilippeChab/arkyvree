@@ -14,7 +14,7 @@ class RulesetChangesService {
     policy.canViewChanges();
 
     // Its changes as copy-on-write reads its snapshots, of the kinds a restore brings back
-    const { added, deleted, modified } = await RulesetChanges.read(db, rulesetId, ruleset.baseRules);
+    const { added, deleted, modified } = await RulesetChanges.read(db, ruleset);
     const changes = [
       ...added.map(({ entityType, id, name }) => ({ entityType, status: "added" as const, entityId: id, name })),
       ...modified.map(({ entityType, id, name, sourceEntityId }) => ({

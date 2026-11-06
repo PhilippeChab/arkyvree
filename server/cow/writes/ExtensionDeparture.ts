@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type CowData, Engine, type OwnedKind } from "@/engine/index.ts";
+import { type CowData, Engine, type OwnedKind, type RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import RulesetChanges from "@/server/cow/views/RulesetChanges.ts";
 import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
@@ -10,7 +10,6 @@ import {
   RulesetEntities,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import EntityUses from "./EntityUses.ts";
 import { findOwnedPairs } from "./ownedPairs.ts";
@@ -57,11 +56,11 @@ export default class ExtensionDeparture {
    * extension is gone. That is the first of the ids the view (`before`) shows it for (`CowData.getEquivalentIds`: the
    * entity a copy stands for, the other extensions' copies of it and the namesakes paired with it) that stays, as the
    * view without the extension (`after`) resolves it, when that view shows it: a copy the ruleset deleted shows nothing.
-   * Its kinds are its ruleset's base rules' (`baseRules`).
+   * Its kinds are its ruleset's (`ruleset`) base rules'.
    */
   private static async findDepartures(
     tx: Db,
-    baseRules: BaseRules,
+    ruleset: RulesetSources,
     before: CowData,
     after: CowData,
     extensionId: string,
@@ -72,7 +71,7 @@ export default class ExtensionDeparture {
       (entity) => entity.entityType,
     );
     const leaving = new Map(
-      Engine.storage(baseRules)
+      Engine.storage(ruleset.baseRules)
         .standaloneKinds()
         .map((type) => [type, [...(own.get(type) ?? []).map((entity) => entity.id), ...(copies.get(type) ?? [])]]),
     );
@@ -94,7 +93,7 @@ export default class ExtensionDeparture {
     const departures = new Map<ReferencedType, ReadonlyMap<string, string | undefined>>();
     for (const [type, ids] of leaving)
       departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
-    const storage = Engine.storage(baseRules);
+    const storage = Engine.storage(ruleset.baseRules);
     for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
       const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
       departures.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
@@ -107,7 +106,7 @@ export default class ExtensionDeparture {
    * copy-on-write reads its snapshots (`RulesetChanges.copiesOf`), and its view without the extension.
    */
   static async read(tx: Db, scope: LockedRulesetScope, extensionId: string): Promise<ExtensionDeparture> {
-    const { ruleset, sources } = scope;
+    const { sources } = scope;
     const snapshots = await RulesetChanges.copiesOf(tx, sources.id, extensionId);
     const after = await CowDataReader.read(tx, {
       ...sources,
@@ -121,7 +120,7 @@ export default class ExtensionDeparture {
     );
     const departures = await ExtensionDeparture.findDepartures(
       tx,
-      ruleset.baseRules,
+      sources,
       scope.rulesetData.cow,
       after,
       extensionId,

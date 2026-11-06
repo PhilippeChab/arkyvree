@@ -1,8 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { NewCharacterPlan, NewCharacterRow } from "@/engine/index.ts";
 import { CharacterLinks, Characters } from "@/server/repositories/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, Ruleset } from "@/shared/relations.ts";
 
 /**
  * A new character's row as its writer has it whole: its plan's, with its owner, its ruleset and its name, and any other
@@ -15,11 +14,15 @@ type WrittenRow = NewCharacterRow &
 /**
  * Writes a new character as the engine plans it (`plan`: a create's, an import's, an advancement's child's), its row
  * whole: the row, with its fields' values and single links, then its links of each role it holds many of (3.5's ability
- * scores, its languages), of its ruleset's base rules (`baseRules`). Answers its row as stored.
+ * scores, its languages), by its ruleset's (`ruleset`) base rules. Answers its row as stored.
  */
-export async function createNewCharacter(tx: Db, baseRules: BaseRules, plan: NewCharacterPlan<WrittenRow>) {
+export async function createNewCharacter(
+  tx: Db,
+  ruleset: Pick<Ruleset, "baseRules">,
+  plan: NewCharacterPlan<WrittenRow>,
+) {
   const [created] = await Characters.create(tx, plan.row);
   for (const [role, links] of Object.entries(plan.links))
-    await CharacterLinks.createMany(tx, baseRules, created.id, role, links);
+    await CharacterLinks.createMany(tx, ruleset.baseRules, created.id, role, links);
   return created;
 }

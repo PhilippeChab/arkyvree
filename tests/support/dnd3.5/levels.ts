@@ -26,7 +26,7 @@ export function increasesOf(abilityId: string | null | undefined) {
 export async function addCharacterLevel(characterId: string, classLevelId: string, picks: Partial<LevelPicks> = {}) {
   const pooled = (step: string, byPool: Record<string, string[]> = {}) =>
     Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
-  return await createAdvancement(db, DND35_BASE_RULES, characterId, {
+  return await createAdvancement(db, { baseRules: DND35_BASE_RULES }, characterId, {
     entryId: classLevelId,
     picks: [
       { step: "hp", amount: 1 },

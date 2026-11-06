@@ -41,11 +41,10 @@ class ModifiersService {
 
       if (sourceModifierId) {
         const modifierType = CUSTOMIZATION_TYPES.modifier;
-        const { baseRules } = scope.ruleset;
-        const cust = (await CustomizationCopies.read(tx, baseRules, [sourceModifierId], modifierType)).get(
+        const cust = (await CustomizationCopies.read(tx, scope.ruleset, [sourceModifierId], modifierType)).get(
           sourceModifierId,
         );
-        if (cust) await CustomizationCopies.copy(tx, baseRules, modifier.id, modifierType, cust);
+        if (cust) await CustomizationCopies.copy(tx, scope.ruleset, modifier.id, modifierType, cust);
       }
 
       await createActivityWithNotifications(
