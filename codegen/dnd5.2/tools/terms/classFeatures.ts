@@ -93,10 +93,7 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   },
   {
     feature: "Draconic Resilience",
-    modifiers: [
-      bonus("combat.hp.misc", "{{ [classes.sorcerer.level] }}"),
-      { ...bonus("combat.ac.misc", "{{ [abilities.charisma.modifier] }}"), requirements: [UNARMORED] },
-    ],
+    modifiers: [bonus("combat.hp.misc", "{{ [classes.sorcerer.level] }}"), setFlag("combat.unarmored.charisma")],
   },
   { feature: "Deft Explorer", modifiers: [bonus("languages.extrapicks", 2)] },
   { feature: "Druidic", modifiers: [grantLanguage("Druidic")] },
@@ -124,14 +121,12 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   {
     feature: "Unarmored Defense",
     owner: "Barbarian",
-    modifiers: [{ ...bonus("combat.ac.misc", "{{ [abilities.constitution.modifier] }}"), requirements: [UNARMORED] }],
+    modifiers: [setFlag("combat.unarmored.constitution")],
   },
   {
     feature: "Unarmored Defense",
     owner: "Monk",
-    modifiers: [
-      { ...bonus("combat.ac.misc", "{{ [abilities.wisdom.modifier] }}"), requirements: [UNARMORED, NO_SHIELD] },
-    ],
+    modifiers: [{ ...setFlag("combat.unarmored.wisdom"), requirements: [NO_SHIELD] }],
   },
 ];
 

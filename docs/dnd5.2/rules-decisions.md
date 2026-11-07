@@ -44,8 +44,11 @@ holds names the code that holds it.
 
 - **Armor Class** is 10 and Dexterity unarmored; an armor's and its Dexterity, capped at 2 in medium armor, none in
   heavy armor, a penalty included (Chain Mail's 16 whatever the wearer's Dexterity); a trained Shield's +2; and misc
-  (`ArmorClass`). An Unarmored Defense is a modifier on `combat.ac.misc`
-  gated on `combat.armor.category` none (and, a monk's, no Shield held), which reads its ability's modifier.
+  (`ArmorClass`). **An Unarmored Defense is another base AC calculation, of which one counts:** its modifier sets its
+  ability's flag (`combat.unarmored.<ability>`: a Barbarian's Constitution, a Monk's Wisdom, gated on no Shield held,
+  a Draconic Sorcerer's Charisma), and without armor the base adds the best ability set, when above 0. A Barbarian 1 /
+  Monk 1 adds the better of Constitution and Wisdom, not both; a Barbarian of Constitution 8 keeps 10 and Dexterity:
+  the SRD's "you choose which calculation to use; you can't use more than one".
 - **An attack** adds its ability's modifier (the better of Strength and Dexterity with a Finesse weapon, as the sheet
   stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the Proficiency Bonus when proficient with the weapon (a feat sets `items.weapons.<kind or category>.proficient`),
   and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the

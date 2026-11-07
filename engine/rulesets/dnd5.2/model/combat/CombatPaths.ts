@@ -2,6 +2,7 @@ import type { GetterOf, PathCategory, PathContext } from "@/engine/core/paths/Pa
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd52Components } from "@/engine/rulesets/dnd5.2/model/CharacterComponents.ts";
+import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import {
   deriveSegmentLabels,
@@ -10,7 +11,7 @@ import {
   type TargetPath,
 } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize } from "@/shared/text.ts";
+import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { WORN_ARMOR_CATEGORIES } from "@/vocabulary/dnd5.2/combat.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
@@ -25,6 +26,7 @@ const COMBAT_LABELS: Record<string, string> = {
   hp: "Hit Points",
   strengthmet: "Strength Met",
   twoweapon: "Two-Weapon Fighting",
+  unarmored: "Unarmored Defense",
 };
 
 /**
@@ -35,7 +37,7 @@ const COMBAT_PATHS = [
   // Armor Class
   {
     path: "ac.base",
-    description: "Default 10, or the armor's AC",
+    description: "10 and the best Unarmored Defense, or the armor's AC",
     type: "number" as const,
     sortOrder: 2,
     requirementOnly: true,
@@ -55,7 +57,7 @@ const COMBAT_PATHS = [
   },
   {
     path: "ac.misc",
-    description: "Other bonuses to AC (Unarmored Defense)",
+    description: "Other bonuses to AC",
     type: "number" as const,
     sortOrder: 2,
   },
@@ -189,6 +191,21 @@ export default class CombatPaths implements PathCategory<Dnd52Components> {
     }));
   }
 
+  /**
+   * Each ability's Unarmored Defense (`combat.unarmored.<ability>`), a flag a modifier sets: an unarmored Armor Class
+   * adds the best ability set, none when none is above 0.
+   */
+  static generateUnarmoredPaths(abilities: readonly { name: string }[], kind: OperatorKind): TargetPath[] {
+    return abilities.map(({ name }) => ({
+      path: `combat.unarmored.${stripSeparators(name)}`,
+      category: "combat",
+      description: `${name} modifier added to AC without armor`,
+      valueType: "boolean" as const,
+      operators: getOperators("boolean", kind),
+      sortOrder: 2,
+    }));
+  }
+
   static isArmorClassTarget(target: string): boolean {
     return target.startsWith("combat.ac.");
   }
@@ -219,14 +236,19 @@ export default class CombatPaths implements PathCategory<Dnd52Components> {
     "combat.initiative": "Initiative bonus components",
     "combat.critical": "The rolls that score a critical hit",
     "combat.twoweapon": "Two-weapon fighting: the off-hand attack's damage",
+    "combat.unarmored": "The abilities AC adds without armor: the best counts",
     "combat.speed": "Speed (ft)",
     "combat.carrying": "Carried weight and carrying capacity",
     "combat.weaponsets": "Each weapon set's Armor Class",
     "combat.weaponsets.*": "Any weapon set",
   };
 
-  generate(_rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
-    return [...CombatPaths.generateCombatPaths(kind), ...CombatPaths.generateSetArmorClassPaths(kind)];
+  generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
+    return [
+      ...CombatPaths.generateCombatPaths(kind),
+      ...CombatPaths.generateUnarmoredPaths(Dnd52View.of(rulesetData).abilities, kind),
+      ...CombatPaths.generateSetArmorClassPaths(kind),
+    ];
   }
 
   getSegmentLabels(): Record<string, string> {

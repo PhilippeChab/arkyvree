@@ -17,9 +17,11 @@ function shieldAcOf(shields: readonly ShieldSlot[], trained: boolean): number {
 
 /**
  * A character's Armor Class, a weapon set's each, as the SRD 5.2.1 counts it: unarmored, 10 and its Dexterity
- * modifier; in armor, the armor's and as much of its Dexterity modifier as the armor lets it add (all of it in light
- * armor, 2 at most in medium armor, none in heavy armor); a Shield's +2, with the training to use it; and what
- * modifiers add (an Unarmored Defense's ability, gated on no armor). A character in several armors wears the heaviest.
+ * modifier, and the best ability an Unarmored Defense adds (the SRD's "you can't use more than one" base AC
+ * calculation: a Barbarian / Monk's better of Constitution and Wisdom); in armor, the armor's and as much of its
+ * Dexterity modifier as the armor lets it add (all of it in light armor, 2 at most in medium armor, none in heavy
+ * armor); a Shield's +2, with the training to use it; and what modifiers add. A character in several armors wears the
+ * heaviest.
  */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
@@ -78,18 +80,28 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
 
     /**
      * The sheet's Armor Class and armor: its base and Dexterity follow the armor worn and the Dexterity, its shield
-     * the best a set holds, when read; misc is an input. The armor's category, its training and its Strength are read
-     * off the armor worn.
+     * the best a set holds, when read; misc is an input. Unarmored, its base adds the best ability an Unarmored
+     * Defense sets (`unarmored`, every ability's key false until one does), when above 0. The armor's category, its
+     * training and its Strength are read off the armor worn.
      */
     protected initializeArmorClass(): void {
       const worn = () => this.wornArmor();
-      const dexterity = () => this.abilities.getAbilityModifier("Dexterity");
+      const { abilities } = this;
+      const unarmored = Object.fromEntries(Object.keys(abilities.getAbilities()).map((key) => [key, false]));
+      this.combat.unarmored = unarmored;
+      // Unarmored, the best of its base AC calculations: 10 and Dexterity, or an Unarmored Defense's with its ability
+      const unarmoredAbility = () =>
+        Math.max(
+          0,
+          ...Object.keys(unarmored).flatMap((key) => (unarmored[key] ? [abilities.getAbilityModifier(key)] : [])),
+        );
+      const dexterity = () => abilities.getAbilityModifier("Dexterity");
       const strength = () => this.abilities.getAbility("Strength")?.total ?? 0;
       const { armortraining } = this.combat;
       const sets = () => Object.values(this.combat.weaponsets);
       this.combat.ac = {
         get base() {
-          return worn()?.ac.total ?? COMBAT_RULES.UNARMORED_AC_BASE;
+          return worn()?.ac.total ?? COMBAT_RULES.UNARMORED_AC_BASE + unarmoredAbility();
         },
         get dexterity() {
           // Heavy armor adds none of it, a penalty included (Chain Mail's 16 whatever its wearer's Dexterity)

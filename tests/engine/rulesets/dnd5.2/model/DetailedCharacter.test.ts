@@ -12,7 +12,16 @@ import { MULTICLASS_ABILITY_MINIMUM } from "@/vocabulary/dnd5.2/classes.ts";
 import { CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /** Each class's hit die, its first level's hit points as a character's first. */
-const HIT_DICE: Record<string, number> = { Fighter: 10, Paladin: 10, Ranger: 10, Sorcerer: 6, Warlock: 8, Wizard: 6 };
+const HIT_DICE: Record<string, number> = {
+  Barbarian: 12,
+  Fighter: 10,
+  Monk: 8,
+  Paladin: 10,
+  Ranger: 10,
+  Sorcerer: 6,
+  Warlock: 8,
+  Wizard: 6,
+};
 
 const session = makeSession();
 
@@ -53,12 +62,16 @@ async function forkCountingNone(classNames: string[]) {
 
 /**
  * A new character of these classes' levels (`classes`, each a class and how many of its levels, in order), its scores
- * 13 each, every class's multiclass prerequisites met (a class's first level's modifiers wait on them), forced past its
- * picks, on `rulesetId` (the seeded core rules, unless given), built as the engine builds it.
+ * 13 each but those `abilities` gives, every class's multiclass prerequisites met unless they say otherwise (a class's
+ * first level's modifiers wait on them), forced past its picks, on `rulesetId` (the seeded core rules, unless given),
+ * built as the engine builds it.
  */
-async function leveled(classes: [string, number][], rulesetId?: string) {
-  const abilities = Object.fromEntries(ABILITY_NAMES.map((ability) => [ability, MULTICLASS_ABILITY_MINIMUM]));
-  const character = await createDnd52Character(session, { abilities, rulesetId });
+async function leveled(
+  classes: [string, number][],
+  { abilities = {}, rulesetId }: { abilities?: Record<string, number>; rulesetId?: string } = {},
+) {
+  const scores = Object.fromEntries(ABILITY_NAMES.map((ability) => [ability, MULTICLASS_ABILITY_MINIMUM]));
+  const character = await createDnd52Character(session, { abilities: { ...scores, ...abilities }, rulesetId });
   let first = true;
   for (const [klass, count] of classes) {
     for (let level = 1; level <= count; level++) {
@@ -156,6 +169,26 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(combat.weaponsets["0"].ac).toMatchObject({ base: 11, dexterity: 3, total: 14 });
     expect(combat.hp.total).toBe(8 + 5 + 6 + 2 * 3);
   });
+  test("of an Unarmored Defense: 10, Dexterity and its ability, the better of two, never below 10 and Dexterity", async () => {
+    // A Barbarian 1 / Monk 1: the Monk's Wisdom (+3), the better calculation, not the Barbarian's Constitution (+2) too
+    const both = await leveled(
+      [
+        ["Barbarian", 1],
+        ["Monk", 1],
+      ],
+      { abilities: { Dexterity: 14, Constitution: 14, Wisdom: 16 } },
+    );
+    expect(both.components.combat.getCombat().weaponsets["0"].ac).toMatchObject({
+      base: 10 + 3,
+      dexterity: 2,
+      misc: 0,
+      total: 15,
+    });
+    // A Barbarian of Constitution 8: 10 and Dexterity, the SRD's own calculation, which the −1 would lower
+    const frail = await leveled([["Barbarian", 1]], { abilities: { Dexterity: 14, Constitution: 8 } });
+    expect(frail.components.combat.getCombat().weaponsets["0"].ac).toMatchObject({ base: 10, dexterity: 2, total: 12 });
+  });
+
   describe("its spell slots, as the SRD 5.2.1's Multiclassing rules give them", () => {
     test("of one casting class: its own, its levels', a fighter's levels counting none", async () => {
       const built = await leveled([
@@ -197,7 +230,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     test("of a class whose levels count none: its own, alone or beside a multiclass's shared slots", async () => {
       // A fork's Wizard and Sorcerer as a homebrew caster stands, its Multiclass Spell Slots left at its default
       const rulesetId = await forkCountingNone(["Wizard", "Sorcerer"]);
-      expect(slotsOf(await leveled([["Wizard", 3]], rulesetId))).toEqual(["1: 4", "2: 2"]);
+      expect(slotsOf(await leveled([["Wizard", 3]], { rulesetId }))).toEqual(["1: 4", "2: 2"]);
       // Beside a Cleric 3 / Bard 2, which share the table's 5th row: the wizard's 4 and 2 on top
       const beside = await leveled(
         [
@@ -205,7 +238,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
           ["Cleric", 3],
           ["Bard", 2],
         ],
-        rulesetId,
+        { rulesetId },
       );
       expect(slotsOf(beside)).toEqual(["1: 8", "2: 5", "3: 2"]);
       // Two that count none keep their own each: the wizard's 4 and 2, the sorcerer's 3
@@ -216,7 +249,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
               ["Wizard", 3],
               ["Sorcerer", 2],
             ],
-            rulesetId,
+            { rulesetId },
           ),
         ),
       ).toEqual(["1: 7", "2: 2"]);

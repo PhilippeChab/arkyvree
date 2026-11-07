@@ -18,8 +18,8 @@ import type { ShieldsData, ShieldSlot } from "./ShieldsComponent.ts";
 type WornArmorCategory = (typeof WORN_ARMOR_CATEGORIES)[number];
 
 /**
- * An Armor Class's parts: its base (10 unarmored, its armor's otherwise), the Dexterity modifier its armor lets it add,
- * its shield's bonus, and what modifiers add (`misc`: a Barbarian's Constitution unarmored, a ring's +1).
+ * An Armor Class's parts: its base (its armor's; unarmored, 10, and the best ability an Unarmored Defense adds), the
+ * Dexterity modifier its armor lets it add, its shield's bonus, and what modifiers add (`misc`: a ring's +1).
  */
 export interface ArmorClassParts {
   readonly base: number;
@@ -71,6 +71,11 @@ export interface CombatData {
   };
   /** Whether its off-hand attack adds its ability modifier to damage: the Two-Weapon Fighting style. */
   twoweapon: { ability: boolean };
+  /**
+   * The abilities an unarmored Armor Class can add, by their keys, each an Unarmored Defense's to set (a Barbarian's
+   * Constitution, a Monk's Wisdom): the best of them counts, none when none is above 0.
+   */
+  unarmored: Record<string, boolean>;
   weaponsets: Record<string, WeaponSet>;
 }
 
@@ -191,6 +196,7 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
       shields,
       speed: { base: COMBAT_RULES.DEFAULT_SPEED, misc: 0, total: COMBAT_RULES.DEFAULT_SPEED },
       twoweapon: { ability: false },
+      unarmored: {},
       weaponsets: {},
     };
   }
