@@ -24,6 +24,7 @@ const COMBAT_LABELS: Record<string, string> = {
   carriedweight: "Carried Weight",
   draglift: "Drag, Lift, or Push",
   hp: "Hit Points",
+  proficiencymisc: "Proficiency Bonus Misc",
   strengthmet: "Strength Met",
   twoweapon: "Two-Weapon Fighting",
   unarmored: "Unarmored Defense",
@@ -116,6 +117,11 @@ const COMBAT_PATHS = [
     description: "Proficiency Bonus",
     type: "number" as const,
     requirementOnly: true,
+  },
+  {
+    path: "proficiencymisc",
+    description: "Other bonuses to the Proficiency Bonus (Ioun Stone of Mastery)",
+    type: "number" as const,
   },
   {
     path: "attacks",

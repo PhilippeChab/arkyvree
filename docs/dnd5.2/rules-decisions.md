@@ -10,7 +10,9 @@ holds names the code that holds it.
 ## Characters
 
 - **The Proficiency Bonus is the character's, by its level** (`PROFICIENCY_BONUS_BY_LEVEL`, `ClassesComponent.getProficiencyBonus`):
-  +2 at level 1, +6 at level 17, whatever its classes. Its path is `combat.proficiency`, for requirements and templates.
+  +2 at level 1, +6 at level 17, whatever its classes, and what modifiers add (`combat.proficiencymisc`: an Ioun Stone of
+  Mastery's +1), which its saves, skills, attacks and spell DCs take. Its total is `combat.proficiency`, for requirements
+  and templates.
 - **A saving throw per ability**, named as its ability is ("Strength"): its ability's modifier, the Proficiency Bonus when
   the character is proficient in it, and misc (`SavesComponent`). Proficiency is `saves.<ability>.proficient`, which a
   feat sets.

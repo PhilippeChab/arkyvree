@@ -64,7 +64,10 @@ export interface CombatData {
     misc: number;
     readonly total: number;
   };
+  /** Its Proficiency Bonus: its level's and `proficiencymisc`, the classes' (`getProficiencyBonus`). */
   readonly proficiency: number;
+  /** What modifiers add to its Proficiency Bonus (an Ioun Stone of Mastery's +1), which saves, skills and DCs read. */
+  proficiencymisc: number;
   shield: { readonly held: boolean };
   shields: ShieldsData;
   speed: {
@@ -209,6 +212,12 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
       initiative: { dexterity: 0, misc: 0, total: 0 },
       get proficiency() {
         return classes.getProficiencyBonus();
+      },
+      get proficiencymisc() {
+        return classes.getProficiencyMisc();
+      },
+      set proficiencymisc(value: number) {
+        classes.setProficiencyMisc(value);
       },
       shield: { held: false },
       shields,

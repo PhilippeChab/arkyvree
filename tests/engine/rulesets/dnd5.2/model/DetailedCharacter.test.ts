@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
@@ -172,6 +173,20 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(combat.weaponsets["0"].ac).toMatchObject({ base: 11, dexterity: 3, total: 14 });
     expect(combat.hp.total).toBe(8 + 5 + 6 + 2 * 3);
   });
+  test("of a raised Proficiency Bonus: its saves, skills and attacks take it", async () => {
+    // A Fighter 1 with an Ioun Stone of Mastery's +1, as its own modifier
+    const fighter = await createDnd52Character(session, { abilities: { Strength: 14 } });
+    await addLevel(session, fighter.id, "Fighter", 1, { hp: HIT_DICE.Fighter }, true);
+    const bonus = { target: "combat.proficiencymisc", operator: "add", value: "1", valueType: "number" };
+    await CharacterModifiersService.createModifier(session, fighter.id, bonus);
+    const built = await buildCharacter(fighter.id);
+    const combat = built.components.combat.getCombat();
+    expect(combat.proficiency).toBe(2 + 1);
+    // Its Strength save, a fighter's: Strength's +2 and the raised bonus's +3
+    expect(savesOf(built)).toMatchObject({ strength: 2 + 3 });
+    expect(combat.weaponsets["0"].mainhand!.tohit.total).toBe(2 + 3);
+  });
+
   test("of a new character: Common, which its species grants", async () => {
     const built = await leveled([["Fighter", 1]]);
     expect(built.components.languages.getGranted().map(({ name }) => name)).toEqual(["Common"]);
