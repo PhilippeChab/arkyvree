@@ -14,12 +14,12 @@ import { eq, gte, or } from "@/content/core/builders/customization/requirements.
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
-import { feat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
-import { FEAT_CATEGORY_POOLS, FEAT_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
+import { FEAT_CATEGORY_POOLS, FEAT_FAMILIES, FEATURE_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import { Memos } from "./Memos.ts";
@@ -100,7 +100,10 @@ export class FeatSeeds {
     return this.ref.raw.map((entry) => ({ ...entry, ...this.ref.overrides?.[entry.name] }));
   }
 
-  /** A feat's prerequisites as requirements: its level, its ability scores (one of them), the feature it needs. */
+  /**
+   * A feat's prerequisites as requirements: its level, its ability scores (one of them), and the feature it needs, any
+   * feat of the feature's family (`FEATURE_FAMILIES`: any class's Fighting Style, a fork's class's too).
+   */
   private requirements({ name, prerequisite_options, prerequisites = {} }: FeatEntry): RequirementEntry[] {
     const { feature_named, minimum_level } = prerequisites;
     const scores = (prerequisite_options?.from.options ?? []).flatMap((option) =>
@@ -113,14 +116,14 @@ export class FeatSeeds {
           ]
         : [],
     );
-    const features = typeof feature_named === "string" ? this.featureFeats(feature_named) : [];
-    if (typeof feature_named === "string" && features.length === 0)
+    if (typeof feature_named === "string" && this.featureFeats(feature_named).length === 0)
       throw new Error(`${name}: no class has the feature "${feature_named}" it requires`);
-    const feature = features.map((featName) => eq(feat(featName)));
+    if (typeof feature_named === "string" && !isOneOf(feature_named, FEATURE_FAMILIES))
+      throw new Error(`${name}: the feature "${feature_named}" it requires is no family of FEATURE_FAMILIES`);
     return [
       ...(typeof minimum_level === "number" ? [gte("identity.meta.level", minimum_level)] : []),
       ...(scores.length > 0 ? [or(...scores)] : []),
-      ...(feature.length > 1 ? [or(...feature)] : feature),
+      ...(typeof feature_named === "string" ? [eq(`feats.${stripSeparators(feature_named)}.*.possessed`)] : []),
     ];
   }
 

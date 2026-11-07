@@ -57,14 +57,15 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
     });
   });
 
-  test("give Magic Initiate a spell list's rooms, and a Fighting Style its class feature and its bonus", () => {
+  test("give Magic Initiate a spell list's rooms, and a Fighting Style any class's Fighting Style and its bonus", () => {
     const { named } = readFeats();
     expect(named("Magic Initiate (Druid)")?.modifiers).toEqual([
       { target: "aptitudes.druidspells.0.allowed", operator: "add", value: "2", valueType: "number" },
       { target: "aptitudes.druidspells.1.allowed", operator: "add", value: "1", valueType: "number" },
     ]);
+    // Any feat of the Fighting Style family: every class's Fighting Style, a fork's class's own too
     expect(named("Defense")).toMatchObject({
-      requirements: [{ target: "feats.fightingstylefighter.possessed" }],
+      requirements: [{ target: "feats.fightingstyle.*.possessed" }],
       modifiers: [{ target: "combat.ac.misc", value: "1", requirements: [{ target: "combat.armor.category" }] }],
     });
     // Its override's name, the SRD's

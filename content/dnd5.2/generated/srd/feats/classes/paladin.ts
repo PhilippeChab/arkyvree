@@ -17,7 +17,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     description:
       "You have learned to cast spells through prayer and meditation. See \"Spells\" for the rules on spellcasting. The information below details how you use those rules with Paladin spells, which appear in the Paladin spell list later in the class's description.\nSpell Slots. The Paladin Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Paladin spells. Heroism and Searing Smite are recommended.\nThe number of spells on your list increases as you gain Paladin levels, as shown in the Prepared Spells column of the Paladin Features table. Whenever that number increases, choose additional Paladin spells until the number of spells on your list matches the number in the Paladin Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Paladin, your list of prepared spells can include six Paladin spells of level 1 or 2 in any combination.\nIf another Paladin feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Paladin spells for you.\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can replace one spell on your list with another Paladin spell for which you have spell slots.\nSpellcasting Ability. Charisma is your spellcasting ability for your Paladin spells.\nSpellcasting Focus. You can use a Holy Symbol as a Spellcasting Focus for your Paladin spells.",
     aptitudes: ["Paladin Features"],
-    fields: { [FEAT_SELECTABLE]: false },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Spellcasting"] },
   },
   {
     name: "Weapon Mastery (Paladin)",
@@ -31,7 +31,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     description:
       'You gain a Fighting Style feat of your choice (see "Feats" for feats). Instead of choosing one of those feats, you can choose the option below.\nBlessed Warrior. You learn two Cleric cantrips of your choice (see the Cleric class\'s section for a list of Cleric spells). Guidance and Sacred Flame are recommended. The chosen cantrips count as Paladin spells for you, and Charisma is your spellcasting ability for them. Whenever you gain a Paladin level, you can replace one of these cantrips with another Cleric cantrip.',
     aptitudes: ["Paladin Features"],
-    fields: { [FEAT_SELECTABLE]: false },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Fighting Style"] },
   },
   {
     name: "Paladin's Smite (Paladin)",

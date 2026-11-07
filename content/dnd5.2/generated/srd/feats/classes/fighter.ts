@@ -10,7 +10,7 @@ export const FIGHTER_CLASS_FEATS: FeatSeed[] = [
     description:
       'You have honed your martial prowess and gain a Fighting Style feat of your choice (see "Feats"). Defense is recommended.\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat.',
     aptitudes: ["Fighter Features"],
-    fields: { [FEAT_SELECTABLE]: false },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Fighting Style"] },
   },
   {
     name: "Second Wind (Fighter)",

@@ -6,7 +6,9 @@ import type { ModifierSeed } from "@/content/core/builders/customization/types.t
 import { classFeatures, classSubclass } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { grantFeat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEATURE_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import type { ClassEntries } from "./ClassEntries.ts";
@@ -26,7 +28,10 @@ export class ClassFeatureFeats {
     return `${feature} (${owner})`;
   }
 
-  /** A feature's feat: its text, the pool its class's features are in, its modifiers, granted at `levels` levels. */
+  /**
+   * A feature's feat: its text, the pool its class's features are in, its modifiers, granted at `levels` levels, and
+   * its family when a feat requires it (`FEATURE_FAMILIES`: Fighting Style, Spellcasting).
+   */
   private featureFeat(feature: string, owner: string, description: string, levels: number): FeatSeed {
     const modifiers = FEATURE_MODIFIERS.filter(
       (entry) => entry.feature === feature && (entry.owner === undefined || entry.owner === owner),
@@ -36,7 +41,11 @@ export class ClassFeatureFeats {
       description: normalizeText(description),
       aptitudes: [classFeatures(this.entries.name())],
       ...(modifiers.length > 0 ? { modifiers } : {}),
-      fields: { [FEAT_SELECTABLE]: false, ...(levels > 1 ? { [FEAT_STACKABLE]: true } : {}) },
+      fields: {
+        [FEAT_SELECTABLE]: false,
+        ...(levels > 1 ? { [FEAT_STACKABLE]: true } : {}),
+        ...(isOneOf(feature, FEATURE_FAMILIES) ? { [FEAT_FAMILY]: [feature] } : {}),
+      },
     };
   }
 

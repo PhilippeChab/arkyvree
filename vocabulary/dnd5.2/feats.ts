@@ -30,6 +30,13 @@ export const FEAT_CATEGORY_POOLS: Readonly<Record<(typeof FEAT_CATEGORIES)[numbe
 };
 
 /**
+ * The class features a feat requires (a Fighting Style feat's "Fighting Style Feature", Boon of Spell Recall's
+ * "Spellcasting Feature"), each a family: every class's own ("Fighting Style (Fighter)") is a feat of it, which the
+ * prerequisite reads (`feats.fightingstyle.*.possessed`), so a fork's class's own counts once its family says so.
+ */
+export const FEATURE_FAMILIES = ["Fighting Style", "Spellcasting"] as const;
+
+/**
  * The families of feats the seeded rules have (a feat's FEAT_FAMILY field): the values the customization offers, and
  * the families a prerequisite names. A feat taken with a choice is a family of its name, a feat per choice ("Grappler
  * (Strength)"); so is a proficiency, a feat per thing it's proficient with ("Skill Proficiency (Athletics)").
@@ -59,6 +66,8 @@ export const FEAT_FAMILIES = [
   "Background Ability Scores",
   // A class's subclasses, a feat each
   "Subclass",
+  // The class features a feat requires, each class's a feat of the family
+  ...FEATURE_FAMILIES,
 ] as const;
 
 /** The pool of any skill's proficiency, a feat per skill, which a feature that takes any skill picks in. */

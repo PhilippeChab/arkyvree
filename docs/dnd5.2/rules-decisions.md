@@ -115,6 +115,10 @@ holds names the code that holds it.
   subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
 - **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
   character.
+- **A feat that requires a class feature requires its family.** A Fighting Style feat's "Fighting Style Feature" and
+  Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
+  family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class
+  qualifies through its own feature once its family says so, whatever it's named.
 - **Magic Initiate is a feat per spell list** (Cleric, Druid, Wizard), its two cantrips and its level 1 spell rooms on
   that list.
 

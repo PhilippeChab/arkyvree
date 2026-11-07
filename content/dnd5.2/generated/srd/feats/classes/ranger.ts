@@ -17,7 +17,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
     description:
       "You have learned to channel the magical essence of nature to cast spells. See \"Spells\" for the rules on spellcasting. The information below details how you use those rules with Ranger spells, which appear in the Ranger spell list later in the class's description.\nSpell Slots. The Ranger Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1\nRanger spells. Cure Wounds and Ensnaring Strike are recommended.\nThe number of spells on your list increases as you gain Ranger levels, as shown in the Prepared Spells column of the Ranger Features table. Whenever that number increases, choose additional Ranger spells until the number of spells on your list matches the number in the Ranger Features table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 5 Ranger, your list of prepared spells can include six Ranger spells of level 1 or 2 in any combination.\nIf another Ranger feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Ranger spells for you.\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can replace one spell on your list with another Ranger spell for which you have spell slots.\nSpellcasting Ability. Wisdom is your spellcasting ability for your Ranger spells.\nSpellcasting Focus. You can use a Druidic Focus as a Spellcasting Focus for your Ranger spells.",
     aptitudes: ["Ranger Features"],
-    fields: { [FEAT_SELECTABLE]: false },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Spellcasting"] },
   },
   {
     name: "Weapon Mastery (Ranger)",
@@ -39,7 +39,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
     description:
       'You gain a Fighting Style feat of your choice (see "Feats"). Instead of choosing one of those feats, you can choose the option below.\nDruidic Warrior. You learn two Druid cantrips of your choice (see the Druid class\'s section for a list of Druid spells). Guidance and Starry Wisp are recommended. The chosen cantrips count as Ranger spells for you, and Wisdom is your spellcasting ability for them. Whenever you gain a Ranger level, you can replace one of these cantrips with another Druid cantrip.',
     aptitudes: ["Ranger Features"],
-    fields: { [FEAT_SELECTABLE]: false },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Fighting Style"] },
   },
   {
     name: "Ranger Subclass (Ranger)",

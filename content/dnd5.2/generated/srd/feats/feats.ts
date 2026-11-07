@@ -190,18 +190,7 @@ export const EPIC_BOON_FEATS: FeatSeed[] = [
     description:
       "You gain the following benefits.\nAbility Score Increase. Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30.\nFree Casting. Whenever you cast a spell with a level 1–4 spell slot, roll 1d4. If the number you roll is the same as the slot's level, the slot isn't expended.",
     aptitudes: ["Epic Boon", "Ability Score Improvement"],
-    requirements: [
-      gte("identity.meta.level", 19),
-      or(
-        eq("feats.spellcastingbard.possessed"),
-        eq("feats.spellcastingcleric.possessed"),
-        eq("feats.spellcastingdruid.possessed"),
-        eq("feats.spellcastingpaladin.possessed"),
-        eq("feats.spellcastingranger.possessed"),
-        eq("feats.spellcastingsorcerer.possessed"),
-        eq("feats.spellcastingwizard.possessed"),
-      ),
-    ],
+    requirements: [gte("identity.meta.level", 19), eq("feats.spellcasting.*.possessed")],
     modifiers: [{ target: "abilities.intelligence.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Boon of Spell Recall"] },
   },
@@ -210,18 +199,7 @@ export const EPIC_BOON_FEATS: FeatSeed[] = [
     description:
       "You gain the following benefits.\nAbility Score Increase. Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30.\nFree Casting. Whenever you cast a spell with a level 1–4 spell slot, roll 1d4. If the number you roll is the same as the slot's level, the slot isn't expended.",
     aptitudes: ["Epic Boon", "Ability Score Improvement"],
-    requirements: [
-      gte("identity.meta.level", 19),
-      or(
-        eq("feats.spellcastingbard.possessed"),
-        eq("feats.spellcastingcleric.possessed"),
-        eq("feats.spellcastingdruid.possessed"),
-        eq("feats.spellcastingpaladin.possessed"),
-        eq("feats.spellcastingranger.possessed"),
-        eq("feats.spellcastingsorcerer.possessed"),
-        eq("feats.spellcastingwizard.possessed"),
-      ),
-    ],
+    requirements: [gte("identity.meta.level", 19), eq("feats.spellcasting.*.possessed")],
     modifiers: [{ target: "abilities.wisdom.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Boon of Spell Recall"] },
   },
@@ -230,18 +208,7 @@ export const EPIC_BOON_FEATS: FeatSeed[] = [
     description:
       "You gain the following benefits.\nAbility Score Increase. Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30.\nFree Casting. Whenever you cast a spell with a level 1–4 spell slot, roll 1d4. If the number you roll is the same as the slot's level, the slot isn't expended.",
     aptitudes: ["Epic Boon", "Ability Score Improvement"],
-    requirements: [
-      gte("identity.meta.level", 19),
-      or(
-        eq("feats.spellcastingbard.possessed"),
-        eq("feats.spellcastingcleric.possessed"),
-        eq("feats.spellcastingdruid.possessed"),
-        eq("feats.spellcastingpaladin.possessed"),
-        eq("feats.spellcastingranger.possessed"),
-        eq("feats.spellcastingsorcerer.possessed"),
-        eq("feats.spellcastingwizard.possessed"),
-      ),
-    ],
+    requirements: [gte("identity.meta.level", 19), eq("feats.spellcasting.*.possessed")],
     modifiers: [{ target: "abilities.charisma.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Boon of Spell Recall"] },
   },
@@ -360,13 +327,7 @@ export const FIGHTING_STYLE_FEATS: FeatSeed[] = [
     name: "Archery",
     description: "You gain a +2 bonus to attack rolls you make with Ranged weapons.",
     aptitudes: ["Fighting Style", "Ability Score Improvement", "Epic Boon"],
-    requirements: [
-      or(
-        eq("feats.fightingstylefighter.possessed"),
-        eq("feats.fightingstylepaladin.possessed"),
-        eq("feats.fightingstyleranger.possessed"),
-      ),
-    ],
+    requirements: [eq("feats.fightingstyle.*.possessed")],
     modifiers: [
       { target: "items.weapons.blowgun.tohit.misc", operator: "add", value: "2", valueType: "number" },
       { target: "items.weapons.dart.tohit.misc", operator: "add", value: "2", valueType: "number" },
@@ -384,13 +345,7 @@ export const FIGHTING_STYLE_FEATS: FeatSeed[] = [
     name: "Defense",
     description: "While you're wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.",
     aptitudes: ["Fighting Style", "Ability Score Improvement", "Epic Boon"],
-    requirements: [
-      or(
-        eq("feats.fightingstylefighter.possessed"),
-        eq("feats.fightingstylepaladin.possessed"),
-        eq("feats.fightingstyleranger.possessed"),
-      ),
-    ],
+    requirements: [eq("feats.fightingstyle.*.possessed")],
     modifiers: [
       {
         target: "combat.ac.misc",
@@ -406,26 +361,14 @@ export const FIGHTING_STYLE_FEATS: FeatSeed[] = [
     description:
       "When you roll damage for an attack you make with a Melee weapon that you are holding with two hands, you can treat any 1 or 2 on a damage die as a 3. The weapon must have the Two-Handed or Versatile property to gain this benefit.",
     aptitudes: ["Fighting Style", "Ability Score Improvement", "Epic Boon"],
-    requirements: [
-      or(
-        eq("feats.fightingstylefighter.possessed"),
-        eq("feats.fightingstylepaladin.possessed"),
-        eq("feats.fightingstyleranger.possessed"),
-      ),
-    ],
+    requirements: [eq("feats.fightingstyle.*.possessed")],
   },
   {
     name: "Two-Weapon Fighting",
     description:
       "When you make an extra attack as a result of using a weapon that has the Light property, you can add your ability modifier to the damage of that attack if you aren't already adding it to the damage.",
     aptitudes: ["Fighting Style", "Ability Score Improvement", "Epic Boon"],
-    requirements: [
-      or(
-        eq("feats.fightingstylefighter.possessed"),
-        eq("feats.fightingstylepaladin.possessed"),
-        eq("feats.fightingstyleranger.possessed"),
-      ),
-    ],
+    requirements: [eq("feats.fightingstyle.*.possessed")],
     modifiers: [{ target: "combat.twoweapon.ability", operator: "set", value: "true", valueType: "boolean" }],
   },
 ];

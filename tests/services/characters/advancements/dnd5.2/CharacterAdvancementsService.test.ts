@@ -2,15 +2,19 @@ import { describe, expect, test } from "bun:test";
 
 import type { AdvancementPlanAnswer } from "@/engine/core/module/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterAdvancements, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterAdvancementsService } from "@/server/services/characters/advancements/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd5.2/levelPlans.ts";
 import { addLevel, findPicks, type LevelPlan, picksOf } from "@/tests/support/dnd5.2/levels.ts";
 import { getDnd52SeedCtx } from "@/tests/support/dnd5.2/seed.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { DND52_BASE_RULES } from "@/vocabulary/dnd5.2/baseRules.ts";
+import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /**
  * A Human Soldier fighter's first level: its background's spread and gaming set, a human's Skillful and Versatile
@@ -449,5 +453,35 @@ describe("A D&D 5th Edition character's levels", () => {
       ]);
       expect(await findPicks("hp", [second.id])).toEqual([]);
     });
+  });
+});
+
+describe("A Fighting Style feat's prerequisite", () => {
+  test("is any feature of the Fighting Style family, a fork's renamed one too", async () => {
+    // A fork whose Fighter's Fighting Style is renamed, as a homebrew class's own feature is named its own way
+    const ctx = await getDnd52SeedCtx();
+    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+      name: `Fork ${uniqueId()}`,
+      private: true,
+    });
+    const style = (await Entities.findOne(db, {
+      entityType: "feats",
+      name: "Fighting Style (Fighter)",
+      rulesetId: fork.rulesetId!,
+    }))!;
+    const described = await EntitiesService.getEntity(session, fork.id, "feats", style.id);
+    await EntitiesService.updateEntity(session, fork.id, "feats", style.id, {
+      name: "Combat Style (Fighter)",
+      description: described.description,
+      // Its form's fields: its family kept
+      fields: { [FEAT_FAMILY]: ["Fighting Style"], [FEAT_STACKABLE]: false },
+      links: { listedIn: described.links.map(({ toId }) => ({ toId })) },
+    });
+    // Its first level takes Defense unforced: its renamed feature is still of the family Defense requires
+    const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES, rulesetId: fork.id });
+    await addLevel(session, character.id, "Fighter", 1, FIGHTER_1);
+    const { feats } = (await buildCharacter(character.id)).components;
+    expect(feats.getFeat("Combat Style (Fighter)")?.possessed).toBe(true);
+    expect(feats.getFeat("Defense")?.possessed).toBe(true);
   });
 });
