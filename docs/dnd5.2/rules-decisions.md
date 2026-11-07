@@ -139,6 +139,10 @@ holds names the code that holds it.
   Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
   family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class
   qualifies through its own feature once its family says so, whatever it's named.
+- **A paladin's Blessed Warrior and a ranger's Druidic Warrior are feats** of the Fighting Style pool, each behind its
+  class's own Fighting Style, that give two cantrips on the Cleric's or the Druid's list
+  (`content/dnd5.2/data/feats/fightingStyleOptions.ts`): picked at the class's level, they're cast with its ability, a
+  paladin's Charisma, a ranger's Wisdom.
 - **Magic Initiate is a feat per spell list** (Cleric, Druid, Wizard), its two cantrips and its level 1 spell rooms on
   that list.
 
@@ -151,5 +155,7 @@ holds names the code that holds it.
   skills.
 - A feature with no number the sheet reads: Rage, Sneak Attack, Bardic Inspiration, Channel Divinity, Wild Shape and the
   like keep their text.
+- A bard's Magical Secrets: its prepared spells come from its own list alone, not the Cleric's, the Druid's or the
+  Wizard's. Blessed and Druidic Warrior's cantrips aren't swapped at a later level.
 - Spells a feature or a trait always has prepared: a Life Domain's Aid at Cleric 3, a drow's Faerie Fire at 3rd level.
   Its description lists them; no modifier makes them known.

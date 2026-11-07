@@ -263,6 +263,20 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(await shieldAcOf("Wizard")).toEqual({ shield: 0, total: 10 });
   });
 
+  test("of a paladin's Blessed Warrior: two Cleric cantrips, cast with its Charisma", async () => {
+    const character = await createDnd52Character(session, { abilities: { Strength: 15, Charisma: 16 } });
+    await addLevel(session, character.id, "Paladin", 1, { hp: HIT_DICE.Paladin }, true);
+    const plan = {
+      hp: 1,
+      feats: { "Fighting Style": ["Blessed Warrior"] },
+      spells: { "Cleric Spells": ["Guidance", "Sacred Flame"] },
+    };
+    await addLevel(session, character.id, "Paladin", 2, plan, true);
+    const built = await buildCharacter(character.id);
+    // Sacred Flame's DC on the Cleric list: 8, the Proficiency Bonus's +2 and Charisma's +3, the paladin's ability
+    expect(built.components.spellGroupings.getDcs().sacredflame?.cleric?.total).toBe(8 + 2 + 3);
+  });
+
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
     const attacksOf = async (classes: [string, number][]) =>
       (await leveled(classes)).components.combat.getCombat().attacks;
