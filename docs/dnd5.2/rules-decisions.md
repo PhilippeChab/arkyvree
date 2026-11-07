@@ -143,10 +143,11 @@ holds names the code that holds it.
   Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
   family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class
   qualifies through its own feature once its family says so, whatever it's named.
-- **A paladin's Blessed Warrior and a ranger's Druidic Warrior are feats** of the Fighting Style pool, each behind its
-  class's own Fighting Style, that give two cantrips on the Cleric's or the Druid's list
-  (`content/dnd5.2/data/feats/fightingStyleOptions.ts`): picked at the class's level, they're cast with its ability, a
-  paladin's Charisma, a ranger's Wisdom.
+- **A paladin's Blessed Warrior and a ranger's Druidic Warrior are feats** of the class's own Fighting Style pool
+  ("Paladin Fighting Style", which its Fighting Style opens beside the Fighting Style feats, and no other class's
+  does), that give two cantrips on the Cleric's or the Druid's list (`content/dnd5.2/data/feats/fightingStyleOptions.ts`):
+  picked at the class's level, they're cast with its ability, a paladin's Charisma, a ranger's Wisdom. A Paladin /
+  Fighter's fighter level offers the feats alone.
 - **Magic Initiate is a feat per spell list** (Cleric, Druid, Wizard), its two cantrips and its level 1 spell rooms on
   that list.
 

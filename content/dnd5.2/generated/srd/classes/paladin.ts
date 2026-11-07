@@ -40,7 +40,7 @@ export const PALADIN: ClassSeed = {
   modifiers: [
     { level: 1, target: "aptitudes.weaponmastery.allowed", operator: "add", value: "2", valueType: "number" },
     { level: 1, target: "aptitudes.paladinspells.1.uses", operator: "add", value: "2", valueType: "number" },
-    { level: 2, target: "aptitudes.fightingstyle.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 2, target: "aptitudes.paladinfightingstyle.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.paladinsubclass.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.paladinspells.1.uses", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },

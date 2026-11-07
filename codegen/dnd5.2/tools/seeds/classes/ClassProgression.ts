@@ -69,7 +69,12 @@ export class ClassProgression {
     return this.entries.levels().flatMap(({ features, level }) =>
       features.flatMap(({ name: feature }): LevelModifier[] => {
         const text = this.entries.feature(feature).description;
-        const pools = FEATURE_POOLS.filter((entry) => entry.feature === feature).map(({ pool }) => poolRoom(pool, 1));
+        // Its class's own pool for the feature when it has one (a paladin's Fighting Style), else the feature's
+        const entries = FEATURE_POOLS.filter((entry) => entry.feature === feature);
+        const own = entries.filter((entry) => entry.owner === name);
+        const pools = (own.length > 0 ? own : entries.filter((entry) => entry.owner === undefined)).map(({ pool }) =>
+          poolRoom(pool, 1),
+        );
         const expertise = readExpertisePicks(text);
         const kinds = feature === "Weapon Mastery" && !counted ? readMasteryKinds(text) : undefined;
         const first = feature === subclass && !picked.has(feature);

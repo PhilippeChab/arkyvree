@@ -530,3 +530,21 @@ describe("A feat taken once", () => {
     expect(await grapplersOffered(character.id, 4)).toEqual([{ eligible: true, name: "Grappler (Strength)" }]);
   });
 });
+
+describe("A paladin's Blessed Warrior", () => {
+  test("is its own Fighting Style's to pick, not a fighter's level's", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const abilities = { Strength: 15, Dexterity: 13, Constitution: 14, Intelligence: 8, Wisdom: 10, Charisma: 13 };
+    const character = await createDnd52Character(session, { abilities });
+    await addLevel(session, character.id, "Paladin", 1, { hp: 10 }, true);
+    await addLevel(session, character.id, "Paladin", 2, { hp: 1 }, true);
+    const named = async (pool: string) => {
+      const plan = levelUpPlan([{ classId: ctx.classMap["Fighter"], level: 1, hp: 1 }]);
+      const { items } = await getStepOptions(session, character.id, "feats", plan, { pool: ctx.aptMap[pool] });
+      return items.map(({ name }) => name);
+    };
+    // A fighter's Fighting Style offers the feats alone; the paladin's own pool, the feats and Blessed Warrior
+    expect(await named("Fighting Style")).not.toContain("Blessed Warrior");
+    expect(await named("Paladin Fighting Style")).toEqual(expect.arrayContaining(["Blessed Warrior", "Defense"]));
+  });
+});

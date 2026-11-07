@@ -12,7 +12,11 @@ import type { FeatEntry, FeatReference } from "@/codegen/dnd5.2/tools/types/feat
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { classSpells } from "@/content/dnd5.2/builders/aptitudes/names.ts";
+import {
+  classFightingStyle,
+  classSpells,
+  FIGHTING_STYLE_OPTION_CLASSES,
+} from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -84,14 +88,18 @@ export class FeatSeeds {
   private base(entry: FeatEntry): FeatSeed {
     const category = CATEGORIES_BY_TYPE[entry.type];
     if (!category) throw new Error(`${entry.name}: no feat category is "${entry.type}"`);
-    const pool = FEAT_CATEGORY_POOLS[category];
+    // A Fighting Style feat is a paladin's and a ranger's pick too, in their own pools
+    const pools = [
+      FEAT_CATEGORY_POOLS[category],
+      ...(category === "Fighting Style" ? FIGHTING_STYLE_OPTION_CLASSES.map(classFightingStyle) : []),
+    ];
     const requirements = this.requirements(entry);
     const modifiers = FEAT_MODIFIERS[entry.name] ?? [];
     const repeatable = entry.repeatable ? `\nRepeatable. ${entry.repeatable}` : "";
     return {
       name: entry.name,
       description: normalizeText(`${entry.description}${repeatable}`),
-      aptitudes: [...new Set([pool, ...ANY_FEAT_POOLS])],
+      aptitudes: [...new Set([...pools, ...ANY_FEAT_POOLS])],
       ...(requirements.length > 0 ? { requirements } : {}),
       ...(modifiers.length > 0 ? { modifiers } : {}),
       ...(entry.repeatable && !readSpellLists(entry.description).length ? { fields: { [FEAT_STACKABLE]: true } } : {}),

@@ -285,7 +285,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     await addLevel(session, character.id, "Paladin", 1, { hp: HIT_DICE.Paladin }, true);
     const plan = {
       hp: 1,
-      feats: { "Fighting Style": ["Blessed Warrior"] },
+      feats: { "Paladin Fighting Style": ["Blessed Warrior"] },
       spells: { "Cleric Spells": ["Guidance", "Sacred Flame"] },
     };
     await addLevel(session, character.id, "Paladin", 2, plan, true);

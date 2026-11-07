@@ -13,8 +13,10 @@ import type {
   RequirementEntry,
 } from "@/content/core/builders/customization/types.ts";
 import {
+  classFightingStyle,
   classSkills,
   DIVINE_ORDER_POOL,
+  FIGHTING_STYLE_OPTION_CLASSES,
   mysticArcanum,
   PRIMAL_ORDER_POOL,
   WEAPON_MASTERY_POOL,
@@ -159,12 +161,21 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   },
 ];
 
-/** The pool a feature gives a room in at each level it's gained at, by feature. */
-export const FEATURE_POOLS: { feature: string; pool: string }[] = [
+/**
+ * The pool a feature gives a room in at each level it's gained at, by feature: its class's own (`owner`) when the class
+ * has one for it, a paladin's Fighting Style's.
+ */
+export const FEATURE_POOLS: { feature: string; owner?: string; pool: string }[] = [
   { feature: "Ability Score Improvement", pool: ABILITY_SCORE_IMPROVEMENT_POOL },
   { feature: "Divine Order", pool: DIVINE_ORDER_POOL },
   { feature: "Epic Boon", pool: "Epic Boon" },
   { feature: "Fighting Style", pool: "Fighting Style" },
+  // A paladin's and a ranger's, in their own pools, which their option joins (Blessed Warrior, Druidic Warrior)
+  ...FIGHTING_STYLE_OPTION_CLASSES.map((owner) => ({
+    feature: "Fighting Style",
+    owner,
+    pool: classFightingStyle(owner),
+  })),
   { feature: "Primal Knowledge", pool: classSkills("Barbarian") },
   { feature: "Primal Order", pool: PRIMAL_ORDER_POOL },
 ];
