@@ -33,6 +33,11 @@ export default {
   classes: [{ klass: "Wizard", hp: [6, 4, 5, 3, 6] }],
   feats: [
     { levelIndex: 0, featName: "Sage: Intelligence +2, Constitution +1", aptitude: "Sage Ability Scores" },
+    {
+      levelIndex: 0,
+      featName: "Magic Initiate (Wizard): Intelligence",
+      aptitude: "Magic Initiate (Wizard) Ability",
+    },
     { levelIndex: 0, featName: "Elven Lineage: Wood Elf", aptitude: "Elf Lineage" },
     { levelIndex: 0, featName: "Keen Senses: Perception", aptitude: "Keen Senses" },
     { levelIndex: 0, featName: "Skill Proficiency: Investigation", aptitude: "Wizard Skills" },

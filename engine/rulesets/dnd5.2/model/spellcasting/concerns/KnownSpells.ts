@@ -146,6 +146,32 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
+     * The character's picked spells (`spells`) on a list the class they were picked at doesn't cast from (a fighter's
+     * Magic Initiate (Wizard) spells, a wizard's Magic Initiate (Cleric) ones), cast with the list's spellcasting
+     * ability once a modifier sets it (`aptitudes.<list>.ability`: Magic Initiate's pick of Intelligence, Wisdom or
+     * Charisma): their DCs registered again with it. A class's own list keeps its ability, and a list no modifier gives
+     * an ability keeps the class's (a paladin's Blessed Warrior cantrips, its Charisma).
+     */
+    protected applyListAbilities(rulesetData: RulesetData, spells: HeldSpell[]) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const keyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
+      const classNames = this.classNameByClassLevelId();
+      const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
+      let changed = false;
+      for (const spell of spells) {
+        const list = keyById.get(spell.viaId);
+        const ability = list === undefined ? undefined : aptitudes[list].ability;
+        if (list === undefined || !ability) continue;
+        const className = spell.classLevelId === undefined ? undefined : classNames.get(spell.classLevelId);
+        if (className !== undefined && this.spellListsOf(className).includes(list)) continue;
+        spell.abilityDcName = ability;
+        this.spellGroupings.registerSpell(spell, spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId);
+        changed = true;
+      }
+      if (changed) this.spells.readGroupings();
+    }
+
+    /**
      * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
      * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
      * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.

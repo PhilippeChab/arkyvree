@@ -8,11 +8,13 @@ import type { Aptitude } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 
-import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
+import { JOINS_CLASS_LIST, LIST_ABILITY } from "./AptitudesPaths.ts";
 import { ALLOWED_ALL } from "./AptitudeTargets.ts";
 
 interface AptitudesData {
   [key: string]: {
+    /** A spell list's: the ability its spells are cast with at a class that doesn't cast from it (`LIST_ABILITY`). */
+    ability?: string;
     allowed: number;
     readonly available: number;
     description: string;
@@ -235,6 +237,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
           aptitudeObj[String(level)] = this.newSpellLevel(() => this.assignedSpells(key)[level]);
 
         aptitudeObj[JOINS_CLASS_LIST.path] = false;
+        aptitudeObj[LIST_ABILITY.path] = "";
       }
     }
   }

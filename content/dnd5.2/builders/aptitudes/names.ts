@@ -85,6 +85,14 @@ export function speciesTraits(species: string): string {
 }
 
 /**
+ * The pick of the ability a feat's spells are cast with ("Magic Initiate (Wizard) Ability"): Intelligence, Wisdom or
+ * Charisma, a feat each.
+ */
+export function spellcastingAbilityPool(featName: string): string {
+  return `${featName} Ability`;
+}
+
+/**
  * The tools a class or a background picks a proficiency among ("Bard Tools", "Soldier Tools"), whose Tool Proficiency
  * feats it lists.
  */

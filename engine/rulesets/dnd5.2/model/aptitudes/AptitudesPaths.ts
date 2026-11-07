@@ -67,12 +67,24 @@ export const JOINS_CLASS_LIST = {
   allowedEntityTypes: ["feats", "class-levels"],
 };
 
+/**
+ * A spell list's spellcasting ability (`aptitudes.<list>.ability`, an ability's name): what its spells are cast with
+ * when the class they're picked at doesn't cast from the list, as Magic Initiate's pick of Intelligence, Wisdom or
+ * Charisma sets it (a Sage fighter's Wizard spells). Empty until a modifier sets it: the class's own then.
+ */
+export const LIST_ABILITY = {
+  path: "ability",
+  label: "Spellcasting Ability",
+  description: "The ability its spells are cast with, when no class of the character's casts from it",
+};
+
 /** The aptitudes' target paths: each aptitude's uses and slots. */
 export default class AptitudesPaths implements PathCategory<Dnd52Components> {
   static generateAptitudePaths(
     aptitudes: Aptitude[],
     kind: OperatorKind,
     leveledAptitudeIds: Set<string>,
+    abilityNames: readonly string[],
   ): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -101,6 +113,14 @@ export default class AptitudesPaths implements PathCategory<Dnd52Components> {
           valueType: "boolean",
           operators: getOperators("boolean", kind),
           allowedEntityTypes: JOINS_CLASS_LIST.allowedEntityTypes,
+        });
+        paths.push({
+          path: `aptitudes.${normalizedAptitudeName}.${LIST_ABILITY.path}`,
+          category: "aptitudes",
+          description: LIST_ABILITY.description,
+          valueType: "string",
+          operators: getOperators("string", kind),
+          possibleValues: abilityNames.map((name) => ({ value: name, label: name })),
         });
       } else {
         // Generate flat paths for non-leveled aptitudes
@@ -138,15 +158,20 @@ export default class AptitudesPaths implements PathCategory<Dnd52Components> {
   readonly name = "aptitudes";
 
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
+    const dnd52 = Dnd52View.of(rulesetData);
     return AptitudesPaths.generateAptitudePaths(
-      Dnd52View.of(rulesetData).aptitudes,
+      dnd52.aptitudes,
       kind,
       SpellLists.of(rulesetData).leveledAptitudeIds,
+      dnd52.abilities.map(({ name }) => name),
     );
   }
 
   getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(NAVIGATABLE_PATHS, { [JOINS_CLASS_LIST.path]: JOINS_CLASS_LIST.label });
+    return deriveSegmentLabels(NAVIGATABLE_PATHS, {
+      [JOINS_CLASS_LIST.path]: JOINS_CLASS_LIST.label,
+      [LIST_ABILITY.path]: LIST_ABILITY.label,
+    });
   }
 
   /** The ruleset's aptitudes, labeled by their names. */

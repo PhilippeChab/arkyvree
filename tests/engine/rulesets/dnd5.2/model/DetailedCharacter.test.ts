@@ -333,6 +333,20 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(weaponsets["1"].ac.total).toBe(13);
   });
 
+  test("of a Sage fighter's Magic Initiate (Wizard): its spells cast with the ability it picks", async () => {
+    const sageFighter = async (picks: Record<string, string[]>) => {
+      const character = await createDnd52Character(session, { abilities: { Intelligence: 14 }, background: "Sage" });
+      const spells = { "Wizard Spells": ["Fire Bolt", "Light", "Burning Hands"] };
+      await addLevel(session, character.id, "Fighter", 1, { hp: HIT_DICE.Fighter, feats: picks, spells }, true);
+      return (await buildCharacter(character.id)).components.spellGroupings.getDcs().burninghands?.wizard?.total;
+    };
+    // Without the pick, a fighter casts Burning Hands with no ability: no DC
+    expect(await sageFighter({})).toBeUndefined();
+    // With Intelligence: 8, the Proficiency Bonus's +2 and Intelligence's +2
+    const intelligence = { "Magic Initiate (Wizard) Ability": ["Magic Initiate (Wizard): Intelligence"] };
+    expect(await sageFighter(intelligence)).toBe(8 + 2 + 2);
+  });
+
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
     const attacksOf = async (classes: [string, number][]) =>
       (await leveled(classes)).components.combat.getCombat().attacks;

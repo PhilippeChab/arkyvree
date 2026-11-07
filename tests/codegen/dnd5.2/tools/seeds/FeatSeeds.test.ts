@@ -16,16 +16,22 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
   test("group by their categories, a feat taken with a choice a feat per option", () => {
     const { seeds } = readFeats();
     expect(Object.fromEntries([...seeds].map(([category, feats]) => [category, feats.length]))).toEqual({
-      Origin: 6,
+      // Magic Initiate's lists, each with its pick of Intelligence, Wisdom or Charisma
+      Origin: 6 + 3 * 3,
       General: 23,
       "Fighting Style": 4,
       "Epic Boon": 35,
     });
+    const abilities = (list: string) =>
+      ["Intelligence", "Wisdom", "Charisma"].map((ability) => `Magic Initiate (${list}): ${ability}`);
     expect(seeds.get("Origin")!.map(({ name }) => name)).toEqual([
       "Alert",
       "Magic Initiate (Cleric)",
+      ...abilities("Cleric"),
       "Magic Initiate (Druid)",
+      ...abilities("Druid"),
       "Magic Initiate (Wizard)",
+      ...abilities("Wizard"),
       "Savage Attacker",
       "Skilled",
     ]);
@@ -64,7 +70,13 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
     expect(named("Magic Initiate (Druid)")?.modifiers).toEqual([
       { target: "aptitudes.druidspells.0.allowed", operator: "add", value: "2", valueType: "number" },
       { target: "aptitudes.druidspells.1.allowed", operator: "add", value: "1", valueType: "number" },
+      // The pick of its spells' ability, a feat each that sets the list's
+      { target: "aptitudes.magicinitiatedruidability.allowed", operator: "add", value: "1", valueType: "number" },
     ]);
+    expect(named("Magic Initiate (Druid): Wisdom")).toMatchObject({
+      aptitudes: ["Magic Initiate (Druid) Ability"],
+      modifiers: [{ target: "aptitudes.druidspells.ability", operator: "set", value: "Wisdom" }],
+    });
     // Any feat of the Fighting Style family: every class's Fighting Style, a fork's class's own too
     expect(named("Defense")).toMatchObject({
       requirements: [{ target: "feats.fightingstyle.*.possessed" }],

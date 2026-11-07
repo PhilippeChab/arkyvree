@@ -681,8 +681,32 @@ export const ORIGIN_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "aptitudes.clericspells.0.allowed", operator: "add", value: "2", valueType: "number" },
       { target: "aptitudes.clericspells.1.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "aptitudes.magicinitiateclericability.allowed", operator: "add", value: "1", valueType: "number" },
     ],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Magic Initiate"] },
+  },
+  {
+    name: "Magic Initiate (Cleric): Intelligence",
+    description: "Intelligence is your spellcasting ability for the spells of Magic Initiate (Cleric).",
+    aptitudes: ["Magic Initiate (Cleric) Ability"],
+    modifiers: [
+      { target: "aptitudes.clericspells.ability", operator: "set", value: "Intelligence", valueType: "string" },
+    ],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Cleric): Wisdom",
+    description: "Wisdom is your spellcasting ability for the spells of Magic Initiate (Cleric).",
+    aptitudes: ["Magic Initiate (Cleric) Ability"],
+    modifiers: [{ target: "aptitudes.clericspells.ability", operator: "set", value: "Wisdom", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Cleric): Charisma",
+    description: "Charisma is your spellcasting ability for the spells of Magic Initiate (Cleric).",
+    aptitudes: ["Magic Initiate (Cleric) Ability"],
+    modifiers: [{ target: "aptitudes.clericspells.ability", operator: "set", value: "Charisma", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
   },
   {
     name: "Magic Initiate (Druid)",
@@ -692,8 +716,32 @@ export const ORIGIN_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "aptitudes.druidspells.0.allowed", operator: "add", value: "2", valueType: "number" },
       { target: "aptitudes.druidspells.1.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "aptitudes.magicinitiatedruidability.allowed", operator: "add", value: "1", valueType: "number" },
     ],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Magic Initiate"] },
+  },
+  {
+    name: "Magic Initiate (Druid): Intelligence",
+    description: "Intelligence is your spellcasting ability for the spells of Magic Initiate (Druid).",
+    aptitudes: ["Magic Initiate (Druid) Ability"],
+    modifiers: [
+      { target: "aptitudes.druidspells.ability", operator: "set", value: "Intelligence", valueType: "string" },
+    ],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Druid): Wisdom",
+    description: "Wisdom is your spellcasting ability for the spells of Magic Initiate (Druid).",
+    aptitudes: ["Magic Initiate (Druid) Ability"],
+    modifiers: [{ target: "aptitudes.druidspells.ability", operator: "set", value: "Wisdom", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Druid): Charisma",
+    description: "Charisma is your spellcasting ability for the spells of Magic Initiate (Druid).",
+    aptitudes: ["Magic Initiate (Druid) Ability"],
+    modifiers: [{ target: "aptitudes.druidspells.ability", operator: "set", value: "Charisma", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
   },
   {
     name: "Magic Initiate (Wizard)",
@@ -703,8 +751,32 @@ export const ORIGIN_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "aptitudes.wizardspells.0.allowed", operator: "add", value: "2", valueType: "number" },
       { target: "aptitudes.wizardspells.1.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "aptitudes.magicinitiatewizardability.allowed", operator: "add", value: "1", valueType: "number" },
     ],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Magic Initiate"] },
+  },
+  {
+    name: "Magic Initiate (Wizard): Intelligence",
+    description: "Intelligence is your spellcasting ability for the spells of Magic Initiate (Wizard).",
+    aptitudes: ["Magic Initiate (Wizard) Ability"],
+    modifiers: [
+      { target: "aptitudes.wizardspells.ability", operator: "set", value: "Intelligence", valueType: "string" },
+    ],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Wizard): Wisdom",
+    description: "Wisdom is your spellcasting ability for the spells of Magic Initiate (Wizard).",
+    aptitudes: ["Magic Initiate (Wizard) Ability"],
+    modifiers: [{ target: "aptitudes.wizardspells.ability", operator: "set", value: "Wisdom", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
+  },
+  {
+    name: "Magic Initiate (Wizard): Charisma",
+    description: "Charisma is your spellcasting ability for the spells of Magic Initiate (Wizard).",
+    aptitudes: ["Magic Initiate (Wizard) Ability"],
+    modifiers: [{ target: "aptitudes.wizardspells.ability", operator: "set", value: "Charisma", valueType: "string" }],
+    fields: { [FEAT_GENERATED]: true },
   },
   {
     name: "Savage Attacker",

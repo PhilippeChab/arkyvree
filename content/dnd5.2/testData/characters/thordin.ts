@@ -38,6 +38,11 @@ export default {
   ],
   feats: [
     { levelIndex: 0, featName: "Acolyte: Wisdom +2, Charisma +1", aptitude: "Acolyte Ability Scores" },
+    {
+      levelIndex: 0,
+      featName: "Magic Initiate (Cleric): Wisdom",
+      aptitude: "Magic Initiate (Cleric) Ability",
+    },
     { levelIndex: 0, featName: "Skill Proficiency: Medicine", aptitude: "Cleric Skills" },
     { levelIndex: 0, featName: "Skill Proficiency: Persuasion", aptitude: "Cleric Skills" },
     { levelIndex: 0, featName: "Divine Order: Thaumaturge", aptitude: "Divine Order" },

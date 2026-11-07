@@ -9,15 +9,16 @@ import {
   type FeatCategory,
 } from "@/codegen/dnd5.2/tools/terms/feats.ts";
 import type { FeatEntry, FeatReference } from "@/codegen/dnd5.2/tools/types/feats.ts";
-import { bonus } from "@/content/core/builders/customization/modifiers.ts";
+import { bonus, setStr } from "@/content/core/builders/customization/modifiers.ts";
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import {
   classFightingStyle,
   classSpells,
   FIGHTING_STYLE_OPTION_CLASSES,
+  spellcastingAbilityPool,
 } from "@/content/dnd5.2/builders/aptitudes/names.ts";
-import { spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import { poolRoom, spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -64,6 +65,18 @@ function asiVariants(base: FeatSeed): FeatSeed[] {
 /** The family of a feat taken with a choice, a feat per option, by its name: none for a feat of no family. */
 function familyOf(name: string): FeatFamily | undefined {
   return FEAT_FAMILIES.find((family) => family === name);
+}
+
+/**
+ * The abilities a feat's spells may be cast with, as its text offers them ("Intelligence, Wisdom, or Charisma is your
+ * spellcasting ability for this feat's spells"): none for a feat that offers no choice.
+ */
+function readCastingAbilities(description: string): string[] {
+  const match = /([A-Z][a-z]+), ([A-Z][a-z]+), or ([A-Z][a-z]+) is your spellcasting ability/.exec(description);
+  return (match?.slice(1) ?? []).map((name) => {
+    if (!isOneOf(name, ABILITY_NAMES)) throw new Error(`"${name}" names no ability`);
+    return name;
+  });
 }
 
 /**
@@ -163,14 +176,34 @@ export class FeatSeeds {
       }));
     }
     const lists = readSpellLists(entry.description);
-    return lists.length === 0
-      ? [base]
-      : lists.map((list) => ({
+    if (lists.length === 0) return [base];
+    // A spell list's version, and the pick of the ability its spells are cast with when it offers one (Magic
+    // Initiate's Intelligence, Wisdom or Charisma): a feat each, which sets the list's (`aptitudes.<list>.ability`)
+    const abilities = readCastingAbilities(entry.description);
+    return lists.flatMap((list) => {
+      const name = `${entry.name} (${list})`;
+      const pool = spellcastingAbilityPool(name);
+      return [
+        {
           ...base,
-          name: `${entry.name} (${list})`,
-          modifiers: [spellRoom(classSpells(list), 0, 2), spellRoom(classSpells(list), 1, 1), ...own],
+          name,
+          modifiers: [
+            spellRoom(classSpells(list), 0, 2),
+            spellRoom(classSpells(list), 1, 1),
+            ...(abilities.length > 0 ? [poolRoom(pool, 1)] : []),
+            ...own,
+          ],
           fields,
-        }));
+        },
+        ...abilities.map((ability) => ({
+          name: `${name}: ${ability}`,
+          description: `${ability} is your spellcasting ability for the spells of ${name}.`,
+          aptitudes: [pool],
+          modifiers: [setStr(`aptitudes.${stripSeparators(classSpells(list))}.ability`, ability)],
+          fields: { [FEAT_GENERATED]: true },
+        })),
+      ];
+    });
   }
 
   /** The book's feats, by category, each feat's options made: in its reference's order. */
