@@ -7,7 +7,6 @@ export const ALL_BACKGROUNDS: BackgroundSeed[] = [
     name: "Acolyte",
     description:
       "Ability Scores: Intelligence, Wisdom, Charisma.\nFeat: Magic Initiate (Cleric).\nSkill Proficiencies: Insight and Religion.\nTool Proficiency: Calligrapher's Supplies.\nEquipment: Choose A or B: (A) Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP; or (B) 50 GP.",
-    abilities: ["Intelligence", "Wisdom", "Charisma"],
     modifiers: [
       { target: "feats.magicinitiatecleric.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.skillproficiencyinsight.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -25,7 +24,6 @@ export const ALL_BACKGROUNDS: BackgroundSeed[] = [
     name: "Criminal",
     description:
       "Ability Scores: Dexterity, Constitution, Intelligence.\nFeat: Alert.\nSkill Proficiencies: Sleight of Hand and Stealth.\nTool Proficiency: Thieves' Tools.\nEquipment: Choose A or B: (A) 2 Daggers, Thieves' Tools, Crowbar, 2 Pouches, Traveler's Clothes, 16 GP; or (B) 50 GP.",
-    abilities: ["Dexterity", "Constitution", "Intelligence"],
     modifiers: [
       { target: "feats.alert.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.skillproficiencysleightofhand.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -38,7 +36,6 @@ export const ALL_BACKGROUNDS: BackgroundSeed[] = [
     name: "Sage",
     description:
       "Ability Scores: Constitution, Intelligence, Wisdom.\nFeat: Magic Initiate (Wizard).\nSkill Proficiencies: Arcana and History.\nTool Proficiency: Calligrapher's Supplies.\nEquipment: Choose A or B: (A) Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP; or (B) 50 GP.",
-    abilities: ["Constitution", "Intelligence", "Wisdom"],
     modifiers: [
       { target: "feats.magicinitiatewizard.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.skillproficiencyarcana.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -56,7 +53,6 @@ export const ALL_BACKGROUNDS: BackgroundSeed[] = [
     name: "Soldier",
     description:
       "Ability Scores: Strength, Dexterity, Constitution.\nFeat: Savage Attacker.\nSkill Proficiencies: Athletics and Intimidation.\nTool Proficiency: Choose one kind of Gaming Set (see \"Equipment\").\nEquipment: Choose A or B: (A) Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer's Kit, Quiver, Traveler's Clothes, 14 GP; or (B) 50 GP.",
-    abilities: ["Strength", "Dexterity", "Constitution"],
     modifiers: [
       { target: "feats.savageattacker.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.skillproficiencyathletics.possessed", operator: "set", value: "true", valueType: "boolean" },

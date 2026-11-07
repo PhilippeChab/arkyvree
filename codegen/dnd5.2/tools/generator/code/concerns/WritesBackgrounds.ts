@@ -5,13 +5,12 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** Writing a background. */
 export function WritesBackgrounds<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingBackgrounds extends Base {
-    /** A background written as code, a list's item: its abilities by name, then its modifiers. */
+    /** A background written as code, a list's item: its name, its description, then its modifiers. */
     background(background: BackgroundSeed): string[] {
       return [
         `  {`,
         `    name: ${this.quote(background.name)},`,
         `    description: ${this.quote(background.description)},`,
-        `    abilities: ${this.formatStringArray(background.abilities, 2)},`,
         ...this.listField(
           "modifiers",
           background.modifiers.map((modifier) => this.plainModifier(modifier)),

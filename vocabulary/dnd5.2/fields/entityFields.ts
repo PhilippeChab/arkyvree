@@ -87,19 +87,10 @@ const APTITUDES_REQUIRED = "At least one aptitude must be selected";
 const AS_TEMPLATE = { field: ITEM_IS_TEMPLATE, values: [true] } as const;
 
 /**
- * A background's fields: the three abilities its increases go to (its `abilityScore` links), which its form shows
- * beside its name. What else it gives (its Origin feat, its skills, its tool) its modifiers grant.
+ * A background's fields: none. What it gives (its Origin feat, its skills, its tool, and its ability increases' pick in
+ * its pool, whose feats are the ways they spread) its modifiers grant, as a Pathfinder race's "+2 to one ability" is.
  */
-const BACKGROUND_FIELDS = {
-  abilityScores: {
-    description: "The three abilities its increases can raise",
-    kind: "links",
-    label: "Ability Scores",
-    placement: "beside-name",
-    references: "abilities",
-    role: "abilityScore",
-  },
-} as const;
+const BACKGROUND_FIELDS = {} as const;
 
 /**
  * A class's fields: its hit die (one of the dice, beside its name; a new class's `DEFAULT_HIT_DIE` when its form gives

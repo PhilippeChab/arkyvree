@@ -44,7 +44,6 @@ export const LINK_ROLES = [
   { role: "spellcastingAbility", fromType: "classes", toType: "abilities", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
   { role: "startingProficiencies", fromType: "classes", toType: "feats", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
   { role: "multiclassProficiencies", fromType: "classes", toType: "feats", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
-  { role: "abilityScore", fromType: "backgrounds", toType: "abilities", viaType: null, single: false, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
 ] as const satisfies readonly LinkRoleDef[];
 
 /**

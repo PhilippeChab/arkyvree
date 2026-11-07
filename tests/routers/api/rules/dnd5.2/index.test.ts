@@ -73,7 +73,8 @@ describe("D&D 5th Edition's rules", () => {
     // No base attack, no saves, no skill points: a level grants features, its pools' rooms its modifiers
     expect(places("class-levels")).toEqual(["grants"]);
     expect(places("species")).toEqual([SPECIES_SIZE, SPECIES_SPEED]);
-    expect(places("backgrounds")).toEqual(["abilityScore"]);
+    // No fields: what a background gives is its modifiers'
+    expect(places("backgrounds")).toEqual([]);
   });
 
   test("give a new character's form its species and its background to pick, and the SRD's alignments", async () => {

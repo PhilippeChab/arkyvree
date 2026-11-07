@@ -39,10 +39,11 @@ function spreads(abilities: string[]): Spread[] {
 }
 
 /**
- * A background reference's seeds (`seeds`): each background's three abilities, its modifiers (its Origin feat granted,
- * one of a family's for the choice it's taken with: "Magic Initiate (Cleric)"; its skills and its tool granted, or a
- * room in its tools' pool when it gives a choice of them; a room in its ability scores' pool), and the feats of that
- * pool (`feats`), its seven ways to spread its increases, each a feat ("Acolyte: Intelligence +2, Wisdom +1").
+ * A background reference's seeds (`seeds`): each background's description (its three abilities named) and its
+ * modifiers (its Origin feat granted, one of a family's for the choice it's taken with: "Magic Initiate (Cleric)"; its
+ * skills and its tool granted, or a room in its tools' pool when it gives a choice of them; a room in its ability
+ * scores' pool), and the feats of that pool (`feats`), its seven ways to spread its increases, each a feat ("Acolyte:
+ * Intelligence +2, Wisdom +1").
  */
 export class BackgroundSeeds {
   constructor(
@@ -85,7 +86,7 @@ export class BackgroundSeeds {
     });
   }
 
-  /** Its backgrounds' seeds: each one's abilities, description and modifiers. */
+  /** Its backgrounds' seeds: each one's description and modifiers. */
   seeds(): BackgroundSeed[] {
     return this.entries().map((entry) => {
       const granted = entry.proficiencies.flatMap(({ name }) => readProficiencyFeats(name, this.tools));
@@ -108,7 +109,6 @@ export class BackgroundSeeds {
           `Tool Proficiency: ${tools.join(", ")}.`,
           ...equipment,
         ].join("\n"),
-        abilities,
         modifiers: [
           grantFeat(this.originFeat(entry)),
           ...granted.map((feat) => grantFeat(feat)),

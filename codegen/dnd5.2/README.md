@@ -191,7 +191,7 @@ of has its modifiers (`terms/`); any other is its text alone.
   own whose feats each grant one ("Keen Senses: Perception"); its subspecies each a feat of its lineage's pool ("Elf
   Lineage": "Elven Lineage: Drow"), which it gives room in. A dwarf's toughness, a human's Versatile and a wood elf's
   speed are modifiers.
-- **Backgrounds** (4, `backgrounds.ts`) and their feats (`feats/backgrounds.ts`): its three abilities, its Origin feat
+- **Backgrounds** (4, `backgrounds.ts`) and their feats (`feats/backgrounds.ts`): its three abilities named in its description, its Origin feat
   granted (a family's variant: "Magic Initiate (Cleric)"), its skills and tool granted, or a room in its tools' pool
   ("Soldier Tools"), and a room in its ability scores' pool, whose feats are its seven ways to spread its increases
   ("Acolyte: Intelligence +2, Wisdom +1").

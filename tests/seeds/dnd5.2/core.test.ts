@@ -56,19 +56,9 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(rows.species.filter(({ partition }) => partition !== "pc")).toEqual([]);
     });
 
-    test("its 4 backgrounds, each with the three abilities its increases go to, in the SRD's order", async () => {
+    test("its 4 backgrounds", async () => {
       const rows = await seededRows();
       expect(sortedNames(rows.backgrounds)).toEqual(["Acolyte", "Criminal", "Sage", "Soldier"]);
-      expect(rows.linkedNames(rows.background("Sage").id, "abilityScore")).toEqual([
-        "Constitution",
-        "Intelligence",
-        "Wisdom",
-      ]);
-      expect(rows.linkedNames(rows.background("Soldier").id, "abilityScore")).toEqual([
-        "Strength",
-        "Dexterity",
-        "Constitution",
-      ]);
     });
 
     test("its 12 classes, each with its 20 levels", async () => {

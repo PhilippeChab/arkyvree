@@ -28,11 +28,10 @@ describe("The SRD 5.2.1's backgrounds, as the generator reads them", () => {
     ]);
     // A choice of gaming sets: a pick in its tools' pool
     expect(described("Soldier")).toContain("aptitudes.soldiertools.allowed add 1");
-    expect(backgrounds.find(({ name }) => name === "Soldier")?.abilities).toEqual([
-      "Strength",
-      "Dexterity",
-      "Constitution",
-    ]);
+    // Its three abilities named in its description, which its pool's feats raise
+    expect(backgrounds.find(({ name }) => name === "Soldier")?.description).toContain(
+      "Ability Scores: Strength, Dexterity, Constitution.",
+    );
     expect(readBackgrounds().toolPicks()).toEqual([
       { pool: "Soldier Tools", tools: ["Dice", "Dragonchess", "Playing Cards", "Three-Dragon Ante"] },
     ]);
