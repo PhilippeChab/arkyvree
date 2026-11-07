@@ -214,10 +214,10 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
     setCells(
       table,
       ownedEntities.flatMap(({ id, position }) =>
-        (shown?.columns ?? []).map((_, column) => ({
+        (shown?.columns ?? []).map(({ key }, column) => ({
           ownedId: id,
           column,
-          value: readTableCell(totalsAt(position)?.[column]),
+          value: readTableCell(totalsAt(position)?.[key]),
         })),
       ),
     );
