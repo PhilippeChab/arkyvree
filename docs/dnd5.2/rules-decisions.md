@@ -73,8 +73,9 @@ holds names the code that holds it.
   feature sets, whatever the order the classes were taken in (a Fighter 11 / Paladin 5 makes 3, the Paladin's level
   taken first or last). A modifier raises the count, never lowers it (`CombatState`).
 - **Speed** is the species', 10 feet lower in armor whose Strength the wearer lacks, and 5 feet at most past the carrying
-  capacity, Strength × 15 lb. for a Small or Medium creature (`CarryingComponent`). The 2024 rules have no load
-  categories.
+  capacity, Strength × 15 lb. for a Small or Medium creature (`CarryingComponent`), its size counted larger by what
+  modifiers add (`combat.carrying.sizesteps`: a goliath's Powerful Build's one, so a Strength 15 goliath carries 450 lb.).
+  The 2024 rules have no load categories.
 
 ## Hit points
 

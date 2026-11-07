@@ -230,6 +230,7 @@ export const SPECIES_FEATS: FeatSeed[] = [
     description:
       "You have Advantage on any ability check you make to end the Grappled condition. You also count as one size larger when determining your carrying capacity.",
     aptitudes: ["Goliath Traits"],
+    modifiers: [{ target: "combat.carrying.sizesteps", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {

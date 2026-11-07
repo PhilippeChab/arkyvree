@@ -25,6 +25,7 @@ const COMBAT_LABELS: Record<string, string> = {
   draglift: "Drag, Lift, or Push",
   hp: "Hit Points",
   proficiencymisc: "Proficiency Bonus Misc",
+  sizesteps: "Size Steps",
   strengthmet: "Strength Met",
   twoweapon: "Two-Weapon Fighting",
   unarmored: "Unarmored Defense",
@@ -155,6 +156,11 @@ const COMBAT_PATHS = [
     description: "Drag, lift or push (lbs)",
     type: "number" as const,
     requirementOnly: true,
+  },
+  {
+    path: "carrying.sizesteps",
+    description: "Sizes larger it counts as for carrying capacity (Powerful Build)",
+    type: "number" as const,
   },
   {
     path: "carrying.overloaded",

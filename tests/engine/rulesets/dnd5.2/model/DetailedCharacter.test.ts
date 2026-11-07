@@ -187,6 +187,17 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(combat.weaponsets["0"].mainhand!.tohit.total).toBe(2 + 3);
   });
 
+  test("of a goliath's carrying capacity: its Powerful Build counts it a size larger", async () => {
+    const capacityOf = async (species: string) => {
+      const character = await createDnd52Character(session, { abilities: { Strength: 15 }, species });
+      await addLevel(session, character.id, "Fighter", 1, { hp: HIT_DICE.Fighter }, true);
+      return (await buildCharacter(character.id)).components.combat.getCombat().carrying.capacity;
+    };
+    // Strength 15 times 15 lb., a Medium human's; times 30, a Large creature's, for a Medium goliath
+    expect(await capacityOf("Human")).toBe(15 * 15);
+    expect(await capacityOf("Goliath")).toBe(15 * 30);
+  });
+
   test("of a new character: Common, which its species grants", async () => {
     const built = await leveled([["Fighter", 1]]);
     expect(built.components.languages.getGranted().map(({ name }) => name)).toEqual(["Common"]);

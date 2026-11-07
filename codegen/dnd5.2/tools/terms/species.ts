@@ -11,5 +11,7 @@ import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 /** The modifiers of the traits a sheet reads a number of, or that give a pick, by trait. */
 export const TRAIT_MODIFIERS: Readonly<Record<string, ModifierSeed[]>> = {
   "Dwarven Toughness": [bonus("combat.hp.misc", "{{ [identity.meta.level] }}")],
+  // One size larger for its carrying capacity
+  "Powerful Build": [bonus("combat.carrying.sizesteps", 1)],
   Versatile: [poolRoom("Origin", 1)],
 };

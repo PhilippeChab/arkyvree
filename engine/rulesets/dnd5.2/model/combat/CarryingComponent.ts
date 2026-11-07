@@ -4,10 +4,14 @@ import type IdentityComponent from "@/engine/rulesets/dnd5.2/model/identity/Iden
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import { CARRY_MULTIPLIER_BY_SIZE, DRAG_LIFT_PUSH_MULTIPLIER } from "@/vocabulary/dnd5.2/carrying.ts";
 import { ITEM_WEIGHT } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd5.2/sizes.ts";
 
 /** What the character carries, against what it can. */
 export interface CarryingData {
-  /** What it can carry: its Strength score times its size's weight (`CARRY_MULTIPLIER_BY_SIZE`). */
+  /**
+   * What it can carry: its Strength score times its size's weight (`CARRY_MULTIPLIER_BY_SIZE`), its size counted
+   * `sizesteps` larger.
+   */
   readonly capacity: number;
   /** What its inventory weighs, which modifiers change. */
   carriedweight: number;
@@ -15,6 +19,8 @@ export interface CarryingData {
   readonly draglift: number;
   /** Whether it carries more than it can: its speed is then 5 feet at most. */
   readonly overloaded: boolean;
+  /** The sizes larger it counts as for its capacity, which modifiers add (a goliath's Powerful Build's 1). */
+  sizesteps: number;
 }
 
 /**
@@ -28,9 +34,12 @@ export default class CarryingComponent extends CharacterComponent<LoadedCharacte
     this.carrying = {
       carriedweight: 0,
       get capacity() {
-        // Its size as the sheet has it, which a modifier on `identity.physiology.species.size` changes
+        // Its size as the sheet has it, which a modifier on `identity.physiology.species.size` changes, counted as many
+        // sizes larger as its steps say, Gargantuan at most
         const { size } = identity.getIdentity().physiology.species;
-        return (abilities.getAbility("Strength")?.total ?? 0) * (CARRY_MULTIPLIER_BY_SIZE[size] ?? 0);
+        const index = SIZE_OPTIONS.findIndex((option) => option === size);
+        const counted = index < 0 ? size : SIZE_OPTIONS[Math.min(index + this.sizesteps, SIZE_OPTIONS.length - 1)];
+        return (abilities.getAbility("Strength")?.total ?? 0) * (CARRY_MULTIPLIER_BY_SIZE[counted] ?? 0);
       },
       get draglift() {
         return this.capacity * DRAG_LIFT_PUSH_MULTIPLIER;
@@ -38,6 +47,7 @@ export default class CarryingComponent extends CharacterComponent<LoadedCharacte
       get overloaded() {
         return this.carriedweight > this.capacity;
       },
+      sizesteps: 0,
     };
   }
 
