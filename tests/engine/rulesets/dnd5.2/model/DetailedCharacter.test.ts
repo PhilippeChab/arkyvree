@@ -61,6 +61,15 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(combat.weaponsets["0"].ac).toMatchObject({ base: 16, dexterity: 0, shield: 2, misc: 1, total: 19 });
     // A fighter's Strength and Constitution saving throws add the Proficiency Bonus; its Dexterity's doesn't
     expect(savesOf(built)).toMatchObject({ strength: 4 + 3, constitution: 3 + 3, dexterity: 1 });
+    // Listed as the abilities are
+    expect(Object.keys(savesOf(built))).toEqual([
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence",
+      "wisdom",
+      "charisma",
+    ]);
     // Skillful's Perception; Alert adds the Proficiency Bonus to Initiative
     expect(built.components.skills.getSkill("Perception")).toMatchObject({ proficient: true, total: 1 + 3 });
     expect(combat.initiative).toMatchObject({ dexterity: 1, misc: 3, total: 4 });
