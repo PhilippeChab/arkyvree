@@ -31,26 +31,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
     description:
       "You can add half your Proficiency Bonus (round down) to any ability check you make that uses a skill proficiency you lack and that doesn't otherwise use your Proficiency Bonus.\nFor example, if you make a Strength (Athletics) check and lack Athletics proficiency, you can add half your Proficiency Bonus to the check.",
     aptitudes: ["Bard Features"],
-    modifiers: [
-      { target: "skills.acrobatics.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.animalhandling.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.arcana.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.athletics.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.deception.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.history.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.insight.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.intimidation.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.investigation.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.medicine.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.nature.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.perception.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.performance.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.persuasion.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.religion.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.sleightofhand.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.stealth.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-      { target: "skills.survival.halfproficient", operator: "set", value: "true", valueType: "boolean" },
-    ],
+    modifiers: [{ target: "skills.*.halfproficient", operator: "set", value: "true", valueType: "boolean" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {
@@ -177,7 +158,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bard Starting Proficiencies",
     description:
-      "What a Bard starts with: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Charisma; 3 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 3 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
+      "What a Bard starts with: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Charisma; 3 skills of your choice; 3 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
     aptitudes: ["Bard Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -199,7 +180,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
         value: "true",
         valueType: "boolean",
       },
-      { target: "aptitudes.bardskills.allowed", operator: "add", value: "3", valueType: "number" },
+      { target: "aptitudes.skillproficiencies.allowed", operator: "add", value: "3", valueType: "number" },
       { target: "aptitudes.bardtools.allowed", operator: "add", value: "3", valueType: "number" },
     ],
     fields: { [FEAT_SELECTABLE]: false },
@@ -207,11 +188,11 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bard Multiclass Proficiencies",
     description:
-      "What multiclassing into Bard gives: Armor Training: Light Armor; 1 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 1 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
+      "What multiclassing into Bard gives: Armor Training: Light Armor; 1 skill of your choice; 1 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
     aptitudes: ["Bard Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
-      { target: "aptitudes.bardskills.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "aptitudes.skillproficiencies.allowed", operator: "add", value: "1", valueType: "number" },
       { target: "aptitudes.bardtools.allowed", operator: "add", value: "1", valueType: "number" },
     ],
     fields: { [FEAT_SELECTABLE]: false },

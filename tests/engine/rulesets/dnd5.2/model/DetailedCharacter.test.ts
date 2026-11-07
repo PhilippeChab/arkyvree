@@ -18,6 +18,7 @@ import { CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 /** Each class's hit die, its first level's hit points as a character's first. */
 const HIT_DICE: Record<string, number> = {
   Barbarian: 12,
+  Bard: 8,
   Fighter: 10,
   Monk: 8,
   Paladin: 10,
@@ -196,6 +197,22 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // Strength 15 times 15 lb., a Medium human's; times 30, a Large creature's, for a Medium goliath
     expect(await capacityOf("Human")).toBe(15 * 15);
     expect(await capacityOf("Goliath")).toBe(15 * 30);
+  });
+
+  test("of a bard's Jack of All Trades: every skill, a fork's own too", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+      name: `Fork ${uniqueId()}`,
+      private: true,
+    });
+    await EntitiesService.createEntity(session, fork.id, "skills", {
+      name: "Sailing",
+      links: { keyAbility: ctx.abilityMap["Wisdom"] },
+    });
+    const built = await leveled([["Bard", 2]], { rulesetId: fork.id });
+    const skills = built.components.skills.getSkills();
+    expect(skills.sailing?.halfproficient).toBe(true);
+    expect(skills.stealth?.halfproficient).toBe(true);
   });
 
   test("of a new character: Common, which its species grants", async () => {

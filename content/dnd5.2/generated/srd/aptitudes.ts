@@ -8,7 +8,6 @@ export const ALL_APTITUDES: string[] = [
   "Barbarian Skills",
   "Barbarian Subclass",
   "Bard Features",
-  "Bard Skills",
   "Bard Spells",
   "Bard Subclass",
   "Bard Tools",

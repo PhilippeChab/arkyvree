@@ -87,8 +87,12 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       );
     }
 
-    /** Its skill picks: each skill's Skill Proficiency, listed in the class's skills' pool ("Fighter Skills"). */
+    /**
+     * Its skill picks: each skill's Skill Proficiency, listed in the class's skills' pool ("Fighter Skills"); none for a
+     * class whose picks are any skill's (a bard's, in the Skill Proficiencies pool).
+     */
     private async insertSkillPicks(def: ClassSeed) {
+      if (def.classSkills.length === 0) return;
       const what = `${def.name}'s skills`;
       const toId = this.idOf(this.ctx.aptMap, classSkills(def.name), what);
       await this.insertListings(

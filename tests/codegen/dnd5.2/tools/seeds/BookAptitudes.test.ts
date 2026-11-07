@@ -36,13 +36,21 @@ describe("A book's aptitudes", () => {
         featOf("Rage (Barbarian)", ["Barbarian Features"]),
       ],
       spells: [{ name: "Fireball", description: "", aptitudes: ["Wizard Spells"], fields: {}, level: 3 }],
+      // A class's skills' pool when it picks among some skills; none for a bard's, any skill's
       classes: [
-        classOf({ name: "Wizard", featurePool: "Wizard Features", spells: { list: "Wizard Spells", known: [] } }),
+        classOf({
+          name: "Wizard",
+          classSkills: ["Arcana", "History"],
+          featurePool: "Wizard Features",
+          spells: { list: "Wizard Spells", known: [] },
+        }),
+        classOf({ name: "Bard", featurePool: "Bard Features" }),
       ],
     });
     expect(new BookAptitudes(contents).names()).toEqual([
       "Ability Score Improvement",
       "Barbarian Features",
+      "Bard Features",
       "Epic Boon",
       "Expertise",
       "Fighting Style",

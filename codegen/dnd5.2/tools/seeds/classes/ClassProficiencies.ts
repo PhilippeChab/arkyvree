@@ -10,7 +10,9 @@ import { classFeatures, classSkills, toolPicks } from "@/content/dnd5.2/builders
 import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { grantFeat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
+import { SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_SELECTABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 
 import type { ClassEntries } from "./ClassEntries.ts";
 
@@ -58,6 +60,9 @@ export class ClassProficiencies {
       const names = readChoiceOptions(choice);
       const skills = names.flatMap((option) => readSkill(option) ?? []);
       const tools = names.flatMap((option) => readTool(option, this.tools) ?? []);
+      // Any skill (a bard's): a room in the pool of every skill's proficiency, a skill a ruleset adds included
+      if (names.length > 0 && skills.length === names.length && skills.length === SKILL_NAMES.length)
+        return { kind: "skills", pool: SKILL_PROFICIENCIES_POOL, picks: choice.choose, options: [] };
       if (names.length > 0 && skills.length === names.length)
         return { kind: "skills", pool: classSkills(name), picks: choice.choose, options: skills };
       if (names.length > 0 && tools.length === names.length)
@@ -76,7 +81,11 @@ export class ClassProficiencies {
       ...granted.map((feat) => grantFeat(feat)),
       ...choices.map(({ pool, picks }) => poolRoom(pool, picks)),
     ];
-    const picked = choices.map(({ kind, options, picks }) => `${picks} of the ${kind} ${options.join(", ")}`);
+    const picked = choices.map(({ kind, options, picks, pool }) =>
+      pool === SKILL_PROFICIENCIES_POOL
+        ? `${picks} skill${picks === 1 ? "" : "s"} of your choice`
+        : `${picks} of the ${kind} ${options.join(", ")}`,
+    );
     const gained = [...granted, ...picked];
     return {
       name,

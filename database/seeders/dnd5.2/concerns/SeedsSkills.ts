@@ -1,6 +1,5 @@
 import { setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import { eq } from "@/content/core/builders/customization/requirements.ts";
-import { feat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import { expertise, skillProficiency } from "@/content/dnd5.2/builders/feats/proficiencies.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import type { SkillSeed } from "@/content/dnd5.2/builders/skills/types.ts";
@@ -12,8 +11,8 @@ import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd5.2/fields/index.ts
 
 /**
  * A skill's feats, as the engine makes them with a skill a ruleset adds (`SkillProficiencyFeats`, `ExpertiseFeats`):
- * its Skill Proficiency, in the pool of any skill's proficiency, and its Expertise, which requires it, in the Expertise
- * pool, each of its family and generated.
+ * its Skill Proficiency, in the pool of any skill's proficiency, and its Expertise, which requires proficiency in it
+ * however the character has it, in the Expertise pool, each of its family and generated.
  */
 function skillFeats(skill: string): FeatSeed[] {
   const slug = stripSeparators(skill);
@@ -30,7 +29,7 @@ function skillFeats(skill: string): FeatSeed[] {
       description: `You have Expertise in the ${skill} skill: your Proficiency Bonus is doubled for its checks.`,
       aptitudes: [EXPERTISE_POOL],
       modifiers: [setFlag(`skills.${slug}.expertise`)],
-      requirements: [eq(feat(skillProficiency(skill)))],
+      requirements: [eq(`skills.${slug}.proficient`)],
       fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Expertise"] },
     },
   ];

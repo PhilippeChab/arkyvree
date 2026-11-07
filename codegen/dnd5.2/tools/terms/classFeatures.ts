@@ -26,7 +26,6 @@ import { grantLanguage, languagePick } from "@/content/dnd5.2/builders/languages
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
 import { ABILITY_SCORE_IMPROVEMENT_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
-import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 import { UNARMED_STRIKE, WEAPON_DEFINITIONS } from "@/vocabulary/dnd5.2/weapons.ts";
 
 /** A count a class's levels hold that adds to a target as it grows: each increase is a class level's modifier. */
@@ -122,8 +121,9 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   { feature: "Fast Movement", modifiers: [{ ...bonus("combat.speed.misc", 10), requirements: [NOT_HEAVY] }] },
   { feature: "Improved Critical", modifiers: [bonus("combat.critical.range", 1)] },
   {
+    // Every skill, a skill a ruleset adds included
     feature: "Jack of All Trades",
-    modifiers: SKILL_NAMES.map((skill) => setFlag(`skills.${stripSeparators(skill)}.halfproficient`)),
+    modifiers: [setFlag("skills.*.halfproficient")],
   },
   {
     // Its weapons attack with Dexterity as a Finesse weapon does, while its monk wears no armor and holds no Shield; its

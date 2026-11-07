@@ -18,13 +18,14 @@ holds names the code that holds it.
   feat sets.
 - **Skills take no ranks or points.** A skill adds its ability's modifier, the Proficiency Bonus when proficient, twice
   with Expertise, half (rounded down) with Jack of All Trades on an unproficient one, and misc (`SkillsComponent`,
-  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). The seeded Jack of All Trades sets each of the SRD's
-  skills; a ruleset that adds a skill can set `skills.*.halfproficient`, which reaches every skill, its own included.
-  The level-up has no skills step.
+  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). Jack of All Trades sets `skills.*.halfproficient`, which
+  reaches every skill, one a ruleset adds included. The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
   mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
-  ruleset adds included.
+  ruleset adds included; its Expertise requires proficiency in it however the character has it
+  (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's) picks them in
+  the Skill Proficiencies pool, which a new skill joins.
 - **A class's starting proficiencies are one feat, a first class's or a multiclass's.** A class names the feat its first
   level grants when it's the character's first class (`startingProficiencies`: its saving throws, armor training,
   weapons, tools and skill picks) and the smaller one it grants a multiclass (`multiclassProficiencies`, the SRD's

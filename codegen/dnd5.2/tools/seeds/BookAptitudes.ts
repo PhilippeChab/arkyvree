@@ -60,9 +60,10 @@ export class BookAptitudes {
       EXPERTISE_POOL,
       ...feats.flatMap(({ aptitudes }) => aptitudes),
       ...spells.flatMap(({ aptitudes }) => aptitudes),
-      ...classes.flatMap(({ featurePool, name, spells: list }) => [
+      // A class's skills' pool, when its skill picks are among some skills (a bard's are any skill's)
+      ...classes.flatMap(({ classSkills: skills, featurePool, name, spells: list }) => [
         featurePool,
-        classSkills(name),
+        ...(skills.length > 0 ? [classSkills(name)] : []),
         ...(list ? [list.list] : []),
       ]),
     ]);

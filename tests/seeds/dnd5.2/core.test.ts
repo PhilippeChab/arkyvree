@@ -337,8 +337,8 @@ describe("The seeded D&D 5th Edition core rules", () => {
           (s) => `Skill Proficiency: ${s}`,
         ),
       );
-      // A bard picks any skill
-      expect(listed("Bard Skills")).toHaveLength(SKILL_NAMES.length);
+      // A bard picks any skill, in the pool of any skill's proficiency, which a skill a ruleset adds joins
+      expect(rows.aptitudes.some(({ name }) => name === "Bard Skills")).toBe(false);
       expect(listed("Skill Proficiencies")).toEqual(SKILL_NAMES.map((s) => `Skill Proficiency: ${s}`).sort());
       expect(listed("Expertise")).toEqual(SKILL_NAMES.map((s) => `Expertise: ${s}`).sort());
     });
@@ -369,12 +369,12 @@ describe("The seeded D&D 5th Edition core rules", () => {
       const expertise = rows.feat("Expertise: Stealth");
       expect(rows.modifiersOf(proficiency.id).map(describeModifier)).toEqual(["skills.stealth.proficient set true"]);
       expect(rows.modifiersOf(expertise.id).map(describeModifier)).toEqual(["skills.stealth.expertise set true"]);
+      // Its Expertise requires the proficiency, however the character has it
       expect(rows.requirementsOf(expertise.id)).toMatchObject([
-        { target: "feats.skillproficiencystealth.possessed", operator: "equal", value: "true" },
+        { target: "skills.stealth.proficient", operator: "equal", value: "true" },
       ]);
-      // Bards, monks, rangers and rogues pick it, and the pool of any skill's proficiency lists it
+      // Monks, rangers and rogues pick it, and the pool of any skill's proficiency lists it, a bard's
       expect(rows.linkedNames(proficiency.id, "listedIn").sort()).toEqual([
-        "Bard Skills",
         "Monk Skills",
         "Ranger Skills",
         "Rogue Skills",
