@@ -27,6 +27,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
 import { ABILITY_SCORE_IMPROVEMENT_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
+import { UNARMED_STRIKE, WEAPON_DEFINITIONS } from "@/vocabulary/dnd5.2/weapons.ts";
 
 /** A count a class's levels hold that adds to a target as it grows: each increase is a class level's modifier. */
 interface ClassCount {
@@ -42,6 +43,17 @@ interface FeatureModifiers {
   modifiers: ModifierSeed[];
   owner?: string;
 }
+
+/**
+ * The Monk weapons, as Martial Arts names them, and the Unarmed Strike: Simple Melee weapons and Martial Melee weapons
+ * that have the Light property, by name.
+ */
+const MONK_WEAPONS = [
+  UNARMED_STRIKE.name,
+  ...Object.entries(WEAPON_DEFINITIONS).flatMap(([name, weapon]) =>
+    weapon && !weapon.ranged && (weapon.category === "Simple" || weapon.properties.includes("Light")) ? [name] : [],
+  ),
+];
 
 /** No Shield held: what a monk's Unarmored Defense and Unarmored Movement require too. */
 const NO_SHIELD: RequirementCondition = {
@@ -64,11 +76,18 @@ const UNARMORED = eqStr("combat.armor.category", "none");
 
 /**
  * The counts a class's levels hold that give room or a bonus as they grow, each increase at its level: the kinds of
- * weapons a Weapon Mastery takes (a barbarian's, a fighter's), a monk's Unarmored Movement.
+ * weapons a Weapon Mastery takes (a barbarian's, a fighter's), a monk's Unarmored Movement, and its Martial Arts die's
+ * sides on each Monk weapon (6 at its 1st level, 2 more at its 5th, 11th and 17th: d8, d10, d12), which the weapon rolls
+ * when better than its own, while its monk wears no armor and holds no Shield.
  */
 export const CLASS_COUNTS: ClassCount[] = [
   { key: "weapon_mastery", target: `aptitudes.${stripSeparators(WEAPON_MASTERY_POOL)}.allowed` },
   { key: "unarmored_movement_bonus", target: "combat.speed.misc", requirements: [UNARMORED, NO_SHIELD] },
+  ...MONK_WEAPONS.map((weapon) => ({
+    key: "martial_arts_die",
+    target: `items.weapons.${stripSeparators(weapon)}.damage.die`,
+    requirements: [UNARMORED, NO_SHIELD],
+  })),
 ];
 
 /** The modifiers of the features a sheet reads a number of, or that grant a feat or a language, by feature. */
@@ -105,6 +124,16 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   {
     feature: "Jack of All Trades",
     modifiers: SKILL_NAMES.map((skill) => setFlag(`skills.${stripSeparators(skill)}.halfproficient`)),
+  },
+  {
+    // Its weapons attack with Dexterity as a Finesse weapon does, while its monk wears no armor and holds no Shield; its
+    // die is its levels' (`CLASS_COUNTS`)
+    feature: "Martial Arts",
+    owner: "Monk",
+    modifiers: MONK_WEAPONS.map((weapon) => ({
+      ...setFlag(`items.weapons.${stripSeparators(weapon)}.finesse`),
+      requirements: [UNARMORED, NO_SHIELD],
+    })),
   },
   {
     feature: "Primal Champion",

@@ -31,6 +31,11 @@ const WEAPON_PATHS = [
     description: "Whether it uses its mastery property",
     type: "boolean" as const,
   },
+  {
+    path: "finesse",
+    description: "Whether it can use Dexterity, as a Finesse weapon (Martial Arts)",
+    type: "boolean" as const,
+  },
   { path: "tohit.ability", description: "Str/Dex modifier to attack", type: "number" as const, requirementOnly: true },
   {
     path: "tohit.proficiency",
@@ -41,6 +46,11 @@ const WEAPON_PATHS = [
   { path: "tohit.magic", description: "Magic bonus to attack", type: "number" as const },
   { path: "tohit.misc", description: "Other bonuses to attack (Archery)", type: "number" as const },
   { path: "damage.dice", description: "Damage dice", type: "string" as const },
+  {
+    path: "damage.die",
+    description: "Sides of a die it can roll instead, the better counts (Martial Arts)",
+    type: "number" as const,
+  },
   { path: "damage.ability", description: "Str/Dex modifier to damage", type: "number" as const, requirementOnly: true },
   { path: "damage.magic", description: "Magic bonus to damage", type: "number" as const },
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const },

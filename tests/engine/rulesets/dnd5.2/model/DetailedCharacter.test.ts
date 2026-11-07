@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
+import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
@@ -193,6 +196,30 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // A Barbarian of Constitution 8: 10 and Dexterity, the SRD's own calculation, which the −1 would lower
     const frail = await leveled([["Barbarian", 1]], { abilities: { Dexterity: 14, Constitution: 8 } });
     expect(frail.components.combat.getCombat().weaponsets["0"].ac).toMatchObject({ base: 10, dexterity: 2, total: 12 });
+  });
+
+  test("of a monk's Martial Arts: its Unarmed Strike with Dexterity, rolling its die by its Monk level", async () => {
+    const unarmedOf = async (level: number) => {
+      const built = await leveled([["Monk", level]], { abilities: { Strength: 10, Dexterity: 16 } });
+      const strike = built.components.combat.getCombat().weaponsets["0"].mainhand!;
+      return { ability: strike.ability, tohit: strike.tohit.total, damage: strike.damage.total };
+    };
+    // The SRD's Monk 1 with Dexterity 16: +5 to hit (Dexterity's +3, the Proficiency Bonus's +2) for 1d6+3, not 1
+    expect(await unarmedOf(1)).toEqual({ ability: "Dexterity", tohit: 5, damage: "1d6+3" });
+    // Its Martial Arts die grows at its 5th level
+    expect(await unarmedOf(5)).toEqual({ ability: "Dexterity", tohit: 6, damage: "1d8+3" });
+    // A Monk weapon rolls its own dice when they're better: a Quarterstaff's d8 in two hands, not the d6
+    const ctx = await getDnd52SeedCtx();
+    const monk = await createDnd52Character(session, { abilities: { Strength: 10, Dexterity: 16 } });
+    await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+    const staff = (await Entities.findOne(db, {
+      entityType: "items",
+      name: "Quarterstaff",
+      rulesetId: ctx.rulesetId,
+    }))!;
+    await CharacterInventoryService.addItem(session, monk.id, staff.id, 1, "Two Handed", null, null, [0], true);
+    const held = (await buildCharacter(monk.id)).components.combat.getCombat().weaponsets["0"].twohanded!;
+    expect({ ability: held.ability, damage: held.damage.total }).toEqual({ ability: "Dexterity", damage: "1d8+3" });
   });
 
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {

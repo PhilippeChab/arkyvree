@@ -58,6 +58,12 @@ holds names the code that holds it.
   and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the
   Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
   (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
+- **A monk's Martial Arts** lets its Unarmed Strike and its Monk weapons (Simple melee weapons, and Martial melee ones
+  with Light, by name) attack with Dexterity as a Finesse weapon does (`items.weapons.<weapon>.finesse`), and its levels
+  give each its die from the Monk table (`damage.die`: 6 sides, 8 from its 5th level, 10 from its 11th, 12 from its
+  17th, as a 3.5 monk's levels give its unarmed damage), which a weapon rolls when better than its own dice (a
+  Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
+  wears no armor and holds no Shield; that it wields only Monk weapons isn't checked.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
   3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2), and the sheet keeps the most any
   feature sets, whatever the order the classes were taken in (a Fighter 11 / Paladin 5 makes 3, the Paladin's level

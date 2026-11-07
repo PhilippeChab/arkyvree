@@ -115,18 +115,26 @@ export interface WeaponSet {
  * misc), its properties, range and mastery, which it uses when its wielder has mastered its kind.
  */
 export interface WeaponSlot {
-  /** The ability its attack and damage add: Strength in melee, Dexterity at range, the better one with Finesse. */
+  /**
+   * The ability its attack and damage add: Strength in melee, Dexterity at range, the better one with Finesse or when
+   * it's `finesse`.
+   */
   readonly ability: "Dexterity" | "Strength";
   damage: {
     /** Its ability's modifier, an off-hand attack's only when negative without Two-Weapon Fighting. */
     readonly ability: number;
+    /** Its own dice: a Versatile weapon's two-handed ones in two hands. */
     dice: string;
+    /** The sides of a die it can roll in place of its dice (a monk's Martial Arts die), the better counting: 0, none. */
+    die: number;
     magic: number;
     misc: number;
     readonly total: string;
     type: string;
   };
   entryId: string | null;
+  /** Whether it can use Dexterity as a Finesse weapon does: a monk's Unarmed Strike and Monk weapons. */
+  finesse: boolean;
   itemId: string | null;
   mastered: boolean;
   /** Its mastery property, when its wielder has mastered its kind (`mastered`). */
