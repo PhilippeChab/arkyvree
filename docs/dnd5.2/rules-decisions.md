@@ -79,11 +79,15 @@ holds names the code that holds it.
 ## Content
 
 - **A subclass is a feat**, picked at its class's 3rd level in the class's subclass pool ("Fighter Subclass"), whose
-  modifiers grant its features at their class levels (`classes.<class>.level`).
-- **An Ability Score Improvement takes any feat the character qualifies for.** The General pool lists every feat, each
-  behind its prerequisites (an Epic Boon's level 19 among them), and the Epic Boon pool every feat: the SRD's "or another
-  feat of your choice for which you qualify". The Ability Score Improvement feat is 21 variants, a spread each (+2 to
-  one ability, or +1 to two), a feat that raises a score of your choice a variant per ability ("Grappler (Strength)").
+  modifiers grant its features at their class levels (`classes.<class>.level`). The Add Level wizard lists a feature
+  with the level that gives it, and opens a pick it gives there (a Champion's Additional Fighting Style at Fighter 7),
+  as it lists what any modifier gives with a level: the saving throws a first class's starting proficiencies give
+  (`LevelUpState.givenWith`).
+- **An Ability Score Improvement takes any feat the character qualifies for.** Its pick is named for it (the Ability
+  Score Improvement pool, where a General feat is picked too) and lists every feat, each behind its prerequisites (an
+  Epic Boon's level 19 among them), and the Epic Boon pool every feat: the SRD's "or another feat of your choice for
+  which you qualify". The Ability Score Improvement feat is 21 variants, a spread each (+2 to one ability, or +1 to
+  two), a feat that raises a score of your choice a variant per ability ("Grappler (Strength)").
 - **A species' lineage is a pick** in its lineage pool ("Elf Lineage"), at the first level, whose feats are its
   subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
 - **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
@@ -100,3 +104,5 @@ holds names the code that holds it.
   skills.
 - A feature with no number the sheet reads: Rage, Sneak Attack, Bardic Inspiration, Channel Divinity, Wild Shape and the
   like keep their text.
+- Spells a feature or a trait always has prepared: a Life Domain's Aid at Cleric 3, a drow's Faerie Fire at 3rd level.
+  Its description lists them; no modifier makes them known.
