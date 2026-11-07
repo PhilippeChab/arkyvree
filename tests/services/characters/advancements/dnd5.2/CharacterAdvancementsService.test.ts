@@ -286,7 +286,7 @@ describe("A D&D 5th Edition character's levels", () => {
       const { "Fighting Style": _, ...feats } = FIGHTER_1.feats!;
       const plan = { ...FIGHTER_1, feats };
       expect(await outcomeOf(() => addLevel(session, character.id, "Fighter", 1, plan))).toContain(
-        "Fighting Style: 1 unspent slot(s) (0/1)",
+        "Fighting Style: 1 pick left (0 of 1)",
       );
       expect(await outcomeOf(() => addLevel(session, character.id, "Fighter", 1, plan, true))).toBe("saved");
     });

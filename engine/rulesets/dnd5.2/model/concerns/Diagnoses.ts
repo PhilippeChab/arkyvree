@@ -15,7 +15,10 @@ import { capitalize } from "@/shared/text.ts";
  */
 export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Diagnosing extends Base {
-    /** The pools' slots unspent or overspent, then the armor worn without its training: what the 2024 rules flag. */
+    /**
+     * The pools' picks left or past their room ("Fighter Skills: 2 picks left (0 of 2)": a slot is a spell's in the
+     * 2024 rules), then the armor worn without its training: what the 2024 rules flag.
+     */
     protected override findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
 
@@ -23,12 +26,11 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const { id, name, spellLevel, allowed, spent, available } of this.components.aptitudes.getSlotPools()) {
         if (allowed === ALLOWED_ALL || available === 0) continue;
         const pool = spellLevel === undefined ? name : `${name} (level ${spellLevel})`;
+        const count = Math.abs(available);
+        const picks = `${count} pick${count === 1 ? "" : "s"}`;
         issues.push({
           category: "aptitudes",
-          message:
-            available > 0
-              ? `${pool}: ${available} unspent slot(s) (${spent}/${allowed})`
-              : `${pool}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+          message: `${pool}: ${picks} ${available > 0 ? "left" : "too many"} (${spent} of ${allowed})`,
           entityId: id,
           entityName: name,
           entityType: "aptitudes",

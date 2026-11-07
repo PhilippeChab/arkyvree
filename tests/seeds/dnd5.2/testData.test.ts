@@ -147,7 +147,7 @@ describe("The D&D 5th Edition test data", () => {
       inventory: [],
     };
     expect(seedCharacter(db, ctx, unmade)).rejects.toThrow(
-      new RegExp(`^${seed.name}, level 1 \\(Fighter\\): .*Fighting Style: 1 unspent slot\\(s\\) \\(0/1\\)`),
+      new RegExp(`^${seed.name}, level 1 \\(Fighter\\): .*Fighting Style: 1 pick left \\(0 of 1\\)`),
     );
   });
 
