@@ -49,7 +49,7 @@ export const PROGRESSION: ProgressionDeclaration = {
       addPool: "Add Feat Pool",
       create: "Create {name}",
       feature: "Class feature",
-      help: "A filled level grants the feature there. A feature that isn't Stackable is granted at one level: clicking another moves it there. A feat pool's filled level gives picks in it: click it again to change how many.",
+      help: "Click a level to grant a feature there. A feature that isn't Stackable is granted once: clicking another level moves it. For a feat pool, click again to change how many picks.",
       pool: "Feat pool",
       pools: "Feat pools",
       repeat: "No effect: a character takes {name} once, at {position}. It isn't Stackable.",
@@ -74,7 +74,7 @@ export const PROGRESSION: ProgressionDeclaration = {
         key: String(level),
         label: SPELL_LEVEL_LABELS[level],
       })),
-      help: "How many spell slots of each level the class has by then, as its table in the SRD gives them: a character casting from this class alone has them, and one casting from several has the Multiclass Spellcaster table's instead.",
+      help: "How many spell slots of each level the class has by then.",
       key: "perDay",
       label: "Spell Slots",
       max: RULESET_LIMITS.tableCount,
@@ -85,7 +85,8 @@ export const PROGRESSION: ProgressionDeclaration = {
     {
       all: {
         hint: "All Prepared From an Earlier Level",
-        lockedPaste: "That cell prepares every spell from an earlier level: paste into an open cell, or Paste a Table",
+        lockedPaste:
+          "That cell already has every spell from an earlier level. Paste into another cell, or use Paste a Table.",
         word: "All",
       },
       columns: SPELL_LEVELS.map((level) => ({
@@ -93,7 +94,7 @@ export const PROGRESSION: ProgressionDeclaration = {
         key: String(level),
         label: SPELL_LEVEL_LABELS[level],
       })),
-      help: "How many cantrips and spells the class prepares by then: its cantrips at their own level, a level's new spells at the highest level it casts then, where a lower level's spell fits too. \"All\" is every spell of its list.",
+      help: 'How many cantrips and spells the class prepares by then. "All" is every spell of its list.',
       key: "known",
       label: "Cantrips and Prepared Spells",
       max: RULESET_LIMITS.tableCount,

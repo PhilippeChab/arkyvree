@@ -17,29 +17,24 @@ import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 const SPELLCASTING_PATHS = [
   {
     path: "casterlevel",
-    description:
-      "The levels counting toward the Multiclass Spellcaster table: all a class's whose levels all count, half (rounded up, together) those whose half do",
+    description: "Levels that count toward spell slots",
     type: "number" as const,
     requirementOnly: true,
   },
   {
     path: "highestslot",
-    description: "The highest level of spell slots",
+    description: "Highest spell slot level",
     type: "number" as const,
     requirementOnly: true,
   },
   ...Array.from({ length: MAX_SPELL_LEVEL }, (_, i) => ({
     path: `slots.${i + 1}`,
-    description: `Spell slots of level ${i + 1}: one casting class's own, or the Multiclass Spellcaster table's once the character casts from several`,
+    description: `Spell slots of level ${i + 1}`,
     type: "number" as const,
     requirementOnly: true,
   })),
-  { path: "pact.slots", description: "Pact Magic slots, which a warlock's levels add", type: "number" as const },
-  {
-    path: "pact.level",
-    description: "Pact Magic slots' level, which a warlock's levels raise",
-    type: "number" as const,
-  },
+  { path: "pact.slots", description: "Pact Magic slots", type: "number" as const },
+  { path: "pact.level", description: "Pact Magic slot level", type: "number" as const },
 ];
 
 /** The spellcasting target paths: the levels counting toward spell slots, the slots, and the Pact Magic slots and level. */

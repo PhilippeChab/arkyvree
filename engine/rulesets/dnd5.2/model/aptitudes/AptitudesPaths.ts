@@ -63,7 +63,7 @@ const SPELL_LEVEL_SLOT_MODIFIERS: Record<
 export const JOINS_CLASS_LIST = {
   path: "joinsclasslist",
   label: "Joins Class List",
-  description: "Whether its spells join the list of the class whose level gave it",
+  description: "Whether its spells join the class's list",
   allowedEntityTypes: ["feats", "class-levels"],
 };
 

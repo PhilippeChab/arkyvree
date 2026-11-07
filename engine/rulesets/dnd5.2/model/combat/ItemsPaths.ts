@@ -36,16 +36,16 @@ const ARMOR_LABELS: Record<string, string> = {
 
 const NAVIGATABLE_ARMOR_PATHS = [
   { path: "ac.base", description: "The armor's own Armor Class", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to the armor's AC (a +1 armor's)", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the armor's AC", type: "number" as const },
   { path: "ac.total", description: "Total AC from this armor", type: "number" as const, requirementOnly: true },
-  { path: "maxdex", description: "The most Dexterity modifier its wearer adds", type: "number" as const },
-  { path: "strength", description: "The Strength its wearer needs, or its speed is lower", type: "number" as const },
+  { path: "maxdex", description: "Maximum Dexterity bonus", type: "number" as const },
+  { path: "strength", description: "Strength its wearer needs", type: "number" as const },
   { path: "stealthdisadvantage", description: "Whether it hinders Stealth", type: "boolean" as const },
 ];
 
 const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.bonus", description: "The Shield's own bonus to AC", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to the Shield's AC (a +1 Shield's)", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the Shield's AC", type: "number" as const },
   { path: "ac.total", description: "Total AC from this Shield", type: "number" as const, requirementOnly: true },
 ];
 

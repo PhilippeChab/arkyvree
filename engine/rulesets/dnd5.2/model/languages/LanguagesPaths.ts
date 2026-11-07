@@ -16,7 +16,7 @@ import { stripSeparators } from "@/shared/text.ts";
 const LANGUAGE_PATHS = [
   {
     path: "known",
-    description: "Whether the character speaks this language, picked or granted: a modifier setting it true grants it",
+    description: "Whether the character speaks this language",
     type: "boolean" as const,
   },
 ];
@@ -25,7 +25,7 @@ const LANGUAGE_PATHS = [
 const PICK_PATHS = [
   {
     path: "extrapicks",
-    description: "Languages to pick past the two standard ones every character picks",
+    description: "Extra languages to pick",
     type: "number" as const,
   },
 ];

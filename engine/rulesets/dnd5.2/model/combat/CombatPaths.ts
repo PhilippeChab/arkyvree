@@ -35,27 +35,27 @@ const COMBAT_PATHS = [
   // Armor Class
   {
     path: "ac.base",
-    description: "10 unarmored, the armor's Armor Class otherwise",
+    description: "Default 10, or the armor's AC",
     type: "number" as const,
     sortOrder: 2,
     requirementOnly: true,
   },
   {
     path: "ac.dexterity",
-    description: "The Dexterity modifier the armor lets its wearer add",
+    description: "Dexterity bonus to AC",
     type: "number" as const,
     sortOrder: 2,
     requirementOnly: true,
   },
   {
     path: "ac.shield",
-    description: "A Shield's bonus, with the training to use it: each set's own; read elsewhere, the greatest set's",
+    description: "Shield bonus to AC",
     type: "number" as const,
     sortOrder: 2,
   },
   {
     path: "ac.misc",
-    description: "Other bonuses to AC (an Unarmored Defense's ability, a ring's +1)",
+    description: "Other bonuses to AC (Unarmored Defense)",
     type: "number" as const,
     sortOrder: 2,
   },
@@ -70,21 +70,21 @@ const COMBAT_PATHS = [
   },
   {
     path: "armor.trained",
-    description: "Whether the wearer has training with its armor's category: without, it can't cast spells",
+    description: "Whether trained with the armor worn",
     type: "boolean" as const,
     sortOrder: 2,
     requirementOnly: true,
   },
   {
     path: "armor.strengthmet",
-    description: "Whether the wearer has its armor's Strength: without, its speed is 10 feet lower",
+    description: "Whether Strength is high enough for the armor",
     type: "boolean" as const,
     sortOrder: 2,
     requirementOnly: true,
   },
   {
     path: "shield.held",
-    description: "Whether a Shield is carried: in a set's Armor Class, by the set; elsewhere, in any set",
+    description: "Whether a Shield is carried",
     type: "boolean" as const,
     sortOrder: 2,
     requirementOnly: true,
@@ -97,7 +97,7 @@ const COMBAT_PATHS = [
   // Hit points
   { path: "hp.base", description: "From each level's hit points", type: "number" as const },
   { path: "hp.constitution", description: "Con modifier per level", type: "number" as const, requirementOnly: true },
-  { path: "hp.misc", description: "Other bonuses to HP (a dwarf's toughness)", type: "number" as const },
+  { path: "hp.misc", description: "Other bonuses to HP (Dwarven Toughness)", type: "number" as const },
   { path: "hp.total", description: "All HP sources combined", type: "number" as const, requirementOnly: true },
   // Initiative
   { path: "initiative.dexterity", description: "Dex modifier", type: "number" as const, requirementOnly: true },
@@ -111,23 +111,23 @@ const COMBAT_PATHS = [
   // Attack
   {
     path: "proficiency",
-    description: "The Proficiency Bonus, by the character's level",
+    description: "Proficiency Bonus",
     type: "number" as const,
     requirementOnly: true,
   },
   {
     path: "attacks",
-    description: "The attacks made when taking the Attack action: 1, more with Extra Attack",
+    description: "Attacks per Attack action (Extra Attack)",
     type: "number" as const,
   },
   {
     path: "critical.range",
-    description: "How many rolls score a critical hit: 1 for a 20, 2 for a 19 or 20 (a Champion's Improved Critical)",
+    description: "Critical hit range (1 = 20, 2 = 19–20)",
     type: "number" as const,
   },
   {
     path: "twoweapon.ability",
-    description: "Whether an off-hand attack adds its ability modifier to damage (the Two-Weapon Fighting style)",
+    description: "Ability modifier to off-hand damage (Two-Weapon Fighting)",
     type: "boolean" as const,
   },
   // Movement
@@ -138,19 +138,19 @@ const COMBAT_PATHS = [
   { path: "carrying.carriedweight", description: "Total weight of items (lbs)", type: "number" as const },
   {
     path: "carrying.capacity",
-    description: "What the character can carry: its Strength times its size's weight (lbs)",
+    description: "Carrying capacity (lbs)",
     type: "number" as const,
     requirementOnly: true,
   },
   {
     path: "carrying.draglift",
-    description: "What the character can drag, lift or push: twice what it carries (lbs)",
+    description: "Drag, lift or push (lbs)",
     type: "number" as const,
     requirementOnly: true,
   },
   {
     path: "carrying.overloaded",
-    description: "Whether it carries more than it can: its speed is then 5 feet at most",
+    description: "Whether over carrying capacity",
     type: "boolean" as const,
     requirementOnly: true,
   },

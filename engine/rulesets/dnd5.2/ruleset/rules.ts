@@ -54,7 +54,7 @@ export const RULES: RulesDeclaration = {
       wideForm: "fluid",
     },
     {
-      help: "Pools of choosable options at certain class levels (e.g., Fighter Subclass, Fighting Style, Weapon Mastery), and spell lists.",
+      help: "Choices a level gives (Fighting Style, Weapon Mastery…).",
       icon: "stars",
       type: "aptitudes",
     },
@@ -63,7 +63,7 @@ export const RULES: RulesDeclaration = {
     { icon: "fitness", type: "abilities" },
     {
       empty: "No mechanics documented for this ruleset.",
-      help: "Free-form rule entries for base game mechanics the app doesn't enforce (e.g., grappling, shoving, conditions). Use them to document or override situational rules for your table.",
+      help: "Rules the app doesn't apply (grappling, conditions…), written down for your table.",
       icon: "gavel",
       longDescription: true,
       type: "mechanics",

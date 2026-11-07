@@ -75,7 +75,7 @@ export const CHARACTER_FIELDS = {
     write: "always",
   },
   height: {
-    description: "The character's height, as its player writes it",
+    description: "Height",
     kind: "text",
     label: "Height",
     placeholder: "e.g., 5 feet 8 inches",
@@ -83,7 +83,7 @@ export const CHARACTER_FIELDS = {
     merge: "winner",
   },
   weight: {
-    description: "The character's weight, as its player writes it",
+    description: "Weight",
     kind: "text",
     label: "Weight",
     placeholder: "e.g., 150 lbs, 68kg",

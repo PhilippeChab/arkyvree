@@ -92,7 +92,7 @@ const AS_TEMPLATE = { field: ITEM_IS_TEMPLATE, values: [true] } as const;
  */
 const BACKGROUND_FIELDS = {
   abilityScores: {
-    description: "The three abilities its ability score increases go to",
+    description: "The three abilities its increases can raise",
     kind: "links",
     label: "Ability Scores",
     placement: "beside-name",
@@ -111,7 +111,7 @@ const BACKGROUND_FIELDS = {
 const CLASS_FIELDS = {
   hitDie: {
     default: DEFAULT_HIT_DIE,
-    description: "The die each of the class's levels rolls for hit points",
+    description: "Hit die rolled each level",
     kind: "number",
     label: "Hit Die",
     labels: HIT_DIE_LABELS,
@@ -123,8 +123,7 @@ const CLASS_FIELDS = {
   },
   multiclassSlots: {
     default: "Its levels don't count",
-    description:
-      "How its levels count toward a character's spell slots once it casts from more than one class (the Multiclass Spellcaster table's level): its own slots are its levels' alone",
+    description: "How its levels count toward spell slots when multiclassing",
     kind: "choice",
     label: "Multiclass Spell Slots",
     field: CLASS_MULTICLASS_SLOTS,
@@ -133,21 +132,21 @@ const CLASS_FIELDS = {
     write: "always",
   },
   spellcastingAbility: {
-    description: "The ability its spells are cast with: their save DC's and their attack bonus's",
+    description: "The ability its spells are cast with",
     kind: "ref",
     label: "Spellcasting Ability",
     references: "abilities",
     role: "spellcastingAbility",
   },
   startingProficiencies: {
-    description: "The feat a character gains with its first level, when the class is its first",
+    description: "Proficiencies it gives as a first class",
     kind: "ref",
     label: "Starting Proficiencies",
     references: "feats",
     role: "startingProficiencies",
   },
   multiclassProficiencies: {
-    description: "The feat a character gains with its first level in the class, when it multiclasses into it",
+    description: "Proficiencies it gives when multiclassing into it",
     kind: "ref",
     label: "Multiclass Proficiencies",
     references: "feats",
@@ -161,7 +160,7 @@ const CLASS_FIELDS = {
  */
 const CLASS_LEVEL_FIELDS = {
   grants: {
-    description: "Select feats with aptitudes granted at this level",
+    description: "Feats granted at this level",
     entries: "grant",
     kind: "links",
     label: "Feats",
@@ -188,7 +187,7 @@ const FEAT_FIELDS = {
     role: "listedIn",
   },
   stackable: {
-    description: "Whether a character can take the feat more than once, and a class grant it at several levels",
+    description: "Whether it can be taken more than once",
     kind: "flag",
     label: "Repeatable",
     field: FEAT_STACKABLE,
@@ -197,7 +196,7 @@ const FEAT_FIELDS = {
   },
   selectable: {
     default: true,
-    description: "Whether a level up picks the feat (false: it's only granted)",
+    description: "Whether it can be picked at a level up",
     form: "hidden",
     kind: "flag",
     label: "Selectable",
@@ -206,7 +205,7 @@ const FEAT_FIELDS = {
     write: "always",
   },
   generated: {
-    description: "Whether its ruleset generated the feat (Skill Proficiency in a skill)",
+    description: "Whether the app made it (a skill's Skill Proficiency)",
     form: "hidden",
     kind: "flag",
     label: "Generated",
@@ -215,7 +214,7 @@ const FEAT_FIELDS = {
     write: "always",
   },
   families: {
-    description: "Feat family grouping (Skill Proficiency, Ability Score Improvement, etc.)",
+    description: "Families it's grouped in (Skill Proficiency, Grappler…)",
     kind: "list",
     kindWide: true,
     label: "Families",
@@ -291,7 +290,7 @@ const ITEM_FIELDS = {
     write: "always",
   },
   madeFrom: {
-    description: "The template of its type it's made from, whose fields it starts from",
+    description: "The item it's made from",
     kind: "ref",
     label: "Template",
     placement: "beside-name",
@@ -301,7 +300,7 @@ const ITEM_FIELDS = {
     typeField: ITEM_TYPE,
   },
   template: {
-    description: "Whether it's a template others are made from",
+    description: "Whether other items are made from it",
     form: "unshown",
     kind: "flag",
     label: "Template",
@@ -312,7 +311,7 @@ const ITEM_FIELDS = {
   weapon: {
     fields: {
       type: {
-        description: "The weapon it is, for feat and modifier targeting (e.g. Longsword, Shortbow)",
+        description: "Which weapon it is (Longsword, Shortbow…)",
         kind: "text",
         kindWide: true,
         label: "Base Weapon",
@@ -322,7 +321,7 @@ const ITEM_FIELDS = {
         values: WEAPON_NAMES,
       },
       category: {
-        description: "Its category, which a weapon proficiency is by (Simple, Martial)",
+        description: "Simple or Martial",
         kind: "text",
         kindWide: true,
         label: "Category",
@@ -362,7 +361,7 @@ const ITEM_FIELDS = {
         values: WEAPON_PROPERTY_NAMES,
       },
       versatileDamage: {
-        description: "Its damage dice in two hands, a Versatile weapon's",
+        description: "Damage in two hands (Versatile)",
         kind: "text",
         kindWide: true,
         label: "Versatile Damage",
@@ -373,7 +372,7 @@ const ITEM_FIELDS = {
       },
       ranged: {
         absent: null,
-        description: "Whether it's a ranged weapon: its attacks use Dexterity",
+        description: "Whether it's a ranged weapon",
         kind: "flag",
         kindWide: true,
         label: "Ranged",
@@ -382,7 +381,7 @@ const ITEM_FIELDS = {
         merge: "fallback",
       },
       range: {
-        description: "Its normal range in feet: a ranged weapon's, or a thrown weapon's (0 or absent = none)",
+        description: "Normal range in feet",
         kind: "number",
         kindWide: true,
         label: "Range (ft.)",
@@ -391,7 +390,7 @@ const ITEM_FIELDS = {
         merge: "fallback",
       },
       longRange: {
-        description: "Its long range in feet, which it attacks at with Disadvantage",
+        description: "Long range in feet",
         kind: "number",
         kindWide: true,
         label: "Long Range (ft.)",
@@ -400,7 +399,7 @@ const ITEM_FIELDS = {
         merge: "fallback",
       },
       mastery: {
-        description: "Its mastery property, which a character with Weapon Mastery uses with it",
+        description: "Its mastery property",
         kind: "text",
         kindWide: true,
         label: "Mastery",
@@ -417,7 +416,7 @@ const ITEM_FIELDS = {
   armor: {
     fields: {
       type: {
-        description: "The armor it is, for feat and modifier targeting (e.g. Leather Armor, Plate Armor)",
+        description: "Which armor it is (Leather Armor, Plate Armor…)",
         kind: "text",
         kindWide: true,
         label: "Base Armor",
@@ -427,7 +426,7 @@ const ITEM_FIELDS = {
         values: ARMOR_NAMES,
       },
       category: {
-        description: "Its category, which armor training is by (Light, Medium, Heavy)",
+        description: "Light, Medium or Heavy",
         kind: "text",
         kindWide: true,
         label: "Category",
@@ -437,7 +436,7 @@ const ITEM_FIELDS = {
         values: ARMOR_CATEGORIES,
       },
       armorClass: {
-        description: "Its wearer's base Armor Class, before its Dexterity modifier",
+        description: "Base Armor Class",
         kind: "number",
         kindWide: true,
         label: "Armor Class",
@@ -446,7 +445,7 @@ const ITEM_FIELDS = {
         merge: "fallback",
       },
       maxDex: {
-        description: "The most Dexterity modifier its wearer adds (absent = all of it, light armor's; 0 = none)",
+        description: "Maximum Dexterity bonus allowed (absent = no maximum)",
         kind: "number",
         kindWide: true,
         label: "Max Dex Modifier",
@@ -455,7 +454,7 @@ const ITEM_FIELDS = {
         merge: "fallback",
       },
       strength: {
-        description: "The Strength score its wearer needs, or its speed is 10 feet lower",
+        description: "Strength needed to wear it without slowing down",
         kind: "number",
         kindWide: true,
         label: "Strength",
@@ -465,7 +464,7 @@ const ITEM_FIELDS = {
       },
       stealthDisadvantage: {
         absent: null,
-        description: "Whether its wearer has Disadvantage on Dexterity (Stealth) checks",
+        description: "Disadvantage on Stealth",
         kind: "flag",
         kindWide: true,
         label: "Stealth Disadvantage",
@@ -481,7 +480,7 @@ const ITEM_FIELDS = {
   shield: {
     fields: {
       acBonus: {
-        description: "What it adds to its wielder's Armor Class",
+        description: "Bonus to Armor Class",
         kind: "number",
         kindWide: true,
         label: "Armor Class Bonus",
@@ -506,7 +505,7 @@ const ITEM_FIELDS = {
   },
   attunement: {
     absent: null,
-    description: "Whether a magic item takes attunement to use",
+    description: "Whether it requires attunement",
     kind: "flag",
     kindWide: true,
     label: "Requires Attunement",
@@ -515,7 +514,7 @@ const ITEM_FIELDS = {
     merge: "fallback",
   },
   charges: {
-    description: "The charges it comes with (a wand's)",
+    description: "Charges (a wand's)",
     kind: "number",
     kindWide: true,
     label: "Charges",
@@ -528,7 +527,7 @@ const ITEM_FIELDS = {
 /** A language's fields: its type, Standard or Rare, which its form shows beside its name. */
 const LANGUAGE_FIELDS = {
   type: {
-    description: "What kind of language it is: Standard, which a new character picks, or Rare",
+    description: "Standard or Rare",
     kind: "text",
     label: "Type",
     placeholder: "e.g., Standard, Rare",
@@ -586,7 +585,7 @@ const SPECIES_FIELDS = {
   },
   speed: {
     default: 30,
-    description: "How far its members move on their turn, in feet",
+    description: "Speed in feet",
     kind: "number",
     label: "Speed",
     min: 1,
@@ -605,7 +604,7 @@ const SPECIES_FIELDS = {
  */
 const SPELL_FIELDS = {
   listedIn: {
-    description: "The spell lists it's on, each at its spell level",
+    description: "Spell lists it's on",
     entries: "tier",
     kind: "links",
     label: "Aptitudes",
@@ -644,7 +643,7 @@ const SPELL_FIELDS = {
     merge: "fallback",
   },
   components: {
-    description: "Its components (Verbal, Somatic, Material)",
+    description: "Components (Verbal, Somatic, Material)",
     kind: "list",
     kindWide: true,
     label: "Components",
@@ -653,7 +652,7 @@ const SPELL_FIELDS = {
     values: SPELL_COMPONENTS,
   },
   material: {
-    description: "What its Material component is",
+    description: "Material component",
     kind: "text",
     kindWide: true,
     label: "Material",
@@ -681,7 +680,7 @@ const SPELL_FIELDS = {
   },
   concentration: {
     absent: null,
-    description: "Whether it takes concentration to keep",
+    description: "Whether it needs concentration",
     kind: "flag",
     kindWide: true,
     label: "Concentration",
