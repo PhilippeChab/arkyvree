@@ -88,8 +88,8 @@ export default class CharacterResponse {
   }
 
   /**
-   * The saves, each with the parts its box lists (`parts`: its ability's, its Proficiency Bonus when proficient, its
-   * misc).
+   * The saves, each with the parts its box lists (`parts`: its ability's, its Proficiency Bonus, +0 when not
+   * proficient, so every box lists the same lines, and its misc).
    */
   private static savesOf(built: DetailedCharacter) {
     return Object.fromEntries(
@@ -99,7 +99,7 @@ export default class CharacterResponse {
           ...save,
           parts: [
             { label: "Ability", value: formatSigned(save.ability) },
-            ...(save.proficient ? [{ label: "Proficiency", value: formatSigned(save.proficiency) }] : []),
+            { label: "Proficiency", value: formatSigned(save.proficiency) },
             { label: "Misc", value: formatSigned(save.misc) },
           ] satisfies SheetStat[],
         },

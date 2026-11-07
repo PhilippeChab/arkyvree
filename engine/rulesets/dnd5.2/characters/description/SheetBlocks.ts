@@ -45,7 +45,7 @@ interface SheetParts {
   equipment: ReturnType<typeof CharacterResponse.equipmentOf>;
   identity: Parameters<typeof IdentityFields.describe>[0];
   passivePerception: number | null;
-  saves: Record<string, { name: string; parts: SheetStat[]; total: number }>;
+  saves: Record<string, { name: string; parts: SheetStat[]; proficient: boolean; total: number }>;
   skills: Record<string, SheetSkill>;
   spellGroups: ReturnType<typeof SpellGroups.describe>;
   spellSlots: ReturnType<typeof SpellGroups.describeSlots>;
@@ -307,14 +307,14 @@ export default class SheetBlocks {
     };
   }
 
-  /** A saving throw's name, marked (*) when the character is proficient in it: its parts list its Proficiency Bonus. */
-  private static markedSave(save: { name: string; parts: SheetStat[] }): string {
-    return save.parts.some(({ label }) => label === "Proficiency") ? `${save.name} *` : save.name;
+  /** A saving throw's name, marked (*) when the character is proficient in it. */
+  private static markedSave(save: { name: string; proficient: boolean }): string {
+    return save.proficient ? `${save.name} *` : save.name;
   }
 
   /**
-   * The saving throws: each its total, signed, and its parts (its ability's, its Proficiency Bonus when proficient, its
-   * misc), a proficient one marked (*).
+   * The saving throws: each its total, signed, and its parts (its ability's, its Proficiency Bonus, +0 when not
+   * proficient, its misc), a proficient one marked (*).
    */
   private static saves(saves: SheetParts["saves"]): ScoresBlock {
     return {
