@@ -33,7 +33,7 @@ function readHighestSlot(spellcasting: Record<string, number>): number | undefin
 /**
  * A class's progression, as its levels give it: its caster type, the requirements a multiclass into it meets (13 in
  * its primary abilities, or in one of them for a fighter), its levels' modifiers (the rooms its features give in its
- * pools: its subclass at its pick, its Ability Score Improvements' General feats, its Epic Boon, its Fighting Style,
+ * pools: its subclass at its pick, its Ability Score Improvements' feats, its Epic Boon, its Fighting Style,
  * its Weapon Mastery's kinds and its Expertise's skills; and the counts its levels hold that add to a target as they
  * grow, `CLASS_COUNTS`), and its spells (its list, and the cantrips and prepared spells it has by each level).
  */

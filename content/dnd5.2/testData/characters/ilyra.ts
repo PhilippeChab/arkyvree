@@ -38,7 +38,11 @@ export default {
     { levelIndex: 0, featName: "Skill Proficiency: Investigation", aptitude: "Wizard Skills" },
     { levelIndex: 0, featName: "Skill Proficiency: Medicine", aptitude: "Wizard Skills" },
     { levelIndex: 2, featName: "Evoker", aptitude: "Wizard Subclass" },
-    { levelIndex: 3, featName: "Ability Score Improvement (Dexterity +1, Intelligence +1)", aptitude: "General" },
+    {
+      levelIndex: 3,
+      featName: "Ability Score Improvement (Dexterity +1, Intelligence +1)",
+      aptitude: "Ability Score Improvement",
+    },
   ],
   spells: [
     ...["Fire Bolt", "Light", "Mage Hand", "Prestidigitation", "Ray of Frost"].map((spellName) => ({

@@ -4,7 +4,7 @@ import { readSpellLists } from "@/codegen/dnd5.2/tools/detect/spellLists.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
 import {
   ANY_FEAT_POOLS,
-  CATEGORY_POOLS,
+  CATEGORIES_BY_TYPE,
   FEAT_MODIFIERS,
   type FeatCategory,
 } from "@/codegen/dnd5.2/tools/terms/feats.ts";
@@ -19,7 +19,7 @@ import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
-import { FEAT_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
+import { FEAT_CATEGORY_POOLS, FEAT_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import { Memos } from "./Memos.ts";
@@ -61,7 +61,8 @@ function familyOf(name: string): FeatFamily | undefined {
 
 /**
  * A book's standalone feats (`seeds`, by category), each read off its entry as its override corrects it: its text,
- * the pools it's picked in (its category's, and those that take any feat a character qualifies for, `ANY_FEAT_POOLS`),
+ * the pools it's picked in (its category's, `FEAT_CATEGORY_POOLS`, and those that take any feat a character qualifies
+ * for, `ANY_FEAT_POOLS`),
  * its prerequisites as requirements (a level, an ability score, a feature: one of the feats a class's feature of that
  * name is, `featureFeats`), its modifiers (`FEAT_MODIFIERS`), and whether it repeats. A feat taken with a choice is a
  * family of a feat per option: the Ability Score Improvement's 21 ways to spread its increase, an ability score
@@ -78,8 +79,9 @@ export class FeatSeeds {
 
   /** A feat's own seed, before its options: its text, pools, requirements, modifiers and fields. */
   private base(entry: FeatEntry): FeatSeed {
-    const pool = CATEGORY_POOLS[entry.type];
-    if (!pool) throw new Error(`${entry.name}: no feat category is "${entry.type}"`);
+    const category = CATEGORIES_BY_TYPE[entry.type];
+    if (!category) throw new Error(`${entry.name}: no feat category is "${entry.type}"`);
+    const pool = FEAT_CATEGORY_POOLS[category];
     const requirements = this.requirements(entry);
     const modifiers = FEAT_MODIFIERS[entry.name] ?? [];
     const repeatable = entry.repeatable ? `\nRepeatable. ${entry.repeatable}` : "";
@@ -152,12 +154,12 @@ export class FeatSeeds {
         }));
   }
 
-  /** The book's feats, by category (its pool), each feat's options made: in its reference's order. */
+  /** The book's feats, by category, each feat's options made: in its reference's order. */
   seeds(): Map<FeatCategory, FeatSeed[]> {
     return this.memos.of("seeds", () => {
       const byCategory = new Map<FeatCategory, FeatSeed[]>();
       for (const entry of this.entries()) {
-        const category = CATEGORY_POOLS[entry.type];
+        const category = CATEGORIES_BY_TYPE[entry.type];
         byCategory.set(category, [...(byCategory.get(category) ?? []), ...this.variants(entry)]);
       }
       return byCategory;

@@ -25,7 +25,7 @@ import { savingThrowProficiency } from "@/content/dnd5.2/builders/feats/proficie
 import { grantLanguage, languagePick } from "@/content/dnd5.2/builders/languages/knowledge.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
-import { SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
+import { ABILITY_SCORE_IMPROVEMENT_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 
 /** A count a class's levels hold that adds to a target as it grows: each increase is a class level's modifier. */
@@ -137,7 +137,7 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
 
 /** The pool a feature gives a room in at each level it's gained at, by feature. */
 export const FEATURE_POOLS: { feature: string; pool: string }[] = [
-  { feature: "Ability Score Improvement", pool: "General" },
+  { feature: "Ability Score Improvement", pool: ABILITY_SCORE_IMPROVEMENT_POOL },
   { feature: "Divine Order", pool: DIVINE_ORDER_POOL },
   { feature: "Epic Boon", pool: "Epic Boon" },
   { feature: "Fighting Style", pool: "Fighting Style" },

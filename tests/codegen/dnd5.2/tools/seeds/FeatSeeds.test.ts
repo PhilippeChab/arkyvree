@@ -13,7 +13,7 @@ function readFeats() {
 }
 
 describe("The SRD 5.2.1's feats, as the generator reads them", () => {
-  test("go in their categories' pools, a feat taken with a choice a feat per option", () => {
+  test("group by their categories, a feat taken with a choice a feat per option", () => {
     const { seeds } = readFeats();
     expect(Object.fromEntries([...seeds].map(([category, feats]) => [category, feats.length]))).toEqual({
       Origin: 6,
@@ -36,7 +36,7 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
     const spreads = all.filter(({ name }) => name.startsWith("Ability Score Improvement ("));
     expect(spreads).toHaveLength(21);
     expect(named("Ability Score Improvement (Strength +2)")).toMatchObject({
-      aptitudes: ["General", "Epic Boon"],
+      aptitudes: ["Ability Score Improvement", "Epic Boon"],
       requirements: [{ target: "identity.meta.level", value: "4" }],
       modifiers: [{ target: "abilities.strength.misc", operator: "add", value: "2" }],
     });

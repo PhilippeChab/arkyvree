@@ -42,7 +42,11 @@ export default {
     { levelIndex: 0, featName: "Weapon Mastery: Greatsword", aptitude: "Weapon Mastery" },
     { levelIndex: 0, featName: "Weapon Mastery: Javelin", aptitude: "Weapon Mastery" },
     { levelIndex: 2, featName: "Champion", aptitude: "Fighter Subclass" },
-    { levelIndex: 3, featName: "Ability Score Improvement (Strength +1, Constitution +1)", aptitude: "General" },
+    {
+      levelIndex: 3,
+      featName: "Ability Score Improvement (Strength +1, Constitution +1)",
+      aptitude: "Ability Score Improvement",
+    },
     { levelIndex: 3, featName: "Weapon Mastery: Warhammer", aptitude: "Weapon Mastery" },
   ],
   inventory: [

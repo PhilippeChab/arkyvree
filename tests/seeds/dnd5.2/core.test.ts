@@ -158,7 +158,10 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(modifiers(1)).toEqual(["aptitudes.fightingstyle.allowed add 1", "aptitudes.weaponmastery.allowed add 3"]);
       expect(modifiers(2)).toEqual([]);
       expect(modifiers(3)).toEqual(["aptitudes.fightersubclass.allowed add 1"]);
-      expect(modifiers(4)).toEqual(["aptitudes.general.allowed add 1", "aptitudes.weaponmastery.allowed add 1"]);
+      expect(modifiers(4)).toEqual([
+        "aptitudes.abilityscoreimprovement.allowed add 1",
+        "aptitudes.weaponmastery.allowed add 1",
+      ]);
       expect(modifiers(19)).toEqual(["aptitudes.epicboon.allowed add 1"]);
     });
 

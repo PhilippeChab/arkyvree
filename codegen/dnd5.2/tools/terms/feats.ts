@@ -8,10 +8,14 @@ import { bonus, setFlag } from "@/content/core/builders/customization/modifiers.
 import type { ModifierSeed, RequirementCondition } from "@/content/core/builders/customization/types.ts";
 import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { type FEAT_CATEGORIES, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
+import {
+  ABILITY_SCORE_IMPROVEMENT_POOL,
+  type FEAT_CATEGORIES,
+  SKILL_PROFICIENCIES_POOL,
+} from "@/vocabulary/dnd5.2/feats.ts";
 import { WEAPON_DEFINITIONS, WEAPON_NAMES } from "@/vocabulary/dnd5.2/weapons.ts";
 
-/** A feat's category, as the vocabulary names it: its pool. */
+/** A feat's category, as the vocabulary names it, which its pool is by (`FEAT_CATEGORY_POOLS`). */
 export type FeatCategory = (typeof FEAT_CATEGORIES)[number];
 
 /** Armor worn, of any category: what the Defense style's Armor Class requires. */
@@ -23,13 +27,14 @@ const ARMORED: RequirementCondition = {
 };
 
 /**
- * The pools that take any feat a character qualifies for, past its category's: an Ability Score Improvement's (the
- * General pool) and an Epic Boon's ("an Epic Boon feat or another feat of your choice for which you qualify").
+ * The pools that take any feat a character qualifies for, past its category's: an Ability Score Improvement's ("the
+ * Ability Score Improvement feat or another feat of your choice for which you qualify") and an Epic Boon's ("an Epic
+ * Boon feat or another feat of your choice for which you qualify").
  */
-export const ANY_FEAT_POOLS: FeatCategory[] = ["General", "Epic Boon"];
+export const ANY_FEAT_POOLS: string[] = [ABILITY_SCORE_IMPROVEMENT_POOL, "Epic Boon"];
 
-/** The pool each category's feats are picked in, by the category the database names them with. */
-export const CATEGORY_POOLS: Readonly<Record<string, FeatCategory>> = {
+/** Each feat's category, by the category the database names it with. */
+export const CATEGORIES_BY_TYPE: Readonly<Record<string, FeatCategory>> = {
   origin: "Origin",
   general: "General",
   "fighting-style": "Fighting Style",

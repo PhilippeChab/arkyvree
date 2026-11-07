@@ -54,7 +54,7 @@ export const MONK: ClassSeed = {
       ],
     },
     { level: 3, target: "aptitudes.monksubclass.allowed", operator: "add", value: "1", valueType: "number" },
-    { level: 4, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
     {
       level: 6,
       target: "combat.speed.misc",
@@ -66,7 +66,7 @@ export const MONK: ClassSeed = {
         { target: "combat.shield.held", operator: "equal", value: "false", valueType: "boolean" },
       ],
     },
-    { level: 8, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
     {
       level: 10,
       target: "combat.speed.misc",
@@ -78,7 +78,13 @@ export const MONK: ClassSeed = {
         { target: "combat.shield.held", operator: "equal", value: "false", valueType: "boolean" },
       ],
     },
-    { level: 12, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
+    {
+      level: 12,
+      target: "aptitudes.abilityscoreimprovement.allowed",
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    },
     {
       level: 14,
       target: "combat.speed.misc",
@@ -90,7 +96,13 @@ export const MONK: ClassSeed = {
         { target: "combat.shield.held", operator: "equal", value: "false", valueType: "boolean" },
       ],
     },
-    { level: 16, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
+    {
+      level: 16,
+      target: "aptitudes.abilityscoreimprovement.allowed",
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    },
     {
       level: 18,
       target: "combat.speed.misc",

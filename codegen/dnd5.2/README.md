@@ -152,8 +152,8 @@ of has its modifiers (`terms/`); any other is its text alone.
   level 9, a half caster's, or none), its links (its spellcasting ability, its Starting and Multiclass Proficiencies'
   feats), its skills (`classSkills`: its skills' pool, "Fighter Skills", lists their Skill Proficiency feats), its
   features by level, each a feat through its features' pool ("Fighter Features"; its subclass's placeholder past its
-  pick left out), its levels' modifiers (its subclass's room at its pick, a General feat's at each Ability Score
-  Improvement, an Epic Boon's, a Fighting Style's, its Weapon Mastery's kinds, by its levels' counts or its text, its
+  pick left out), its levels' modifiers (its subclass's room at its pick, a room at each Ability Score Improvement
+  in its pool ("Ability Score Improvement", which lists every feat), an Epic Boon's, a Fighting Style's, its Weapon Mastery's kinds, by its levels' counts or its text, its
   Expertise's skills, by its text, and a monk's Unarmored Movement), its multiclass's requirements (13 in its primary
   abilities, one of a fighter's two), and its spells (its list, "Wizard Spells", and the cantrips and prepared spells
   it has by each level, a level's new ones at the highest spell level its slots reach then; a warlock's Mystic
@@ -170,8 +170,9 @@ of has its modifiers (`terms/`); any other is its text alone.
   throws), Primal Champion and Body and Mind, Primal Knowledge (a room in the barbarian's skills' pool), Divine Order
   and Primal Order (a room in their pools, whose sacred roles are hand-written feats), and the subclasses' Improved and
   Superior Critical, Additional Fighting Style, Bonus Proficiencies and Draconic Resilience.
-- **Feats** (`feats/feats.ts`, a list per category): each in its category's pool, and in the General's and the Epic
-  Boon's, which take any feat a character qualifies for; its prerequisites as requirements (a level, an ability score,
+- **Feats** (`feats/feats.ts`, a list per category): each in its category's pool (a General feat's is the Ability
+  Score Improvement's), and in the Ability Score Improvement's and the Epic Boon's, which take any feat a character
+  qualifies for; its prerequisites as requirements (a level, an ability score,
   a class feature's feats); a feat taken with a choice a family of a feat per option: the Ability Score Improvement's
   21 spreads ("Ability Score Improvement (Strength +1, Dexterity +1)"), an ability score increase's abilities
   ("Grappler (Strength)", the Epic Boons'), Magic Initiate's spell lists (two cantrips' and a level 1 spell's rooms in

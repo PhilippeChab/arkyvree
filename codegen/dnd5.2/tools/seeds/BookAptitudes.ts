@@ -8,7 +8,7 @@ import type { Dnd52ItemSeed } from "@/content/dnd5.2/builders/items/types.ts";
 import type { SpeciesSeed } from "@/content/dnd5.2/builders/species/types.ts";
 import type { LeveledSpellSeed } from "@/content/dnd5.2/builders/spells/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { EXPERTISE_POOL, FEAT_CATEGORIES, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
+import { EXPERTISE_POOL, FEAT_CATEGORY_POOLS, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 
 /** What a book's seeds are, of every kind that names an aptitude or a feat, as the generator writes them. */
@@ -55,7 +55,7 @@ export class BookAptitudes {
   private named(): Set<string> {
     const { classes, feats, spells } = this.contents;
     return new Set([
-      ...FEAT_CATEGORIES,
+      ...Object.values(FEAT_CATEGORY_POOLS),
       SKILL_PROFICIENCIES_POOL,
       EXPERTISE_POOL,
       ...feats.flatMap(({ aptitudes }) => aptitudes),

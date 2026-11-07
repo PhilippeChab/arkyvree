@@ -98,7 +98,14 @@ describe("A D&D 5th Edition ruleset", () => {
     const powerAttack = await idIn(dnd35.id, "feats", "Power Attack");
     const character = await createDnd52Character(session, { abilities: { Strength: 15 } });
     for (const force of [false, true]) {
-      const level = addLevel(session, character.id, "Fighter", 1, { hp: 10, feats: { General: [powerAttack] } }, force);
+      const level = addLevel(
+        session,
+        character.id,
+        "Fighter",
+        1,
+        { hp: 10, feats: { "Ability Score Improvement": [powerAttack] } },
+        force,
+      );
       expect(level).rejects.toMatchObject({
         refusal: "invalid",
         message: `Feat ${powerAttack} does not belong to the character's ruleset`,

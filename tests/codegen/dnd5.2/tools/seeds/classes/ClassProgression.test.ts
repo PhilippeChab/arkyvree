@@ -98,7 +98,7 @@ describe("A class's progression", () => {
     expect(progression.modifiers().map(({ level, target, value }) => [level, target, value])).toEqual([
       [1, "aptitudes.expertise.allowed", "2"],
       [2, "aptitudes.testersubclass.allowed", "1"],
-      [3, "aptitudes.general.allowed", "1"],
+      [3, "aptitudes.abilityscoreimprovement.allowed", "1"],
     ]);
   });
 

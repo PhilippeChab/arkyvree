@@ -156,7 +156,7 @@ describe("A D&D 5th Edition character's levels", () => {
         "Skill Proficiencies",
         "Origin",
         "Fighter Subclass",
-        "General",
+        "Ability Score Improvement",
       ];
       expect(Object.fromEntries(pools.map((name) => [name, poolOf(answer, "feats", name)?.allowed ?? 0]))).toEqual({
         "Fighter Skills": 2,
@@ -167,7 +167,7 @@ describe("A D&D 5th Edition character's levels", () => {
         "Skill Proficiencies": 1,
         Origin: 1,
         "Fighter Subclass": 0,
-        General: 0,
+        "Ability Score Improvement": 0,
       });
     });
 

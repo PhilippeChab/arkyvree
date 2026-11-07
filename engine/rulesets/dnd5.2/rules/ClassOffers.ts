@@ -4,7 +4,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import type { FEAT_CATEGORIES } from "@/vocabulary/dnd5.2/feats.ts";
+import { ABILITY_SCORE_IMPROVEMENT_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 
 /**
  * A class's own feature pool: its id (none while the ruleset has none), its name ("Witch Class Feature"), and what a
@@ -25,18 +25,15 @@ interface PoolRef {
 /** What a class's own feature pool is named: "Witch Class Feature". */
 const FEATURE_POOL_SUFFIX = "Class Feature";
 
-/** The pool of General feats, which a class's Ability Score Improvement picks in: its features are granted through it too. */
-const GENERAL_FEATS_POOL: (typeof FEAT_CATEGORIES)[number] = "General";
-
 /**
  * The feat pools a class (`klass`, as the view has it) is offered, by whom they belong to:
  * - a pool is a class's when its name starts with the class's ("Fighter Subclass", "Fighter Fighting Style"), the longest
  *   class name that starts it winning ("Ranger Knight Class Feature" is the Ranger Knight's);
  * - its features are granted through its own feature pool ("Witch Class Feature"), the pools its levels already grant
- *   one through, and General;
+ *   one through, and Ability Score Improvement (the pool a class's Ability Score Improvement picks in);
  * - its picks are given in any feat pool but a class's own feature pool, its own too ("Fighter Class Feature"), which
  *   holds the features its levels grant outright, none a pick may choose: its own pools first (Fighter Subclass), then
- *   the others by name (Fighter Fighting Style, General).
+ *   the others by name (Ability Score Improvement, Fighter Fighting Style).
  * Feat pools are the aptitudes feats are listed in: a class's spell list is none.
  */
 export default class ClassOffers {
@@ -60,12 +57,12 @@ export default class ClassOffers {
 
   /**
    * The pools the class's features are granted through (`pools`, the ruleset's feat pools): its own feature pool
-   * (`own`), those its levels grant one through now, and General.
+   * (`own`), those its levels grant one through now, and Ability Score Improvement.
    */
   private featurePoolsOf(pools: readonly Aptitude[], own: OwnFeaturePool): Aptitude[] {
     const through = this.grantedThrough();
-    const general = this.dnd52.aptitudeIdBySlug.get(stripSeparators(GENERAL_FEATS_POOL));
-    return pools.filter((pool) => pool.id === own.id || through.has(pool.id) || pool.id === general);
+    const improvement = this.dnd52.aptitudeIdBySlug.get(stripSeparators(ABILITY_SCORE_IMPROVEMENT_POOL));
+    return pools.filter((pool) => pool.id === own.id || through.has(pool.id) || pool.id === improvement);
   }
 
   /** The pools the class's levels grant features through, as they grant them now. */

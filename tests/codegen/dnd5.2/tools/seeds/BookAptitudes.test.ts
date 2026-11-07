@@ -29,20 +29,23 @@ function featOf(name: string, aptitudes: string[], seed: Partial<FeatSeed> = {})
 }
 
 describe("A book's aptitudes", () => {
-  test("are the feat categories, the engine's skill pools and every pool its seeds name, sorted, each once", () => {
+  test("are the feat categories' pools, the engine's skill pools and every pool its seeds name, sorted, each once", () => {
     const contents = contentsOf({
-      feats: [featOf("Defense", ["Fighting Style", "General"]), featOf("Rage (Barbarian)", ["Barbarian Features"])],
+      feats: [
+        featOf("Defense", ["Fighting Style", "Ability Score Improvement"]),
+        featOf("Rage (Barbarian)", ["Barbarian Features"]),
+      ],
       spells: [{ name: "Fireball", description: "", aptitudes: ["Wizard Spells"], fields: {}, level: 3 }],
       classes: [
         classOf({ name: "Wizard", featurePool: "Wizard Features", spells: { list: "Wizard Spells", known: [] } }),
       ],
     });
     expect(new BookAptitudes(contents).names()).toEqual([
+      "Ability Score Improvement",
       "Barbarian Features",
       "Epic Boon",
       "Expertise",
       "Fighting Style",
-      "General",
       "Origin",
       "Skill Proficiencies",
       "Wizard Features",
@@ -60,7 +63,7 @@ describe("A book's check", () => {
         featOf("Skilled", ["Origin"], {
           modifiers: [bonus("aptitudes.skillproficiencies.allowed", 3), setFlag("feats.alert.possessed")],
         }),
-        featOf("Expert", ["General"], { modifiers: [setFlag("feats.expertisestealth.possessed")] }),
+        featOf("Expert", ["Ability Score Improvement"], { modifiers: [setFlag("feats.expertisestealth.possessed")] }),
       ],
     });
     expect(() => new BookAptitudes(contents).check()).not.toThrow();
@@ -84,7 +87,7 @@ describe("A book's check", () => {
     );
     const required = contentsOf({
       feats: [
-        featOf("Follower", ["General"], {
+        featOf("Follower", ["Ability Score Improvement"], {
           requirements: [{ target: "feats.leader.possessed", operator: "equal", value: "true", valueType: "boolean" }],
         }),
       ],
@@ -93,7 +96,7 @@ describe("A book's check", () => {
   });
 
   test("refuses two feats of one name, and a class linking or granting a feat the book has none of", () => {
-    const twice = contentsOf({ feats: [featOf("Alert", ["Origin"]), featOf("Alert", ["General"])] });
+    const twice = contentsOf({ feats: [featOf("Alert", ["Origin"]), featOf("Alert", ["Ability Score Improvement"])] });
     expect(() => new BookAptitudes(twice).check()).toThrow("Two feats are named Alert");
     const linked = contentsOf({
       classes: [
