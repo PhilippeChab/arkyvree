@@ -34,6 +34,10 @@ holds names the code that holds it.
   (+2 and +1, or +1 to each of its three), as a Pathfinder human's "+2 to one ability" is a pick its modifier opens. A
   background has no field naming its three abilities, which would only repeat its pool's feats: its description names
   them, and a fork's background raises what its pool's feats raise.
+- **A character's languages are Common, which its species grants, and its picks.** Every SRD species grants Common
+  (`languages.common.known`, a modifier, as a 3.5 race's automatic languages are), so a fork's species speaks it once
+  its modifiers say so, and a fork that renames Common edits what names it, as any modifier naming a language. Past
+  it, a new character picks two standard languages; a rare one (Druidic, Thieves' Cant) comes from a feature's grant.
 - **An increase past 20 isn't refused.** A background's, an Ability Score Improvement's or a feat's +1 raises a score to
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
 - **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training

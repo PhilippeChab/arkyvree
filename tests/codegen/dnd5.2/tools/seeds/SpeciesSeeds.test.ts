@@ -25,7 +25,7 @@ describe("The SRD 5.2.1's species, as the generator reads them", () => {
     expect(species.find(({ name }) => name === "Gnome")?.fields[SPECIES_SIZE]).toBe("Small");
   });
 
-  test("grant a species' traits, and give room in its lineage's pool", () => {
+  test("grant a species' traits and Common, and give room in its lineage's pool", () => {
     const elf = readSpecies()
       .seeds()
       .find(({ name }) => name === "Elf")!;
@@ -36,6 +36,8 @@ describe("The SRD 5.2.1's species, as the generator reads them", () => {
       "feats.keensenses.possessed set true",
       "feats.trance.possessed set true",
       "aptitudes.elflineage.allowed add 1",
+      // Every character knows Common, which its species grants
+      "languages.common.known set true",
     ]);
   });
 

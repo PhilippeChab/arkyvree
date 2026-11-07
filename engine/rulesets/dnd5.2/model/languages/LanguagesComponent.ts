@@ -4,7 +4,6 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Language } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { COMMON_LANGUAGE } from "@/vocabulary/dnd5.2/languages.ts";
 
 /** A language as the character's target paths read it: whether the character speaks it, picked or granted. */
 interface LanguageEntry {
@@ -29,8 +28,8 @@ function byName(a: Language, b: Language) {
 /**
  * A character's languages: an entry for each of the ruleset's, known when the character picked it (its rows') or a
  * modifier grants it (`languages.<slug>.known` set true, as it applies in the build's rounds behind its requirements: a
- * species' languages, a druid's Druidic, and Common, every character's), which a requirement reads however it was gained; and the extra picks
- * its modifiers give.
+ * species' Common, a druid's Druidic), which a requirement reads however it was gained; and the extra picks its
+ * modifiers give.
  */
 export default class LanguagesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly data: LanguagesData = { extrapicks: 0 };
@@ -52,10 +51,7 @@ export default class LanguagesComponent extends CharacterComponent<LoadedCharact
       const slug = stripSeparators(language.name);
       if (slug in this.data) continue;
       this.languages.set(slug, language);
-      // Every character knows Common, which no pick takes: granted, as a feature's language is
-      const common = language.name === COMMON_LANGUAGE;
-      if (common) this.grantedIds.add(language.id);
-      this.data[slug] = { known: common || pickedIds.has(language.id) };
+      this.data[slug] = { known: pickedIds.has(language.id) };
     }
   }
 

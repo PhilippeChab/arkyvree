@@ -13,6 +13,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.draconicflight.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.draconicancestry.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "aptitudes.dragonbornlineage.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -24,6 +25,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.dwarvenresilience.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.dwarventoughness.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.stonecunning.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -37,6 +39,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.keensenses.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.trance.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "aptitudes.elflineage.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -48,6 +51,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.gnomishcunning.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.gnomishlineage.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "aptitudes.gnomelineage.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -59,6 +63,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.largeform.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.powerfulbuild.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "aptitudes.goliathlineage.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -70,6 +75,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.halflingnimbleness.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.luck.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.naturallystealthy.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -80,6 +86,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.resourceful.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.skillful.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.versatile.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -90,6 +97,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.adrenalinerush.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.darkvision120ft.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.relentlessendurance.possessed", operator: "set", value: "true", valueType: "boolean" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {
@@ -102,6 +110,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
       { target: "feats.fiendishlegacy.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.otherworldlypresence.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "aptitudes.tieflinglineage.allowed", operator: "add", value: "1", valueType: "number" },
+      { target: "languages.common.known", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
 ];

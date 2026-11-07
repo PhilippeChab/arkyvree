@@ -169,6 +169,12 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(combat.weaponsets["0"].ac).toMatchObject({ base: 11, dexterity: 3, total: 14 });
     expect(combat.hp.total).toBe(8 + 5 + 6 + 2 * 3);
   });
+  test("of a new character: Common, which its species grants", async () => {
+    const built = await leveled([["Fighter", 1]]);
+    expect(built.components.languages.getGranted().map(({ name }) => name)).toEqual(["Common"]);
+    expect(built.components.languages.getLanguages().common).toEqual({ known: true });
+  });
+
   test("of an Unarmored Defense: 10, Dexterity and its ability, the better of two, never below 10 and Dexterity", async () => {
     // A Barbarian 1 / Monk 1: the Monk's Wisdom (+3), the better calculation, not the Barbarian's Constitution (+2) too
     const both = await leveled(

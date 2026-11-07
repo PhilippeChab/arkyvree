@@ -382,7 +382,7 @@ describe("The seeded D&D 5th Edition core rules", () => {
       ]);
     });
 
-    test("grant a species' traits, and give room in its lineage's pool, whose feats are its lineages", async () => {
+    test("grant a species' traits and Common, and give room in its lineage's pool, whose feats are its lineages", async () => {
       const rows = await seededRows();
       expect(rows.modifiersOf(rows.speciesNamed("Elf").id).map(describeModifier).sort()).toEqual([
         "aptitudes.elflineage.allowed add 1",
@@ -391,6 +391,7 @@ describe("The seeded D&D 5th Edition core rules", () => {
         "feats.feyancestry.possessed set true",
         "feats.keensenses.possessed set true",
         "feats.trance.possessed set true",
+        "languages.common.known set true",
       ]);
       const lineage = rows.aptitude("Elf Lineage");
       const lineages = rows.feats.filter(({ id }) =>

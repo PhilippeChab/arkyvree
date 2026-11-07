@@ -15,9 +15,11 @@ import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { grantFeat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import { skillProficiency } from "@/content/dnd5.2/builders/feats/proficiencies.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
+import { grantLanguage } from "@/content/dnd5.2/builders/languages/knowledge.ts";
 import type { SpeciesSeed } from "@/content/dnd5.2/builders/species/types.ts";
 import { SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_GENERATED, FEAT_SELECTABLE, SPECIES_SIZE, SPECIES_SPEED } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { COMMON_LANGUAGE } from "@/vocabulary/dnd5.2/languages.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/vocabulary/dnd5.2/sizes.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 
@@ -126,8 +128,9 @@ export class SpeciesSeeds {
   }
 
   /**
-   * Its species' seeds: each one's size (Medium of those its player chooses between) and speed, and its modifiers, its
-   * traits' feats granted and a room in its lineage's pool, when it has subspecies.
+   * Its species' seeds: each one's size (Medium of those its player chooses between) and speed, and its modifiers: its
+   * traits' feats granted, a room in its lineage's pool when it has subspecies, and Common, which every character
+   * knows, granted as a 3.5 race's automatic languages are.
    */
   seeds(): SpeciesSeed[] {
     return this.entries().map((entry) => {
@@ -142,6 +145,7 @@ export class SpeciesSeeds {
         modifiers: [
           ...traits.map((trait) => grantFeat(trait)),
           ...(entry.subspecies.length > 0 ? [poolRoom(speciesLineage(entry.name), 1)] : []),
+          grantLanguage(COMMON_LANGUAGE),
         ],
       };
     });
