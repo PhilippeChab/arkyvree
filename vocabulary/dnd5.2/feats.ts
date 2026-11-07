@@ -70,5 +70,20 @@ export const FEAT_FAMILIES = [
   ...FEATURE_FAMILIES,
 ] as const;
 
+/**
+ * The feats taken with a choice the SRD doesn't call Repeatable, by their families: a character takes one of their
+ * versions, Grappler (Strength) or Grappler (Dexterity), never both (`FeatRules.canTake`).
+ */
+export const FEATS_TAKEN_ONCE = [
+  "Grappler",
+  "Boon of Combat Prowess",
+  "Boon of Dimensional Travel",
+  "Boon of Fate",
+  "Boon of Irresistible Offense",
+  "Boon of Spell Recall",
+  "Boon of the Night Spirit",
+  "Boon of Truesight",
+] as const;
+
 /** The pool of any skill's proficiency, a feat per skill, which a feature that takes any skill picks in. */
 export const SKILL_PROFICIENCIES_POOL = "Skill Proficiencies";

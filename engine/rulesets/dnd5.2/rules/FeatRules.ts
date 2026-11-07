@@ -1,11 +1,14 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import { FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import { FEATS_TAKEN_ONCE } from "@/vocabulary/dnd5.2/feats.ts";
+import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /**
- * The D&D 5th Edition feat rules of a ruleset's view (`rulesetData`), derived once and kept with it (`FeatRules.of`): which feats
- * stack, and which a character can take again. A feat that stacks is taken each time it's picked, a row a pick; a
- * character holds one that doesn't once. And which of a family's feats are its variants (`variantOf`).
+ * The D&D 5th Edition feat rules of a ruleset's view (`rulesetData`), derived once and kept with it (`FeatRules.of`):
+ * which feats stack, and which a character can take again. A feat that stacks is taken each time it's picked, a row a
+ * pick; a character holds one that doesn't once, and one version of a feat taken once (`FEATS_TAKEN_ONCE`). And which
+ * of a family's feats are its variants (`variantOf`).
  */
 export default class FeatRules {
   constructor(private readonly rulesetData: RulesetData) {}
@@ -26,12 +29,22 @@ export default class FeatRules {
     return name.startsWith(prefix) ? name.slice(prefix.length) : undefined;
   }
 
+  /** A feat's families (FEAT_FAMILY), by its id: none for one of no family. */
+  private familiesOf(featId: string): readonly string[] {
+    const families = Dnd52View.of(this.rulesetData).featsById.get(featId)?.fields[FEAT_FAMILY];
+    return Array.isArray(families) ? families : [];
+  }
+
   /**
    * Whether a character can take the feat (`featId`) with those it holds already (`heldIds`): one that stacks each
-   * time, one that doesn't when it holds it not.
+   * time, one that doesn't when it holds it not, and a version of a feat taken once (`FEATS_TAKEN_ONCE`) when it holds
+   * no other version (Grappler (Dexterity) refused beside Grappler (Strength)), whatever the versions are named.
    */
   canTake(featId: string, heldIds: ReadonlySet<string>): boolean {
-    return !heldIds.has(featId) || this.isStackable(featId);
+    if (heldIds.has(featId)) return this.isStackable(featId);
+    const once: readonly string[] = this.familiesOf(featId).filter((family) => isOneOf(family, FEATS_TAKEN_ONCE));
+    if (once.length === 0) return true;
+    return ![...heldIds].some((heldId) => this.familiesOf(heldId).some((family) => once.includes(family)));
   }
 
   /** Whether the ruleset's feat (`featId`) stacks: a character may have it more than once. */

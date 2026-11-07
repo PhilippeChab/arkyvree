@@ -284,7 +284,16 @@ export default class SelectionChecks {
     const [feat] = feats;
     if (feat) {
       const name = this.dnd52.featsById.get(feat.entityId!)?.name ?? feat.entityId;
-      throw new RulesError("invalid", `Non-stackable feat "${name}" is already on this character`);
+      // Itself held, or another version of a feat taken once (Grappler (Strength) beside Grappler (Dexterity))
+      const held = holding({ feats: {}, spells: picks.spells })
+        .getHeldFeats()
+        .some(({ entity }) => entity.id === feat.entityId);
+      throw new RulesError(
+        "invalid",
+        held
+          ? `Non-stackable feat "${name}" is already on this character`
+          : `Feat "${name}" is taken once, and the character has another version of it`,
+      );
     }
     const [spell] = spells;
     if (!spell) return;

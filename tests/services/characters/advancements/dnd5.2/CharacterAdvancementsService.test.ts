@@ -105,6 +105,23 @@ async function createWizard(scores: Record<string, number> = WIZARD_SCORES) {
   return { character, first };
 }
 
+/** A Fighter of these levels (`levels`), forced past its picks, on `rulesetId` (the seeded rules, unless given). */
+async function fighter(levels: number, picks: Record<number, Record<string, string[]>> = {}, rulesetId?: string) {
+  const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES, rulesetId });
+  for (let level = 1; level <= levels; level++)
+    await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 1, feats: picks[level] }, true);
+  return character;
+}
+
+/** The Grappler versions a Fighter's next level offers in its Ability Score Improvement, each eligible or not. */
+async function grapplersOffered(characterId: string, level: number) {
+  const ctx = await getDnd52SeedCtx();
+  const plan = levelUpPlan([{ classId: ctx.classMap["Fighter"], level, hp: 1 }]);
+  const at = { pool: ctx.aptMap["Ability Score Improvement"] };
+  const { items } = await getStepOptions(session, characterId, "feats", plan, at, { search: "Grappler" });
+  return items.map(({ eligible, name }) => ({ eligible, name }));
+}
+
 /** The answer to a plan of one level of `klass` for `characterId`, its `level`, with `plan`'s picks. */
 async function levelAnswer(characterId: string, klass: string, level: number, plan: Omit<LevelPlan, "hp"> = {}) {
   const ctx = await getDnd52SeedCtx();
@@ -487,25 +504,29 @@ describe("A Fighting Style feat's prerequisite", () => {
 });
 
 describe("A feat taken once", () => {
-  test("isn't offered in another version: Grappler (Dexterity) to a character with Grappler (Strength)", async () => {
+  test("is taken in one version: Grappler (Dexterity) left out, and refused, beside Grappler (Strength)", async () => {
     const ctx = await getDnd52SeedCtx();
-    const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES });
-    // A Fighter 5 who took Grappler (Strength) with its 4th level's Ability Score Improvement
-    for (let level = 1; level <= 5; level++) {
-      const feats: Record<string, string[]> =
-        level === 4 ? { "Ability Score Improvement": ["Grappler (Strength)"] } : {};
-      await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 1, feats }, true);
-    }
-    // Its 6th level's: the other version is there, refused for the one it has, which is left out
-    const plan = levelUpPlan([{ classId: ctx.classMap["Fighter"], level: 6, hp: 1 }]);
-    const at = { pool: ctx.aptMap["Ability Score Improvement"] };
-    const { items } = await getStepOptions(session, character.id, "feats", plan, at, { search: "Grappler" });
-    expect(items.map(({ eligible, name }) => ({ eligible, name }))).toEqual([
-      { eligible: false, name: "Grappler (Dexterity)" },
-    ]);
-    const [dexterity] = items;
-    expect("requirementTree" in dexterity && dexterity.requirementTree).toContain(
-      "feats.grapplerstrength.possessed == false  [UNMET]",
+    const character = await fighter(5, { 4: { "Ability Score Improvement": ["Grappler (Strength)"] } });
+    // Its 6th level's picker offers neither version: one it has, the other a version of a feat it takes once
+    expect(await grapplersOffered(character.id, 6)).toEqual([]);
+    // Its save refuses the other version, forced or not
+    const plan = levelUpPlan(
+      [{ classId: ctx.classMap["Fighter"], level: 6, hp: 1 }],
+      picksOf(ctx, { feats: { "Ability Score Improvement": ["Grappler (Dexterity)"] } }),
     );
+    expect(CharacterAdvancementsService.addAdvancements(session, character.id, plan, true)).rejects.toMatchObject({
+      message: 'Feat "Grappler (Dexterity)" is taken once, and the character has another version of it',
+    });
+  });
+
+  test("doesn't name its versions: a fork that deletes one still offers the other", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+      name: `Fork ${uniqueId()}`,
+      private: true,
+    });
+    await EntitiesService.deleteEntity(session, fork.id, "feats", ctx.featMap["Grappler (Dexterity)"]);
+    const character = await fighter(3, {}, fork.id);
+    expect(await grapplersOffered(character.id, 4)).toEqual([{ eligible: true, name: "Grappler (Strength)" }]);
   });
 });
