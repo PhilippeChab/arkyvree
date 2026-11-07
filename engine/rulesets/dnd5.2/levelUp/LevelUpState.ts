@@ -180,12 +180,14 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
         return spell ? [{ description: spell.description, free: grant.free, id: spell.id, name: spell.name }] : [];
       }),
     );
+    // Each spell once, however many lists a modifier makes it known on: the step names a spell, not its list
+    const unlisted = [...new Map(given.map((spell) => [spell.id, spell])).values()];
     const listed = new Set(granted.map(({ id }) => id));
     return {
       spellsToSelect: pools.spellsToSelect,
       autoGrantedSpells: [
         ...granted,
-        ...given.filter(({ id }) => !listed.has(id)).map((spell) => ({ ...spell, free: true })),
+        ...unlisted.filter(({ id }) => !listed.has(id)).map((spell) => ({ ...spell, free: true })),
       ],
       aptitudePools: pools.spellPools,
     };

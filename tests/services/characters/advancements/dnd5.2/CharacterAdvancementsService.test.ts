@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { AdvancementPlanAnswer } from "@/engine/core/module/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterAdvancements, Rulesets } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterAdvancementsService } from "@/server/services/characters/advancements/index.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
@@ -208,6 +208,32 @@ describe("A D&D 5th Edition character's levels", () => {
       const answer = await levelAnswer(character.id, "Fighter", 7);
       expect(grantedNamesOf(answer)).toEqual(["Additional Fighting Style (Champion)"]);
       expect(poolOf(answer, "feats", "Fighting Style")).toMatchObject({ allowed: 2, spent: 1, available: 1 });
+    });
+
+    test("names a spell a level's modifier makes known on two lists once", async () => {
+      const { character } = await createWizard();
+      // The character's own modifiers, from its second level: Dispel Magic known on the Wizard's list and the Cleric's
+      for (const list of ["wizard", "cleric"]) {
+        const [modifier] = await Modifiers.create(db, {
+          sourceId: character.id,
+          sourceType: "characters",
+          target: `spells.dispelmagic.${list}.known`,
+          value: "true",
+          valueType: "boolean",
+          operator: "set",
+        });
+        await Requirements.create(db, {
+          entityId: modifier.id,
+          entityType: "modifiers",
+          level: "1",
+          target: "classes.wizard.level",
+          operator: "greater_than_or_equal",
+          value: "2",
+          valueType: "number",
+        });
+      }
+      const granted = stepAnswerOf(await levelAnswer(character.id, "Wizard", 2), "spells", "pick").granted;
+      expect(granted.filter(({ name }) => name === "Dispel Magic")).toMatchObject([{ free: true }]);
     });
 
     test("names what an edited level gave when it was taken, not what the levels after it give", async () => {
