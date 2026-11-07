@@ -189,6 +189,24 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(frail.components.combat.getCombat().weaponsets["0"].ac).toMatchObject({ base: 10, dexterity: 2, total: 12 });
   });
 
+  test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
+    const attacksOf = async (classes: [string, number][]) =>
+      (await leveled(classes)).components.combat.getCombat().attacks;
+    // A Fighter 11's Two Extra Attacks make 3, a Paladin 5's Extra Attack 2: 3, the Paladin's levels first or last
+    expect(
+      await attacksOf([
+        ["Fighter", 11],
+        ["Paladin", 5],
+      ]),
+    ).toBe(3);
+    expect(
+      await attacksOf([
+        ["Paladin", 5],
+        ["Fighter", 11],
+      ]),
+    ).toBe(3);
+  });
+
   describe("its spell slots, as the SRD 5.2.1's Multiclassing rules give them", () => {
     test("of one casting class: its own, its levels', a fighter's levels counting none", async () => {
       const built = await leveled([

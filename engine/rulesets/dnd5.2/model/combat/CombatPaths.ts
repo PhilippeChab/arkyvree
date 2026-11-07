@@ -119,7 +119,7 @@ const COMBAT_PATHS = [
   },
   {
     path: "attacks",
-    description: "Attacks per Attack action (Extra Attack)",
+    description: "Attacks per Attack action: the most a feature gives (Extra Attack)",
     type: "number" as const,
   },
   {

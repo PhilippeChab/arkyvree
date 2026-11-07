@@ -55,9 +55,9 @@ holds names the code that holds it.
   Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
   (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
-  3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2). The last of them a character gains
-  wins, so a Fighter 11 who then takes a level of another Extra Attack class reads 2, which the table corrects (a
-  template on its own target, `max([combat.attacks], 2)`, is one the engine skips).
+  3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2), and the sheet keeps the most any
+  feature sets, whatever the order the classes were taken in (a Fighter 11 / Paladin 5 makes 3, the Paladin's level
+  taken first or last). A modifier raises the count, never lowers it (`CombatState`).
 - **Speed** is the species', 10 feet lower in armor whose Strength the wearer lacks, and 5 feet at most past the carrying
   capacity, Strength × 15 lb. for a Small or Medium creature (`CarryingComponent`). The 2024 rules have no load
   categories.

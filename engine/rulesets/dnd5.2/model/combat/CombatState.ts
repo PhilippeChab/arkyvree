@@ -45,7 +45,10 @@ export interface CombatData {
   armors: ArmorsData;
   /** Training with each armor category and with shields, each a feat's to set. */
   armortraining: { heavy: boolean; light: boolean; medium: boolean; shields: boolean };
-  /** The attacks it makes when it takes the Attack action: 1, more with Extra Attack. */
+  /**
+   * The attacks it makes when it takes the Attack action: 1, or the most a feature sets (Extra Attack's 2, the
+   * Fighter's Two Extra Attacks' 3), whatever the order its features apply in. A modifier raises it, never lowers it.
+   */
   attacks: number;
   carrying: CarryingData;
   /** How many rolls score a critical hit, the 20 and those under it: 1 = 20, 2 = 19–20 (a Champion's). */
@@ -179,12 +182,19 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
     shields: ShieldsData,
     carrying: CarryingData,
   ): CombatData {
+    // Two classes' Extra Attacks don't stack: the attacks are the most any feature gives (`attacks`)
+    let attacks = 1;
     return {
       ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0 },
       armor: { category: "none", strengthmet: true, trained: true },
       armortraining: { light: false, medium: false, heavy: false, shields: false },
       armors,
-      attacks: 1,
+      get attacks() {
+        return attacks;
+      },
+      set attacks(value: number) {
+        attacks = Math.max(attacks, value);
+      },
       carrying,
       critical: { range: 1 },
       hp: { base: 0, constitution: 0, misc: 0, total: 0 },

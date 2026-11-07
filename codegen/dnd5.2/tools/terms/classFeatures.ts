@@ -98,7 +98,7 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   { feature: "Deft Explorer", modifiers: [bonus("languages.extrapicks", 2)] },
   { feature: "Druidic", modifiers: [grantLanguage("Druidic")] },
   // Each Extra Attack sets the attacks it gives, which two classes' don't add up to: the fighter's later ones set more,
-  // and the last a character gains wins (its feats apply in its levels' order)
+  // and the sheet keeps the most any sets, whatever the order its levels were taken in
   { feature: "Extra Attack", modifiers: [setNum("combat.attacks", 2)] },
   { feature: "Fast Movement", modifiers: [{ ...bonus("combat.speed.misc", 10), requirements: [NOT_HEAVY] }] },
   { feature: "Improved Critical", modifiers: [bonus("combat.critical.range", 1)] },
