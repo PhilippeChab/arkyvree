@@ -6,7 +6,7 @@ import { CharacterAdvancements, Entities, Modifiers, Requirements, Rulesets } fr
 import { CharacterAdvancementsService } from "@/server/services/characters/advancements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { getPlanAnswer, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
+import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd5.2/levelPlans.ts";
 import { addLevel, findPicks, type LevelPlan, picksOf } from "@/tests/support/dnd5.2/levels.ts";
@@ -483,5 +483,29 @@ describe("A Fighting Style feat's prerequisite", () => {
     const { feats } = (await buildCharacter(character.id)).components;
     expect(feats.getFeat("Combat Style (Fighter)")?.possessed).toBe(true);
     expect(feats.getFeat("Defense")?.possessed).toBe(true);
+  });
+});
+
+describe("A feat taken once", () => {
+  test("isn't offered in another version: Grappler (Dexterity) to a character with Grappler (Strength)", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES });
+    // A Fighter 5 who took Grappler (Strength) with its 4th level's Ability Score Improvement
+    for (let level = 1; level <= 5; level++) {
+      const feats: Record<string, string[]> =
+        level === 4 ? { "Ability Score Improvement": ["Grappler (Strength)"] } : {};
+      await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 1, feats }, true);
+    }
+    // Its 6th level's: the other version is there, refused for the one it has, which is left out
+    const plan = levelUpPlan([{ classId: ctx.classMap["Fighter"], level: 6, hp: 1 }]);
+    const at = { pool: ctx.aptMap["Ability Score Improvement"] };
+    const { items } = await getStepOptions(session, character.id, "feats", plan, at, { search: "Grappler" });
+    expect(items.map(({ eligible, name }) => ({ eligible, name }))).toEqual([
+      { eligible: false, name: "Grappler (Dexterity)" },
+    ]);
+    const [dexterity] = items;
+    expect("requirementTree" in dexterity && dexterity.requirementTree).toContain(
+      "feats.grapplerstrength.possessed == false  [UNMET]",
+    );
   });
 });

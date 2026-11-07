@@ -119,6 +119,10 @@ holds names the code that holds it.
   subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
 - **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
   character.
+- **A feat is taken once unless the SRD calls it Repeatable,** whichever version: each version of Grappler, or of an
+  Epic Boon that raises an ability of your choice, requires the others unheld (`feats.grapplerdexterity.possessed`
+  false), so a character with Grappler (Strength) is refused Grappler (Dexterity). The Ability Score Improvement,
+  Magic Initiate (on another spell list) and Skilled repeat.
 - **A feat that requires a class feature requires its family.** A Fighting Style feat's "Fighting Style Feature" and
   Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
   family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class

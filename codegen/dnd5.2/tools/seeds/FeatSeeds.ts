@@ -11,9 +11,14 @@ import {
 import type { FeatEntry, FeatReference } from "@/codegen/dnd5.2/tools/types/feats.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
-import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type {
+  ModifierSeed,
+  RequirementCondition,
+  RequirementEntry,
+} from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import { feat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -29,6 +34,9 @@ type FeatFamily = (typeof FEAT_FAMILIES)[number];
 
 /** The feat that's the Ability Score Improvement, whose variants are its ways to spread its increase. */
 const ASI = "Ability Score Improvement";
+
+/** The SRD's word for a feat taken more than once ("Repeatable. You can take this feat more than once"). */
+const REPEATABLE = /\bRepeatable\./;
 
 /** The path of an ability's increases (`abilities.<ability>.misc`). */
 function abilityMisc(ability: string): string {
@@ -57,6 +65,11 @@ function asiVariants(base: FeatSeed): FeatSeed[] {
 /** The family of a feat taken with a choice, a feat per option, by its name: none for a feat of no family. */
 function familyOf(name: string): FeatFamily | undefined {
   return FEAT_FAMILIES.find((family) => family === name);
+}
+
+/** A feat (`name`) the character doesn't have: another version of a feat taken once. */
+function unheld(name: string): RequirementCondition {
+  return { target: feat(name), operator: "equal", value: "false", valueType: "boolean" };
 }
 
 /**
@@ -139,9 +152,15 @@ export class FeatSeeds {
     if (entry.name === ASI) return asiVariants(base).map((variant) => ({ ...variant, fields }));
     const increase = readAbilityIncrease(entry.description);
     if (increase) {
-      return increase.abilities.map((ability) => ({
+      const names = increase.abilities.map((ability) => `${entry.name} (${ability})`);
+      // A feat that isn't Repeatable is taken once, whichever ability it raises: each version requires the others unheld
+      const once = !REPEATABLE.test(entry.description) && names.length > 1;
+      return increase.abilities.map((ability, index) => ({
         ...base,
-        name: `${entry.name} (${ability})`,
+        name: names[index],
+        ...(once && {
+          requirements: [...(base.requirements ?? []), ...names.filter((name) => name !== names[index]).map(unheld)],
+        }),
         modifiers: [bonus(abilityMisc(ability), increase.amount), ...own],
         fields,
       }));
