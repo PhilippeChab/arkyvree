@@ -77,7 +77,9 @@ holds names the code that holds it.
   bard's, a cleric's, a druid's, a sorcerer's and a wizard's; half of a paladin's and a ranger's, together, rounded up
   once (the SRD's "Half your levels (round up) in the Paladin and Ranger classes", read as their sum: a Paladin 1 /
   Ranger 1 counts 1, not 2); none of a class without the Spellcasting feature (`SpellcastingState.countSlots`,
-  `countCasterLevels`). A Ranger 4 / Sorcerer 3 counts 5, the SRD's example. A class's own table is the Multiclass
+  `countCasterLevels`). A Ranger 4 / Sorcerer 3 counts 5, the SRD's example. A class casts when its levels give it
+  slots, whatever its Multiclass Spell Slots says (`castingClasses`): a homebrew caster left at the field's default,
+  "Its levels don't count", has its own slots, alone or beside the shared table's. A class's own table is the Multiclass
   Spellcaster table's at the levels it counts (a test holds it), so a class alone and its count never disagree. Slots a
   feat or an item adds to a class's list count for a character casting from that class alone: the shared table
   replaces them, as the SRD gives no other slots to a multiclass.

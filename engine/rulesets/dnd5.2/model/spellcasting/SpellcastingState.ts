@@ -33,8 +33,8 @@ export interface SpellTagLists {
 }
 
 /**
- * A character's spellcasting's state, which its concerns read: its slots, counted when read off its classes' levels
- * and caster types, and the spells its lists know.
+ * A character's spellcasting's state, which its concerns read: its slots, counted when read off its classes' levels,
+ * and the spells its lists know.
  */
 export default abstract class SpellcastingState extends CharacterComponent<LoadedCharacterData> {
   constructor(
@@ -82,41 +82,52 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   protected spellTags: Record<string, string[]> = {};
 
   /**
-   * The character's classes with the Spellcasting feature, each by its name with its level and how its levels count
-   * toward a multiclass's slots: those whose levels all count or half do (`MULTICLASS_SLOTS`), as their fields say.
+   * The character's classes that cast spells, each by its name with its level, its own slots and how its levels count
+   * toward a multiclass's slots (its field's, `MULTICLASS_SLOTS`): those whose spell lists hold a slot, their levels' or
+   * a modifier's, whatever their field says. A homebrew caster with the field's default casts as the SRD's do.
    */
   private castingClasses() {
     return Object.entries(this.classes.getCharacterClasses()).flatMap(([className, { klass, level }]) => {
-      const counted = this.multiclassSlotsByClassId.get(klass.id);
-      return counted === "All its levels" || counted === "Half its levels" ? [{ className, counted, level }] : [];
+      const slots = this.ownSlotsOf(className);
+      if (!Object.values(slots).some((count) => count > 0)) return [];
+      return [{ className, counted: this.multiclassSlotsByClassId.get(klass.id), level, slots }];
     });
   }
 
   /**
-   * The levels the character's classes count toward the Multiclass Spellcaster table, as the Multiclassing rules add
-   * them: all the levels of each class whose levels all count, and half the levels of those whose half do, together,
+   * The levels the character's casting classes count toward the Multiclass Spellcaster table, as the Multiclassing rules
+   * add them: all the levels of each class whose levels all count, and half the levels of those whose half do, together,
    * rounded up.
    */
-  private countCasterLevels(): number {
+  private countCasterLevels(casting = this.castingClasses()): number {
     let all = 0;
     let half = 0;
-    for (const { counted, level } of this.castingClasses()) {
+    for (const { counted, level } of casting) {
       if (counted === "All its levels") all += level;
-      else half += level;
+      else if (counted === "Half its levels") half += level;
     }
     return all + Math.ceil(half / 2);
   }
 
   /**
-   * The character's spell slots by spell level, from the 1st: its casting class's own when it casts from one class (the
-   * SRD's "follow the rules for that class"), the Multiclass Spellcaster table's at the levels its classes count once it
-   * casts from more than one, none when it casts from none.
+   * The character's spell slots by spell level, from the 1st. Casting from one class whose levels count (the SRD's
+   * "follow the rules for that class"), that class's own; from several, the Multiclass Spellcaster table's at the levels
+   * they count. A casting class whose levels don't count keeps its own slots beside them.
    */
   private countSlots(): Record<string, number> {
     const casting = this.castingClasses();
-    if (casting.length === 1) return this.ownSlotsOf(casting[0].className);
-    const row = MULTICLASS_SPELL_SLOTS[Math.min(this.countCasterLevels(), MULTICLASS_SPELL_SLOTS.length) - 1];
-    return Object.fromEntries(SPELL_LEVELS.slice(1).map((level) => [String(level), row?.[level - 1] ?? 0]));
+    const sharing = casting.filter(({ counted }) => counted === "All its levels" || counted === "Half its levels");
+    const shared = sharing.length > 1;
+    const slots = Object.fromEntries(SPELL_LEVELS.slice(1).map((level) => [String(level), 0]));
+    if (shared) {
+      const row = MULTICLASS_SPELL_SLOTS[Math.min(this.countCasterLevels(sharing), MULTICLASS_SPELL_SLOTS.length) - 1];
+      for (const level of SPELL_LEVELS.slice(1)) slots[String(level)] += row?.[level - 1] ?? 0;
+    }
+    for (const klass of casting) {
+      if (shared && sharing.includes(klass)) continue;
+      for (const [level, count] of Object.entries(klass.slots)) slots[level] += count;
+    }
+    return slots;
   }
 
   /**

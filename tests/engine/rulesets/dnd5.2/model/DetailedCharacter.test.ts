@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
 import { addLevel } from "@/tests/support/dnd5.2/levels.ts";
-import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { getDnd52SeedCtx } from "@/tests/support/dnd5.2/seed.ts";
+import { findSeededCharacter, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
 import { MULTICLASS_ABILITY_MINIMUM } from "@/vocabulary/dnd5.2/classes.ts";
+import { CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /** Each class's hit die, its first level's hit points as a character's first. */
 const HIT_DICE: Record<string, number> = { Fighter: 10, Paladin: 10, Ranger: 10, Sorcerer: 6, Warlock: 8, Wizard: 6 };
@@ -28,13 +32,33 @@ function slotsOf(built: Awaited<ReturnType<typeof seeded>>) {
 }
 
 /**
+ * A private fork of the seeded core rules whose classes of these names (`classNames`) count none of their levels
+ * toward a multiclass's slots, the field's default, as a homebrew caster's is until its creator sets it.
+ */
+async function forkCountingNone(classNames: string[]) {
+  const ctx = await getDnd52SeedCtx();
+  const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, { name: `Fork ${uniqueId()}`, private: true });
+  for (const className of classNames) {
+    const klass = await EntitiesService.getEntity(session, fork.id, "classes", ctx.classMap[className]);
+    await EntitiesService.updateEntity(session, fork.id, "classes", klass.id, {
+      name: klass.name,
+      description: klass.description,
+      fields: { ...klass.fields, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
+      // Its links, each one entity: its spellcasting ability, its starting and multiclass proficiencies
+      links: Object.fromEntries(klass.links.map(({ role, toId }) => [role, toId])),
+    });
+  }
+  return fork.id;
+}
+
+/**
  * A new character of these classes' levels (`classes`, each a class and how many of its levels, in order), its scores
  * 13 each, every class's multiclass prerequisites met (a class's first level's modifiers wait on them), forced past its
- * picks, built as the engine builds it.
+ * picks, on `rulesetId` (the seeded core rules, unless given), built as the engine builds it.
  */
-async function leveled(classes: [string, number][]) {
+async function leveled(classes: [string, number][], rulesetId?: string) {
   const abilities = Object.fromEntries(ABILITY_NAMES.map((ability) => [ability, MULTICLASS_ABILITY_MINIMUM]));
-  const character = await createDnd52Character(session, { abilities });
+  const character = await createDnd52Character(session, { abilities, rulesetId });
   let first = true;
   for (const [klass, count] of classes) {
     for (let level = 1; level <= count; level++) {
@@ -168,6 +192,34 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
       ]);
       expect(warlockWizard.components.spellcasting.getSpellcasting().pact).toEqual({ level: 2, slots: 2 });
       expect(slotsOf(warlockWizard)).toEqual(["1: 3"]);
+    });
+
+    test("of a class whose levels count none: its own, alone or beside a multiclass's shared slots", async () => {
+      // A fork's Wizard and Sorcerer as a homebrew caster stands, its Multiclass Spell Slots left at its default
+      const rulesetId = await forkCountingNone(["Wizard", "Sorcerer"]);
+      expect(slotsOf(await leveled([["Wizard", 3]], rulesetId))).toEqual(["1: 4", "2: 2"]);
+      // Beside a Cleric 3 / Bard 2, which share the table's 5th row: the wizard's 4 and 2 on top
+      const beside = await leveled(
+        [
+          ["Wizard", 3],
+          ["Cleric", 3],
+          ["Bard", 2],
+        ],
+        rulesetId,
+      );
+      expect(slotsOf(beside)).toEqual(["1: 8", "2: 5", "3: 2"]);
+      // Two that count none keep their own each: the wizard's 4 and 2, the sorcerer's 3
+      expect(
+        slotsOf(
+          await leveled(
+            [
+              ["Wizard", 3],
+              ["Sorcerer", 2],
+            ],
+            rulesetId,
+          ),
+        ),
+      ).toEqual(["1: 7", "2: 2"]);
     });
   });
 });
