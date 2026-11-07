@@ -47,6 +47,7 @@ What the files give was checked against the SRD 5.2.1's text: its 339 spells (27
 each class's features by level, its skill and tool choices and its table's prepared spells, a subclass's features at
 its class's levels, and the Weapons and Armor tables, their costs and weights included. Where the database differs from
 the SRD, its reference's overrides say what the SRD gives:
+
 - items: a Sling's damage (bludgeoning), a Trident's (1d8, 1d10 in two hands; the database has the 2014 rules'), Hide
   Armor's category (medium), Half Plate Armor's name, and 27 costs and weights (a Longbow's 50 GP, a Pike's 18 lb.);
 - species: a Human's size, Medium or Small, as its player chooses;
