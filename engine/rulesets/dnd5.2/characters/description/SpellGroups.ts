@@ -231,9 +231,9 @@ export default class SpellGroups {
 
   /**
    * The character's spell slots, as the summary at the start of its sheets' spells prints them: a column per spell
-   * level it has slots at, a row for its Spellcasting's (every class's spells cast with them, as the SRD 5.2.1's
-   * Multiclass Spellcaster table gives them by its levels) and one for its Pact Magic's (all of one level). None for a
-   * character with no slot.
+   * level it has slots at, a row for its Spellcasting's (every class's spells cast with them: its one casting class's
+   * own, or the SRD 5.2.1's Multiclass Spellcaster table's once it casts from several) and one for its Pact Magic's (all
+   * of one level). None for a character with no slot.
    */
   static describeSlots(character: SpellSource): SpellSlots {
     const { pact, slots } = character.getSpellcasting();

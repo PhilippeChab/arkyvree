@@ -10,12 +10,13 @@ const POSITION_ALIASES = ["level", "lvl"];
 
 /**
  * How a class progresses in the 2024 rules: its features and feat pools under "Class Features" (its subclass's pick, its
- * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), and its cantrips and prepared
- * spells, a column a spell level: what it prepares by then, a level's new spells counted at the highest level it casts
- * then, which a lower level's spells fill too. Its spell slots are no column of its own: the Multiclass Spellcaster
- * table's, by the levels its caster type counts. A class's spell list is the aptitude named for it ("Wizard Spells"),
- * which its Spell List tab's first add makes where the ruleset has none. Its levels follow no track: the Proficiency
- * Bonus is the character's, by its level, and its hit points its hit die's.
+ * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), its spell slots, a column a spell
+ * level: what its levels give on its list by then, as its table in the SRD gives them, which a character casting from
+ * this class alone has; and its cantrips and prepared spells, a column a spell level: what it prepares by then, a
+ * level's new spells counted at the highest level it casts then, which a lower level's spells fill too. A class's
+ * spell list is the aptitude named for it ("Wizard Spells"), which its Spell List tab's first add makes where the
+ * ruleset has none. Its levels follow no track: the Proficiency Bonus is the character's, by its level, and its hit
+ * points its hit die's.
  */
 export const PROGRESSION: ProgressionDeclaration = {
   counts: {
@@ -59,13 +60,28 @@ export const PROGRESSION: ProgressionDeclaration = {
   },
   grantsLabel: "Class Features",
   lastPosition: MAX_CLASS_LEVEL,
-  // Its Levels and Feat Pools tabs are its Progression's; its prepared spells', the Spells tab
+  // Its Levels and Feat Pools tabs are its Progression's; its spell slots' and its prepared spells', the Spells tab
   tabAliases: {
     "feat-pools": "progression",
     levels: "progression",
-    "spells-known": "spells",
+    "spells-known": "spells?table=known",
+    "spells-per-day": "spells",
   },
   tables: [
+    {
+      columns: SPELL_LEVELS.slice(1).map((level) => ({
+        aliases: ProgressionLabels.listSpellLevelAliases(level),
+        key: String(level),
+        label: SPELL_LEVEL_LABELS[level],
+      })),
+      help: "How many spell slots of each level the class has by then, as its table in the SRD gives them: a character casting from this class alone has them, and one casting from several has the Multiclass Spellcaster table's instead.",
+      key: "perDay",
+      label: "Spell Slots",
+      max: RULESET_LIMITS.tableCount,
+      positionAliases: POSITION_ALIASES,
+      table: "spells",
+      totals: "spellsPerDay",
+    },
     {
       all: {
         hint: "All Prepared From an Earlier Level",

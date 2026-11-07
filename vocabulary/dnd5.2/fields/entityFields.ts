@@ -20,7 +20,7 @@
  */
 
 import { ARMOR_CATEGORIES, ARMOR_NAMES } from "@/vocabulary/dnd5.2/armor.ts";
-import { CASTER_TYPES, DEFAULT_HIT_DIE, HIT_DIE_LABELS, HIT_DIE_VALUES } from "@/vocabulary/dnd5.2/classes.ts";
+import { DEFAULT_HIT_DIE, HIT_DIE_LABELS, HIT_DIE_VALUES, MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/classes.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd5.2/equipment.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
 import { ITEM_RARITIES, ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd5.2/itemTemplates.ts";
@@ -42,7 +42,7 @@ import {
   ARMOR_STRENGTH,
   ARMOR_TYPE,
 } from "./armor.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "./class.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "./class.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "./feat.ts";
 import {
   ITEM_ATTUNEMENT,
@@ -103,9 +103,10 @@ const BACKGROUND_FIELDS = {
 
 /**
  * A class's fields: its hit die (one of the dice, beside its name; a new class's `DEFAULT_HIT_DIE` when its form gives
- * none), its caster type and the ability its spells are cast with, and the feats its starting proficiencies are: the
- * one a character gains when the class is its first (its saving throws, armor, weapons and skill picks), and the one
- * it gains when it multiclasses into it, which the SRD's Multiclassing rules make smaller.
+ * none), how its levels count toward a multiclass's spell slots (its own slots are its levels' modifiers'), the
+ * ability its spells are cast with, and the feats its starting proficiencies are: the one a character gains when the
+ * class is its first (its saving throws, armor, weapons and skill picks), and the one it gains when it multiclasses
+ * into it, which the SRD's Multiclassing rules make smaller.
  */
 const CLASS_FIELDS = {
   hitDie: {
@@ -120,14 +121,15 @@ const CLASS_FIELDS = {
     values: HIT_DIE_VALUES,
     write: "always",
   },
-  casterType: {
-    default: "None",
-    description: "How its levels count toward a multiclassed character's spell slots",
+  multiclassSlots: {
+    default: "Its levels don't count",
+    description:
+      "How its levels count toward a character's spell slots once it casts from more than one class (the Multiclass Spellcaster table's level): its own slots are its levels' alone",
     kind: "choice",
-    label: "Caster Type",
-    field: CLASS_CASTER_TYPE,
+    label: "Multiclass Spell Slots",
+    field: CLASS_MULTICLASS_SLOTS,
     merge: "fallback",
-    values: CASTER_TYPES,
+    values: MULTICLASS_SLOTS,
     write: "always",
   },
   spellcastingAbility: {

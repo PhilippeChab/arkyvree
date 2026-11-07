@@ -5,7 +5,7 @@ import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { createKeyedApi, expectOk, guestApi } from "@/tests/support/api.ts";
 import { getDnd52SeedCtx } from "@/tests/support/dnd5.2/seed.ts";
 import { DND52_BASE_RULES } from "@/vocabulary/dnd5.2/baseRules.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD, SPECIES_SIZE, SPECIES_SPEED } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS, SPECIES_SIZE, SPECIES_SPEED } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /** A new character's form's items, as its sections lay them out. */
 function formItems(form: { sections: { kind: string; lines?: unknown[][] }[] }) {
@@ -65,7 +65,7 @@ describe("D&D 5th Edition's rules", () => {
     const places = (type: string) => (fields[type as keyof typeof fields] ?? []).map(placeOf);
     expect(places("classes")).toEqual([
       CLASS_HD,
-      CLASS_CASTER_TYPE,
+      CLASS_MULTICLASS_SLOTS,
       "spellcastingAbility",
       "startingProficiencies",
       "multiclassProficiencies",
@@ -106,7 +106,7 @@ describe("D&D 5th Edition's rules", () => {
     expect(rules.kinds.map(({ type }) => type)).not.toContain("races");
     expect(rules.characterKinds.map(({ value }) => value)).toEqual(["pc"]);
     expect((rules.fields.classes ?? []).map((field) => ("field" in field ? field.field : undefined))).toContain(
-      CLASS_CASTER_TYPE,
+      CLASS_MULTICLASS_SLOTS,
     );
     expect(rules.importers).toEqual([]);
   });

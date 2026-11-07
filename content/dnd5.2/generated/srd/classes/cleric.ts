@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const CLERIC: ClassSeed = {
   name: "Cleric",
   description: "A class of a d8 Hit Point Die per level, whose primary ability is Wisdom.",
-  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Full" },
+  fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "All its levels" },
   links: {
     multiclassProficiencies: "Cleric Multiclass Proficiencies",
     spellcastingAbility: "Wisdom",
@@ -33,9 +33,22 @@ export const CLERIC: ClassSeed = {
   ],
   modifiers: [
     { level: 1, target: "aptitudes.divineorder.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 1, target: "aptitudes.clericspells.1.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 2, target: "aptitudes.clericspells.1.uses", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.clericsubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.clericspells.1.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.clericspells.2.uses", operator: "add", value: "2", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 4, target: "aptitudes.clericspells.2.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "aptitudes.clericspells.3.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 6, target: "aptitudes.clericspells.3.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 7, target: "aptitudes.clericspells.4.uses", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 8, target: "aptitudes.clericspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.clericspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.clericspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 10, target: "aptitudes.clericspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 11, target: "aptitudes.clericspells.6.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 12,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -43,6 +56,8 @@ export const CLERIC: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 13, target: "aptitudes.clericspells.7.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 15, target: "aptitudes.clericspells.8.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 16,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -50,7 +65,11 @@ export const CLERIC: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 17, target: "aptitudes.clericspells.9.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 18, target: "aptitudes.clericspells.5.uses", operator: "add", value: "1", valueType: "number" },
     { level: 19, target: "aptitudes.epicboon.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 19, target: "aptitudes.clericspells.6.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 20, target: "aptitudes.clericspells.7.uses", operator: "add", value: "1", valueType: "number" },
   ],
   requirements: [gte("abilities.wisdom.total", 13)],
   spells: {

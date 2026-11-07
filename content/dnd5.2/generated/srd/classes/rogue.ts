@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const ROGUE: ClassSeed = {
   name: "Rogue",
   description: "A class of a d8 Hit Point Die per level, whose primary ability is Dexterity.",
-  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "None" },
+  fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Rogue Multiclass Proficiencies",
     startingProficiencies: "Rogue Starting Proficiencies",

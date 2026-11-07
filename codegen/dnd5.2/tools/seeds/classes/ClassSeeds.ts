@@ -3,7 +3,7 @@ import type { ClassReference } from "@/codegen/dnd5.2/tools/types/classes.ts";
 import { classFeatures } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import { ClassEntries } from "./ClassEntries.ts";
 import { ClassFeatureFeats } from "./ClassFeatureFeats.ts";
@@ -61,7 +61,7 @@ export class ClassSeeds {
   }
 
   /**
-   * Its class's seed: its name and description, hit die and caster type, its links (its spellcasting ability, its
+   * Its class's seed: its name and description, hit die and how its levels count toward a multiclass's spell slots, its links (its spellcasting ability, its
    * proficiencies' feats), its skills, its features by level through its features' pool, its levels' modifiers, its
    * multiclass's requirements and its spells.
    */
@@ -74,7 +74,7 @@ export class ClassSeeds {
     return {
       name,
       description: this.description(),
-      fields: { [CLASS_HD]: hit_die, [CLASS_CASTER_TYPE]: this.progression.casterType() },
+      fields: { [CLASS_HD]: hit_die, [CLASS_MULTICLASS_SLOTS]: this.progression.multiclassSlots() },
       links: {
         ...(spellcasting ? { spellcastingAbility: readAbility(spellcasting.spellcasting_ability.name) } : {}),
         startingProficiencies: ClassProficiencies.startingName(name),

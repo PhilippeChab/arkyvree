@@ -1,7 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildCharacter } from "@/tests/support/dnd5.2/characters.ts";
+import { buildCharacter, createDnd52Character } from "@/tests/support/dnd5.2/characters.ts";
+import { addLevel } from "@/tests/support/dnd5.2/levels.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
+import { MULTICLASS_ABILITY_MINIMUM } from "@/vocabulary/dnd5.2/classes.ts";
+
+/** Each class's hit die, its first level's hit points as a character's first. */
+const HIT_DICE: Record<string, number> = { Fighter: 10, Paladin: 10, Ranger: 10, Sorcerer: 6, Warlock: 8, Wizard: 6 };
+
+const session = makeSession();
 
 /** Each saving throw's total, by its ability's slug. */
 function savesOf(built: Awaited<ReturnType<typeof seeded>>) {
@@ -16,6 +25,24 @@ function slotsOf(built: Awaited<ReturnType<typeof seeded>>) {
   return Object.entries(slots)
     .filter(([, count]) => count > 0)
     .map(([level, count]) => `${level}: ${count}`);
+}
+
+/**
+ * A new character of these classes' levels (`classes`, each a class and how many of its levels, in order), its scores
+ * 13 each, every class's multiclass prerequisites met (a class's first level's modifiers wait on them), forced past its
+ * picks, built as the engine builds it.
+ */
+async function leveled(classes: [string, number][]) {
+  const abilities = Object.fromEntries(ABILITY_NAMES.map((ability) => [ability, MULTICLASS_ABILITY_MINIMUM]));
+  const character = await createDnd52Character(session, { abilities });
+  let first = true;
+  for (const [klass, count] of classes) {
+    for (let level = 1; level <= count; level++) {
+      await addLevel(session, character.id, klass, level, { hp: first ? HIT_DICE[klass] : 1 }, true);
+      first = false;
+    }
+  }
+  return await buildCharacter(character.id);
 }
 
 /** A seeded character, built as the engine builds it. */
@@ -95,5 +122,43 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     const combat = built.components.combat.getCombat();
     expect(combat.weaponsets["0"].ac).toMatchObject({ base: 11, dexterity: 3, total: 14 });
     expect(combat.hp.total).toBe(8 + 5 + 6 + 2 * 3);
+  });
+  describe("its spell slots, as the SRD 5.2.1's Multiclassing rules give them", () => {
+    test("of one casting class: its own, its levels', a fighter's levels counting none", async () => {
+      const built = await leveled([
+        ["Paladin", 3],
+        ["Fighter", 2],
+      ]);
+      expect(slotsOf(built)).toEqual(["1: 3"]);
+    });
+
+    test("of several: the Multiclass Spellcaster table's at all their full casters' levels and half the others'", async () => {
+      // The SRD's example: a level 4 Ranger / level 3 Sorcerer counts as a level 5 caster
+      const example = await leveled([
+        ["Ranger", 4],
+        ["Sorcerer", 3],
+      ]);
+      expect(example.components.spellcasting.getSpellcasting()).toMatchObject({ casterlevel: 5 });
+      expect(slotsOf(example)).toEqual(["1: 4", "2: 3", "3: 2"]);
+      // A Wizard 3 / Paladin 2 counts 3 + 1, not the 4 and 2 level 1 slots and the 2 level 2 slots of its own two
+      const wizardPaladin = await leveled([
+        ["Wizard", 3],
+        ["Paladin", 2],
+      ]);
+      expect(slotsOf(wizardPaladin)).toEqual(["1: 4", "2: 3"]);
+    });
+
+    test("of a warlock: its Pact Magic, apart, beside another class's own slots", async () => {
+      const warlock = await leveled([["Warlock", 3]]);
+      expect(warlock.components.spellcasting.getSpellcasting().pact).toEqual({ level: 2, slots: 2 });
+      expect(slotsOf(warlock)).toEqual([]);
+      // Pact Magic isn't the Spellcasting feature: a Warlock 3 / Wizard 2 has the wizard's own slots beside it
+      const warlockWizard = await leveled([
+        ["Warlock", 3],
+        ["Wizard", 2],
+      ]);
+      expect(warlockWizard.components.spellcasting.getSpellcasting().pact).toEqual({ level: 2, slots: 2 });
+      expect(slotsOf(warlockWizard)).toEqual(["1: 3"]);
+    });
   });
 });

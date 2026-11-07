@@ -1,6 +1,6 @@
 /**
- * What a class's levels' modifiers add up to by each level, by the key each counts toward: its table's feat pools, and
- * its cantrips and prepared spells, as its page shows them and its progression's save plans them.
+ * What a class's levels' modifiers add up to by each level, by the key each counts toward: its table's feat pools, its
+ * spell slots, and its cantrips and prepared spells, as its page shows them and its progression's save plans them.
  */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -21,8 +21,8 @@ export interface TableStep<V> {
 }
 
 /**
- * What a class's levels' modifiers add up to by each level (`computeRunning`), and the step its spell table takes of
- * them: its cantrips' and prepared spells'.
+ * What a class's levels' modifiers add up to by each level (`computeRunning`), and the steps its spell tables take of
+ * them: its cantrips' and prepared spells', and its spell slots'.
  */
 export default class LevelTotals {
   /**
@@ -60,5 +60,13 @@ export default class LevelTotals {
     if (target?.field !== "allowed" || typeof value !== "number") return undefined;
     const setsAll = AptitudeTargets.setsAllKnown(modifier);
     return { key: target.level, step: (total) => (setsAll || total === "All" ? "All" : (total ?? 0) + value) };
+  }
+
+  /** A modifier's step on the spell slots by spell level: a list's spell level's `uses` adds to them. */
+  static readSlotStep(modifier: TableModifier): TableStep<number> | undefined {
+    const target = AptitudeTargets.parseSpellLevel(modifier.target);
+    const value = LiteralValue.parse(modifier.value, "number");
+    if (target?.field !== "uses" || typeof value !== "number") return undefined;
+    return { key: target.level, step: (total) => (total ?? 0) + value };
   }
 }

@@ -148,13 +148,16 @@ Each kind's seeds read its reference as its overrides correct it, its text plain
 hyphenated line breaks joined, the Markdown's emphasis left out). A feature, a feat or a trait a sheet reads a number
 of has its modifiers (`terms/`); any other is its text alone.
 
-- **Classes** (12, `classes/<class>.ts`): its hit die and caster type (Pact Magic's, a full caster's whose slots reach
-  level 9, a half caster's, or none), its links (its spellcasting ability, its Starting and Multiclass Proficiencies'
+- **Classes** (12, `classes/<class>.ts`): its hit die and how its levels count toward a multiclass's spell slots (all
+  of a class whose slots reach level 9, half of one whose slots stop short, none of a warlock's or of a class without
+  spells), its links (its spellcasting ability, its Starting and Multiclass Proficiencies'
   feats), its skills (`classSkills`: its skills' pool, "Fighter Skills", lists their Skill Proficiency feats), its
   features by level, each a feat through its features' pool ("Fighter Features"; its subclass's placeholder past its
-  pick left out), its levels' modifiers (its subclass's room at its pick, a room at each Ability Score Improvement
-  in its pool ("Ability Score Improvement", which lists every feat), an Epic Boon's, a Fighting Style's, its Weapon Mastery's kinds, by its levels' counts or its text, its
-  Expertise's skills, by its text, and a monk's Unarmored Movement), its multiclass's requirements (13 in its primary
+  pick left out), its levels' modifiers (its subclass's room at its pick, a room at each Ability Score Improvement in
+  its pool ("Ability Score Improvement", which lists every feat), an Epic Boon's, a Fighting Style's, its Weapon
+  Mastery's kinds, by its levels' counts or its text, its Expertise's skills, by its text, a monk's Unarmored Movement,
+  and its spell slots: each level's new ones on its list, by its table, or a warlock's Pact Magic, its slots and their
+  level), its multiclass's requirements (13 in its primary
   abilities, one of a fighter's two), and its spells (its list, "Wizard Spells", and the cantrips and prepared spells
   it has by each level, a level's new ones at the highest spell level its slots reach then; a warlock's Mystic
   Arcanum a room at each of its spell levels in a pool of its own, "Mystic Arcanum (Level 6)", which lists the

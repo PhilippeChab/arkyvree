@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const WARLOCK: ClassSeed = {
   name: "Warlock",
   description: "A class of a d8 Hit Point Die per level, whose primary ability is Charisma.",
-  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Pact" },
+  fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Warlock Multiclass Proficiencies",
     spellcastingAbility: "Charisma",
@@ -33,10 +33,18 @@ export const WARLOCK: ClassSeed = {
     [20, "Eldritch Master (Warlock)"],
   ],
   modifiers: [
+    { level: 1, target: "spellcasting.pact.slots", operator: "add", value: "1", valueType: "number" },
+    { level: 1, target: "spellcasting.pact.level", operator: "add", value: "1", valueType: "number" },
+    { level: 2, target: "spellcasting.pact.slots", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.warlocksubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "spellcasting.pact.level", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "spellcasting.pact.level", operator: "add", value: "1", valueType: "number" },
+    { level: 7, target: "spellcasting.pact.level", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "spellcasting.pact.level", operator: "add", value: "1", valueType: "number" },
     { level: 11, target: "aptitudes.mysticarcanumlevel6.6.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 11, target: "spellcasting.pact.slots", operator: "add", value: "1", valueType: "number" },
     {
       level: 12,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -54,6 +62,7 @@ export const WARLOCK: ClassSeed = {
       valueType: "number",
     },
     { level: 17, target: "aptitudes.mysticarcanumlevel9.9.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 17, target: "spellcasting.pact.slots", operator: "add", value: "1", valueType: "number" },
     { level: 19, target: "aptitudes.epicboon.allowed", operator: "add", value: "1", valueType: "number" },
   ],
   requirements: [gte("abilities.charisma.total", 13)],

@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const RANGER: ClassSeed = {
   name: "Ranger",
   description: "A class of a d10 Hit Point Die per level, whose primary ability is Dexterity and Wisdom.",
-  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Half" },
+  fields: { [CLASS_HD]: 10, [CLASS_MULTICLASS_SLOTS]: "Half its levels" },
   links: {
     multiclassProficiencies: "Ranger Multiclass Proficiencies",
     spellcastingAbility: "Wisdom",
@@ -48,12 +48,19 @@ export const RANGER: ClassSeed = {
   ],
   modifiers: [
     { level: 1, target: "aptitudes.weaponmastery.allowed", operator: "add", value: "2", valueType: "number" },
+    { level: 1, target: "aptitudes.rangerspells.1.uses", operator: "add", value: "2", valueType: "number" },
     { level: 2, target: "aptitudes.expertise.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 2, target: "aptitudes.fightingstyle.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.rangersubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.rangerspells.1.uses", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "aptitudes.rangerspells.1.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "aptitudes.rangerspells.2.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 7, target: "aptitudes.rangerspells.2.uses", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 9, target: "aptitudes.expertise.allowed", operator: "add", value: "2", valueType: "number" },
+    { level: 9, target: "aptitudes.rangerspells.3.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 11, target: "aptitudes.rangerspells.3.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 12,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -61,6 +68,8 @@ export const RANGER: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 13, target: "aptitudes.rangerspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 15, target: "aptitudes.rangerspells.4.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 16,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -68,7 +77,10 @@ export const RANGER: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 17, target: "aptitudes.rangerspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 17, target: "aptitudes.rangerspells.5.uses", operator: "add", value: "1", valueType: "number" },
     { level: 19, target: "aptitudes.epicboon.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 19, target: "aptitudes.rangerspells.5.uses", operator: "add", value: "1", valueType: "number" },
   ],
   requirements: [gte("abilities.dexterity.total", 13), gte("abilities.wisdom.total", 13)],
   spells: {

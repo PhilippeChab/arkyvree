@@ -6,12 +6,12 @@ import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells, classSubclass, WEAPON_MASTERY_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
-import { poolRoom, spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import { poolRoom, spellRoom, spellSlots } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
+import type { MulticlassSlots } from "@/vocabulary/dnd5.2/classes.ts";
 import { EXPERTISE_POOL } from "@/vocabulary/dnd5.2/feats.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
+import { MAX_SPELL_LEVEL, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import type { ClassEntries } from "./ClassEntries.ts";
 
@@ -31,11 +31,12 @@ function readHighestSlot(spellcasting: Record<string, number>): number | undefin
 }
 
 /**
- * A class's progression, as its levels give it: its caster type, the requirements a multiclass into it meets (13 in
- * its primary abilities, or in one of them for a fighter), its levels' modifiers (the rooms its features give in its
- * pools: its subclass at its pick, its Ability Score Improvements' feats, its Epic Boon, its Fighting Style,
- * its Weapon Mastery's kinds and its Expertise's skills; and the counts its levels hold that add to a target as they
- * grow, `CLASS_COUNTS`), and its spells (its list, and the cantrips and prepared spells it has by each level).
+ * A class's progression, as its levels give it: how its levels count toward a multiclass's spell slots, the
+ * requirements a multiclass into it meets (13 in its primary abilities, or in one of them for a fighter), its levels'
+ * modifiers (the rooms its features give in its pools: its subclass at its pick, its Ability Score Improvements' feats,
+ * its Epic Boon, its Fighting Style, its Weapon Mastery's kinds and its Expertise's skills; its spell slots, or a
+ * warlock's Pact Magic; and the counts its levels hold that add to a target as they grow, `CLASS_COUNTS`), and its
+ * spells (its list, and the cantrips and prepared spells it has by each level).
  */
 export class ClassProgression {
   constructor(private readonly entries: ClassEntries) {}
@@ -83,6 +84,51 @@ export class ClassProgression {
     );
   }
 
+  /** Whether its levels give Pact Magic (a warlock's), not the Spellcasting feature. */
+  private hasPactMagic(): boolean {
+    return this.entries.levels().some(({ features }) => features.some(({ name }) => name === "Pact Magic"));
+  }
+
+  /**
+   * A warlock's Pact Magic as its levels give it: each level's new slots and the spell level they rise to, by its table
+   * (`spellcasting.pact.slots`, `spellcasting.pact.level`). Refused for a table whose slots or level go down.
+   */
+  private pactModifiers(): LevelModifier[] {
+    const previous = { level: 0, slots: 0 };
+    return this.entries.levels().flatMap(({ level, name, spellcasting }): LevelModifier[] => {
+      if (!spellcasting) return [];
+      const slotLevel = readHighestSlot(spellcasting) ?? 0;
+      const slots = slotLevel > 0 ? (spellcasting[`spell_slots_level_${slotLevel}`] ?? 0) : 0;
+      if (slots < previous.slots || slotLevel < previous.level) throw new Error(`${name}: its Pact Magic shrinks`);
+      const added = [
+        ...(slots > previous.slots ? [bonus("spellcasting.pact.slots", slots - previous.slots)] : []),
+        ...(slotLevel > previous.level ? [bonus("spellcasting.pact.level", slotLevel - previous.level)] : []),
+      ];
+      Object.assign(previous, { level: slotLevel, slots });
+      return added.map((modifier) => ({ ...modifier, level }));
+    });
+  }
+
+  /**
+   * Its levels' spell slots, as its table gives them: each level's new slots at their spell level, on its list
+   * (`aptitudes.<list>.<level>.uses`), for a class with the Spellcasting feature; a warlock's Pact Magic instead
+   * (`pactModifiers`). Refused for a table whose slots go down.
+   */
+  private slotModifiers(): LevelModifier[] {
+    if (this.hasPactMagic()) return this.pactModifiers();
+    const list = classSpells(this.entries.name());
+    const previous = new Map<number, number>();
+    return this.entries.levels().flatMap(({ level, name, spellcasting }) =>
+      SPELL_LEVELS.slice(1).flatMap((spellLevel): LevelModifier[] => {
+        const slots = spellcasting?.[`spell_slots_level_${spellLevel}`] ?? previous.get(spellLevel) ?? 0;
+        const added = slots - (previous.get(spellLevel) ?? 0);
+        if (added < 0) throw new Error(`${name}: its level ${spellLevel} slots go down`);
+        previous.set(spellLevel, slots);
+        return added > 0 ? [{ ...spellSlots(list, spellLevel, added), level }] : [];
+      }),
+    );
+  }
+
   /**
    * The rooms its spell room features give (`SPELL_ROOM_FEATURES`), at each level they're gained at: a spell level's
    * room each time, from the feature's first, in that spell level's pool (a Mystic Arcanum's).
@@ -97,22 +143,27 @@ export class ClassProgression {
   }
 
   /**
-   * Its caster type, as its levels read: a Pact Magic's (a warlock's), a full caster's, whose slots reach level 9, a
-   * half caster's, whose slots stop short, or none's, without spellcasting.
+   * Its levels' modifiers, in level order: its features' rooms (its spell room features' too), its spell slots (a
+   * warlock's Pact Magic), and its counts' increases.
    */
-  casterType(): CasterType {
-    const levels = this.entries.levels();
-    if (levels.some(({ features }) => features.some(({ name }) => name === "Pact Magic"))) return "Pact";
-    const last = levels.at(-1)?.spellcasting;
-    if (!last) return "None";
-    return readHighestSlot(last) === MAX_SPELL_LEVEL ? "Full" : "Half";
+  modifiers(): LevelModifier[] {
+    return [
+      ...this.featureModifiers(),
+      ...this.spellRoomModifiers(),
+      ...this.slotModifiers(),
+      ...this.countModifiers(),
+    ].sort((a, b) => a.level - b.level);
   }
 
-  /** Its levels' modifiers, in level order: its features' rooms (its spell room features' too), and its counts' increases. */
-  modifiers(): LevelModifier[] {
-    return [...this.featureModifiers(), ...this.spellRoomModifiers(), ...this.countModifiers()].sort(
-      (a, b) => a.level - b.level,
-    );
+  /**
+   * How its levels count toward a multiclass's spell slots, as its levels read: all of a class whose slots reach level 9
+   * (a bard's, a wizard's), half of one whose slots stop short (a paladin's, a ranger's), none of a warlock's (Pact
+   * Magic isn't the Spellcasting feature) or of a class without spells.
+   */
+  multiclassSlots(): MulticlassSlots {
+    const last = this.entries.levels().at(-1)?.spellcasting;
+    if (this.hasPactMagic() || !last) return "Its levels don't count";
+    return readHighestSlot(last) === MAX_SPELL_LEVEL ? "All its levels" : "Half its levels";
   }
 
   /**

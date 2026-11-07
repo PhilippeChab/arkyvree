@@ -64,11 +64,22 @@ holds names the code that holds it.
 
 ## Spells
 
-- **Spell slots are the Multiclass Spellcaster table's**, by the levels a character's classes count: all its levels in
-  full casters' classes, and half its levels in the Paladin and Ranger classes together, rounded up once (the SRD's
-  "Half your levels (round up) in the Paladin and Ranger classes", read as their sum: a Paladin 1 / Ranger 1 counts 1,
-  not 2) (`SpellcastingState.countCasterLevels`); a single class's table gives the same. A warlock's Pact Magic
-  slots are apart, by its level (`PACT_MAGIC_SLOTS`). The SRD has no third caster.
+- **A class's levels give its spell slots, as D&D 3.5's do.** Each level of a casting class adds its new slots to its
+  spell list, as its table in the SRD gives them (`aptitudes.<list>.<level>.uses`; its page's Spell Slots table): a
+  Wizard's 3rd level adds a 4th level 1 slot and two level 2 slots. A character casting from one class has that
+  class's slots, the SRD's "follow the rules for that class" (`SpellcastingState.ownSlotsOf`). A class's first level's
+  slots wait on its multiclass prerequisites, as its other modifiers do.
+- **Casting from more than one class, the Multiclass Spellcaster table's slots replace theirs**, at the levels the
+  classes count. Each class says how its levels count (its Multiclass Spell Slots, `MULTICLASS_SLOTS`): all of a
+  bard's, a cleric's, a druid's, a sorcerer's and a wizard's; half of a paladin's and a ranger's, together, rounded up
+  once (the SRD's "Half your levels (round up) in the Paladin and Ranger classes", read as their sum: a Paladin 1 /
+  Ranger 1 counts 1, not 2); none of a class without the Spellcasting feature (`SpellcastingState.countSlots`,
+  `countCasterLevels`). A Ranger 4 / Sorcerer 3 counts 5, the SRD's example. A class's own table is the Multiclass
+  Spellcaster table's at the levels it counts (a test holds it), so a class alone and its count never disagree.
+- **A warlock's Pact Magic is apart.** Its levels add its slots and raise their level (`spellcasting.pact.slots`,
+  `spellcasting.pact.level`), by its table (`PACT_MAGIC_SLOTS`), and count toward no other slots: Pact Magic isn't the
+  Spellcasting feature. A Warlock 3 / Wizard 2 has two level 2 Pact Magic slots and the wizard's own three level 1
+  slots. The SRD has no third caster.
 - **Prepared spells mix levels freely.** A class's table gives its cantrips and its prepared spells by level, a level's
   new spells counted at the highest level it casts then; the room past cantrips is one count, which any spell of level 1
   up to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination). A spell above it

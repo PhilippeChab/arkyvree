@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const WIZARD: ClassSeed = {
   name: "Wizard",
   description: "A class of a d6 Hit Point Die per level, whose primary ability is Intelligence.",
-  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Full" },
+  fields: { [CLASS_HD]: 6, [CLASS_MULTICLASS_SLOTS]: "All its levels" },
   links: {
     multiclassProficiencies: "Wizard Multiclass Proficiencies",
     spellcastingAbility: "Intelligence",
@@ -31,9 +31,22 @@ export const WIZARD: ClassSeed = {
     [20, "Signature Spells (Wizard)"],
   ],
   modifiers: [
+    { level: 1, target: "aptitudes.wizardspells.1.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 2, target: "aptitudes.wizardspells.1.uses", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.wizardsubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.wizardspells.1.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.wizardspells.2.uses", operator: "add", value: "2", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 4, target: "aptitudes.wizardspells.2.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "aptitudes.wizardspells.3.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 6, target: "aptitudes.wizardspells.3.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 7, target: "aptitudes.wizardspells.4.uses", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 8, target: "aptitudes.wizardspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.wizardspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.wizardspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 10, target: "aptitudes.wizardspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 11, target: "aptitudes.wizardspells.6.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 12,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -41,6 +54,8 @@ export const WIZARD: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 13, target: "aptitudes.wizardspells.7.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 15, target: "aptitudes.wizardspells.8.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 16,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -48,7 +63,11 @@ export const WIZARD: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 17, target: "aptitudes.wizardspells.9.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 18, target: "aptitudes.wizardspells.5.uses", operator: "add", value: "1", valueType: "number" },
     { level: 19, target: "aptitudes.epicboon.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 19, target: "aptitudes.wizardspells.6.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 20, target: "aptitudes.wizardspells.7.uses", operator: "add", value: "1", valueType: "number" },
   ],
   requirements: [gte("abilities.intelligence.total", 13)],
   spells: {

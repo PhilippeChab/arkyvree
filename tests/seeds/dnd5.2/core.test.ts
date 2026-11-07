@@ -14,8 +14,9 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import { findOtherCoreRulesets } from "@/tests/support/dnd5.2/seed.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
 import { DND52_BASE_RULES } from "@/vocabulary/dnd5.2/baseRules.ts";
-import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_MULTICLASS_SLOTS, ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
+import { MULTICLASS_SPELL_SLOTS, PACT_MAGIC_SLOTS, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import { seededRows } from "./seededRows.ts";
 
@@ -168,7 +169,11 @@ describe("The seeded D&D 5th Edition core rules", () => {
     test("give a wizard's levels its cantrips and its prepared spells, a level's new ones at its highest level", async () => {
       const rows = await seededRows();
       const modifiers = (level: number) =>
-        rows.modifiersOf(rows.classLevel("Wizard", level).id).map(describeModifier).sort();
+        rows
+          .modifiersOf(rows.classLevel("Wizard", level).id)
+          .map(describeModifier)
+          .filter((modifier) => !modifier.includes(".uses "))
+          .sort();
       expect(modifiers(1)).toEqual([
         "aptitudes.wizardspells.0.allowed add 3",
         "aptitudes.wizardspells.1.allowed add 4",
@@ -179,6 +184,72 @@ describe("The seeded D&D 5th Edition core rules", () => {
         "aptitudes.wizardsubclass.allowed add 1",
       ]);
       expect(modifiers(5)).toEqual(["aptitudes.wizardspells.3.allowed add 2"]);
+    });
+
+    test("give each casting class's levels its spell slots on its list, the SRD's at every level", async () => {
+      const rows = await seededRows();
+      // A class's own table is the Multiclass Spellcaster table's at the levels it counts: all a full caster's, half a
+      // half caster's, rounded up
+      const shares: Record<string, number> = {
+        Bard: 1,
+        Cleric: 1,
+        Druid: 1,
+        Sorcerer: 1,
+        Wizard: 1,
+        Paladin: 0.5,
+        Ranger: 0.5,
+      };
+      for (const [klass, share] of Object.entries(shares)) {
+        const slots = new Map<number, number>();
+        for (let level = 1; level <= 20; level++) {
+          for (const { target, value } of rows.modifiersOf(rows.classLevel(klass, level).id)) {
+            const spellLevel = /^aptitudes\.[a-z]+spells\.(\d)\.uses$/.exec(target)?.[1];
+            if (spellLevel) slots.set(Number(spellLevel), (slots.get(Number(spellLevel)) ?? 0) + Number(value));
+          }
+          const row = MULTICLASS_SPELL_SLOTS[Math.ceil(level * share) - 1];
+          const expected = SPELL_LEVELS.slice(1).map((spellLevel) => row[spellLevel - 1]);
+          expect([klass, level, SPELL_LEVELS.slice(1).map((spellLevel) => slots.get(spellLevel) ?? 0)]).toEqual([
+            klass,
+            level,
+            expected,
+          ]);
+        }
+      }
+    });
+
+    test("give a warlock's levels its Pact Magic, the SRD's at every level, and no slot on its list", async () => {
+      const rows = await seededRows();
+      const pact = { level: 0, slots: 0 };
+      for (let warlockLevel = 1; warlockLevel <= 20; warlockLevel++) {
+        const modifiers = rows.modifiersOf(rows.classLevel("Warlock", warlockLevel).id);
+        for (const { target, value } of modifiers) {
+          if (target === "spellcasting.pact.slots") pact.slots += Number(value);
+          if (target === "spellcasting.pact.level") pact.level += Number(value);
+        }
+        expect(modifiers.filter(({ target }) => target.endsWith(".uses"))).toEqual([]);
+        expect([warlockLevel, pact]).toEqual([warlockLevel, PACT_MAGIC_SLOTS[warlockLevel - 1]]);
+      }
+    });
+
+    test("say how each class's levels count toward a multiclass's slots: all, half, or none", async () => {
+      const rows = await seededRows();
+      const counted = Object.fromEntries(
+        rows.classes.map((klass) => [klass.name, klass.fields[CLASS_MULTICLASS_SLOTS]]),
+      );
+      expect(counted).toEqual({
+        Barbarian: "Its levels don't count",
+        Bard: "All its levels",
+        Cleric: "All its levels",
+        Druid: "All its levels",
+        Fighter: "Its levels don't count",
+        Monk: "Its levels don't count",
+        Paladin: "Half its levels",
+        Ranger: "Half its levels",
+        Rogue: "Its levels don't count",
+        Sorcerer: "All its levels",
+        Warlock: "Its levels don't count",
+        Wizard: "All its levels",
+      });
     });
 
     test("give a wizard 25 prepared spells at its 20th level, the SRD's", async () => {

@@ -1,6 +1,7 @@
 /**
  * A class's progression as its Progression and Spells tabs edit it at once: its levels' own fields and granted feats,
- * its feat pools' picks, and its cantrips and prepared spells as totals, which its levels keep as increments.
+ * its feat pools' picks, and its spell slots and its cantrips and prepared spells as totals, which its levels keep as
+ * increments.
  */
 
 import { z } from "zod";
@@ -20,7 +21,7 @@ import type { Dnd52Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/vie
 import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeName, stripSeparators } from "@/shared/text.ts";
 import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
-import { SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
+import { MAX_SPELL_LEVEL, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
 import type ClassTable from "./ClassTable.ts";
@@ -74,6 +75,7 @@ const COUNTS = z.object({
   spells: z
     .object({
       known: z.array(z.object({ counts: z.array(KNOWN.nullable()).max(SPELL_LEVELS.length) })).optional(),
+      perDay: z.array(z.object({ counts: z.array(COUNT.nullable()).max(MAX_SPELL_LEVEL) })).optional(),
     })
     .optional(),
 });
@@ -87,7 +89,8 @@ const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected a
 /**
  * A progression's save, as its form sends it: its class levels' forms (`owned`, each its fields, and its links: the
  * feats it grants, by role), its pools' picks by level (each pool by its `id`), and its
- * spell tables' totals, a level's one a spell level from 0 (`null` for none). Each part refuses a key it doesn't take,
+ * spell tables' totals, a level's one a column of its table (`null` for none): a spell level, from 0 for its cantrips
+ * and prepared spells, from 1 for its spell slots. Each part refuses a key it doesn't take,
  * as an entity's form does.
  */
 const PROGRESSION_BODY = z.strictObject({
@@ -111,6 +114,9 @@ const PROGRESSION_BODY = z.strictObject({
             counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
           }),
         )
+        .optional(),
+      perDay: z
+        .array(z.strictObject({ ownedId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
         .optional(),
     })
     .optional(),
@@ -221,6 +227,16 @@ function replaceOwn(
 }
 
 /**
+ * A spell table's spell levels, its columns' keys in their order, by the field its totals count (`uses`: its spell
+ * slots', from spell level 1; `allowed`: its cantrips' and prepared spells', from 0): a save's row gives a count a
+ * column, which these name.
+ */
+function spellLevelsOf(field: "allowed" | "uses"): number[] {
+  const key = field === "uses" ? "perDay" : "known";
+  return PROGRESSION.tables.find((table) => table.key === key)?.columns.map((column) => Number(column.key)) ?? [];
+}
+
+/**
  * A class's progression (`klass`, as the view has it, with its levels' and its table's parts): what its tabs read
  * beside its levels and tables (its pools' own picks, the spell list its spells go to), and what one save of them all
  * writes, level by level.
@@ -317,7 +333,11 @@ export default class ClassProgression {
     const original = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
     const working = new Map(original);
     for (const pool of body.pools ?? []) this.planPool(working, pool);
-    if (body.spells?.known) this.planSpells(working, body.spells.known, this.spellTotals(working));
+    // Each table reads its totals before either writes: a save of one keeps the other's as they were
+    const slots = this.spellTotals("uses", working);
+    if (body.spells?.known)
+      this.planSpells(working, body.spells.known, "allowed", this.spellTotals("allowed", working));
+    if (body.spells?.perDay) this.planSpells(working, body.spells.perDay, "uses", slots);
     if (body.spells) this.checkListKept(working);
     return { body, original, working };
   }
@@ -339,24 +359,31 @@ export default class ClassProgression {
   }
 
   /**
-   * The cantrips and prepared spells table's totals, each level's given (`rows`) over the ones it had before the save
-   * (`totals`), as each spell level's own modifiers on the class's list (`aptitudes.<list>.<level>.allowed`): refused
-   * where its spell tables take no save (`spellTables`).
+   * A spell table's totals (`field`: `allowed` for its cantrips and prepared spells, `uses` for its spell slots), each
+   * level's given (`rows`) over the ones it had before the save (`totals`), as each spell level's own modifiers on the
+   * class's list (`aptitudes.<list>.<level>.<field>`): refused where its spell tables take no save (`spellTables`).
    */
   private planSpells(
     working: Map<string, LevelModifier[]>,
     rows: SpellRow<number | "all">[],
+    field: "allowed" | "uses",
     totals: Map<string, Record<string | number, SpellTotal>>,
   ) {
     const { list, refusal } = this.spellTables;
     if (!list) throw new RulesError("invalid", refusal);
     const levels = this.classLevels;
-    const given = new Map(rows.map(({ counts, ownedId }) => [this.levels.find(ownedId).id, counts]));
+    const levelsOf = spellLevelsOf(field);
+    const given = new Map(
+      rows.map(({ counts, ownedId }) => [
+        this.levels.find(ownedId).id,
+        Object.fromEntries(counts.map((count, column) => [levelsOf[column], count])),
+      ]),
+    );
     for (const spellLevel of SPELL_LEVELS) {
-      const target = `aptitudes.${list.slug}.${spellLevel}.allowed`;
+      const target = `aptitudes.${list.slug}.${spellLevel}.${field}`;
       const isOwn = (modifier: LevelModifier) =>
-        modifier.target === target && (isPlainAdd(modifier) || isPlainAll(modifier));
-      const kept = this.spellTotals(working, (modifier) => !isOwn(modifier));
+        modifier.target === target && (isPlainAdd(modifier) || (field === "allowed" && isPlainAll(modifier)));
+      const kept = this.spellTotals(field, working, (modifier) => !isOwn(modifier));
       const asked = levels.map(({ id }): SpellTotal => {
         const count = given.get(id)?.[spellLevel];
         if (count === undefined) return totals.get(id)?.[spellLevel];
@@ -372,7 +399,7 @@ export default class ClassProgression {
       // A column with a modifier the table can't read as a count (one requirements gate, which it counts for every
       // character; one that isn't an add of a number) takes no change: that's its levels' own to make
       const unread = (modifier: LevelModifier) =>
-        modifier.target === target && !isPlainAdd(modifier) && !isPlainAll(modifier);
+        modifier.target === target && !isPlainAdd(modifier) && !(field === "allowed" && isPlainAll(modifier));
       const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[spellLevel]));
       const changes = wanted.some((total, index) => total !== current[index]);
       if (changes && levels.some(({ id }) => working.get(id)?.some(unread))) {
@@ -433,15 +460,18 @@ export default class ClassProgression {
   }
 
   /**
-   * The cantrips and prepared spells table's totals by each level, of the levels' modifiers as a save plans them
-   * (`keep`: those).
+   * A spell table's totals by each level (`field`'s: `uses` for its spell slots, `allowed` for its cantrips and
+   * prepared spells), of the levels' modifiers as a save plans them (`keep`: those).
    */
   private spellTotals(
+    field: "allowed" | "uses",
     working: Map<string, LevelModifier[]>,
     keep: (modifier: LevelModifier) => boolean = () => true,
   ): Map<string, Record<string | number, SpellTotal>> {
     const modifiers = readTableModifiers(working, keep);
-    return LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
+    return field === "uses"
+      ? LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readSlotStep)
+      : LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
   }
 
   /**

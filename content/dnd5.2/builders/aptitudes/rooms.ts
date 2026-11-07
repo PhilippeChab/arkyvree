@@ -1,6 +1,7 @@
 /**
- * A pool's rooms, as the content gives them: picks in a pool of feats (`aptitudes.<pool>.allowed`), and spells at a
- * spell level of a list (`aptitudes.<list>.<level>.allowed`).
+ * A pool's rooms, as the content gives them: picks in a pool of feats (`aptitudes.<pool>.allowed`), spells at a spell
+ * level of a list (`aptitudes.<list>.<level>.allowed`), and spell slots at a spell level of a list
+ * (`aptitudes.<list>.<level>.uses`).
  */
 
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
@@ -15,4 +16,9 @@ export function poolRoom(pool: string, picks: number): Modifier {
 /** `spells` more spells of the spell level `level` (0 for cantrips) in the spell list `list` ("Wizard Spells"). */
 export function spellRoom(list: string, level: number, spells: number): Modifier {
   return bonus(`aptitudes.${stripSeparators(list)}.${level}.allowed`, spells);
+}
+
+/** `slots` more spell slots of the spell level `level` on the spell list `list` ("Wizard Spells"). */
+export function spellSlots(list: string, level: number, slots: number): Modifier {
+  return bonus(`aptitudes.${stripSeparators(list)}.${level}.uses`, slots);
 }

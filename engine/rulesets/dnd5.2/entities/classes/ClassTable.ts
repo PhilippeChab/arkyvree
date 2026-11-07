@@ -1,4 +1,7 @@
-/** A class's table, as its page shows it: each level's feat pools and its cantrips and prepared spells, and its spell lists. */
+/**
+ * A class's table, as its page shows it: each level's feat pools, its spell slots, and its cantrips and prepared
+ * spells, and its spell lists.
+ */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -32,8 +35,8 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
 }
 
 /**
- * A class's table (`klass`, as the view has it): its levels' feat pools, and its cantrips and prepared spells by then,
- * and its spell lists. Its spell slots are no table of its own: the Multiclass Spellcaster table's.
+ * A class's table (`klass`, as the view has it): its levels' feat pools, its spell slots and its cantrips and prepared
+ * spells by then, and its spell lists.
  */
 export default class ClassTable {
   constructor(
@@ -47,13 +50,14 @@ export default class ClassTable {
   }
 
   /**
-   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells-known`): refused as not found for a
-   * table it has none of. Its spell tables read its levels' modifiers as the view has them, or as a save
+   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells`, `spells-known`): refused as not
+   * found for a table it has none of. Its spell tables read its levels' modifiers as the view has them, or as a save
    * would leave them (`modifiers`: its progression's plan's).
    */
   describe(table: string, modifiers?: TableModifier[]) {
     if (table === "feat-pools") return this.describeFeatPools();
     if (table === "spell-lists") return this.describeSpellLists();
+    if (table === "spells") return this.describeSpells(modifiers);
     if (table === "spells-known") return this.describeSpellsKnown(modifiers);
     throw new RulesError("not-found", `No ${table} table for classes`);
   }
@@ -128,6 +132,17 @@ export default class ClassTable {
     const own = this.describeOwnList();
     if (own.id === null || this.holdsFeats(own.id)) return [];
     return [{ id: own.id, name: own.name }];
+  }
+
+  /**
+   * The class's levels, each with the spell slots it has by spell level by then (`spellsPerDay`): what its levels'
+   * modifiers add to its list's spell levels' slots (`aptitudes.<list>.<level>.uses`). Of its levels' modifiers as the
+   * view has them, or as a save would leave them (`modifiers`: its progression's plan's).
+   */
+  describeSpells(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {
+    const { levels } = this;
+    const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readSlotStep);
+    return levels.map((level) => ({ ...level, spellsPerDay: totals.get(level.id) ?? {} }));
   }
 
   /**

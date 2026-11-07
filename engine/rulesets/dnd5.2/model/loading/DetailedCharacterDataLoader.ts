@@ -6,7 +6,7 @@ import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Item, Klass, Language } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
-import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
+import type { MulticlassSlots } from "@/vocabulary/dnd5.2/classes.ts";
 
 import { CustomizesEntities } from "./concerns/CustomizesEntities.ts";
 import { LoadsPicks } from "./concerns/LoadsPicks.ts";
@@ -37,9 +37,9 @@ export interface LoadedCharacterData extends LoadedCharacter<Item> {
   /** Its background, with its customizations: none before it has one. */
   background: CustomizedBackground | undefined;
   character: Character;
-  classCasterTypeMap: Map<string, CasterType>;
   classes: Klass[];
   classLevels: CustomizedClassLevel[];
+  classMulticlassSlotsMap: Map<string, MulticlassSlots>;
   classSpellcastingAbilityMap: Map<string, string>;
   feats: HeldFeat[];
   grantCountsByPool: Record<string, number>;

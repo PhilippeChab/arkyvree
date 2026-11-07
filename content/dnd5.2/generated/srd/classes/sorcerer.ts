@@ -2,12 +2,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const SORCERER: ClassSeed = {
   name: "Sorcerer",
   description: "A class of a d6 Hit Point Die per level, whose primary ability is Charisma.",
-  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Full" },
+  fields: { [CLASS_HD]: 6, [CLASS_MULTICLASS_SLOTS]: "All its levels" },
   links: {
     multiclassProficiencies: "Sorcerer Multiclass Proficiencies",
     spellcastingAbility: "Charisma",
@@ -33,9 +33,22 @@ export const SORCERER: ClassSeed = {
     [20, "Arcane Apotheosis (Sorcerer)"],
   ],
   modifiers: [
+    { level: 1, target: "aptitudes.sorcererspells.1.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 2, target: "aptitudes.sorcererspells.1.uses", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.sorcerersubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.sorcererspells.1.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.sorcererspells.2.uses", operator: "add", value: "2", valueType: "number" },
     { level: 4, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 4, target: "aptitudes.sorcererspells.2.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 5, target: "aptitudes.sorcererspells.3.uses", operator: "add", value: "2", valueType: "number" },
+    { level: 6, target: "aptitudes.sorcererspells.3.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 7, target: "aptitudes.sorcererspells.4.uses", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.abilityscoreimprovement.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 8, target: "aptitudes.sorcererspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.sorcererspells.4.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 9, target: "aptitudes.sorcererspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 10, target: "aptitudes.sorcererspells.5.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 11, target: "aptitudes.sorcererspells.6.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 12,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -43,6 +56,8 @@ export const SORCERER: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 13, target: "aptitudes.sorcererspells.7.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 15, target: "aptitudes.sorcererspells.8.uses", operator: "add", value: "1", valueType: "number" },
     {
       level: 16,
       target: "aptitudes.abilityscoreimprovement.allowed",
@@ -50,7 +65,11 @@ export const SORCERER: ClassSeed = {
       value: "1",
       valueType: "number",
     },
+    { level: 17, target: "aptitudes.sorcererspells.9.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 18, target: "aptitudes.sorcererspells.5.uses", operator: "add", value: "1", valueType: "number" },
     { level: 19, target: "aptitudes.epicboon.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 19, target: "aptitudes.sorcererspells.6.uses", operator: "add", value: "1", valueType: "number" },
+    { level: 20, target: "aptitudes.sorcererspells.7.uses", operator: "add", value: "1", valueType: "number" },
   ],
   requirements: [gte("abilities.charisma.total", 13)],
   spells: {

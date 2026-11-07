@@ -149,14 +149,58 @@ describe("A class's progression", () => {
     expect(progressionOf(corrected).spells()?.known[1].slice(0, 2)).toEqual([3, 3]);
   });
 
-  test("is of a half caster's type when its slots stop short of level 9, none's without spellcasting", () => {
-    expect(
-      progressionOf(classOf([{ features: ["Spellcasting"], spellcasting: spellcastingOf(0, 2, [2]) }])).casterType(),
-    ).toBe("Half");
-    expect(progressionOf(classOf([{ features: ["Rage"] }])).casterType()).toBe("None");
-    expect(
-      progressionOf(classOf([{ features: ["Pact Magic"], spellcasting: spellcastingOf(2, 2, [1]) }])).casterType(),
-    ).toBe("Pact");
+  test("counts all its levels toward a multiclass's slots, half when its slots stop short of level 9, none apart", () => {
+    const castingTo = (slots: number[], feature = "Spellcasting") =>
+      progressionOf(classOf([{ features: [feature], spellcasting: spellcastingOf(0, 2, slots) }])).multiclassSlots();
+    expect(castingTo([4, 3, 3, 3, 3, 2, 2, 1, 1])).toBe("All its levels");
+    expect(castingTo([2])).toBe("Half its levels");
+    // A warlock's Pact Magic isn't the Spellcasting feature, and a class without spells has neither
+    expect(castingTo([1], "Pact Magic")).toBe("Its levels don't count");
+    expect(progressionOf(classOf([{ features: ["Rage"] }])).multiclassSlots()).toBe("Its levels don't count");
+  });
+
+  test("gives each level's new spell slots on its list, at their spell levels", () => {
+    const progression = progressionOf(
+      classOf([
+        { features: ["Spellcasting"], spellcasting: spellcastingOf(2, 2, [2]) },
+        { features: [], spellcasting: spellcastingOf(2, 3, [3]) },
+        { features: [], spellcasting: spellcastingOf(2, 4, [4, 2]) },
+      ]),
+    );
+    const slots = progression.modifiers().filter(({ target }) => target.endsWith(".uses"));
+    expect(slots.map(({ level, target, value }) => [level, target, value])).toEqual([
+      [1, "aptitudes.testerspells.1.uses", "2"],
+      [2, "aptitudes.testerspells.1.uses", "1"],
+      [3, "aptitudes.testerspells.1.uses", "1"],
+      [3, "aptitudes.testerspells.2.uses", "2"],
+    ]);
+  });
+
+  test("gives a warlock's levels its Pact Magic slots and their level, no slot on its list", () => {
+    const progression = progressionOf(
+      classOf([
+        { features: ["Pact Magic"], spellcasting: spellcastingOf(2, 2, [1]) },
+        { features: [], spellcasting: spellcastingOf(2, 3, [2]) },
+        { features: [], spellcasting: spellcastingOf(2, 4, [0, 2]) },
+      ]),
+    );
+    const slots = progression
+      .modifiers()
+      .filter(({ target }) => target.startsWith("spellcasting.") || target.endsWith(".uses"));
+    expect(slots.map(({ level, target, value }) => [level, target, value])).toEqual([
+      [1, "spellcasting.pact.slots", "1"],
+      [1, "spellcasting.pact.level", "1"],
+      [2, "spellcasting.pact.slots", "1"],
+      [3, "spellcasting.pact.level", "1"],
+    ]);
+  });
+
+  test("refuses a table whose slots go down", () => {
+    const levels = [
+      { features: ["Spellcasting"], spellcasting: spellcastingOf(2, 2, [3]) },
+      { features: [], spellcasting: spellcastingOf(2, 3, [2]) },
+    ];
+    expect(() => progressionOf(classOf(levels)).modifiers()).toThrow("Tester 2: its level 1 slots go down");
   });
 
   test("requires a multiclass's scores: each of its prerequisites, one of its alternatives", () => {

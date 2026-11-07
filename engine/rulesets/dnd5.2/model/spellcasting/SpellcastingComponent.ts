@@ -28,16 +28,16 @@ class SpellcastingComponent extends include(SpellcastingState, KnownSpells) {
     this.buildSpellTags(feats, SpellLists.of(rulesetData).featListIds);
   }
 
-  /** Its classes' spell lists and caster types. */
+  /** Its classes' spell lists, and how each class's levels count toward a multiclass's slots. */
   override initialize(
-    { classCasterTypeMap }: Pick<LoadedCharacterData, "classCasterTypeMap">,
+    { classMulticlassSlotsMap }: Pick<LoadedCharacterData, "classMulticlassSlotsMap">,
     { rulesetData }: RulesetView,
   ) {
     this.classListsByClassId = SpellLists.of(rulesetData).classListsByClass;
-    this.casterTypeByClassId = classCasterTypeMap;
+    this.multiclassSlotsByClassId = classMulticlassSlotsMap;
   }
 
-  /** Its caster levels and spell slots: the `spellcasting` component's, its target paths'. */
+  /** Its caster levels, its spell slots and its Pact Magic: the `spellcasting` component's, its target paths'. */
   getSpellcasting(): CastingLevels {
     return this.castingLevels;
   }

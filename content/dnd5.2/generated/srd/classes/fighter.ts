@@ -2,12 +2,12 @@
 
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
-import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 export const FIGHTER: ClassSeed = {
   name: "Fighter",
   description: "A class of a d10 Hit Point Die per level, whose primary ability is Strength or Dexterity.",
-  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "None" },
+  fields: { [CLASS_HD]: 10, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Fighter Multiclass Proficiencies",
     startingProficiencies: "Fighter Starting Proficiencies",
