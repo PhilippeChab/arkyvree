@@ -46,7 +46,8 @@ holds names the code that holds it.
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
 - **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training
   in has Disadvantage on Strength and Dexterity tests and can't cast spells (`Diagnoses.findArmorIssues`); a Shield
-  without training adds nothing to its Armor Class (`ArmorClass`).
+  without training adds nothing to its Armor Class, its magic bonus neither (a Shield +1's, on `combat.ac.shield`, as
+  3.5's are: `ArmorClass`).
 
 ## Combat
 

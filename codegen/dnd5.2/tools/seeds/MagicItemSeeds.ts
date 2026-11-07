@@ -51,11 +51,13 @@ const TEMPLATES: Record<"Armor" | "Shield" | "Weapon", readonly string[]> = {
   Weapon: WEAPON_NAMES,
 };
 
-/** An enhanced item's modifiers, by its type and its bonus: a weapon's to hit and damage, an armor's Armor Class. */
+/**
+ * An enhanced item's modifiers, by its type and its bonus: a weapon's to hit and damage, an armor's Armor Class, a
+ * Shield's on its own part of it (`combat.ac.shield`, as 3.5's), which needs Shield training as the Shield's +2 does.
+ */
 function enhancement(type: "Armor" | "Shield" | "Weapon", plus: number): Modifier[] {
-  return type === "Weapon"
-    ? [bonus("weapon.tohit.magic", plus), bonus("weapon.damage.magic", plus)]
-    : [bonus("combat.ac.misc", plus)];
+  if (type === "Weapon") return [bonus("weapon.tohit.magic", plus), bonus("weapon.damage.magic", plus)];
+  return [bonus(type === "Shield" ? "combat.ac.shield" : "combat.ac.misc", plus)];
 }
 
 /** A rarity line a variant's text opens on past its type's ("Uncommon (+1)", "Rare (Silver)"). */

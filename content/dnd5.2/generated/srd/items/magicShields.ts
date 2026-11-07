@@ -24,7 +24,7 @@ export const MAGIC_SHIELDS: Dnd52ItemSeed[] = [
       "While holding this Shield, you have a +1 bonus to Armor Class, in addition to the Shield's normal bonus to AC.",
     fields: { [ITEM_TYPE]: "Shield", [ITEM_SLOT]: "Off Hand", [ITEM_RARITY]: "Uncommon", [ITEM_ATTUNEMENT]: false },
     links: { madeFrom: "Shield" },
-    modifiers: [{ target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.shield", operator: "add", value: "1", valueType: "number" }],
   },
   {
     name: "Shield +2",
@@ -32,7 +32,7 @@ export const MAGIC_SHIELDS: Dnd52ItemSeed[] = [
       "While holding this Shield, you have a +2 bonus to Armor Class, in addition to the Shield's normal bonus to AC.",
     fields: { [ITEM_TYPE]: "Shield", [ITEM_SLOT]: "Off Hand", [ITEM_RARITY]: "Rare", [ITEM_ATTUNEMENT]: false },
     links: { madeFrom: "Shield" },
-    modifiers: [{ target: "combat.ac.misc", operator: "add", value: "2", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.shield", operator: "add", value: "2", valueType: "number" }],
   },
   {
     name: "Shield +3",
@@ -40,7 +40,7 @@ export const MAGIC_SHIELDS: Dnd52ItemSeed[] = [
       "While holding this Shield, you have a +3 bonus to Armor Class, in addition to the Shield's normal bonus to AC.",
     fields: { [ITEM_TYPE]: "Shield", [ITEM_SLOT]: "Off Hand", [ITEM_RARITY]: "Very Rare", [ITEM_ATTUNEMENT]: false },
     links: { madeFrom: "Shield" },
-    modifiers: [{ target: "combat.ac.misc", operator: "add", value: "3", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.shield", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Shield of Missile Attraction",

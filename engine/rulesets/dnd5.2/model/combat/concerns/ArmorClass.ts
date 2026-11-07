@@ -10,9 +10,9 @@ type OwnParts = Pick<ArmorClassParts, "misc" | "shield">;
 /** The heaviest of the armors a character wears, by its category: the one its Armor Class is from. */
 const CATEGORY_WEIGHT: Record<string, number> = { light: 1, medium: 2, heavy: 3 };
 
-/** The Armor Class a set's shield adds: its first's, the one it uses, with training to use it (`trained`), else none. */
-function shieldAcOf(shields: readonly ShieldSlot[], trained: boolean): number {
-  return trained ? (shields[0]?.ac.total ?? 0) : 0;
+/** The Armor Class a set's shield adds: its first's, the one it uses. */
+function shieldAcOf(shields: readonly ShieldSlot[]): number {
+  return shields[0]?.ac.total ?? 0;
 }
 
 /**
@@ -20,7 +20,7 @@ function shieldAcOf(shields: readonly ShieldSlot[], trained: boolean): number {
  * modifier, and the best ability an Unarmored Defense adds (the SRD's "you can't use more than one" base AC
  * calculation: a Barbarian / Monk's better of Constitution and Wisdom); in armor, the armor's and as much of its
  * Dexterity modifier as the armor lets it add (all of it in light armor, 2 at most in medium armor, none in heavy
- * armor); a Shield's +2, with the training to use it; and what modifiers add. A character in several armors wears the
+ * armor); a Shield's +2 and what modifiers add to it (a Shield +1's), with the training to use it; and misc. A character in several armors wears the
  * heaviest.
  */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
@@ -41,11 +41,12 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
         get dexterity() {
           return shared().dexterity;
         },
+        // Without Shield training, a Shield adds nothing, what a modifier adds to it either (a Shield +1's +1)
         get shield() {
-          return shieldAcOf(shields(), trained()) + own.shield;
+          return trained() ? shieldAcOf(shields()) + own.shield : 0;
         },
         set shield(value: number) {
-          own.shield = value - shieldAcOf(shields(), trained());
+          own.shield = value - (trained() ? shieldAcOf(shields()) : 0);
         },
         get misc() {
           return shared().misc + own.misc;

@@ -248,6 +248,21 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect({ ability: held.ability, damage: held.damage.total }).toEqual({ ability: "Dexterity", damage: "1d8+3" });
   });
 
+  test("of a Shield +1: its +2 and its +1 with Shield training, nothing without", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const shield = (await Entities.findOne(db, { entityType: "items", name: "Shield +1", rulesetId: ctx.rulesetId }))!;
+    const shieldAcOf = async (klass: string) => {
+      const character = await createDnd52Character(session);
+      await addLevel(session, character.id, klass, 1, { hp: HIT_DICE[klass] }, true);
+      await CharacterInventoryService.addItem(session, character.id, shield.id, 1, "Off Hand", null, null, [0], true);
+      const { ac } = (await buildCharacter(character.id)).components.combat.getCombat().weaponsets["0"];
+      return { shield: ac.shield, total: ac.total };
+    };
+    // A fighter's training: the Shield's +2 and its +1; a wizard's none, its +1 neither
+    expect(await shieldAcOf("Fighter")).toEqual({ shield: 3, total: 13 });
+    expect(await shieldAcOf("Wizard")).toEqual({ shield: 0, total: 10 });
+  });
+
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
     const attacksOf = async (classes: [string, number][]) =>
       (await leveled(classes)).components.combat.getCombat().attacks;
