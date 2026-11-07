@@ -26,6 +26,12 @@ export interface ArmorClassParts {
   readonly dexterity: number;
   misc: number;
   shield: number;
+  /**
+   * The abilities its unarmored base can add, by their keys, each an Unarmored Defense's to set (a Barbarian's
+   * Constitution, a Monk's Wisdom): the best of them counts, none when none is above 0. A set's own holds what a
+   * modifier gated on the set sets (a monk's, no Shield in the set), the sheet's what every set shares.
+   */
+  readonly unarmored: Record<string, boolean>;
 }
 
 /**
@@ -77,11 +83,6 @@ export interface CombatData {
   };
   /** Whether its off-hand attack adds its ability modifier to damage: the Two-Weapon Fighting style. */
   twoweapon: { ability: boolean };
-  /**
-   * The abilities an unarmored Armor Class can add, by their keys, each an Unarmored Defense's to set (a Barbarian's
-   * Constitution, a Monk's Wisdom): the best of them counts, none when none is above 0.
-   */
-  unarmored: Record<string, boolean>;
   weaponsets: Record<string, WeaponSet>;
 }
 
@@ -196,7 +197,7 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
     // Two classes' Extra Attacks don't stack: the attacks are the most any feature gives (`attacks`)
     let attacks = 1;
     return {
-      ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0 },
+      ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0, unarmored: {} },
       armor: { category: "none", strengthmet: true, trained: true },
       armortraining: { light: false, medium: false, heavy: false, shields: false },
       armors,
@@ -223,7 +224,6 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
       shields,
       speed: { base: COMBAT_RULES.DEFAULT_SPEED, misc: 0, total: COMBAT_RULES.DEFAULT_SPEED },
       twoweapon: { ability: false },
-      unarmored: {},
       weaponsets: {},
     };
   }

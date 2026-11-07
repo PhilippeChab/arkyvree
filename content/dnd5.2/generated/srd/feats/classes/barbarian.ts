@@ -17,7 +17,7 @@ export const BARBARIAN_CLASS_FEATS: FeatSeed[] = [
     description:
       "While you aren't wearing any armor, your base Armor Class equals 10 plus your Dexterity and Constitution modifiers. You can use a Shield and still gain this benefit.",
     aptitudes: ["Barbarian Features"],
-    modifiers: [{ target: "combat.unarmored.constitution", operator: "set", value: "true", valueType: "boolean" }],
+    modifiers: [{ target: "combat.ac.unarmored.constitution", operator: "set", value: "true", valueType: "boolean" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {

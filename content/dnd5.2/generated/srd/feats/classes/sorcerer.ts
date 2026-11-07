@@ -126,7 +126,7 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
     aptitudes: ["Sorcerer Features"],
     modifiers: [
       { target: "combat.hp.misc", operator: "add", value: "{{ [classes.sorcerer.level] }}", valueType: "number" },
-      { target: "combat.unarmored.charisma", operator: "set", value: "true", valueType: "boolean" },
+      { target: "combat.ac.unarmored.charisma", operator: "set", value: "true", valueType: "boolean" },
     ],
     fields: { [FEAT_SELECTABLE]: false },
   },

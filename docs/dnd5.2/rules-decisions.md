@@ -55,8 +55,9 @@ holds names the code that holds it.
 - **Armor Class** is 10 and Dexterity unarmored; an armor's and its Dexterity, capped at 2 in medium armor, none in
   heavy armor, a penalty included (Chain Mail's 16 whatever the wearer's Dexterity); a trained Shield's +2; and misc
   (`ArmorClass`). **An Unarmored Defense is another base AC calculation, of which one counts:** its modifier sets its
-  ability's flag (`combat.unarmored.<ability>`: a Barbarian's Constitution, a Monk's Wisdom, gated on no Shield held,
-  a Draconic Sorcerer's Charisma), and without armor the base adds the best ability set, when above 0. A Barbarian 1 /
+  ability's flag (`combat.ac.unarmored.<ability>`: a Barbarian's Constitution, a Draconic Sorcerer's Charisma, and a
+  Monk's Wisdom, gated on no Shield held, so set in each weapon set without one), and without armor the base adds the
+  best ability set, when above 0. A Barbarian 1 /
   Monk 1 adds the better of Constitution and Wisdom, not both; a Barbarian of Constitution 8 keeps 10 and Dexterity:
   the SRD's "you choose which calculation to use; you can't use more than one".
 - **An attack** adds its ability's modifier (the better of Strength and Dexterity with a Finesse weapon, as the sheet
@@ -69,7 +70,8 @@ holds names the code that holds it.
   give each its die from the Monk table (`damage.die`: 6 sides, 8 from its 5th level, 10 from its 11th, 12 from its
   17th, as a 3.5 monk's levels give its unarmed damage), which a weapon rolls when better than its own dice (a
   Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
-  wears no armor and holds no Shield; that it wields only Monk weapons isn't checked.
+  wears no armor, in each weapon set holding no Shield (a weapon modifier gated on the set reaches that set's weapons
+  alone: `Builds.scopesOf`); that it wields only Monk weapons isn't checked.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
   3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2), and the sheet keeps the most any
   feature sets, whatever the order the classes were taken in (a Fighter 11 / Paladin 5 makes 3, the Paladin's level

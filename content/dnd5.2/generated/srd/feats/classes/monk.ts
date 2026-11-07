@@ -151,7 +151,7 @@ export const MONK_CLASS_FEATS: FeatSeed[] = [
     aptitudes: ["Monk Features"],
     modifiers: [
       {
-        target: "combat.unarmored.wisdom",
+        target: "combat.ac.unarmored.wisdom",
         operator: "set",
         value: "true",
         valueType: "boolean",

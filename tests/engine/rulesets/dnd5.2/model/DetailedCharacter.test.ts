@@ -294,6 +294,45 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(built.components.spellGroupings.getDcs().sacredflame?.cleric?.total).toBe(8 + 2 + 3);
   });
 
+  test("of a monk with a Shield in another set: its Unarmored Defense and Martial Arts in the set without it", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const monk = await createDnd52Character(session, { abilities: { Dexterity: 16, Wisdom: 16 } });
+    await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+    const itemId = async (name: string) =>
+      (await Entities.findOne(db, { entityType: "items", name, rulesetId: ctx.rulesetId }))!.id;
+    await CharacterInventoryService.addItem(
+      session,
+      monk.id,
+      await itemId("Quarterstaff"),
+      1,
+      "Two Handed",
+      null,
+      null,
+      [0],
+      true,
+    );
+    await CharacterInventoryService.addItem(
+      session,
+      monk.id,
+      await itemId("Shield"),
+      1,
+      "Off Hand",
+      null,
+      null,
+      [1],
+      true,
+    );
+    const { weaponsets } = (await buildCharacter(monk.id)).components.combat.getCombat();
+    // The first set holds no Shield: 10, Dexterity's +3 and Wisdom's +3; its Quarterstaff with Dexterity, its d8
+    expect(weaponsets["0"].ac.total).toBe(16);
+    expect({ ability: weaponsets["0"].twohanded!.ability, damage: weaponsets["0"].twohanded!.damage.total }).toEqual({
+      ability: "Dexterity",
+      damage: "1d8+3",
+    });
+    // The second holds one, which a monk has no training with: 10 and Dexterity's +3 alone
+    expect(weaponsets["1"].ac.total).toBe(13);
+  });
+
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
     const attacksOf = async (classes: [string, number][]) =>
       (await leveled(classes)).components.combat.getCombat().attacks;

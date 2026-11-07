@@ -1,5 +1,6 @@
 import type CharacterState from "@/engine/rulesets/dnd5.2/model/CharacterState.ts";
 import CombatPaths from "@/engine/rulesets/dnd5.2/model/combat/CombatPaths.ts";
+import ItemsPaths from "@/engine/rulesets/dnd5.2/model/combat/ItemsPaths.ts";
 import SpellsPaths from "@/engine/rulesets/dnd5.2/model/spells/SpellsPaths.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -28,17 +29,21 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
      * The weapon sets a modifier on the Armor Class applies in, each set its own Armor Class: an item's, the sets whose
      * hands hold it (a +1 Shield's is its set's); one on the shield's part, which no set shares, or whose own
      * requirements read what follows the set (the shield held: a monk's Unarmored Defense), each set, its requirements
-     * read there. Any other applies to the parts every set shares, and a modifier on anything else to the whole sheet.
+     * read there. Any other applies to the parts every set shares. A modifier on a group of weapons whose requirements
+     * read the set (a monk's Martial Arts, no Shield held) applies in each set to that set's weapons alone; any other,
+     * and a modifier on anything else, to the whole sheet.
      */
     protected override scopesOf(modifier: Modifier): string[] | null {
-      if (!CombatPaths.isArmorClassTarget(modifier.target)) return null;
+      const armorClass = CombatPaths.isArmorClassTarget(modifier.target);
+      if (!armorClass && !ItemsPaths.isWeaponGroupTarget(modifier.target)) return null;
       const { combat } = this.components;
-      const held = modifier.sourceType === "items" ? combat.getSetsHolding(modifier.sourceId) : [];
+      const held = armorClass && modifier.sourceType === "items" ? combat.getSetsHolding(modifier.sourceId) : [];
       if (held.length > 0) return held;
       const readsSet = this.ownGatesOf(modifier).some((group) =>
         group.some((requirement) => requirement.target !== null && CombatPaths.readsWeaponSet(requirement.target)),
       );
-      return readsSet || CombatPaths.isShieldBonusTarget(modifier.target) ? combat.getSetKeys() : null;
+      const shieldPart = armorClass && CombatPaths.isShieldBonusTarget(modifier.target);
+      return readsSet || shieldPart ? combat.getSetKeys() : null;
     }
 
     /** Nothing between the rounds: what a weapon's attack reads, its proficiency and its mastery, modifiers set. */

@@ -204,12 +204,13 @@ export default class CombatPaths implements PathCategory<Dnd52Components> {
   }
 
   /**
-   * Each ability's Unarmored Defense (`combat.unarmored.<ability>`), a flag a modifier sets: an unarmored Armor Class
-   * adds the best ability set, none when none is above 0.
+   * Each ability's Unarmored Defense (`combat.ac.unarmored.<ability>`), a flag a modifier sets: an unarmored Armor
+   * Class adds the best ability set, none when none is above 0. A modifier gated on the set (a monk's, no Shield held)
+   * sets it in each set that meets it, as any modifier on the Armor Class (`Builds.scopesOf`).
    */
   static generateUnarmoredPaths(abilities: readonly { name: string }[], kind: OperatorKind): TargetPath[] {
     return abilities.map(({ name }) => ({
-      path: `combat.unarmored.${stripSeparators(name)}`,
+      path: `combat.ac.unarmored.${stripSeparators(name)}`,
       category: "combat",
       description: `${name} modifier added to AC without armor`,
       valueType: "boolean" as const,
@@ -248,7 +249,7 @@ export default class CombatPaths implements PathCategory<Dnd52Components> {
     "combat.initiative": "Initiative bonus components",
     "combat.critical": "The rolls that score a critical hit",
     "combat.twoweapon": "Two-weapon fighting: the off-hand attack's damage",
-    "combat.unarmored": "The abilities AC adds without armor: the best counts",
+    "combat.ac.unarmored": "The abilities AC adds without armor: the best counts",
     "combat.speed": "Speed (ft)",
     "combat.carrying": "Carried weight and carrying capacity",
     "combat.weaponsets": "Each weapon set's Armor Class",
