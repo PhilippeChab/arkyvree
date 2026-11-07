@@ -1,6 +1,7 @@
 import { type CharacterInput, type ChildrenPlan, type PickPlan, type StoredPick } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Feat, Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
@@ -197,6 +198,25 @@ export default abstract class LevelUpBase<C> {
     return first ? { average: hd, max: hd, min: hd } : this.rules.hitPointsOf(hd);
   }
 
+  /**
+   * The two projections of a saved level (`advancementId`, of class level `classLevelId`) that say what it brings: the
+   * character as it was before the level (`before`), and with the level alone after that (`withLevel`), its grants
+   * and its picks (`picks`), at the hit points a level counts before they're rolled. What an edited level answers for
+   * (`findEditedLevelIssues`), and what Edit Level lists it gives.
+   */
+  protected projectLevelContribution(
+    advancementId: string,
+    classLevelId: string,
+    picks: Pick<LevelPicks, "feats" | "spells">,
+  ) {
+    const before = new CharacterProjection(this.character);
+    before.dropLevelsFrom(advancementId);
+    const withLevel = new CharacterProjection(this.character);
+    withLevel.dropLevelsFrom(advancementId);
+    withLevel.pick(withLevel.addLevel(classLevelId, { hp: LevelRules.UNROLLED_LEVEL_HP }), this.toPickPlans(picks));
+    return { before, withLevel };
+  }
+
   protected get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
@@ -214,7 +234,7 @@ export default abstract class LevelUpBase<C> {
   }
 
   /** A level's picks as a save writes them: its feats and its spells, each in its pool. */
-  protected toPickPlans({ feats, spells }: LevelPicks): PickPlan[] {
+  protected toPickPlans({ feats, spells }: Pick<LevelPicks, "feats" | "spells">): PickPlan[] {
     const pooled = (step: string, byPool: Record<string, string[]>) =>
       Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
     return [...pooled("feats", feats), ...pooled("spells", spells)];

@@ -64,9 +64,29 @@ const WIZARD_1: LevelPlan = {
 /** A wizard's scores: Intelligence and Strength 13 or more, a fighter's multiclass's. */
 const WIZARD_SCORES = { Strength: 13, Dexterity: 14, Constitution: 12, Intelligence: 15, Wisdom: 10, Charisma: 8 };
 
+/** The names of what a plan's answer says its feats step grants. */
+function grantedNamesOf(answer: AdvancementPlanAnswer) {
+  return stepAnswerOf(answer, "feats", "pick").granted.map(({ name }) => name);
+}
+
 /** A pool's room in a pick step's answer, by the pool's name. */
 function poolOf(answer: AdvancementPlanAnswer, step: "feats" | "spells", name: string) {
   return Object.values(stepAnswerOf(answer, step, "pick").pools).find((pool) => pool.name === name);
+}
+
+/** A Human Soldier fighter of `levels` levels, its Fighting Style at its first, the Champion at its third. */
+async function createFighter(levels: number) {
+  const character = await createHuman(FIGHTER_SCORES);
+  const saved = [];
+  for (let level = 1; level <= levels; level++) {
+    const picks: Record<number, Record<string, string[]>> = {
+      1: { "Fighting Style": ["Defense"] },
+      3: { "Fighter Subclass": ["Champion"] },
+    };
+    const feats = picks[level] ?? {};
+    saved.push(await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 6, feats }, true));
+  }
+  return { character, saved };
 }
 
 /** A new Human Soldier of `scores`. */
@@ -155,6 +175,52 @@ describe("A D&D 5th Edition character's levels", () => {
       const character = await createHuman(FIGHTER_SCORES);
       const hp = stepAnswerOf(await levelAnswer(character.id, "Fighter", 1), "hp", "value");
       expect(hp.advancements).toMatchObject([{ max: 10, min: 10 }]);
+    });
+  });
+
+  describe("listing what a level grants", () => {
+    test("names what a class's starting proficiencies give at a first level, its saving throws", async () => {
+      const character = await createHuman(FIGHTER_SCORES);
+      const granted = grantedNamesOf(await levelAnswer(character.id, "Fighter", 1));
+      expect(granted).toEqual(
+        expect.arrayContaining([
+          "Fighter Starting Proficiencies",
+          "Saving Throw Proficiency: Strength",
+          "Saving Throw Proficiency: Constitution",
+        ]),
+      );
+      expect(granted).not.toContain("Saving Throw Proficiency: Dexterity");
+    });
+
+    test("names a subclass's features its pick gives at the level it's picked", async () => {
+      const { character } = await createFighter(2);
+      const granted = grantedNamesOf(
+        await levelAnswer(character.id, "Fighter", 3, { feats: { "Fighter Subclass": ["Champion"] } }),
+      );
+      expect(granted).toEqual(
+        expect.arrayContaining(["Improved Critical (Champion)", "Remarkable Athlete (Champion)"]),
+      );
+      expect(granted).not.toContain("Additional Fighting Style (Champion)");
+    });
+
+    test("names a subclass's feature at its class level, and opens the pick it gives in the same level", async () => {
+      const { character } = await createFighter(6);
+      const answer = await levelAnswer(character.id, "Fighter", 7);
+      expect(grantedNamesOf(answer)).toEqual(["Additional Fighting Style (Champion)"]);
+      expect(poolOf(answer, "feats", "Fighting Style")).toMatchObject({ allowed: 2, spent: 1, available: 1 });
+    });
+
+    test("names what an edited level gave when it was taken, not what the levels after it give", async () => {
+      const { character, saved } = await createFighter(7);
+      const ctx = await getDnd52SeedCtx();
+      const edit = levelEditPlan(6, picksOf(ctx, { feats: { "Fighter Subclass": ["Champion"] } }));
+      const granted = grantedNamesOf(
+        await getPlanAnswer(session, character.id, { ...edit, editedAdvancementId: saved[2].id }),
+      );
+      expect(granted).toEqual(
+        expect.arrayContaining(["Improved Critical (Champion)", "Remarkable Athlete (Champion)"]),
+      );
+      expect(granted).not.toContain("Additional Fighting Style (Champion)");
     });
   });
 

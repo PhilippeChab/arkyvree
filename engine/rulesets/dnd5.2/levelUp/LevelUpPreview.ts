@@ -12,7 +12,8 @@ export default class LevelUpPreview extends PlannedLevelsState {
    * The level-up wizard's preview of the planned levels: its feats and spells steps, each level's class, hit die and
    * hit points (a character's first level's, its die's highest), and where each pool's next pick goes. The feats and
    * spells steps fit the form's feats and spells (`picks`) to their pools, as a save would take them, and say what fits
-   * (`fitted`) and each pool's room for them.
+   * (`fitted`), each pool's room for them, and what the levels grant: their class levels' grants, and what the
+   * character holds with them and the fitted picks that a modifier gave it, which it didn't hold as saved.
    */
   private buildLevelUpPreview(planned: PlannedLevels, picks: Partial<LevelPicks>) {
     const { classLevelEntries, savedLevelCount } = planned;
@@ -20,9 +21,10 @@ export default class LevelUpPreview extends PlannedLevelsState {
     const { classLevelIds } = gains;
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd52, this.countOwnPicks(fitted.picks));
+    const given = this.givenWith(planned.saved, fitted.character);
     return {
-      feats: { ...this.featStep(pools, this.grantingLevelsOf(planned)), fitted: fitted.picks.feats },
-      spells: { ...this.spellStep(pools, classLevelIds), fitted: fitted.picks.spells },
+      feats: { ...this.featStep(pools, this.grantingLevelsOf(planned), given.feats), fitted: fitted.picks.feats },
+      spells: { ...this.spellStep(pools, classLevelIds, given.spells), fitted: fitted.picks.spells },
       // Per-level data for HP step, review, and auto-assignment
       levelDetails: classLevelEntries.map(({ klass, classLevel }, i) => ({
         classId: klass.id,

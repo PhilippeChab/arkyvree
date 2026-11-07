@@ -36,6 +36,21 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
+   * What the step's level gives through a modifier (`givenWith`), with its fitted picks (`picks`): an edited level's,
+   * as it was taken (the character before it, then with it alone after that, as its issues read it); a level-up's
+   * with the levels the plan takes before it.
+   */
+  private givenAt(step: LevelQuery, classLevelId: string, picks: PoolPicks) {
+    if (step.editedLevel) {
+      const { before, withLevel } = this.projectLevelContribution(step.editedLevel.id, classLevelId, picks);
+      return this.givenWith(this.build(before), this.build(withLevel));
+    }
+    const before = new CharacterProjection(this.character);
+    before.addLevels(step.planned?.classLevelIds ?? [], { hp: LevelRules.UNROLLED_LEVEL_HP });
+    return this.givenWith(this.build(before), this.build(this.projectStep(classLevelId, step, picks)));
+  }
+
+  /**
    * The step's projection: a level of class level `classLevelId` after the levels planned before it, or in the edited
    * level's place, so the first level stays the first, with the feats and spells it picks (`picks`), when given.
    */
@@ -61,9 +76,10 @@ export default class LevelUpSteps extends LevelUpState {
   describeLevelSteps(step: LevelQuery) {
     const { classLevel, first, picks, pools }: Picked = this.buildPicked(step);
     const levels = [{ classLevelId: classLevel.id, first }];
+    const given = this.givenAt(step, classLevel.id, picks);
     return {
-      feats: { ...this.featStep(pools, levels), fitted: picks.feats },
-      spells: { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells },
+      feats: { ...this.featStep(pools, levels, given.feats), fitted: picks.feats },
+      spells: { ...this.spellStep(pools, [classLevel.id], given.spells), fitted: picks.spells },
     };
   }
 }

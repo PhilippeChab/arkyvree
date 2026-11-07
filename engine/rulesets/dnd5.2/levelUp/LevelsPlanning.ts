@@ -196,21 +196,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The two projections that say which issues an edited level answers for (`findEditedLevelIssues`): the character as
-   * it was before the level (`before`), and with the level alone after that (`withLevel`). Any entity the level brings
-   * can raise a pool (a class level's grant, a feat it picks), so `withLevel` takes its grants and its picks, at the
-   * hit points a level counts before they're rolled.
-   */
-  private projectLevelContribution(advancementId: string, classLevelId: string, picks: LevelPicks) {
-    const before = new CharacterProjection(this.character);
-    before.dropLevelsFrom(advancementId);
-    const withLevel = new CharacterProjection(this.character);
-    withLevel.dropLevelsFrom(advancementId);
-    withLevel.pick(withLevel.addLevel(classLevelId, { hp: LevelRules.UNROLLED_LEVEL_HP }), this.toPickPlans(picks));
-    return { before, withLevel };
-  }
-
-  /**
    * The character as a level-up leaves it: each planned level a fresh level after its saved ones, with its hit points
    * and picks, as a level's edit projects it.
    */
