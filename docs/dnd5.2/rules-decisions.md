@@ -158,5 +158,10 @@ holds names the code that holds it.
   like keep their text.
 - A bard's Magical Secrets: its prepared spells come from its own list alone, not the Cleric's, the Druid's or the
   Wizard's. Blessed and Druidic Warrior's cantrips aren't swapped at a later level.
+- A weapon's own critical range: the range is the character's (`combat.critical.range`, a Champion's), so a homebrew
+  keen weapon's modifier widens every weapon's.
+- A warlock's Mystic Arcanum offers the spells its pools list ("Mystic Arcanum (Level 6)"): a fork's new level 6 warlock
+  spell joins the pool as well as the list. Two classes with Pact Magic add their slot levels together (the SRD has
+  one).
 - Spells a feature or a trait always has prepared: a Life Domain's Aid at Cleric 3, a drow's Faerie Fire at 3rd level.
   Its description lists them; no modifier makes them known.
