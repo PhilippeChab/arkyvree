@@ -88,8 +88,8 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /**
-     * Its skill picks: each skill's Skill Proficiency, listed in the class's skills' pool ("Fighter Skills"); none for a
-     * class whose picks are any skill's (a bard's, in the Skill Proficiencies pool).
+     * Its skill picks: each skill's Skill Proficiency, listed in the class's skills' pool ("Fighter Skills"); none for
+     * a class whose picks are any skill's (a bard's, in the Skill Proficiencies pool).
      */
     private async insertSkillPicks(def: ClassSeed) {
       if (def.classSkills.length === 0) return;

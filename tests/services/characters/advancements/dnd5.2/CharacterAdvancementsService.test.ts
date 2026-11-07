@@ -4,6 +4,7 @@ import type { AdvancementPlanAnswer } from "@/engine/core/module/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterAdvancementsService } from "@/server/services/characters/advancements/index.ts";
+import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
@@ -546,5 +547,23 @@ describe("A paladin's Blessed Warrior", () => {
     // A fighter's Fighting Style offers the feats alone; the paladin's own pool, the feats and Blessed Warrior
     expect(await named("Fighting Style")).not.toContain("Blessed Warrior");
     expect(await named("Paladin Fighting Style")).toEqual(expect.arrayContaining(["Blessed Warrior", "Defense"]));
+  });
+});
+
+describe("An Expertise", () => {
+  test("takes a proficiency however the character has it, a homebrew modifier's too", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES });
+    await addLevel(session, character.id, "Fighter", 1, { hp: 10 }, true);
+    // Arcana's proficiency from the character's own modifier, no Skill Proficiency feat
+    const proficient = { target: "skills.arcana.proficient", operator: "set", value: "true", valueType: "boolean" };
+    await CharacterModifiersService.createModifier(session, character.id, proficient);
+    const plan = levelUpPlan([{ classId: ctx.classMap["Fighter"], level: 2, hp: 1 }]);
+    // The Expertise family's feats, as its row opens them
+    const at = { pool: ctx.aptMap["Expertise"], group: "Expertise" };
+    const { items } = await getStepOptions(session, character.id, "feats", plan, at, { limit: 50 });
+    const eligible = (name: string) => items.find((item) => item.name === name)?.eligible;
+    expect(eligible("Expertise: Arcana")).toBe(true);
+    expect(eligible("Expertise: History")).toBe(false);
   });
 });

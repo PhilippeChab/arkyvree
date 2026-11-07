@@ -210,7 +210,8 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
       if (!armor) return [];
       return traverser.traverse(component, subPath, armor, grouping, 0, pathParts);
     }
-    // Each weapon or shield of the group, by its key ("0_mainhand": its set's, then its hand), a set's alone in its scope
+    // Each weapon or shield of the group, by its key ("0_mainhand": its set's, then its hand), a set's alone in its
+    // scope
     const group = ItemsPaths.heldGroup(component, subcategory, grouping);
     if (!isRecord(group)) return [];
     const scope = subcategory === "weapons" ? context?.scope : undefined;

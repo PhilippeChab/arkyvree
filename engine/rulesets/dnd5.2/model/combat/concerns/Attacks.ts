@@ -40,8 +40,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
     /**
      * The ability a weapon's attack and damage add, as the sheet stands when read (an increase the modifiers applied
-     * counts): the better of Strength and Dexterity with a Finesse weapon or one a modifier makes `finesse` (Martial Arts),
-     * Dexterity with any other ranged weapon, Strength with any other melee weapon, a thrown one's too.
+     * counts): the better of Strength and Dexterity with a Finesse weapon or one a modifier makes `finesse` (Martial
+     * Arts), Dexterity with any other ranged weapon, Strength with any other melee weapon, a thrown one's too.
      */
     private abilityOf(fields: WeaponFields, finesse: boolean): "Dexterity" | "Strength" {
       if (finesse || fields.properties.includes("Finesse")) {

@@ -82,8 +82,8 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
 
     /**
      * An Armor Class's base, from the Unarmored Defenses the sheet (`shared`) and a set (`own`) set: the armor's when
-     * one is worn; unarmored, 10 and the best ability any of them adds, when above 0 (the SRD's "you can't use more than
-     * one" base AC calculation: a Barbarian / Monk's better of Constitution and Wisdom).
+     * one is worn; unarmored, 10 and the best ability any of them adds, when above 0 (the SRD's "you can't use more
+     * than one" base AC calculation: a Barbarian / Monk's better of Constitution and Wisdom).
      */
     private unarmoredBase(...flags: Record<string, boolean>[]): number {
       const worn = this.wornArmor();

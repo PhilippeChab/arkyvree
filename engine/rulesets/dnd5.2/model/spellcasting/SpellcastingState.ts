@@ -48,8 +48,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   }
 
   /**
-   * The character's slots and caster levels, counted when read, so a planned level counts; and its Pact Magic, which its
-   * modifiers add to (a warlock's levels').
+   * The character's slots and caster levels, counted when read, so a planned level counts; and its Pact Magic, which
+   * its modifiers add to (a warlock's levels').
    */
   protected readonly castingLevels: CastingLevels = (() => {
     const casterLevel = () => this.countCasterLevels();
@@ -83,8 +83,9 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   /**
    * The character's classes that cast spells, each by its name with its level, its own slots and how its levels count
-   * toward a multiclass's slots (its field's, `MULTICLASS_SLOTS`): those whose spell lists hold a slot, their levels' or
-   * a modifier's, whatever their field says. A homebrew caster with the field's default casts as the SRD's do.
+   * toward a multiclass's slots (its field's, `MULTICLASS_SLOTS`): those whose spell lists hold a slot, their levels'
+   * or a modifier's, whatever their field says: a homebrew caster left at the field's default has its own slots, and
+   * two such classes keep each its own (`countSlots`).
    */
   private castingClasses() {
     return Object.entries(this.classes.getCharacterClasses()).flatMap(([className, { klass, level }]) => {
@@ -95,9 +96,9 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   }
 
   /**
-   * The levels the character's casting classes count toward the Multiclass Spellcaster table, as the Multiclassing rules
-   * add them: all the levels of each class whose levels all count, and half the levels of those whose half do, together,
-   * rounded up.
+   * The levels the character's casting classes count toward the Multiclass Spellcaster table, as the Multiclassing
+   * rules add them: all the levels of each class whose levels all count, and half the levels of those whose half do,
+   * together, rounded up.
    */
   private countCasterLevels(casting = this.castingClasses()): number {
     let all = 0;
@@ -111,8 +112,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   /**
    * The character's spell slots by spell level, from the 1st. Casting from one class whose levels count (the SRD's
-   * "follow the rules for that class"), that class's own; from several, the Multiclass Spellcaster table's at the levels
-   * they count. A casting class whose levels don't count keeps its own slots beside them.
+   * "follow the rules for that class"), that class's own; from several, the Multiclass Spellcaster table's at the
+   * levels they count. A casting class whose levels don't count keeps its own slots beside them.
    */
   private countSlots(): Record<string, number> {
     const casting = this.castingClasses();

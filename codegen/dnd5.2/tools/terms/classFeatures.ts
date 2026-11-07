@@ -78,8 +78,8 @@ const UNARMORED = eqStr("combat.armor.category", "none");
 /**
  * The counts a class's levels hold that give room or a bonus as they grow, each increase at its level: the kinds of
  * weapons a Weapon Mastery takes (a barbarian's, a fighter's), a monk's Unarmored Movement, and its Martial Arts die's
- * sides on each Monk weapon (6 at its 1st level, 2 more at its 5th, 11th and 17th: d8, d10, d12), which the weapon rolls
- * when better than its own, while its monk wears no armor and holds no Shield.
+ * sides on each Monk weapon (6 at its 1st level, 2 more at its 5th, 11th and 17th: d8, d10, d12), which the weapon
+ * rolls when better than its own, while its monk wears no armor and holds no Shield.
  */
 export const CLASS_COUNTS: ClassCount[] = [
   { key: "weapon_mastery", target: `aptitudes.${stripSeparators(WEAPON_MASTERY_POOL)}.allowed` },
@@ -128,8 +128,8 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
     modifiers: [setFlag("skills.*.halfproficient")],
   },
   {
-    // Its weapons attack with Dexterity as a Finesse weapon does, while its monk wears no armor and holds no Shield; its
-    // die is its levels' (`CLASS_COUNTS`)
+    // Its weapons attack with Dexterity as a Finesse weapon does, while its monk wears no armor and holds no Shield;
+    // its die is its levels' (`CLASS_COUNTS`)
     feature: "Martial Arts",
     owner: "Monk",
     modifiers: MONK_WEAPONS.map((weapon) => ({
