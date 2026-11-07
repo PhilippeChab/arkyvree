@@ -47,7 +47,7 @@ export const CATEGORIES_BY_TYPE: Readonly<Record<string, FeatCategory>> = {
  * to its text), Two-Weapon Fighting's ability modifier to an off-hand attack's damage.
  */
 export const FEAT_MODIFIERS: Readonly<Record<string, ModifierSeed[]>> = {
-  Alert: [bonus("combat.initiative.misc", "{{ [combat.proficiency] }}")],
+  Alert: [bonus("combat.initiative.misc", "{{ [combat.proficiency.total] }}")],
   Archery: WEAPON_NAMES.filter((weapon) => WEAPON_DEFINITIONS[weapon]!.ranged).map((weapon) =>
     bonus(`items.weapons.${stripSeparators(weapon)}.tohit.misc`, 2),
   ),

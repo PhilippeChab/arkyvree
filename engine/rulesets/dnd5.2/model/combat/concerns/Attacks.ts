@@ -90,7 +90,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
             return modifier();
           },
           get proficiency() {
-            return weapon.proficient ? combat.proficiency : 0;
+            return weapon.proficient ? combat.proficiency.total : 0;
           },
           magic: 0,
           misc: 0,

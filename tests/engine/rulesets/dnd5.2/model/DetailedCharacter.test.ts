@@ -178,11 +178,11 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // A Fighter 1 with an Ioun Stone of Mastery's +1, as its own modifier
     const fighter = await createDnd52Character(session, { abilities: { Strength: 14 } });
     await addLevel(session, fighter.id, "Fighter", 1, { hp: HIT_DICE.Fighter }, true);
-    const bonus = { target: "combat.proficiencymisc", operator: "add", value: "1", valueType: "number" };
+    const bonus = { target: "combat.proficiency.misc", operator: "add", value: "1", valueType: "number" };
     await CharacterModifiersService.createModifier(session, fighter.id, bonus);
     const built = await buildCharacter(fighter.id);
     const combat = built.components.combat.getCombat();
-    expect(combat.proficiency).toBe(2 + 1);
+    expect(combat.proficiency).toMatchObject({ base: 2, misc: 1, total: 3 });
     // Its Strength save, a fighter's: Strength's +2 and the raised bonus's +3
     expect(savesOf(built)).toMatchObject({ strength: 2 + 3 });
     expect(combat.weaponsets["0"].mainhand!.tohit.total).toBe(2 + 3);

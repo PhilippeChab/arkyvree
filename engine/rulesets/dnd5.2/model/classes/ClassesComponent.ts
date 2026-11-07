@@ -99,16 +99,21 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     return this.classes;
   }
 
-  /**
-   * The character's Proficiency Bonus, by its level (`getTotalLevel`), as the Character Advancement table gives it (a
-   * character before its first level has its first level's), and what modifiers add to it (`getProficiencyMisc`).
-   */
+  /** The character's Proficiency Bonus: its level's (`getProficiencyByLevel`) and what modifiers add to it. */
   getProficiencyBonus(): number {
-    const level = Math.min(Math.max(this.getTotalLevel(), 1), PROFICIENCY_BONUS_BY_LEVEL.length);
-    return PROFICIENCY_BONUS_BY_LEVEL[level - 1] + this.proficiencyMisc;
+    return this.getProficiencyByLevel() + this.proficiencyMisc;
   }
 
-  /** What modifiers add to the Proficiency Bonus past its level's (`combat.proficiencymisc`). */
+  /**
+   * The Proficiency Bonus of the character's level (`getTotalLevel`), as the Character Advancement table gives it: a
+   * character before its first level has its first level's.
+   */
+  getProficiencyByLevel(): number {
+    const level = Math.min(Math.max(this.getTotalLevel(), 1), PROFICIENCY_BONUS_BY_LEVEL.length);
+    return PROFICIENCY_BONUS_BY_LEVEL[level - 1];
+  }
+
+  /** What modifiers add to the Proficiency Bonus past its level's (`combat.proficiency.misc`). */
   getProficiencyMisc(): number {
     return this.proficiencyMisc;
   }
@@ -126,7 +131,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     entry.level--;
   }
 
-  /** Sets what modifiers add to the Proficiency Bonus (`combat.proficiencymisc`, which a modifier writes). */
+  /** Sets what modifiers add to the Proficiency Bonus (`combat.proficiency.misc`, which a modifier writes). */
   setProficiencyMisc(value: number): void {
     this.proficiencyMisc = value;
   }

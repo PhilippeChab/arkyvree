@@ -38,7 +38,7 @@ export const RULES: RulesDeclaration = {
       "Requirements are conditions that entities must meet to be usable/available. Examples include character level requirements, feat prerequisites, etc.",
     settings: "The ruleset's own rules. A fork starts from its source's and can change them.",
     templateExamples:
-      "[abilities.constitution.modifier], [combat.proficiency], floor([classes.monk.level] / 2), max(1, [abilities.wisdom.modifier])",
+      "[abilities.constitution.modifier], [combat.proficiency.total], floor([classes.monk.level] / 2), max(1, [abilities.wisdom.modifier])",
   },
   kinds: [
     { icon: "face", type: "species" },

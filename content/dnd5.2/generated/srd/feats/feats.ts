@@ -1344,7 +1344,12 @@ export const ORIGIN_FEATS: FeatSeed[] = [
       "You gain the following benefits.\nInitiative Proficiency. When you roll Initiative, you can add your Proficiency Bonus to the roll.\nInitiative Swap. Immediately after you roll Initiative, you can swap your Initiative with the Initiative of one willing ally in the same combat. You can't make this swap if you or the ally has the Incapacitated condition.",
     aptitudes: ["Origin", "Ability Score Improvement", "Epic Boon"],
     modifiers: [
-      { target: "combat.initiative.misc", operator: "add", value: "{{ [combat.proficiency] }}", valueType: "number" },
+      {
+        target: "combat.initiative.misc",
+        operator: "add",
+        value: "{{ [combat.proficiency.total] }}",
+        valueType: "number",
+      },
     ],
   },
   {

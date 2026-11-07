@@ -31,7 +31,7 @@ interface CombatStats {
   critical: { range: number };
   hp: { total: number };
   initiative: { total: number };
-  proficiency: number;
+  proficiency: { total: number };
   speed: { total: number };
   weaponsets: Record<
     string,
@@ -149,7 +149,7 @@ export default class CombatSheet {
   static describe<C extends CombatStats & { ac: unknown }>(combat: { getCombat(): C }) {
     const { ac: _parts, weaponsets, ...stats } = combat.getCombat();
     const weaponSets = CombatSheet.weaponSets(weaponsets, CombatSheet.formatCritical(stats.critical.range));
-    const proficiencyLabel = formatSigned(stats.proficiency);
+    const proficiencyLabel = formatSigned(stats.proficiency.total);
     const speedLabel = CombatSheet.formatFeet(stats.speed.total);
     return {
       ...stats,
