@@ -4,6 +4,8 @@
  * the pools of the proficiencies a feat grants, each a family's.
  */
 
+import { CLASS_FEATURE_POOL_SUFFIX } from "@/vocabulary/dnd5.2/classes.ts";
+
 /** The pool of every armor training, a feat per category of armor and the Shields' (granted, never picked). */
 export const ARMOR_TRAINING_POOL = "Armor Training";
 
@@ -32,7 +34,7 @@ export function backgroundAbilityScores(background: string): string {
 
 /** A class's features ("Fighter Features"): each its levels grant, its subclasses' and its proficiencies' too. */
 export function classFeatures(className: string): string {
-  return `${className} Features`;
+  return `${className} ${CLASS_FEATURE_POOL_SUFFIX}`;
 }
 
 /** A class's skill picks ("Fighter Skills"): its starting proficiencies give room in it. */

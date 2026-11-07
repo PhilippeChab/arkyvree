@@ -8,6 +8,12 @@
 /** How a class's levels count toward a character's spell slots once it casts from more than one class. */
 export type MulticlassSlots = (typeof MULTICLASS_SLOTS)[number];
 
+/**
+ * What a class's feature pool is named after its class ("Fighter Features"): the pool its levels grant its features
+ * through, its subclasses' and its proficiencies' too, which the content names and a class's page offers.
+ */
+export const CLASS_FEATURE_POOL_SUFFIX = "Features";
+
 /** The hit die a new class has when its form gives none. */
 export const DEFAULT_HIT_DIE = 8;
 

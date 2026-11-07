@@ -483,7 +483,7 @@ export default class ClassProgression {
    * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), the picks
    * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
    * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
-   * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
+   * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Features", its id none while the ruleset
    * has none, which its first created feature makes), and the notes on its levels' grants that give nothing
    * (`featureNotes`, `FeatureStacking.describeNotes`).
    */
@@ -586,7 +586,7 @@ export default class ClassProgression {
 
   /**
    * A new feature the class's levels can grant (`name`, as typed: "Hex"), made in its own feature pool under the name
-   * its rules give it ("Hex (Witch)"), the pool made first where the ruleset has none ("Witch Class Feature",
+   * its rules give it ("Hex (Witch)"), the pool made first where the ruleset has none ("Witch Features",
    * `ClassOffers.describeOwnFeaturePool`): never picked at a level up, and not Stackable until its page says so; what
    * its activity records is the feat's create's. Refused as invalid without a name, and as a conflict for a feat of the
    * name the ruleset has already, or an aptitude of the pool's name its spells are listed in.
