@@ -1,7 +1,7 @@
 import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
+import { charactersInCharacter, contributorsInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -15,10 +15,11 @@ import type { Character } from "@/shared/relations.ts";
 
 /**
  * The filters of the user's characters list: those they own or contribute to (`accessRole` keeps one side; default
- * both), live unless `visibility` says otherwise, matching `search`.
+ * both), live unless `visibility` says otherwise, of one ruleset when `rulesetId` names it, matching `search`.
  */
 interface CharacterListWhere {
   accessRole?: "owner" | "contributor";
+  rulesetId?: string;
   search?: string;
   userId: string;
   visibility?: Visibility;
@@ -69,13 +70,14 @@ class CharactersRepository extends include(
 
   /** What the user's characters list keeps: its pages and its total share it. */
   private listCondition(db: Db, where: CharacterListWhere) {
-    const { accessRole, search, userId, visibility = Visibility.UnarchivedOnly } = where;
+    const { accessRole, rulesetId, search, userId, visibility = Visibility.UnarchivedOnly } = where;
     const owns = eq(this.table.userId, userId);
     const contributes = this.contributesTo(db, userId);
     return this.where([
       accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
       this.isPlayerCharacter(),
       this.visibility(visibility),
+      rulesetId !== undefined && eq(this.table.rulesetId, rulesetId),
       this.search(search, [this.table.name, this.table.description]),
     ]);
   }
@@ -145,6 +147,19 @@ class CharactersRepository extends include(
           "userId" in where && eq(this.table.userId, where.userId),
         ]),
       );
+  }
+
+  /**
+   * The rulesets the user's characters list holds characters of, with these filters but a ruleset and a search (the
+   * list's filter's options), each its id and name, by name.
+   */
+  async findListRulesets(db: Db, where: Omit<CharacterListWhere, "rulesetId" | "search">) {
+    return await db
+      .selectDistinct({ id: rulesetsInRules.id, name: rulesetsInRules.name })
+      .from(this.table)
+      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, this.table.rulesetId))
+      .where(this.listCondition(db, where))
+      .orderBy(rulesetsInRules.name, rulesetsInRules.id);
   }
 
   /**

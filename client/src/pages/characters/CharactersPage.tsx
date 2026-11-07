@@ -1,5 +1,5 @@
-import { Button, Container, Stack, Typography } from "@mui/material";
-import { useQueryClient } from "@tanstack/react-query";
+import { Box, Button, Container, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -36,6 +36,7 @@ import {
   characterDetailQuery,
   type CharacterListFilters,
   characterListQuery,
+  characterRulesetsQuery,
 } from "@/client/src/lib/queries.ts";
 
 import type { CharacterImport } from "./characterQueries.ts";
@@ -70,8 +71,11 @@ export default function CharactersPage() {
   );
 
   const view = oneOf(searchParams.get("view"), CHARACTER_VIEWS, CHARACTER_LIST_DEFAULTS.view);
+  // The ruleset the list shows characters of, any without one: one its view holds no character of shows none
+  const rulesetId = searchParams.get("ruleset") ?? undefined;
+  const rulesets = useQuery(characterRulesetsQuery(view)).data ?? [];
 
-  const characters = useListPageQuery(characterListQuery({ view, search, orderBy, orderDir }));
+  const characters = useListPageQuery(characterListQuery({ view, search, orderBy, orderDir, rulesetId }));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
@@ -112,6 +116,28 @@ export default function CharactersPage() {
               filterValue={view}
               onFilterChange={(value) => updateSearchParams({ view: value })}
               sortOptions={CHARACTER_SORT_OPTIONS}
+              filtered={rulesetId !== undefined}
+              filters={
+                rulesets.length > 1 || rulesetId !== undefined ? (
+                  <Box sx={{ width: { xs: "100%", md: 220 } }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Ruleset"
+                      value={rulesetId ?? ""}
+                      onChange={(event) => updateSearchParams({ ruleset: event.target.value || null })}
+                    >
+                      <MenuItem value="">All Rulesets</MenuItem>
+                      {rulesets.map((ruleset) => (
+                        <MenuItem key={ruleset.id} value={ruleset.id}>
+                          {ruleset.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                ) : undefined
+              }
             />
 
             <ListPageResults
@@ -166,6 +192,7 @@ export default function CharactersPage() {
                     chips={
                       <>
                         {character.accessRole === "contributor" && <StatusChip label="Shared" color="info" />}
+                        <StatusChip label={character.ruleset.name} />
                         <CharacterBuildChips chips={character.chips} />
                       </>
                     }

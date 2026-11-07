@@ -501,6 +501,30 @@ describe("CharactersService", () => {
       expect(await list("archived")).toEqual([archived.id]);
       expect(await list("all")).toEqual([active.id, archived.id].sort());
     });
+    test("lists one ruleset's characters when it names one, each card with its ruleset, and the rulesets it holds", async () => {
+      const { session } = await createTestUser();
+      const { rulesetId: coreId } = await getSeedCtx();
+      const fork = await createSeededTestRuleset(session.userId, { name: `Aaa Fork ${uniqueId()}` });
+      const core = await createCharacterAs(session, { name: "Core Hero" });
+      const forked = await createCharacterAs(session, { name: "Fork Hero", rulesetId: fork.id });
+      const cards = async (rulesetId?: string) =>
+        (await CharactersService.getCharacters(session, { rulesetId }, page)).items as {
+          id: string;
+          ruleset: { id: string; name: string };
+        }[];
+
+      expect((await cards(fork.id)).map(({ id }) => id)).toEqual([forked.id]);
+      expect((await cards(coreId)).map(({ id }) => id)).toEqual([core.id]);
+      const both = await cards();
+      expect(both.find(({ id }) => id === forked.id)?.ruleset).toEqual({ id: fork.id, name: fork.name });
+      expect(both.find(({ id }) => id === core.id)?.ruleset).toMatchObject({ id: coreId, name: "Core SRD 3.5" });
+      // The filter's options: the rulesets the list holds characters of, by name
+      expect(await CharactersService.getCharacterRulesets(session, {})).toEqual([
+        { id: fork.id, name: fork.name },
+        { id: coreId, name: "Core SRD 3.5" },
+      ]);
+      expect(await CharactersService.getCharacterRulesets(session, { visibility: "archived" })).toEqual([]);
+    });
   });
 
   describe("archiving", () => {

@@ -99,6 +99,8 @@ export const QUERY_KEYS = {
   characters: {
     lists: ["characters", "list"] as const,
     list: (filters?: Record<string, unknown>) => ["characters", "list", filters] as const,
+    /** The rulesets a list's view holds characters of: nested in the lists, which a character's change refreshes. */
+    rulesets: (view: string) => ["characters", "list", "rulesets", view] as const,
     detail: (id: string) => ["characters", "detail", id] as const,
     contributors: (id: string) => ["characters", "detail", id, "contributors"] as const,
     inventory: (id: string) => ["characters", "detail", id, "inventory"] as const,

@@ -56,10 +56,11 @@ export default new Hono()
         orderBy: z.enum(["name", "createdAt", "lastChangedAt"]).default("lastChangedAt"),
         orderDir: orderDirDesc,
         accessRole: z.enum(["owner", "contributor"]).optional(),
+        rulesetId: z.string().uuid().optional(),
       }),
     ),
     async (c) => {
-      const { visibility, search, orderBy, orderDir, accessRole, limit, page } = c.req.valid("query");
+      const { visibility, search, orderBy, orderDir, accessRole, rulesetId, limit, page } = c.req.valid("query");
       // Use the service to get character list with session for activity logging
       return c.json(
         await CharactersService.getCharacters(
@@ -70,6 +71,7 @@ export default new Hono()
             orderBy,
             orderDir,
             accessRole,
+            rulesetId,
           },
           { limit, page },
         ),
@@ -77,7 +79,6 @@ export default new Hono()
       );
     },
   )
-  // How a new character of a ruleset sets its scores of a scored link's role (3.5's `score`, its ability scores)
   .get("/creation", validate("query", z.object({ role: z.string(), rulesetId: z.string().uuid() })), async (c) => {
     const { role, rulesetId } = c.req.valid("query");
     return c.json(await CharactersService.getCreation(c.var.requestSession, rulesetId, role), 200);
@@ -107,6 +108,25 @@ export default new Hono()
       );
     },
   )
+  // The rulesets the list holds characters of, in its view: its ruleset filter's options
+  .get(
+    "/rulesets",
+    validate(
+      "query",
+      z.object({
+        visibility: z.enum(["all", "archived", "active"]).default("active"),
+        accessRole: z.enum(["owner", "contributor"]).optional(),
+      }),
+    ),
+    async (c) => {
+      const { visibility, accessRole } = c.req.valid("query");
+      return c.json(
+        await CharactersService.getCharacterRulesets(c.var.requestSession, { visibility, accessRole }),
+        200,
+      );
+    },
+  )
+  // How a new character of a ruleset sets its scores of a scored link's role (3.5's `score`, its ability scores)
   // The session's characters it could link to a campaign: in none yet, on its ruleset
   .get(
     "/unlinked/:campaignId",
