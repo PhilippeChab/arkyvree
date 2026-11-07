@@ -40,14 +40,14 @@ const WEAPON_PROFICIENCY_FIELDS: FeatFields = {
 export const ARMOR_TRAINING_FEATS: FeatSeed[] = [
   ...ARMOR_CATEGORIES.map((category) => ({
     name: armorTraining(`${category} Armor`),
-    description: `You have training with ${category} armor: you can wear it without its penalties to your D20 Tests and your spellcasting.`,
+    description: `You can wear ${category} armor without penalty.`,
     aptitudes: [ARMOR_TRAINING_POOL],
     modifiers: [setFlag(`combat.armortraining.${stripSeparators(category)}`)],
     fields: ARMOR_TRAINING_FIELDS,
   })),
   {
     name: armorTraining("Shields"),
-    description: "You have training with Shields: you gain a Shield's Armor Class bonus while you hold one.",
+    description: "You gain a Shield's Armor Class bonus while you hold one.",
     aptitudes: [ARMOR_TRAINING_POOL],
     modifiers: [setFlag("combat.armortraining.shields")],
     fields: ARMOR_TRAINING_FIELDS,
@@ -57,7 +57,7 @@ export const ARMOR_TRAINING_FEATS: FeatSeed[] = [
 /** A saving throw's proficiency per ability, which a class grants its first level's two. */
 export const SAVING_THROW_PROFICIENCY_FEATS: FeatSeed[] = ABILITY_NAMES.map((ability) => ({
   name: savingThrowProficiency(ability),
-  description: `You have proficiency in ${ability} saving throws: you add your Proficiency Bonus to them.`,
+  description: `You add your Proficiency Bonus to ${ability} saving throws.`,
   aptitudes: [SAVING_THROW_PROFICIENCIES_POOL],
   modifiers: [setFlag(`saves.${stripSeparators(ability)}.proficient`)],
   fields: { [FEAT_SELECTABLE]: false, [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Saving Throw Proficiency"] },
@@ -70,14 +70,14 @@ export const SAVING_THROW_PROFICIENCY_FEATS: FeatSeed[] = ABILITY_NAMES.map((abi
 export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
   ...WEAPON_CATEGORIES.map((category) => ({
     name: weaponProficiency(`${category} Weapons`),
-    description: `You have proficiency with ${category} weapons: you add your Proficiency Bonus to your attack rolls with them.`,
+    description: `You add your Proficiency Bonus to attacks with ${category} weapons.`,
     aptitudes: [WEAPON_PROFICIENCIES_POOL],
     modifiers: [setFlag(`items.weapons.${stripSeparators(category)}.proficient`)],
     fields: WEAPON_PROFICIENCY_FIELDS,
   })),
   ...WEAPON_NAMES.map((weapon) => ({
     name: weaponProficiency(weapon),
-    description: `You have proficiency with the ${weapon}: you add your Proficiency Bonus to your attack rolls with it.`,
+    description: `You add your Proficiency Bonus to attacks with the ${weapon}.`,
     aptitudes: [WEAPON_PROFICIENCIES_POOL],
     modifiers: [setFlag(`items.weapons.${stripSeparators(weapon)}.proficient`)],
     fields: WEAPON_PROFICIENCY_FIELDS,

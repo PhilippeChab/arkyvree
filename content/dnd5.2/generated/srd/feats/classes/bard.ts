@@ -177,7 +177,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bard Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Bard is its first class: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Charisma; 3 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 3 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
+      "What a Bard starts with: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Charisma; 3 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 3 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
     aptitudes: ["Bard Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -207,7 +207,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bard Multiclass Proficiencies",
     description:
-      "Gained with a character's first Bard level, when Bard isn't its first class: Armor Training: Light Armor; 1 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 1 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
+      "What multiclassing into Bard gives: Armor Training: Light Armor; 1 of the skills Acrobatics, Animal Handling, Arcana, Athletics, Deception, History, Insight, Intimidation, Investigation, Medicine, Nature, Perception, Performance, Persuasion, Religion, Sleight of Hand, Stealth, Survival; 1 of the tools Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
     aptitudes: ["Bard Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

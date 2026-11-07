@@ -167,7 +167,7 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Sorcerer Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Sorcerer is its first class: Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Constitution; Saving Throw Proficiency: Charisma; 2 of the skills Arcana, Deception, Insight, Intimidation, Persuasion, Religion.",
+      "What a Sorcerer starts with: Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Constitution; Saving Throw Proficiency: Charisma; 2 of the skills Arcana, Deception, Insight, Intimidation, Persuasion, Religion.",
     aptitudes: ["Sorcerer Features"],
     modifiers: [
       {
@@ -194,7 +194,7 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
   },
   {
     name: "Sorcerer Multiclass Proficiencies",
-    description: "Gained with a character's first Sorcerer level, when Sorcerer isn't its first class: no proficiency.",
+    description: "What multiclassing into Sorcerer gives: no proficiency.",
     aptitudes: ["Sorcerer Features"],
     fields: { [FEAT_SELECTABLE]: false },
   },

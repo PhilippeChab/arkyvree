@@ -24,7 +24,7 @@ export default class ExpertiseFeats extends GeneratedFeats {
     return [
       {
         name: ExpertiseFeats.nameOf(skillName),
-        description: `You have Expertise in the ${skillName} skill: your Proficiency Bonus is doubled for its checks.`,
+        description: `You add twice your Proficiency Bonus to ${skillName} checks.`,
         fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Expertise"] }),
         modifiers: [
           { target: SkillsPaths.expertise(skillName), operator: "set", value: "true", valueType: "boolean" } as const,

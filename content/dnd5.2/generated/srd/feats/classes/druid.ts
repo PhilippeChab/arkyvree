@@ -179,7 +179,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Druid Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Druid is its first class: Armor Training: Light Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Tool Proficiency: Herbalism Kit; Saving Throw Proficiency: Intelligence; Saving Throw Proficiency: Wisdom; 2 of the skills Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, Survival.",
+      "What a Druid starts with: Armor Training: Light Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Tool Proficiency: Herbalism Kit; Saving Throw Proficiency: Intelligence; Saving Throw Proficiency: Wisdom; 2 of the skills Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, Survival.",
     aptitudes: ["Druid Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -204,8 +204,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
   },
   {
     name: "Druid Multiclass Proficiencies",
-    description:
-      "Gained with a character's first Druid level, when Druid isn't its first class: Armor Training: Light Armor; Armor Training: Shields.",
+    description: "What multiclassing into Druid gives: Armor Training: Light Armor; Armor Training: Shields.",
     aptitudes: ["Druid Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

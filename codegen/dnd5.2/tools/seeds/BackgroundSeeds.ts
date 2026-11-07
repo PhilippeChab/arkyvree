@@ -77,7 +77,7 @@ export class BackgroundSeeds {
       const abilities = entry.ability_scores.map(({ name }) => readAbility(name));
       return spreads(abilities).map((spread) => ({
         name: `${entry.name}: ${spread.map(([ability, amount]) => `${ability} +${amount}`).join(", ")}`,
-        description: `Your ${entry.name} background increases ${spread.map(([ability, amount]) => `your ${ability} score by ${amount}`).join(" and ")}, to a maximum of 20.`,
+        description: `${spread.map(([ability, amount]) => `+${amount} ${ability}`).join(", ")} (20 at most).`,
         aptitudes: [backgroundAbilityScores(entry.name)],
         modifiers: spread.map(([ability, amount]) => bonus(`abilities.${stripSeparators(ability)}.misc`, amount)),
         fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Background Ability Scores"] },

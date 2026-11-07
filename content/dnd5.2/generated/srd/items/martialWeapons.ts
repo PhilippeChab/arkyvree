@@ -7,132 +7,122 @@ import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
 export const MARTIAL_WEAPONS: Dnd52ItemSeed[] = [
   {
     name: "Battleaxe",
-    description:
-      "Martial Melee weapon. Damage: 1d8 Slashing (1d10 two-handed). Properties: Versatile. Mastery: Topple.",
+    description: "A heavy axe, swung in one hand or two.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Battleaxe") },
   },
   {
     name: "Blowgun",
-    description:
-      "Martial Ranged weapon. Damage: 1 Piercing. Properties: Ammunition, Loading (Range 25/100). Mastery: Vex.",
+    description: "A tube that shoots needles with a puff of breath.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Blowgun") },
   },
   {
     name: "Flail",
-    description: "Martial Melee weapon. Damage: 1d8 Bludgeoning. Properties: none. Mastery: Sap.",
+    description: "A spiked ball on a chain, fixed to a handle.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Flail") },
   },
   {
     name: "Glaive",
-    description: "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Mastery: Graze.",
+    description: "A long pole topped with a heavy blade.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Glaive") },
   },
   {
     name: "Greataxe",
-    description: "Martial Melee weapon. Damage: 1d12 Slashing. Properties: Heavy, Two-Handed. Mastery: Cleave.",
+    description: "A huge axe, swung with both hands.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Greataxe") },
   },
   {
     name: "Greatsword",
-    description: "Martial Melee weapon. Damage: 2d6 Slashing. Properties: Heavy, Two-Handed. Mastery: Graze.",
+    description: "A huge sword, swung with both hands.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Greatsword") },
   },
   {
     name: "Halberd",
-    description: "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Mastery: Cleave.",
+    description: "A long pole topped with an axe blade and a spike.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Halberd") },
   },
   {
     name: "Hand Crossbow",
-    description:
-      "Martial Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Light, Loading (Range 30/120). Mastery: Vex.",
+    description: "A small crossbow, fired with one hand.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Hand Crossbow") },
   },
   {
     name: "Heavy Crossbow",
-    description:
-      "Martial Ranged weapon. Damage: 1d10 Piercing. Properties: Ammunition, Heavy, Loading, Two-Handed (Range 100/400). Mastery: Push.",
+    description: "A large, powerful crossbow.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Heavy Crossbow") },
   },
   {
     name: "Lance",
-    description:
-      "Martial Melee weapon. Damage: 1d10 Piercing. Properties: Heavy, Reach, Two-Handed. Mastery: Topple. Two-handed unless mounted.",
+    description: "A long spear used from horseback. Two-handed unless mounted.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Lance") },
   },
   {
     name: "Longbow",
-    description:
-      "Martial Ranged weapon. Damage: 1d8 Piercing. Properties: Ammunition, Heavy, Two-Handed (Range 150/600). Mastery: Slow.",
+    description: "A tall bow that shoots far.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Longbow") },
   },
   {
     name: "Longsword",
-    description: "Martial Melee weapon. Damage: 1d8 Slashing (1d10 two-handed). Properties: Versatile. Mastery: Sap.",
+    description: "A straight, double-edged blade, used in one hand or two.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Longsword") },
   },
   {
     name: "Maul",
-    description: "Martial Melee weapon. Damage: 2d6 Bludgeoning. Properties: Heavy, Two-Handed. Mastery: Topple.",
+    description: "A huge hammer, swung with both hands.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Maul") },
   },
   {
     name: "Morningstar",
-    description: "Martial Melee weapon. Damage: 1d8 Piercing. Properties: none. Mastery: Sap.",
+    description: "A club topped with a spiked metal ball.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Morningstar") },
   },
   {
     name: "Musket",
-    description:
-      "Martial Ranged weapon. Damage: 1d12 Piercing. Properties: Ammunition, Loading, Two-Handed (Range 40/120). Mastery: Slow.",
+    description: "A long firearm that shoots lead balls.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Musket") },
   },
   {
     name: "Pike",
-    description: "Martial Melee weapon. Damage: 1d10 Piercing. Properties: Heavy, Reach, Two-Handed. Mastery: Push.",
+    description: "A very long spear that strikes from a distance.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Pike") },
   },
   {
     name: "Pistol",
-    description:
-      "Martial Ranged weapon. Damage: 1d10 Piercing. Properties: Ammunition, Loading (Range 30/90). Mastery: Vex.",
+    description: "A small firearm, fired with one hand.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Pistol") },
   },
   {
     name: "Rapier",
-    description: "Martial Melee weapon. Damage: 1d8 Piercing. Properties: Finesse. Mastery: Vex.",
+    description: "A thin, light sword made for quick thrusts.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Rapier") },
   },
   {
     name: "Scimitar",
-    description: "Martial Melee weapon. Damage: 1d6 Slashing. Properties: Finesse, Light. Mastery: Nick.",
+    description: "A light, curved sword.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Scimitar") },
   },
   {
     name: "Shortsword",
-    description: "Martial Melee weapon. Damage: 1d6 Piercing. Properties: Finesse, Light. Mastery: Vex.",
+    description: "A short blade for quick strikes.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Shortsword") },
   },
   {
     name: "Trident",
-    description:
-      "Martial Melee weapon. Damage: 1d8 Piercing (1d10 two-handed). Properties: Thrown, Versatile (Range 20/60). Mastery: Topple.",
+    description: "A three-pronged spear.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Trident") },
   },
   {
     name: "War Pick",
-    description: "Martial Melee weapon. Damage: 1d8 Piercing (1d10 two-handed). Properties: Versatile. Mastery: Sap.",
+    description: "A heavy pick that punches through armor.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("War Pick") },
   },
   {
     name: "Warhammer",
-    description:
-      "Martial Melee weapon. Damage: 1d8 Bludgeoning (1d10 two-handed). Properties: Versatile. Mastery: Push.",
+    description: "A heavy war hammer, used in one hand or two.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Warhammer") },
   },
   {
     name: "Whip",
-    description: "Martial Melee weapon. Damage: 1d4 Slashing. Properties: Finesse, Reach. Mastery: Slow.",
+    description: "A long leather lash that strikes from a distance.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Whip") },
   },
 ];

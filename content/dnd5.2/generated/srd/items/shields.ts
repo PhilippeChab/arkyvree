@@ -7,7 +7,7 @@ import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
 export const SHIELDS: Dnd52ItemSeed[] = [
   {
     name: "Shield",
-    description: "Shield. Armor Class: +2, held in one hand.",
+    description: "A wood or metal shield, carried in one hand.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() },
   },
 ];

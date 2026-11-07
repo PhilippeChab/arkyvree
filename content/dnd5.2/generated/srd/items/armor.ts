@@ -7,64 +7,62 @@ import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
 export const ARMOR: Dnd52ItemSeed[] = [
   {
     name: "Breastplate",
-    description: "Medium armor. Armor Class: 14 + Dex modifier (max 2). Don: 5 minutes. Doff: 1 minute.",
+    description: "A fitted metal chest plate. Takes 5 minutes to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Breastplate") },
   },
   {
     name: "Chain Mail",
-    description: "Heavy armor. Armor Class: 16. Strength: 13. Stealth: Disadvantage. Don: 10 minutes. Doff: 5 minutes.",
+    description: "A full suit of interlocking metal rings. Takes 10 minutes to put on, 5 minutes to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Chain Mail") },
   },
   {
     name: "Chain Shirt",
-    description: "Medium armor. Armor Class: 13 + Dex modifier (max 2). Don: 5 minutes. Doff: 1 minute.",
+    description: "A shirt of metal rings, worn under clothing. Takes 5 minutes to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Chain Shirt") },
   },
   {
     name: "Half Plate Armor",
-    description:
-      "Medium armor. Armor Class: 15 + Dex modifier (max 2). Stealth: Disadvantage. Don: 5 minutes. Doff: 1 minute.",
+    description: "Metal plates covering most of the body. Takes 5 minutes to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Half Plate Armor") },
   },
   {
     name: "Hide Armor",
-    description: "Medium armor. Armor Class: 12 + Dex modifier (max 2). Don: 5 minutes. Doff: 1 minute.",
+    description: "Thick furs and pelts. Takes 5 minutes to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Hide Armor") },
   },
   {
     name: "Leather Armor",
-    description: "Light armor. Armor Class: 11 + Dex modifier. Don: 1 minute. Doff: 1 minute.",
+    description: "Stiffened leather. Takes 1 minute to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Leather Armor") },
   },
   {
     name: "Padded Armor",
-    description: "Light armor. Armor Class: 11 + Dex modifier. Stealth: Disadvantage. Don: 1 minute. Doff: 1 minute.",
+    description: "Quilted layers of cloth. Takes 1 minute to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Padded Armor") },
   },
   {
     name: "Plate Armor",
-    description: "Heavy armor. Armor Class: 18. Strength: 15. Stealth: Disadvantage. Don: 10 minutes. Doff: 5 minutes.",
+    description: "Shaped metal plates covering the whole body. Takes 10 minutes to put on, 5 minutes to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Plate Armor") },
   },
   {
     name: "Ring Mail",
-    description: "Heavy armor. Armor Class: 14. Stealth: Disadvantage. Don: 10 minutes. Doff: 5 minutes.",
+    description: "Leather with heavy metal rings sewn on. Takes 10 minutes to put on, 5 minutes to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Ring Mail") },
   },
   {
     name: "Scale Mail",
-    description:
-      "Medium armor. Armor Class: 14 + Dex modifier (max 2). Stealth: Disadvantage. Don: 5 minutes. Doff: 1 minute.",
+    description: "A coat of overlapping metal scales. Takes 5 minutes to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Scale Mail") },
   },
   {
     name: "Splint Armor",
-    description: "Heavy armor. Armor Class: 17. Strength: 15. Stealth: Disadvantage. Don: 10 minutes. Doff: 5 minutes.",
+    description: "Metal strips riveted onto leather. Takes 10 minutes to put on, 5 minutes to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Splint Armor") },
   },
   {
     name: "Studded Leather Armor",
-    description: "Light armor. Armor Class: 12 + Dex modifier. Don: 1 minute. Doff: 1 minute.",
+    description: "Leather reinforced with rivets. Takes 1 minute to put on, 1 minute to take off.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields("Studded Leather Armor") },
   },
 ];

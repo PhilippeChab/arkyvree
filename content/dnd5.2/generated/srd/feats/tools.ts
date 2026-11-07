@@ -6,260 +6,223 @@ import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd5.2/fields/index.ts
 export const TOOL_FEATS: FeatSeed[] = [
   {
     name: "Tool Proficiency: Alchemist's Supplies",
-    description:
-      "You have proficiency with Alchemist's Supplies: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Alchemist's Supplies.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Bagpipes",
-    description:
-      "You have proficiency with Bagpipes: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Bagpipes.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Brewer's Supplies",
-    description:
-      "You have proficiency with Brewer's Supplies: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Brewer's Supplies.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Calligrapher's Supplies",
-    description:
-      "You have proficiency with Calligrapher's Supplies: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Calligrapher's Supplies.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Carpenter's Tools",
-    description:
-      "You have proficiency with Carpenter's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Carpenter's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Cartographer's Tools",
-    description:
-      "You have proficiency with Cartographer's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Cartographer's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Cobbler's Tools",
-    description:
-      "You have proficiency with Cobbler's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Cobbler's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Cook's Utensils",
-    description:
-      "You have proficiency with Cook's Utensils: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Cook's Utensils.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Dice",
-    description:
-      "You have proficiency with Dice: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Dice.",
     aptitudes: ["Tool Proficiencies", "Soldier Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Disguise Kit",
-    description:
-      "You have proficiency with Disguise Kit: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Disguise Kit.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Dragonchess",
-    description:
-      "You have proficiency with Dragonchess: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Dragonchess.",
     aptitudes: ["Tool Proficiencies", "Soldier Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Drum",
-    description:
-      "You have proficiency with Drum: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Drum.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Dulcimer",
-    description:
-      "You have proficiency with Dulcimer: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Dulcimer.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Flute",
-    description:
-      "You have proficiency with Flute: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Flute.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Forgery Kit",
-    description:
-      "You have proficiency with Forgery Kit: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Forgery Kit.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Glassblower's Tools",
-    description:
-      "You have proficiency with Glassblower's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Glassblower's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Herbalism Kit",
-    description:
-      "You have proficiency with Herbalism Kit: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Herbalism Kit.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Horn",
-    description:
-      "You have proficiency with Horn: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Horn.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Jeweler's Tools",
-    description:
-      "You have proficiency with Jeweler's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Jeweler's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Leatherworker's Tools",
-    description:
-      "You have proficiency with Leatherworker's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Leatherworker's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Lute",
-    description:
-      "You have proficiency with Lute: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Lute.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Lyre",
-    description:
-      "You have proficiency with Lyre: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Lyre.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Mason's Tools",
-    description:
-      "You have proficiency with Mason's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Mason's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Navigator's Tools",
-    description:
-      "You have proficiency with Navigator's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Navigator's Tools.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Painter's Supplies",
-    description:
-      "You have proficiency with Painter's Supplies: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Painter's Supplies.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Pan flute",
-    description:
-      "You have proficiency with Pan flute: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Pan flute.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Playing Cards",
-    description:
-      "You have proficiency with Playing Cards: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Playing Cards.",
     aptitudes: ["Tool Proficiencies", "Soldier Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Poisoner's Kit",
-    description:
-      "You have proficiency with Poisoner's Kit: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Poisoner's Kit.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Potter's Tools",
-    description:
-      "You have proficiency with Potter's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Potter's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Shawm",
-    description:
-      "You have proficiency with Shawm: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Shawm.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Smith's Tools",
-    description:
-      "You have proficiency with Smith's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Smith's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Thieves' Tools",
-    description:
-      "You have proficiency with Thieves' Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Thieves' Tools.",
     aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Three-Dragon Ante",
-    description:
-      "You have proficiency with Three-Dragon Ante: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Three-Dragon Ante.",
     aptitudes: ["Tool Proficiencies", "Soldier Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Tinker's Tools",
-    description:
-      "You have proficiency with Tinker's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Tinker's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Viol",
-    description:
-      "You have proficiency with Viol: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Viol.",
     aptitudes: ["Tool Proficiencies", "Bard Tools", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Weaver's Tools",
-    description:
-      "You have proficiency with Weaver's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Weaver's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
     name: "Tool Proficiency: Woodcarver's Tools",
-    description:
-      "You have proficiency with Woodcarver's Tools: you add your Proficiency Bonus to any ability check you make with it.",
+    description: "You add your Proficiency Bonus to checks with Woodcarver's Tools.",
     aptitudes: ["Tool Proficiencies", "Monk Tools"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },

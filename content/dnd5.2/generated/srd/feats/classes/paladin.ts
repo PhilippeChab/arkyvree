@@ -213,7 +213,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Paladin Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Paladin is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Heavy Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills Athletics, Insight, Intimidation, Medicine, Persuasion, Religion.",
+      "What a Paladin starts with: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Heavy Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills Athletics, Insight, Intimidation, Medicine, Persuasion, Religion.",
     aptitudes: ["Paladin Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -246,7 +246,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Paladin Multiclass Proficiencies",
     description:
-      "Gained with a character's first Paladin level, when Paladin isn't its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Martial Weapons.",
+      "What multiclassing into Paladin gives: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Martial Weapons.",
     aptitudes: ["Paladin Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

@@ -1,5 +1,6 @@
 import { readChoiceOptions, readSkill } from "@/codegen/dnd5.2/tools/detect/proficiencies.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
+import { readDescription, SPECIES_DESCRIPTIONS } from "@/codegen/dnd5.2/tools/terms/descriptions.ts";
 import { TRAIT_MODIFIERS } from "@/codegen/dnd5.2/tools/terms/species.ts";
 import type {
   SpeciesEntry,
@@ -52,7 +53,7 @@ export class SpeciesSeeds {
       return { feats: [], modifiers: [poolRoom(SKILL_PROFICIENCIES_POOL, picks)] };
     const feats = skills.map((skill) => ({
       name: `${trait.name}: ${skill}`,
-      description: `You have proficiency in the ${skill} skill (${trait.name}).`,
+      description: `You add your Proficiency Bonus to ${skill} checks (${trait.name}).`,
       aptitudes: [trait.name],
       modifiers: [grantFeat(skillProficiency(skill))],
       fields: { [FEAT_GENERATED]: true },
@@ -132,11 +133,11 @@ export class SpeciesSeeds {
     return this.entries().map((entry) => {
       const sizes = this.sizes(entry);
       const size = sizes.includes("Medium") ? "Medium" : sizes[0];
-      const chosen = sizes.length > 1 ? ` (${sizes.join(" or ")}, chosen with the species)` : "";
+      const chosen = sizes.length > 1 ? ` ${sizes.join(" or ")}, chosen when the character is made.` : "";
       const traits = entry.traits.map(({ name }) => name);
       return {
         name: entry.name,
-        description: `A ${entry.type} of ${size} size${chosen}, with a Speed of ${entry.speed} feet. Its traits: ${traits.join(", ")}.`,
+        description: `${readDescription(SPECIES_DESCRIPTIONS, entry.name, "species")}${chosen}`,
         fields: { [SPECIES_SIZE]: size, [SPECIES_SPEED]: entry.speed },
         modifiers: [
           ...traits.map((trait) => grantFeat(trait)),

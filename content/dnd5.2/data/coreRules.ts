@@ -28,6 +28,39 @@ const ABILITY_MEASURES: Record<string, string> = {
   Charisma: "Confidence, poise, and charm",
 };
 
+/** What each language is, in our own words: the SRD's tables name them alone. */
+const LANGUAGE_DESCRIPTIONS: Record<string, string> = {
+  Common: "The language every character knows.",
+  "Common Sign Language": "A sign language used across the world.",
+  Draconic: "The language of dragons and dragonborn.",
+  Dwarvish: "The language of dwarves.",
+  Elvish: "The language of elves.",
+  Giant: "The language of giants and goliaths.",
+  Gnomish: "The language of gnomes.",
+  Goblin: "The language of goblins, hobgoblins and bugbears.",
+  Halfling: "The language of halflings.",
+  Orc: "The language of orcs.",
+  Abyssal: "The language of demons.",
+  Celestial: "The language of angels and other celestials.",
+  "Deep Speech": "The language of aberrations from beyond.",
+  Druidic: "The secret language of druids.",
+  Infernal: "The language of devils.",
+  Primordial: "The language of elementals, with its Aquan, Auran, Ignan and Terran dialects.",
+  Sylvan: "The language of the fey.",
+  "Thieves' Cant": "A secret mix of jargon and signs used by rogues.",
+  Undercommon: "The trade language of the Underdark.",
+};
+
+/** What each saving throw resists, in our own words. */
+const SAVE_DESCRIPTIONS: Record<string, string> = {
+  Strength: "Resist being pushed, grabbed or knocked down.",
+  Dexterity: "Dodge out of the way of danger.",
+  Constitution: "Endure poison, disease and exhaustion.",
+  Intelligence: "Resist attacks on your mind and illusions.",
+  Wisdom: "Resist charm, fear and mental control.",
+  Charisma: "Hold on to yourself against possession and banishment.",
+};
+
 /** What each skill is used for, as the Skills table's examples give it. */
 // oxfmt-ignore
 const SKILL_USES: Record<SkillName, string> = {
@@ -58,15 +91,12 @@ export const ABILITIES: AbilitySeed[] = ABILITY_NAMES.map((name) => ({ name, des
 export const LANGUAGES: LanguageSeed[] = [
   ...STANDARD_LANGUAGES.map((name) => ({
     name,
-    description: `A standard language.`,
+    description: LANGUAGE_DESCRIPTIONS[name],
     fields: { [LANGUAGE_TYPE]: STANDARD_LANGUAGE_TYPE },
   })),
   ...RARE_LANGUAGES.map((name) => ({
     name,
-    description:
-      name === "Primordial"
-        ? "A rare language, with its Aquan, Auran, Ignan, and Terran dialects."
-        : "A rare language.",
+    description: LANGUAGE_DESCRIPTIONS[name],
     fields: { [LANGUAGE_TYPE]: RARE_LANGUAGE_TYPE },
   })),
 ];
@@ -74,7 +104,7 @@ export const LANGUAGES: LanguageSeed[] = [
 /** A saving throw for each ability, named as it is, its bonus its ability's. */
 export const SAVES: SaveSeed[] = ABILITY_NAMES.map((name) => ({
   name,
-  description: `A ${name} saving throw.`,
+  description: SAVE_DESCRIPTIONS[name],
   links: { keyAbility: name },
 }));
 

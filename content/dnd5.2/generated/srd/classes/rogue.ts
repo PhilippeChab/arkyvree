@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const ROGUE: ClassSeed = {
   name: "Rogue",
-  description: "A class of a d8 Hit Point Die per level, whose primary ability is Dexterity.",
+  description: "A sneaky expert who strikes where it hurts most. Primary ability: Dexterity.",
   fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Rogue Multiclass Proficiencies",

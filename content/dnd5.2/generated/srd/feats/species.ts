@@ -135,7 +135,7 @@ export const SPECIES_FEATS: FeatSeed[] = [
   },
   {
     name: "Keen Senses: Insight",
-    description: "You have proficiency in the Insight skill (Keen Senses).",
+    description: "You add your Proficiency Bonus to Insight checks (Keen Senses).",
     aptitudes: ["Keen Senses"],
     modifiers: [
       { target: "feats.skillproficiencyinsight.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -144,7 +144,7 @@ export const SPECIES_FEATS: FeatSeed[] = [
   },
   {
     name: "Keen Senses: Perception",
-    description: "You have proficiency in the Perception skill (Keen Senses).",
+    description: "You add your Proficiency Bonus to Perception checks (Keen Senses).",
     aptitudes: ["Keen Senses"],
     modifiers: [
       { target: "feats.skillproficiencyperception.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -153,7 +153,7 @@ export const SPECIES_FEATS: FeatSeed[] = [
   },
   {
     name: "Keen Senses: Survival",
-    description: "You have proficiency in the Survival skill (Keen Senses).",
+    description: "You add your Proficiency Bonus to Survival checks (Keen Senses).",
     aptitudes: ["Keen Senses"],
     modifiers: [
       { target: "feats.skillproficiencysurvival.possessed", operator: "set", value: "true", valueType: "boolean" },

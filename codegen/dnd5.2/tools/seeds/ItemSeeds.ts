@@ -1,6 +1,7 @@
 import { readCost } from "@/codegen/dnd5.2/tools/detect/costs.ts";
 import { readAbility } from "@/codegen/dnd5.2/tools/detect/proficiencies.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
+import { ARMOR_DESCRIPTIONS, readDescription, WEAPON_DESCRIPTIONS } from "@/codegen/dnd5.2/tools/terms/descriptions.ts";
 import { TOOL_CATEGORIES } from "@/codegen/dnd5.2/tools/terms/items.ts";
 import type { ItemEntry, ItemReference } from "@/codegen/dnd5.2/tools/types/items.ts";
 import { TOOL_PROFICIENCIES_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
@@ -9,7 +10,7 @@ import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { armorFields, shieldFields, weaponFields } from "@/content/dnd5.2/builders/items/fields.ts";
 import type { Dnd52ItemSeed } from "@/content/dnd5.2/builders/items/types.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { ARMOR_DEFINITIONS, ARMOR_NAMES, SHIELD_DEFINITION } from "@/vocabulary/dnd5.2/armor.ts";
+import { ARMOR_DEFINITIONS, ARMOR_NAMES } from "@/vocabulary/dnd5.2/armor.ts";
 import {
   FEAT_FAMILY,
   FEAT_GENERATED,
@@ -59,16 +60,16 @@ function describe(entry: ItemEntry): string {
   return parts.length > 0 ? parts.join("\n") : entry.name;
 }
 
-/** An armor's description, off the Armor table: its category, Armor Class, Strength, Stealth, and donning and doffing. */
+/**
+ * An armor's description, the Shield's too: ours (`ARMOR_DESCRIPTIONS`), and how long it takes to put on and take off,
+ * as the Armor table gives it. Its Armor Class, Strength and Stealth are its fields.
+ */
 function describeArmor(name: string, entry: ItemEntry): string {
-  const armor = ARMOR_DEFINITIONS[name]!;
-  const dex =
-    armor.maxDex === null ? " + Dex modifier" : armor.maxDex > 0 ? ` + Dex modifier (max ${armor.maxDex})` : "";
   return [
-    `${armor.category} armor. Armor Class: ${armor.armorClass}${dex}.`,
-    ...(armor.strength > 0 ? [`Strength: ${armor.strength}.`] : []),
-    ...(armor.stealthDisadvantage ? ["Stealth: Disadvantage."] : []),
-    ...(entry.don_time && entry.doff_time ? [`Don: ${entry.don_time}. Doff: ${entry.doff_time}.`] : []),
+    readDescription(ARMOR_DESCRIPTIONS, name, "armor"),
+    ...(entry.don_time && entry.doff_time
+      ? [`Takes ${entry.don_time} to put on, ${entry.doff_time} to take off.`]
+      : []),
   ].join(" ");
 }
 
@@ -86,17 +87,14 @@ function describeTool(entry: ItemEntry): string[] {
   ];
 }
 
-/** A weapon's description, off the Weapons table: its category, damage, properties and mastery, and its notes. */
+/**
+ * A weapon's description: ours (`WEAPON_DESCRIPTIONS`), and the Weapons table's notes (a Lance's "Two-handed unless
+ * mounted"). Its damage, properties and mastery are its fields.
+ */
 function describeWeapon(name: string, entry: ItemEntry): string {
-  const weapon = WEAPON_DEFINITIONS[name]!;
-  const versatile = weapon.versatile ? ` (${weapon.versatile} two-handed)` : "";
-  const range = weapon.range ? ` (Range ${weapon.range.normal}/${weapon.range.long})` : "";
-  const properties = weapon.properties.length > 0 ? weapon.properties.join(", ") + range : "none";
-  return [
-    `${weapon.category} ${weapon.ranged ? "Ranged" : "Melee"} weapon. Damage: ${weapon.damage} ${weapon.damageType}${versatile}.`,
-    `Properties: ${properties}. Mastery: ${weapon.mastery}.`,
-    ...(entry.notes ?? []).map((note) => `${note}.`),
-  ].join(" ");
+  return [readDescription(WEAPON_DESCRIPTIONS, name, "weapon"), ...(entry.notes ?? []).map((note) => `${note}.`)].join(
+    " ",
+  );
 }
 
 /** Whether an item is of the equipment category `category`. */
@@ -161,11 +159,9 @@ export class ItemSeeds {
         fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields(name) },
       };
     }
-    if (isOf(entry, "Shields")) {
-      const don = entry.don_time && entry.doff_time ? ` Don: ${entry.don_time}. Doff: ${entry.doff_time}.` : "";
-      const description = `Shield. Armor Class: +${SHIELD_DEFINITION.armorClass}, held in one hand.${don}`;
-      return { name, description, fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() } };
-    }
+    if (isOf(entry, "Shields"))
+      return { name, description: describeArmor(name, entry), fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() } };
+
     if (!ARMOR_DEFINITIONS[name]) throw new Error(`${name}: an armor the Armor table doesn't have`);
     return {
       name,
@@ -205,7 +201,7 @@ export class ItemSeeds {
   toolFeats(picks: ToolPicks[]): FeatSeed[] {
     return this.tools().map((tool) => ({
       name: toolProficiency(tool),
-      description: `You have proficiency with ${tool}: you add your Proficiency Bonus to any ability check you make with it.`,
+      description: `You add your Proficiency Bonus to checks with ${tool}.`,
       aptitudes: [
         TOOL_PROFICIENCIES_POOL,
         ...picks.filter(({ tools }) => tools.includes(tool)).map(({ pool }) => pool),

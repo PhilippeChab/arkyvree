@@ -105,7 +105,7 @@ export class ClassProficiencies {
     if (outside.some((skill) => !skills.has(skill))) throw new Error(`${name}: a multiclass skill isn't its class's`);
     return this.proficienciesFeat(
       ClassProficiencies.multiclassName(name),
-      `Gained with a character's first ${name} level, when ${name} isn't its first class`,
+      `What multiclassing into ${name} gives`,
       proficiencies.map(({ name: proficiency }) => proficiency),
       choices,
     );
@@ -117,7 +117,7 @@ export class ClassProficiencies {
     const { proficiencies, proficiency_choices } = this.entries.entry();
     return this.proficienciesFeat(
       ClassProficiencies.startingName(name),
-      `Gained with a character's first level, when ${name} is its first class`,
+      `What a ${name} starts with`,
       proficiencies.map(({ name: proficiency }) => proficiency),
       this.choices(proficiency_choices),
     );

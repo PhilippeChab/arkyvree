@@ -6,8 +6,7 @@ import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd5.2/fields/index.ts
 export const BACKGROUND_FEATS: FeatSeed[] = [
   {
     name: "Acolyte: Intelligence +2, Wisdom +1",
-    description:
-      "Your Acolyte background increases your Intelligence score by 2 and your Wisdom score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Wisdom (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -17,8 +16,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Intelligence +2, Charisma +1",
-    description:
-      "Your Acolyte background increases your Intelligence score by 2 and your Charisma score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Charisma (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -28,8 +26,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Wisdom +2, Intelligence +1",
-    description:
-      "Your Acolyte background increases your Wisdom score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Wisdom, +1 Intelligence (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.wisdom.misc", operator: "add", value: "2", valueType: "number" },
@@ -39,8 +36,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Wisdom +2, Charisma +1",
-    description:
-      "Your Acolyte background increases your Wisdom score by 2 and your Charisma score by 1, to a maximum of 20.",
+    description: "+2 Wisdom, +1 Charisma (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.wisdom.misc", operator: "add", value: "2", valueType: "number" },
@@ -50,8 +46,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Charisma +2, Intelligence +1",
-    description:
-      "Your Acolyte background increases your Charisma score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Charisma, +1 Intelligence (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.charisma.misc", operator: "add", value: "2", valueType: "number" },
@@ -61,8 +56,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Charisma +2, Wisdom +1",
-    description:
-      "Your Acolyte background increases your Charisma score by 2 and your Wisdom score by 1, to a maximum of 20.",
+    description: "+2 Charisma, +1 Wisdom (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.charisma.misc", operator: "add", value: "2", valueType: "number" },
@@ -72,8 +66,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Acolyte: Intelligence +1, Wisdom +1, Charisma +1",
-    description:
-      "Your Acolyte background increases your Intelligence score by 1 and your Wisdom score by 1 and your Charisma score by 1, to a maximum of 20.",
+    description: "+1 Intelligence, +1 Wisdom, +1 Charisma (20 at most).",
     aptitudes: ["Acolyte Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "1", valueType: "number" },
@@ -84,8 +77,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Dexterity +2, Constitution +1",
-    description:
-      "Your Criminal background increases your Dexterity score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Dexterity, +1 Constitution (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" },
@@ -95,8 +87,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Dexterity +2, Intelligence +1",
-    description:
-      "Your Criminal background increases your Dexterity score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Dexterity, +1 Intelligence (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" },
@@ -106,8 +97,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Constitution +2, Dexterity +1",
-    description:
-      "Your Criminal background increases your Constitution score by 2 and your Dexterity score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Dexterity (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -117,8 +107,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Constitution +2, Intelligence +1",
-    description:
-      "Your Criminal background increases your Constitution score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Intelligence (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -128,8 +117,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Intelligence +2, Dexterity +1",
-    description:
-      "Your Criminal background increases your Intelligence score by 2 and your Dexterity score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Dexterity (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -139,8 +127,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Intelligence +2, Constitution +1",
-    description:
-      "Your Criminal background increases your Intelligence score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Constitution (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -150,8 +137,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Criminal: Dexterity +1, Constitution +1, Intelligence +1",
-    description:
-      "Your Criminal background increases your Dexterity score by 1 and your Constitution score by 1 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+1 Dexterity, +1 Constitution, +1 Intelligence (20 at most).",
     aptitudes: ["Criminal Ability Scores"],
     modifiers: [
       { target: "abilities.dexterity.misc", operator: "add", value: "1", valueType: "number" },
@@ -162,8 +148,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Constitution +2, Intelligence +1",
-    description:
-      "Your Sage background increases your Constitution score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Intelligence (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -173,8 +158,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Constitution +2, Wisdom +1",
-    description:
-      "Your Sage background increases your Constitution score by 2 and your Wisdom score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Wisdom (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -184,8 +168,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Intelligence +2, Constitution +1",
-    description:
-      "Your Sage background increases your Intelligence score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Constitution (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -195,8 +178,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Intelligence +2, Wisdom +1",
-    description:
-      "Your Sage background increases your Intelligence score by 2 and your Wisdom score by 1, to a maximum of 20.",
+    description: "+2 Intelligence, +1 Wisdom (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.intelligence.misc", operator: "add", value: "2", valueType: "number" },
@@ -206,8 +188,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Wisdom +2, Constitution +1",
-    description:
-      "Your Sage background increases your Wisdom score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Wisdom, +1 Constitution (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.wisdom.misc", operator: "add", value: "2", valueType: "number" },
@@ -217,8 +198,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Wisdom +2, Intelligence +1",
-    description:
-      "Your Sage background increases your Wisdom score by 2 and your Intelligence score by 1, to a maximum of 20.",
+    description: "+2 Wisdom, +1 Intelligence (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.wisdom.misc", operator: "add", value: "2", valueType: "number" },
@@ -228,8 +208,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Sage: Constitution +1, Intelligence +1, Wisdom +1",
-    description:
-      "Your Sage background increases your Constitution score by 1 and your Intelligence score by 1 and your Wisdom score by 1, to a maximum of 20.",
+    description: "+1 Constitution, +1 Intelligence, +1 Wisdom (20 at most).",
     aptitudes: ["Sage Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "1", valueType: "number" },
@@ -240,8 +219,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Strength +2, Dexterity +1",
-    description:
-      "Your Soldier background increases your Strength score by 2 and your Dexterity score by 1, to a maximum of 20.",
+    description: "+2 Strength, +1 Dexterity (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" },
@@ -251,8 +229,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Strength +2, Constitution +1",
-    description:
-      "Your Soldier background increases your Strength score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Strength, +1 Constitution (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.strength.misc", operator: "add", value: "2", valueType: "number" },
@@ -262,8 +239,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Dexterity +2, Strength +1",
-    description:
-      "Your Soldier background increases your Dexterity score by 2 and your Strength score by 1, to a maximum of 20.",
+    description: "+2 Dexterity, +1 Strength (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" },
@@ -273,8 +249,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Dexterity +2, Constitution +1",
-    description:
-      "Your Soldier background increases your Dexterity score by 2 and your Constitution score by 1, to a maximum of 20.",
+    description: "+2 Dexterity, +1 Constitution (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.dexterity.misc", operator: "add", value: "2", valueType: "number" },
@@ -284,8 +259,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Constitution +2, Strength +1",
-    description:
-      "Your Soldier background increases your Constitution score by 2 and your Strength score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Strength (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -295,8 +269,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Constitution +2, Dexterity +1",
-    description:
-      "Your Soldier background increases your Constitution score by 2 and your Dexterity score by 1, to a maximum of 20.",
+    description: "+2 Constitution, +1 Dexterity (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.constitution.misc", operator: "add", value: "2", valueType: "number" },
@@ -306,8 +279,7 @@ export const BACKGROUND_FEATS: FeatSeed[] = [
   },
   {
     name: "Soldier: Strength +1, Dexterity +1, Constitution +1",
-    description:
-      "Your Soldier background increases your Strength score by 1 and your Dexterity score by 1 and your Constitution score by 1, to a maximum of 20.",
+    description: "+1 Strength, +1 Dexterity, +1 Constitution (20 at most).",
     aptitudes: ["Soldier Ability Scores"],
     modifiers: [
       { target: "abilities.strength.misc", operator: "add", value: "1", valueType: "number" },

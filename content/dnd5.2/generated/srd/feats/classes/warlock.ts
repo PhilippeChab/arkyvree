@@ -149,7 +149,7 @@ export const WARLOCK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Warlock Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Warlock is its first class: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills Arcana, Deception, History, Intimidation, Investigation, Nature, Religion.",
+      "What a Warlock starts with: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills Arcana, Deception, History, Intimidation, Investigation, Nature, Religion.",
     aptitudes: ["Warlock Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -172,8 +172,7 @@ export const WARLOCK_CLASS_FEATS: FeatSeed[] = [
   },
   {
     name: "Warlock Multiclass Proficiencies",
-    description:
-      "Gained with a character's first Warlock level, when Warlock isn't its first class: Armor Training: Light Armor.",
+    description: "What multiclassing into Warlock gives: Armor Training: Light Armor.",
     aptitudes: ["Warlock Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

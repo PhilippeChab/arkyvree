@@ -6,8 +6,7 @@ import { SPECIES_SIZE, SPECIES_SPEED } from "@/vocabulary/dnd5.2/fields/index.ts
 export const ALL_SPECIES: SpeciesSeed[] = [
   {
     name: "Dragonborn",
-    description:
-      "A Humanoid of Medium size, with a Speed of 30 feet. Its traits: Darkvision (60 ft.), Draconic Flight, Draconic Ancestry.",
+    description: "Proud folk with draconic ancestry and a breath weapon.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.darkvision60ft.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -18,8 +17,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Dwarf",
-    description:
-      "A Humanoid of Medium size, with a Speed of 30 feet. Its traits: Darkvision (120 ft.), Dwarven Resilience, Dwarven Toughness, Stonecunning.",
+    description: "Sturdy, hardy folk who see well in the dark.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.darkvision120ft.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -30,8 +28,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Elf",
-    description:
-      "A Humanoid of Medium size, with a Speed of 30 feet. Its traits: Darkvision (60 ft.), Elven Lineage, Fey Ancestry, Keen Senses, Trance.",
+    description: "Graceful folk of fey descent with keen senses.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.darkvision60ft.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -44,8 +41,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Gnome",
-    description:
-      "A Humanoid of Small size, with a Speed of 30 feet. Its traits: Darkvision (60 ft.), Gnomish Cunning, Gnomish Lineage.",
+    description: "Small, clever folk with a gift for magic.",
     fields: { [SPECIES_SIZE]: "Small", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.darkvision60ft.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -56,8 +52,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Goliath",
-    description:
-      "A Humanoid of Medium size, with a Speed of 35 feet. Its traits: Giant Ancestry, Large Form, Powerful Build.",
+    description: "Towering folk descended from giants.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 35 },
     modifiers: [
       { target: "feats.giantancestry.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -68,8 +63,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Halfling",
-    description:
-      "A Humanoid of Small size, with a Speed of 30 feet. Its traits: Brave, Halfling Nimbleness, Luck, Naturally Stealthy.",
+    description: "Small, lucky folk who slip past danger.",
     fields: { [SPECIES_SIZE]: "Small", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.brave.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -80,8 +74,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Human",
-    description:
-      "A Humanoid of Medium size (Small or Medium, chosen with the species), with a Speed of 30 feet. Its traits: Resourceful, Skillful, Versatile.",
+    description: "Adaptable folk found in every land. Small or Medium, chosen when the character is made.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.resourceful.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -91,8 +84,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   },
   {
     name: "Orc",
-    description:
-      "A Humanoid of Medium size, with a Speed of 30 feet. Its traits: Adrenaline Rush, Darkvision (120 ft.), Relentless Endurance.",
+    description: "Strong, tireless folk who keep fighting when hurt.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.adrenalinerush.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -103,7 +95,7 @@ export const ALL_SPECIES: SpeciesSeed[] = [
   {
     name: "Tiefling",
     description:
-      "A Humanoid of Medium size (Small or Medium, chosen with the species), with a Speed of 30 feet. Its traits: Darkvision (60 ft.), Fiendish Legacy, Otherworldly Presence.",
+      "Folk with fiendish ancestry and a touch of infernal magic. Small or Medium, chosen when the character is made.",
     fields: { [SPECIES_SIZE]: "Medium", [SPECIES_SPEED]: 30 },
     modifiers: [
       { target: "feats.darkvision60ft.possessed", operator: "set", value: "true", valueType: "boolean" },

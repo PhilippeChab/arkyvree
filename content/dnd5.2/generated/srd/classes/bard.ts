@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const BARD: ClassSeed = {
   name: "Bard",
-  description: "A class of a d8 Hit Point Die per level, whose primary ability is Charisma.",
+  description: "A performer whose music and words carry magic. Primary ability: Charisma.",
   fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "All its levels" },
   links: {
     multiclassProficiencies: "Bard Multiclass Proficiencies",

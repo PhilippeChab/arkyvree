@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const MONK: ClassSeed = {
   name: "Monk",
-  description: "A class of a d8 Hit Point Die per level, whose primary ability is Dexterity and Wisdom.",
+  description: "A martial artist who fights with fists and focus. Primary ability: Dexterity and Wisdom.",
   fields: { [CLASS_HD]: 8, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Monk Multiclass Proficiencies",

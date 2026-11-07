@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const SORCERER: ClassSeed = {
   name: "Sorcerer",
-  description: "A class of a d6 Hit Point Die per level, whose primary ability is Charisma.",
+  description: "A spellcaster born with magic in their blood. Primary ability: Charisma.",
   fields: { [CLASS_HD]: 6, [CLASS_MULTICLASS_SLOTS]: "All its levels" },
   links: {
     multiclassProficiencies: "Sorcerer Multiclass Proficiencies",

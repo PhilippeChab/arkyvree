@@ -224,7 +224,7 @@ export const BARBARIAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Barbarian Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Barbarian is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Strength; Saving Throw Proficiency: Constitution; 2 of the skills Animal Handling, Athletics, Intimidation, Nature, Perception, Survival.",
+      "What a Barbarian starts with: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Strength; Saving Throw Proficiency: Constitution; 2 of the skills Animal Handling, Athletics, Intimidation, Nature, Perception, Survival.",
     aptitudes: ["Barbarian Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -261,7 +261,7 @@ export const BARBARIAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Barbarian Multiclass Proficiencies",
     description:
-      "Gained with a character's first Barbarian level, when Barbarian isn't its first class: Armor Training: Shields; Weapon Proficiency: Martial Weapons.",
+      "What multiclassing into Barbarian gives: Armor Training: Shields; Weapon Proficiency: Martial Weapons.",
     aptitudes: ["Barbarian Features"],
     modifiers: [
       { target: "feats.armortrainingshields.possessed", operator: "set", value: "true", valueType: "boolean" },

@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const FIGHTER: ClassSeed = {
   name: "Fighter",
-  description: "A class of a d10 Hit Point Die per level, whose primary ability is Strength or Dexterity.",
+  description: "A master of weapons and armor. Primary ability: Strength or Dexterity.",
   fields: { [CLASS_HD]: 10, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Fighter Multiclass Proficiencies",

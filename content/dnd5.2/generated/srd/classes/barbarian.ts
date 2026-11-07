@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const BARBARIAN: ClassSeed = {
   name: "Barbarian",
-  description: "A class of a d12 Hit Point Die per level, whose primary ability is Strength.",
+  description: "A fierce warrior who fights in a Rage. Primary ability: Strength.",
   fields: { [CLASS_HD]: 12, [CLASS_MULTICLASS_SLOTS]: "Its levels don't count" },
   links: {
     multiclassProficiencies: "Barbarian Multiclass Proficiencies",

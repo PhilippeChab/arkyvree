@@ -203,7 +203,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ranger Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Ranger is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Strength; 3 of the skills Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival.",
+      "What a Ranger starts with: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Strength; 3 of the skills Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival.",
     aptitudes: ["Ranger Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -240,7 +240,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Ranger Multiclass Proficiencies",
     description:
-      "Gained with a character's first Ranger level, when Ranger isn't its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Martial Weapons; 1 of the skills Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival.",
+      "What multiclassing into Ranger gives: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Martial Weapons; 1 of the skills Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival.",
     aptitudes: ["Ranger Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

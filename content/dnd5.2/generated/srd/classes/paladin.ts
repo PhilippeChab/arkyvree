@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const PALADIN: ClassSeed = {
   name: "Paladin",
-  description: "A class of a d10 Hit Point Die per level, whose primary ability is Strength and Charisma.",
+  description: "A holy warrior bound by a sacred oath. Primary ability: Strength and Charisma.",
   fields: { [CLASS_HD]: 10, [CLASS_MULTICLASS_SLOTS]: "Half its levels" },
   links: {
     multiclassProficiencies: "Paladin Multiclass Proficiencies",

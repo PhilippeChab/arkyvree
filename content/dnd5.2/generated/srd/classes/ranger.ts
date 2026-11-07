@@ -6,7 +6,7 @@ import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5.2/fields/ind
 
 export const RANGER: ClassSeed = {
   name: "Ranger",
-  description: "A class of a d10 Hit Point Die per level, whose primary ability is Dexterity and Wisdom.",
+  description: "A wilderness hunter who mixes weapons and nature magic. Primary ability: Dexterity and Wisdom.",
   fields: { [CLASS_HD]: 10, [CLASS_MULTICLASS_SLOTS]: "Half its levels" },
   links: {
     multiclassProficiencies: "Ranger Multiclass Proficiencies",

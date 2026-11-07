@@ -1,4 +1,5 @@
 import { readAbility } from "@/codegen/dnd5.2/tools/detect/proficiencies.ts";
+import { CLASS_DESCRIPTIONS, readDescription } from "@/codegen/dnd5.2/tools/terms/descriptions.ts";
 import type { ClassReference } from "@/codegen/dnd5.2/tools/types/classes.ts";
 import { classFeatures } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
@@ -35,8 +36,9 @@ export class ClassSeeds {
 
   /** The class's description: its hit die and its primary abilities. */
   private description(): string {
-    const { hit_die, primary_ability } = this.entries.entry();
-    return `A class of a d${hit_die} Hit Point Die per level, whose primary ability is ${primary_ability.desc}.`;
+    const { primary_ability } = this.entries.entry();
+    const description = readDescription(CLASS_DESCRIPTIONS, this.entries.name(), "class");
+    return `${description} Primary ability: ${primary_ability.desc}.`;
   }
 
   /** The feats of its own features, of its subclasses and their features, and of its proficiencies. */

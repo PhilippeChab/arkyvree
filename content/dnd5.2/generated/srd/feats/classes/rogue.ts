@@ -226,7 +226,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Rogue Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Rogue is its first class: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Rapier; Weapon Proficiency: Scimitar; Weapon Proficiency: Shortsword; Weapon Proficiency: Whip; Weapon Proficiency: Hand Crossbow; Tool Proficiency: Thieves' Tools; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Intelligence; 4 of the skills Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, Stealth.",
+      "What a Rogue starts with: Armor Training: Light Armor; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Rapier; Weapon Proficiency: Scimitar; Weapon Proficiency: Shortsword; Weapon Proficiency: Whip; Weapon Proficiency: Hand Crossbow; Tool Proficiency: Thieves' Tools; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Intelligence; 4 of the skills Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, Stealth.",
     aptitudes: ["Rogue Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -261,7 +261,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Rogue Multiclass Proficiencies",
     description:
-      "Gained with a character's first Rogue level, when Rogue isn't its first class: Armor Training: Light Armor; Tool Proficiency: Thieves' Tools; 1 of the skills Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, Stealth.",
+      "What multiclassing into Rogue gives: Armor Training: Light Armor; Tool Proficiency: Thieves' Tools; 1 of the skills Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, Stealth.",
     aptitudes: ["Rogue Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

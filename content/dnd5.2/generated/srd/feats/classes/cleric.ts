@@ -164,7 +164,7 @@ export const CLERIC_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Cleric Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Cleric is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills History, Insight, Medicine, Persuasion, Religion.",
+      "What a Cleric starts with: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Wisdom; Saving Throw Proficiency: Charisma; 2 of the skills History, Insight, Medicine, Persuasion, Religion.",
     aptitudes: ["Cleric Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -190,7 +190,7 @@ export const CLERIC_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Cleric Multiclass Proficiencies",
     description:
-      "Gained with a character's first Cleric level, when Cleric isn't its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields.",
+      "What multiclassing into Cleric gives: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Shields.",
     aptitudes: ["Cleric Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

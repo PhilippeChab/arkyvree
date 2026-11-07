@@ -7,78 +7,72 @@ import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd5.2/fields/index.ts";
 export const SIMPLE_WEAPONS: Dnd52ItemSeed[] = [
   {
     name: "Club",
-    description: "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light. Mastery: Slow.",
+    description: "A simple wooden club.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Club") },
   },
   {
     name: "Dagger",
-    description:
-      "Simple Melee weapon. Damage: 1d4 Piercing. Properties: Finesse, Light, Thrown (Range 20/60). Mastery: Nick.",
+    description: "A short blade, easy to hide and to throw.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Dagger") },
   },
   {
     name: "Dart",
-    description: "Simple Ranged weapon. Damage: 1d4 Piercing. Properties: Finesse, Thrown (Range 20/60). Mastery: Vex.",
+    description: "A small weighted spike, thrown by hand.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Dart") },
   },
   {
     name: "Greatclub",
-    description: "Simple Melee weapon. Damage: 1d8 Bludgeoning. Properties: Two-Handed. Mastery: Push.",
+    description: "A massive wooden club, swung with both hands.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Greatclub") },
   },
   {
     name: "Handaxe",
-    description: "Simple Melee weapon. Damage: 1d6 Slashing. Properties: Light, Thrown (Range 20/60). Mastery: Vex.",
+    description: "A small axe, for chopping or throwing.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Handaxe") },
   },
   {
     name: "Javelin",
-    description: "Simple Melee weapon. Damage: 1d6 Piercing. Properties: Thrown (Range 30/120). Mastery: Slow.",
+    description: "A light spear made for throwing.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Javelin") },
   },
   {
     name: "Light Crossbow",
-    description:
-      "Simple Ranged weapon. Damage: 1d8 Piercing. Properties: Ammunition, Loading, Two-Handed (Range 80/320). Mastery: Slow.",
+    description: "A crossbow light enough to carry anywhere.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Light Crossbow") },
   },
   {
     name: "Light Hammer",
-    description:
-      "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light, Thrown (Range 20/60). Mastery: Nick.",
+    description: "A small hammer, for striking or throwing.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Light Hammer") },
   },
   {
     name: "Mace",
-    description: "Simple Melee weapon. Damage: 1d6 Bludgeoning. Properties: none. Mastery: Sap.",
+    description: "A metal club with a heavy head.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Mace") },
   },
   {
     name: "Quarterstaff",
-    description:
-      "Simple Melee weapon. Damage: 1d6 Bludgeoning (1d8 two-handed). Properties: Versatile. Mastery: Topple.",
+    description: "A long wooden staff, used in one hand or two.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Quarterstaff") },
   },
   {
     name: "Shortbow",
-    description:
-      "Simple Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Two-Handed (Range 80/320). Mastery: Vex.",
+    description: "A small bow, easy to handle.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Shortbow") },
   },
   {
     name: "Sickle",
-    description: "Simple Melee weapon. Damage: 1d4 Slashing. Properties: Light. Mastery: Nick.",
+    description: "A curved farming blade.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Sickle") },
   },
   {
     name: "Sling",
-    description: "Simple Ranged weapon. Damage: 1d4 Bludgeoning. Properties: Ammunition (Range 30/120). Mastery: Slow.",
+    description: "A strap that hurls stones or bullets.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Sling") },
   },
   {
     name: "Spear",
-    description:
-      "Simple Melee weapon. Damage: 1d6 Piercing (1d8 two-handed). Properties: Thrown, Versatile (Range 20/60). Mastery: Sap.",
+    description: "A pointed shaft, thrown or thrust.",
     fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields("Spear") },
   },
 ];
