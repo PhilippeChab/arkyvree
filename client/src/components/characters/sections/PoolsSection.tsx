@@ -219,7 +219,8 @@ function PoolTierView({ columns, entityType, rulesetId, tier }: PoolTierProps) {
   return (
     // The last tier, closed, keeps the space its title has to its entries
     <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
+      {/* Centered: the title starts with its arrow, whose bottom a baseline would set the note on */}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <SubsectionTitle component="h4">
           <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
             {tier.label} ({tier.entries.length})
