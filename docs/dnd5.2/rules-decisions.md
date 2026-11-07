@@ -37,7 +37,9 @@ holds names the code that holds it.
 - **A character's languages are Common, which its species grants, and its picks.** Every SRD species grants Common
   (`languages.common.known`, a modifier, as a 3.5 race's automatic languages are), so a fork's species speaks it once
   its modifiers say so, and a fork that renames Common edits what names it, as any modifier naming a language. Past
-  it, a new character picks two standard languages; a rare one (Druidic, Thieves' Cant) comes from a feature's grant.
+  it, a new character picks two standard languages, and one more per extra pick a feature gives "from the language
+  tables" (`languages.extrapicks`: a rogue's Thieves' Cant, a ranger's Deft Explorer): as many of its picks as its extra
+  picks may be rare, so a Rogue 1 picks Abyssal beside two standard ones, and a fighter none (`SpokenLanguages`).
 - **An increase past 20 isn't refused.** A background's, an Ability Score Improvement's or a feat's +1 raises a score to
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
 - **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training
