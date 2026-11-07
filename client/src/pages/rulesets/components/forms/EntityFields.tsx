@@ -428,12 +428,13 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
           <FormTextField
             control={control}
             name={formPath<T>(`${placeOf(field)}.every`)}
-            rules={wholeNumberRules(0, "Frequency is required", field.lastPosition)}
+            rules={wholeNumberRules(0, false, field.lastPosition)}
             number
-            label={`Every N ${many}`}
-            helperText="0 for none"
+            zeroWhenEmpty
+            label={`Every How Many ${many}`}
+            placeholder="Never"
             fullWidth
-            slotProps={{ htmlInput: { min: 0, max: field.lastPosition } }}
+            slotProps={{ htmlInput: { min: 0, max: field.lastPosition }, inputLabel: { shrink: true } }}
           />
         </Box>
         <Stack spacing={1.5}>
