@@ -58,11 +58,18 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
           chainingOperator: "or",
           children: [{ target: "abilities.strength.total" }, { target: "abilities.dexterity.total" }],
         },
+        { target: "feats.grapplerstrength.possessed", value: "false" },
       ],
       modifiers: [{ target: "abilities.dexterity.misc", value: "1" }],
     });
-    // Its versions name no other: the engine's feat rules take one of a feat taken once (FEATS_TAKEN_ONCE)
-    expect(named("Grappler (Dexterity)")?.requirements).toHaveLength(2);
+    // A feat taken once: each version requires not having the other
+    expect(named("Grappler (Dexterity)")?.requirements).toHaveLength(3);
+    expect(named("Grappler (Dexterity)")?.requirements).toContainEqual({
+      target: "feats.grapplerstrength.possessed",
+      operator: "equal",
+      value: "false",
+      valueType: "boolean",
+    });
   });
 
   test("give Magic Initiate a spell list's rooms, and a Fighting Style any class's Fighting Style and its bonus", () => {

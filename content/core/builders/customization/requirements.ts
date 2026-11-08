@@ -21,6 +21,11 @@ export function eq(target: string): RequirementCondition {
   return condition(target, "equal", "true", "boolean");
 }
 
+/** `target` false: a feat not possessed (another version of a feat taken once). */
+export function eqFalse(target: string): RequirementCondition {
+  return condition(target, "equal", "false", "boolean");
+}
+
 /** `target` equal to the number `value`. */
 export function eqNum(target: string, value: string | number): RequirementCondition {
   return condition(target, "equal", value, "number");
