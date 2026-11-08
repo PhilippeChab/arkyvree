@@ -4,7 +4,7 @@ import { Hono } from "hono";
 
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { findRequestSession, getSessionCookie, SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
-import { createSignedInUser } from "@/tests/support/users.ts";
+import { createUserWithSession } from "@/tests/support/users.ts";
 
 const cookieApp = new Hono().get("/", (c) => c.json({ sessionId: getSessionCookie(c) ?? null }));
 
@@ -18,7 +18,7 @@ async function read(cookie?: string) {
 
 describe("findRequestSession", () => {
   test("answers a live session and its user", async () => {
-    const { session, user } = await createSignedInUser();
+    const { session, user } = await createUserWithSession();
     const found = await findRequestSession(session.id);
     expect(found.session.id).toBe(session.id);
     expect(found.user.id).toBe(user.id);
@@ -27,12 +27,12 @@ describe("findRequestSession", () => {
   test("refuses no session, an unknown one and an expired one", async () => {
     expect(findRequestSession(undefined)).rejects.toThrow(UnauthorizedError);
     expect(findRequestSession(crypto.randomUUID())).rejects.toThrow(UnauthorizedError);
-    const { session } = await createSignedInUser({ sessionExpiresAt: PAST });
+    const { session } = await createUserWithSession({ sessionExpiresAt: PAST });
     expect(findRequestSession(session.id)).rejects.toThrow("Session expired");
   });
 
   test("refuses the live session of an expired demo user", async () => {
-    const { session } = await createSignedInUser({ expiresAt: PAST });
+    const { session } = await createUserWithSession({ expiresAt: PAST });
     expect(findRequestSession(session.id)).rejects.toThrow("Session expired");
   });
 });

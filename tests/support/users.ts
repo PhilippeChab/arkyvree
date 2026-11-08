@@ -21,11 +21,22 @@ export function makeSession(userId: string = SEED_USER_ID): SessionRow {
   };
 }
 
+/** A new user and a session for them. `prefix` starts the username and email. */
+export async function createTestUser(prefix = "testuser") {
+  const id = uniqueId();
+  const [user] = await Users.create(db, {
+    username: `${prefix}-${id}`,
+    emailAddress: `${prefix}-${id}@example.com`,
+    password: "password1234",
+  });
+  return { user, session: makeSession(user.id) };
+}
+
 /**
  * A new user (a demo's when `expiresAt` is given) and a stored session of theirs (`sessionExpiresAt`, else live): one a
  * request's cookie signs in. `prefix` starts the username and email.
  */
-export async function createSignedInUser({
+export async function createUserWithSession({
   expiresAt,
   prefix = "testuser",
   sessionExpiresAt,
@@ -39,17 +50,6 @@ export async function createSignedInUser({
   });
   const [session] = await Sessions.create(db, { userId: user.id, expiresAt: sessionExpiresAt });
   return { session, user };
-}
-
-/** A new user and a session for them. `prefix` starts the username and email. */
-export async function createTestUser(prefix = "testuser") {
-  const id = uniqueId();
-  const [user] = await Users.create(db, {
-    username: `${prefix}-${id}`,
-    emailAddress: `${prefix}-${id}@example.com`,
-    password: "password1234",
-  });
-  return { user, session: makeSession(user.id) };
 }
 
 /** The code of `userId`'s latest email verification. */
