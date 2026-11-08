@@ -153,7 +153,7 @@ Roughly: concat arrays from fork+ancestors â†’ drop COW'd ids and sibling ids â†
 
 System-owned rulesets (`rulesets.system = true`) get `cache.pin(key)` on first fetch so TTL, sweep, and LRU eviction all skip them. User forks still use normal LRU + 5-min TTL.
 
-The underlying `MemoryCache` capacity is 200 entries, in each of `RulesetViews`' caches (`rawData`, `cowData`, `targetPaths`). With the ~9 system-owned rulesets pinned in each, ~190 slots remain for the user-fork working set.
+The underlying `MemoryCache` capacity is 200 entries, in each of `RulesetViews`' caches (`rawData`, `cowData`, `targetPaths`). Only `rawData` pins (its reader, `RawDataReader.read`, says when): with the ~9 system-owned rulesets pinned there, ~190 of its slots remain for the user-fork working set.
 
 Safety: if everything in the cache is pinned and you try to insert a non-pinned entry, `set()` bails rather than growing past `MAX_ENTRIES`.
 
