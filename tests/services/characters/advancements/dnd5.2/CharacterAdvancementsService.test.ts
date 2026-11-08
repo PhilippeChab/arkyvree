@@ -621,7 +621,7 @@ describe("A feat taken once", () => {
     expect((await unmetPrerequisites(character.id)).join("; ")).toMatch(/Unmet prerequisite on Grappler \(Dexterity\)/);
   });
 
-  test("is refused at an edited level beside a later level's version", async () => {
+  test("is not eligible at an edited level beside a later level's version", async () => {
     const ctx = await getDnd52SeedCtx();
     const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES });
     const saved = [];
@@ -629,7 +629,7 @@ describe("A feat taken once", () => {
       const feats = level === 8 ? { "Ability Score Improvement": ["Grappler (Strength)"] } : undefined;
       saved.push(await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 1, feats }, true));
     }
-    // Its 4th level, edited, offers Grappler (Dexterity) as not eligible, as its save refuses it
+    // Its 4th level, edited, offers Grappler (Dexterity) as not eligible, its later Grappler (Strength) named
     const edit = { ...levelEditPlan(1), editedAdvancementId: saved[3]!.id };
     const at = { pool: ctx.aptMap["Ability Score Improvement"] };
     const { items } = await getStepOptions(session, character.id, "feats", edit, at, { search: "Grappler" });
