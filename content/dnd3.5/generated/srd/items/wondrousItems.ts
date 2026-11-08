@@ -130,7 +130,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
       [MAGIC_CASTER_LEVEL]: 5,
       [MAGIC_AURA]: ["Faint transmutation"],
     },
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.naturalenhancement", operator: "add", value: "1", valueType: "number" }],
   },
   {
     name: "Amulet of Natural Armor +2",
@@ -144,7 +144,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
       [MAGIC_CASTER_LEVEL]: 5,
       [MAGIC_AURA]: ["Faint transmutation"],
     },
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "2", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.naturalenhancement", operator: "add", value: "2", valueType: "number" }],
   },
   {
     name: "Amulet of Natural Armor +3",
@@ -158,7 +158,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
       [MAGIC_CASTER_LEVEL]: 5,
       [MAGIC_AURA]: ["Faint transmutation"],
     },
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "3", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.naturalenhancement", operator: "add", value: "3", valueType: "number" }],
   },
   {
     name: "Amulet of Natural Armor +4",
@@ -172,7 +172,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
       [MAGIC_CASTER_LEVEL]: 5,
       [MAGIC_AURA]: ["Faint transmutation"],
     },
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "4", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.naturalenhancement", operator: "add", value: "4", valueType: "number" }],
   },
   {
     name: "Amulet of Natural Armor +5",
@@ -186,7 +186,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
       [MAGIC_CASTER_LEVEL]: 5,
       [MAGIC_AURA]: ["Faint transmutation"],
     },
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "5", valueType: "number" }],
+    modifiers: [{ target: "combat.ac.naturalenhancement", operator: "add", value: "5", valueType: "number" }],
   },
   {
     name: "Amulet of Proof against Detection and Location",

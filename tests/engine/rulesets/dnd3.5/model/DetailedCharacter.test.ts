@@ -2121,8 +2121,8 @@ describe("DetailedCharacter", () => {
       });
     });
 
-    test("keep a bonus to the armor's AC beside the armor's own, whichever applies first", async () => {
-      // Chain mail (+5), its item +1 (a magic armor), and bracers' +2 on the armor bonus
+    test("keep the best armor bonus, an armor's with its own +1, over another one, whichever applies first", async () => {
+      // Chain mail (+5) and its item's +1 (a magic armor), beside another +2 armor bonus (bracers'): the armor's 6
       const { itemMap, rulesetId } = await getSeedCtx();
       await Modifiers.create(db, {
         sourceId: itemMap["Chain Mail"],
@@ -2135,7 +2135,7 @@ describe("DetailedCharacter", () => {
       invalidateSeededRuleset(rulesetId);
       await createRaceModifier(await findSeededCharacter("Bjorn Ironhand"), { target: "combat.ac.armor", value: "2" });
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
-      expect(bjorn.components.combat.getCombat().ac.armor).toBe(8);
+      expect(bjorn.components.combat.getCombat().ac.armor).toBe(6);
     });
 
     test("gated by a requirement, read the sheet the other modifiers have changed", async () => {

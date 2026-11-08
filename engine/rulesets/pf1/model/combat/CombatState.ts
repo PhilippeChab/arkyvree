@@ -18,11 +18,15 @@ import type { ShieldsData, ShieldSlot } from "./ShieldsComponent.ts";
 type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
 /**
- * An armor class's parts: its inputs (the base, the armor's and the shield's AC, natural armor, deflection, dodge,
- * misc, uncanny dodge), which modifiers change, and what's computed when read (Dexterity's bonus, the size's).
+ * An armor class's parts: its inputs (the base, the armor's and the shield's AC, natural armor, each with its
+ * enhancement, deflection, dodge, misc, uncanny dodge), which modifiers change, and what's computed when read
+ * (Dexterity's bonus, the size's). The armor's, the shield's, natural armor, their enhancements, and deflection each
+ * keep the best of their sources, as same-type bonuses don't stack (`BestOfSources`).
  */
 export interface ArmorClassParts {
   armor: number;
+  /** An enhancement bonus to armor, which adds to the armor bonus */
+  armorenhancement: number;
   base: number;
   deflection: number;
   readonly dexterity: number;
@@ -30,7 +34,11 @@ export interface ArmorClassParts {
   dodge: number;
   misc: number;
   natural: number;
+  /** An enhancement bonus to natural armor (an Amulet of Natural Armor's), which stacks with natural armor */
+  naturalenhancement: number;
   shield: number;
+  /** An enhancement bonus to a shield, which adds to the shield bonus while a shield is held */
+  shieldenhancement: number;
   readonly size: number;
   /** Keeps the Dexterity and dodge bonuses when flat-footed: uncanny dodge */
   uncannydodge: boolean;
@@ -135,8 +143,9 @@ export interface SetArmorClass extends ArmorClassParts {
  * The armor class's parts every weapon set shares, read outside a set: the shield's is no set's, but the greatest set's
  * own (`WeaponSet.ac`), computed when read.
  */
-export interface SharedArmorClass extends Omit<ArmorClassParts, "shield"> {
+export interface SharedArmorClass extends Omit<ArmorClassParts, "shield" | "shieldenhancement"> {
   readonly shield: number;
+  readonly shieldenhancement: number;
 }
 
 /** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
@@ -278,9 +287,12 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
       ac: {
         base: COMBAT_RULES.DEFAULT_AC_BASE,
         armor: 0,
+        armorenhancement: 0,
         shield: 0,
+        shieldenhancement: 0,
         dexterity: 0,
         natural: 0,
+        naturalenhancement: 0,
         deflection: 0,
         dodge: 0,
         size: 0,
@@ -318,9 +330,6 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
 
   /** Each double weapon's other end's damage dice (its WEAPON_DOUBLE_DAMAGE). */
   protected readonly doubleWeapons = new WeakMap<WeaponSlot, string>();
-
-  /** What modifiers add to the armor's AC, beside the armor's own: a modifier's write keeps its part. */
-  protected readonly gearBonus = { armor: 0 };
 
   /** The inventory's weapons the combat placed, in its order (`CombatComponent.initialize`). */
   protected readonly heldWeapons: HeldWeapon[] = [];

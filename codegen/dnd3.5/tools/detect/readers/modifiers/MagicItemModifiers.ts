@@ -20,10 +20,10 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
     pattern: /^Gauntlets of Ogre Power$/i,
     toModifiers: () => [bonus("abilities.strength.misc", "2")],
   },
-  // Amulet of Natural Armor +N
+  // Amulet of Natural Armor +N: an enhancement bonus to natural armor, which stacks with a natural armor bonus
   {
     pattern: /Natural Armor\s*\+(\d+)$/i,
-    toModifiers: (m) => [bonus("combat.ac.natural", m[1])],
+    toModifiers: (m) => [bonus("combat.ac.naturalenhancement", m[1])],
   },
   // Bracers of Armor +N
   {

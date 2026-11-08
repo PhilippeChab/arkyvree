@@ -39,14 +39,15 @@ const COMBAT_PATHS = [
   { path: "ac.base", description: "Default 10", type: "number" as const, sortOrder: 2 },
   {
     path: "ac.armor",
-    description: "Armor bonus to AC: armor, bracers, an armor's enhancement (not in touch AC)",
+    description:
+      "Armor bonus to AC: the best one counts, an armor's with its own enhancement, bracers' (not in touch AC)",
     type: "number" as const,
     sortOrder: 2,
   },
   {
     path: "ac.shield",
     description:
-      "Shield bonus to AC: a shield, its enhancement (not in touch AC). Each set's own, which a modifier changes in each set; read elsewhere, the greatest set's",
+      "Shield bonus to AC: the best one counts, a shield's with its own enhancement (not in touch AC). Each set's own, which a modifier changes in each set; read elsewhere, the greatest set's",
     type: "number" as const,
     sortOrder: 2,
   },
@@ -57,11 +58,41 @@ const COMBAT_PATHS = [
     sortOrder: 2,
     requirementOnly: true,
   },
-  { path: "ac.natural", description: "Natural armor bonus (not in touch AC)", type: "number" as const, sortOrder: 2 },
-  { path: "ac.deflection", description: "Deflection bonus to AC", type: "number" as const, sortOrder: 2 },
+  {
+    path: "ac.natural",
+    description: "Natural armor bonus: the best one counts (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.armorenhancement",
+    description: "Enhancement bonus to armor: it adds to the armor bonus, and the best one counts (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.shieldenhancement",
+    description:
+      "Enhancement bonus to a shield: it adds to the shield bonus while a shield is held, and the best one counts (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.naturalenhancement",
+    description:
+      "Enhancement bonus to natural armor (an amulet of natural armor's): it adds to natural armor, and the best one counts (not in touch AC)",
+    type: "number" as const,
+    sortOrder: 2,
+  },
+  {
+    path: "ac.deflection",
+    description: "Deflection bonus to AC: the best one counts",
+    type: "number" as const,
+    sortOrder: 2,
+  },
   {
     path: "ac.dodge",
-    description: "Dodge bonus to AC, and any other lost when flat-footed (not in flat-footed AC)",
+    description: "Dodge bonus to AC: dodge bonuses stack, and any other lost when flat-footed (not in flat-footed AC)",
     type: "number" as const,
     sortOrder: 2,
   },
@@ -270,11 +301,11 @@ export default class CombatPaths implements PathCategory<Pf1Components> {
   }
 
   /**
-   * Whether a target is the shield's part of the armor class (`combat.ac.shield`), which no weapon set shares: each
-   * set's is its own shield's, which a modifier changes in each set.
+   * Whether a target is the shield's part of the armor class (`combat.ac.shield`) or its enhancement, which no weapon
+   * set shares: each set's is its own shield's, which a modifier changes in each set.
    */
   static isShieldBonusTarget(target: string): boolean {
-    return target === "combat.ac.shield";
+    return target === "combat.ac.shield" || target === "combat.ac.shieldenhancement";
   }
 
   /**

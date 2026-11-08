@@ -52,8 +52,11 @@ export default abstract class CharacterBase<
     protected readonly character: Character,
     protected readonly targetPaths: TargetPathsTraverser,
   ) {
-    this.modifierEvaluator = new ModifierEvaluator(targetPaths, this.contextsOf, (modifier) =>
-      this.joinModifiers(this.grantsOf(modifier)),
+    this.modifierEvaluator = new ModifierEvaluator(
+      targetPaths,
+      this.contextsOf,
+      (modifier) => this.joinModifiers(this.grantsOf(modifier)),
+      (modifier) => this.bonusSourceOf(modifier),
     );
     this.requirementEvaluator = new RequirementEvaluator(targetPaths);
   }
@@ -281,6 +284,14 @@ export default abstract class CharacterBase<
       if (templateId) this.itemNames.set(templateId, item.name);
     }
     return this.itemNames;
+  }
+
+  /**
+   * The source a modifier adds under to a value that keeps the best of its sources (`BestOfSources`: an armor class's
+   * deflection bonus): its own (an item, a feat, a race), unless the ruleset counts several as one.
+   */
+  protected bonusSourceOf(modifier: Modifier): string {
+    return modifier.sourceId;
   }
 
   /**
