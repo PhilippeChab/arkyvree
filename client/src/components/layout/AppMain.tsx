@@ -75,7 +75,8 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
       }}
     >
       {banner}
-      <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>
+      {/* A size container, the app's whole area: a row that slides past its page's column reads its width (`cqw`) */}
+      <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center", containerType: "inline-size" }}>
         {/* The app's page width, every page's: each brings its own gutter (its Container, whose own width is this) */}
         <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
           {rulesPending ? (
