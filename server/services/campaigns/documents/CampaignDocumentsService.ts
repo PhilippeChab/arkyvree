@@ -134,7 +134,8 @@ class CampaignDocumentsService {
     item: TreeItem,
     sides: WriteSides,
   ) {
-    const data = { campaignId: campaign.id, campaignName: campaign.name, kind: item.kind, name: item.name };
+    // Named as an activity names what it's about (`entityName`), which its feed and its notifications read
+    const data = { campaignId: campaign.id, campaignName: campaign.name, entityName: item.name, kind: item.kind };
     const activity = { userId: session.userId, targetId: item.id, targetType: TARGET_TYPES.campaignDocuments, data };
     await Activities.create(tx, { ...activity, type });
 

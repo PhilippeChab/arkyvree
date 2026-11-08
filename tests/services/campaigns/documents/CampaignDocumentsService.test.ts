@@ -39,7 +39,7 @@ function newDocument(parts: Partial<NewDocument> = {}): NewDocument {
 /** What a user was notified of: each notification's type and the name its data gives. */
 async function inbox(userId: string) {
   const { items } = await Notifications.findPage(db, { recipientId: userId }, { limit: 50, page: 1 });
-  return items.map(({ type, data }) => `${type} ${(data as { name?: string }).name}`);
+  return items.map(({ type, data }) => `${type} ${(data as { entityName?: string }).entityName}`);
 }
 
 /** The names of the campaign's items a session sees. */
@@ -375,7 +375,13 @@ describe("CampaignDocumentsService", () => {
       expect(map.map(({ type, data }) => [type, data])).toEqual([
         [
           "shareCampaignDocument",
-          { campaignId: campaign.id, campaignName: campaign.name, kind: "Document", name: "Map", actorName: null },
+          {
+            campaignId: campaign.id,
+            campaignName: campaign.name,
+            kind: "Document",
+            entityName: "Map",
+            actorName: null,
+          },
         ],
       ]);
     });
