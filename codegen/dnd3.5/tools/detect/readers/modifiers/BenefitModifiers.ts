@@ -50,8 +50,9 @@ export class BenefitModifiers extends ModifierReading {
       if (slug) modifiers.push(bonus(`saves.${slug}.misc`, match[1]));
     }
 
-    // Pattern: "+N natural armor bonus" or "+N to natural armor"
-    const natArmorMatch = benefit.match(/\+(\d+)\s+(?:natural armor|to natural armor)/i);
+    // Pattern: "+N natural armor bonus" or "+N to natural armor", the character's own: not a mount's ("a +6 natural
+    // armor adjustment" in Devoted Tracker's example)
+    const natArmorMatch = text.first(/\+(\d+)\s+(?:natural armor|to natural armor)/i);
     if (natArmorMatch) modifiers.push(bonus("combat.ac.natural", natArmorMatch[1]));
 
     // Pattern: "+N bonus on [all] attack rolls ... using the selected weapon"

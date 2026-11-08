@@ -191,7 +191,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "If you have levels in paladin and ranger, those levels stack for the purposes of determining the extra damage dealt by your smite evil ability and determining the bonus for your wild empathy class feature. This feat does not allow additional daily uses of smite evil. If you have both the special mount and animal companion class features, you can designate your special mount as your animal companion. The mount gains all the benefits of being both your special mount and your animal companion. For instance, a 5th-level paladin/6th-level ranger's special mount would have 4 bonus Hit Dice, a +6 natural armor adjustment, +2 Strength, +1 Dexterity, two bonus tricks, and Intelligence 6, as well as the empathic link, improved evasion, share spells, share saving throws, and link special abilities. In addition, you can multiclass freely between the paladin and ranger classes. You must still remain lawful good in order to retain your paladin abilities and take paladin levels. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
     requirements: [eq("feats.track.possessed"), eq("feats.smiteevil.*.possessed"), eq("feats.wildempathy.*.possessed")],
-    modifiers: [{ target: "combat.ac.natural", operator: "add", value: "6", valueType: "number" }],
   },
   {
     name: "Disguise Spell",
