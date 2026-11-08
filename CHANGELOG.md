@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The characters list shows each character's ruleset, and filters by ruleset
 - Pathfinder 1: a new game system with the Core Rulebook's races, classes, feats, spells and items, as the ruleset "Core PSD 1"
 
 ## 0.7.0 — 2026-11-04

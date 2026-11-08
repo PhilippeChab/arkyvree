@@ -39,6 +39,8 @@ export interface CampaignListFilters {
 export interface CharacterListFilters {
   orderBy: NonNullable<CharacterListParams["orderBy"]>;
   orderDir: Direction;
+  /** The ruleset its characters are of: any without one. */
+  rulesetId?: string;
   search: string;
   view: (typeof CHARACTER_VIEWS)[number];
 }
@@ -178,11 +180,28 @@ export function characterListQuery(filters: CharacterListFilters) {
             search: filters.search || undefined,
             orderBy: filters.orderBy,
             orderDir: filters.orderDir,
+            rulesetId: filters.rulesetId,
           },
         }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/** The rulesets a characters list's view (`view`) holds characters of: its ruleset filter's options, by name. */
+export function characterRulesetsQuery(view: CharacterListFilters["view"]) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.characters.rulesets(view),
+    queryFn: () =>
+      parseResponse(
+        rpc.api.characters.rulesets.$get({
+          query: {
+            visibility: view === "archived" ? "archived" : "active",
+            accessRole: view === "shared" ? "contributor" : undefined,
+          },
+        }),
+      ),
   });
 }
 

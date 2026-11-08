@@ -7,7 +7,7 @@ import {
   type LinkPicksPlan,
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
+import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
@@ -17,6 +17,7 @@ import {
   Characters,
   Entities,
   type Pagination,
+  Rulesets,
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
@@ -84,6 +85,17 @@ class CharactersService extends include(Object, Archives, Imports) {
     });
 
     return updatedCharacter;
+  }
+
+  /**
+   * The names of the characters' rulesets (`characters`), by id: as their views have them (`views`), and an archived
+   * ruleset's, which no view reads, from its row.
+   */
+  private async readRulesetNames(views: Map<string, RulesetScope>, characters: Character[]) {
+    const names = new Map([...views.values()].map(({ ruleset }) => [ruleset.id, ruleset.name]));
+    const unread = [...new Set(characters.map(({ rulesetId }) => rulesetId))].filter((id) => !names.has(id));
+    for (const ruleset of await Rulesets.findMany(db, { ids: unread })) names.set(ruleset.id, ruleset.name);
+    return names;
   }
 
   /**
@@ -171,12 +183,29 @@ class CharactersService extends include(Object, Archives, Imports) {
     });
   }
 
+  /**
+   * The rulesets the user's characters list holds characters of, for its ruleset filter: its view's (owned or shared,
+   * live or archived), each its id and name, by name.
+   */
+  async getCharacterRulesets(
+    session: Session,
+    where: { accessRole?: "owner" | "contributor"; visibility?: keyof typeof visibilityMap },
+  ) {
+    const { visibility, accessRole } = where;
+    return await Characters.findListRulesets(db, {
+      userId: session.userId,
+      ...(accessRole && { accessRole }),
+      ...(visibility && { visibility: visibilityMap[visibility] }),
+    });
+  }
+
   async getCharacters(
     session: Session,
     where: {
       accessRole?: "owner" | "contributor";
       orderBy?: "name" | "createdAt" | "lastChangedAt";
       orderDir?: "asc" | "desc";
+      rulesetId?: string;
       search?: string;
       visibility?: keyof typeof visibilityMap;
     },
@@ -201,9 +230,11 @@ class CharactersService extends include(Object, Archives, Imports) {
       async (views) => {
         // The user's own characters: every card whole
         const cards = describeCharacterCards(views, charactersList, advancements, new Set());
+        const rulesetNames = await this.readRulesetNames(views, charactersList);
         const enrichedCharacters = charactersList.map((char) => ({
           ...cards.get(char.id)!,
           accessRole: char.accessRole,
+          ruleset: { id: char.rulesetId, name: rulesetNames.get(char.rulesetId) ?? "" },
         }));
 
         return {
