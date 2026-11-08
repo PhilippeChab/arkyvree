@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Players } from "@/server/repositories/index.ts";
-import { type DocumentAudience, isInDocumentAudience } from "@/shared/campaignDocuments.ts";
+import { type DocumentAudience, isInDocumentAudience, MAX_DOCUMENT_DEPTH } from "@/shared/campaignDocuments.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
@@ -17,6 +17,17 @@ interface CharacterLink {
 
 /** What a campaign's checks read of it. */
 type PolicyCampaign = Pick<Campaign, "id" | "deletedAt" | "rulesetId">;
+
+/**
+ * What a write of one of the campaign's folders or documents names of other records, as its service read them: the
+ * folder it goes in (`folder`, none at the top or for a write that doesn't move it: whether it's one of the campaign's
+ * folders, whether it's the item or one of its own, and how deep it would stand what it holds), and whether every
+ * seat it admits is the campaign's (`seatsFound`).
+ */
+export interface DocumentPlacement {
+  folder?: { depth: number; found: boolean; within: boolean };
+  seatsFound: boolean;
+}
 
 export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   constructor(session: Session, entity: PolicyCampaign, player: Player | null = null) {
@@ -49,6 +60,20 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   private canDelete() {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can manage this campaign");
+
+    return true;
+  }
+
+  /**
+   * Where a folder or a document goes and whom it admits (`placement`): in one of the campaign's folders, never itself
+   * or one of its own, at most `MAX_DOCUMENT_DEPTH` folders deep, admitting the campaign's seats alone.
+   */
+  private canPlaceDocument({ folder, seatsFound }: DocumentPlacement) {
+    if (folder && !folder.found) throw new UnprocessableEntityError("Folder not found in this campaign");
+    if (folder?.within) throw new UnprocessableEntityError("A folder can't go in itself or one of its folders");
+    if (folder && folder.depth > MAX_DOCUMENT_DEPTH)
+      throw new UnprocessableEntityError(`Folders nest ${MAX_DOCUMENT_DEPTH} deep at most`);
+    if (!seatsFound) throw new UnprocessableEntityError("Player not found in this campaign");
 
     return true;
   }
@@ -130,11 +155,13 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   /**
    * Adding, editing, moving and removing the campaign's folders and documents, and choosing whom each admits: its Game
-   * Master's, but a demo's (`canUseSignedUpFeatures`), in a campaign that isn't archived.
+   * Master's, but a demo's (`canUseSignedUpFeatures`), in a campaign that isn't archived. Where a write puts an item and
+   * whom it admits (`placement`, the other records it names) is checked between the two (`canPlaceDocument`).
    */
-  canManageDocuments() {
+  canManageDocuments(placement?: DocumentPlacement) {
     this.canUpdate();
     this.canUseSignedUpFeatures();
+    if (placement) this.canPlaceDocument(placement);
     return this.canModify();
   }
 

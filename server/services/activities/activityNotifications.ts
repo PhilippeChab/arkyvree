@@ -153,7 +153,9 @@ async function recordActivity(
   if (recipientIds.length === 0) return;
 
   const actor = await Users.findOne(tx, { id: values.userId });
-  const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
+  // Those a write names (a campaign's players) may not read the actor's address: they read its username alone, if any
+  const actorName =
+    named.length > 0 ? (actor?.username ?? null) : (actor?.username ?? actor?.emailAddress ?? "Unknown");
   const { targetId, targetType, type, userId: actorId } = values;
   await Notifications.createMany(
     tx,

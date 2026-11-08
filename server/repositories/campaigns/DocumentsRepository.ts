@@ -1,7 +1,7 @@
-import { count, eq, getTableColumns, type InferInsertModel } from "drizzle-orm";
+import { and, eq, getTableColumns, type InferInsertModel, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { documentsInCampaign } from "@/drizzle/schema.ts";
+import { documentReadersInCampaign, documentsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
@@ -25,15 +25,6 @@ class DocumentsRepository extends include(BaseRepository<typeof documentsInCampa
     super(documentsInCampaign);
   }
 
-  /** How many folders and documents a campaign keeps. */
-  async count(db: Db, where: { campaignId: string }) {
-    const [result] = await db
-      .select({ count: count() })
-      .from(this.table)
-      .where(eq(this.table.campaignId, where.campaignId));
-    return result?.count ?? 0;
-  }
-
   async create(db: Db, values: InferInsertModel<typeof documentsInCampaign>) {
     return (await db.insert(this.table).values(values).returning()).map(toDocument);
   }
@@ -41,16 +32,6 @@ class DocumentsRepository extends include(BaseRepository<typeof documentsInCampa
   /** Deletes a folder, with what it holds, or a document: the database cascades to its contents and their readers. */
   async delete(db: Db, where: { id: string }) {
     return (await db.delete(this.table).where(eq(this.table.id, where.id)).returning()).map(toDocument);
-  }
-
-  /** A campaign's whole tree, its documents' text left out, each by its name, then its id. */
-  async findMany(db: Db, where: { campaignId: string }) {
-    const rows = await db
-      .select(TREE_COLUMNS)
-      .from(this.table)
-      .where(eq(this.table.campaignId, where.campaignId))
-      .orderBy(this.orderBy(this.table.name), this.orderBy(this.table.id));
-    return rows.map(toDocument);
   }
 
   /** A folder or a document, of a campaign or any, with its text. */
@@ -65,6 +46,32 @@ class DocumentsRepository extends include(BaseRepository<typeof documentsInCampa
         ),
       );
     return row && toDocument(row);
+  }
+
+  /**
+   * A campaign's whole tree, each by its name, then its id, with the live seats it names (`readerIds`, sorted: a seat
+   * archived with its user's account names no one), in one statement, so a write committing meanwhile is read whole or
+   * not at all. Its documents' text is left out but one's (`textOf`), which an item's read shows.
+   */
+  async findTree(db: Db, where: { campaignId: string }, textOf?: string) {
+    const readers = documentReadersInCampaign;
+    const seat = playersInCampaign;
+    const readerIds = sql<string[]>`coalesce(
+      array_agg(${readers.playerId}::text ORDER BY ${readers.playerId}::text) FILTER (WHERE ${seat.id} IS NOT NULL),
+      '{}'
+    )`;
+    const body = textOf
+      ? sql<string | null>`CASE WHEN ${this.table.id} = ${textOf} THEN ${this.table.body} END`
+      : sql<null>`NULL`;
+    const rows = await db
+      .select({ ...TREE_COLUMNS, body, readerIds })
+      .from(this.table)
+      .leftJoin(readers, eq(readers.documentId, this.table.id))
+      .leftJoin(seat, and(eq(seat.id, readers.playerId), isNull(seat.deletedAt)))
+      .where(eq(this.table.campaignId, where.campaignId))
+      .groupBy(this.table.id)
+      .orderBy(this.orderBy(this.table.name), this.orderBy(this.table.id));
+    return rows.map(toDocument);
   }
 
   /** Changes a row, as its edit read it (`expectedUpdatedAt`): none when it changed since. */

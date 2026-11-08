@@ -40,7 +40,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors`, a ruleset's and a character's (Pending/Active/Rejected/Revoked enum: a revoked one stays, by its status) |
 | Account credentials | `ApiKeys` (a revoked key: nothing names it, and its token must stop working at once; an expired one, which the sign-in refuses, once `runCleanup.ts` reaps it) |
-| A campaign's documents | `Documents` (a folder's delete takes what it holds, by cascade, never moving it up to its folder, where a Private folder's contents would show), `DocumentReaders` (the seats a Selected item names: a link, rewritten with its item's setting) |
+| A campaign's documents | `Documents` (a folder's delete takes what it holds, by cascade, never moving it up to its folder, where a Private folder's contents would show), `DocumentReaders` (the seats a Selected item names: a link, rewritten with its item's setting; a seat archived with its user's account keeps its rows, which name no one: the tree reads live seats alone, and its item's next save of its seats drops them) |
 
 A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 

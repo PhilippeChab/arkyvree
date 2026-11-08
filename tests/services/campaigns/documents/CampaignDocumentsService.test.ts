@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { documentsInCampaign } from "@/drizzle/schema.ts";
+import { eq } from "drizzle-orm";
+
+import { documentsInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,
@@ -10,8 +12,10 @@ import {
   STALE_ENTITY_MESSAGE,
   UnprocessableEntityError,
 } from "@/server/errors/index.ts";
-import { Campaigns, Documents, Notifications, Players } from "@/server/repositories/index.ts";
+import { Campaigns, Notifications, Players } from "@/server/repositories/index.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
+import { AccountService } from "@/server/services/authentication/account/index.ts";
+import { readDocumentTree } from "@/server/services/campaigns/documents/documentTree.ts";
 import { CampaignDocumentsService } from "@/server/services/campaigns/documents/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
@@ -113,6 +117,22 @@ describe("CampaignDocumentsService", () => {
         new UnprocessableEntityError(`Folders nest ${MAX_DOCUMENT_DEPTH} deep at most`),
       );
       expect((await add({ parentId })).parentId).toBe(parentId);
+    });
+
+    test("refuses who first, then the folder and seats it names, then the campaign's state", async () => {
+      const { gm, campaign, rogue, add } = await setup();
+      const document = await add();
+      expect(add({ parentId: document.id })).rejects.toEqual(
+        new UnprocessableEntityError("Folder not found in this campaign"),
+      );
+      await CampaignsService.archiveCampaign(gm, campaign.id);
+      expect(add({ parentId: NIL_UUID })).rejects.toEqual(
+        new UnprocessableEntityError("Folder not found in this campaign"),
+      );
+      expect(add()).rejects.toEqual(new ConflictError("This campaign is archived"));
+      expect(
+        CampaignDocumentsService.createDocument(rogue.session, campaign.id, newDocument({ parentId: NIL_UUID })),
+      ).rejects.toEqual(new ForbiddenError("Only the Game Master can edit this campaign"));
     });
 
     test("keeps a campaign's folders and documents within their count", async () => {
@@ -257,10 +277,10 @@ describe("CampaignDocumentsService", () => {
         CampaignDocumentsService.updateDocument(gm, campaign.id, document.id, edit);
 
       expect((await update({ name: "Renamed" })).readerIds).toEqual([rogue.player.id]);
-      expect((await update({ readerIds: [rogue.player.id, bard.player.id] })).readerIds).toEqual([
-        rogue.player.id,
-        bard.player.id,
-      ]);
+      // Sorted, as a read answers them
+      expect((await update({ readerIds: [rogue.player.id, bard.player.id] })).readerIds).toEqual(
+        [rogue.player.id, bard.player.id].sort(),
+      );
       expect(await update({ visibility: "Public" })).toMatchObject({ visibility: "Public", readerIds: [] });
       expect(update({ visibility: "Selected" })).rejects.toEqual(
         new BadRequestError("A Selected folder or document names one player at least"),
@@ -268,6 +288,18 @@ describe("CampaignDocumentsService", () => {
       expect(update({ readerIds: [bard.player.id] })).rejects.toEqual(
         new BadRequestError("Only a Selected folder or document names its players"),
       );
+    });
+
+    test("answers a player's change of a hidden item as of an unknown one", async () => {
+      const { campaign, rogue, add } = await setup();
+      const hidden = await add({ name: "Twist" });
+      const refusal = new ForbiddenError("Only the Game Master can edit this campaign");
+      for (const id of [hidden.id, NIL_UUID]) {
+        expect(CampaignDocumentsService.updateDocument(rogue.session, campaign.id, id, { name: "x" })).rejects.toEqual(
+          refusal,
+        );
+        expect(CampaignDocumentsService.removeDocument(rogue.session, campaign.id, id)).rejects.toEqual(refusal);
+      }
     });
 
     test("refuses a folder's text, a player and an unknown item", async () => {
@@ -326,6 +358,28 @@ describe("CampaignDocumentsService", () => {
       for (const player of [rogue, bard]) expect(await inbox(player.user.id)).toEqual(["shareCampaignDocument Act 3"]);
     });
 
+    test("the players a move reveals an item to, by the Game Master's username alone", async () => {
+      const { gm, campaign, rogue, add } = await setup();
+      const shown = await add({ kind: "Folder", name: "Handouts", visibility: "Public" });
+      const { id: mapId } = await add({
+        name: "Map",
+        visibility: "Public",
+        parentId: (await add({ kind: "Folder" })).id,
+      });
+      await db.update(usersInAccount).set({ username: null }).where(eq(usersInAccount.id, gm.userId));
+
+      await CampaignDocumentsService.updateDocument(gm, campaign.id, mapId, { parentId: shown.id });
+      const { items } = await Notifications.findPage(db, { recipientId: rogue.user.id }, { limit: 10, page: 1 });
+      // The folder, shown as it was created, and the document the move reveals
+      const map = items.filter(({ targetId }) => targetId === mapId);
+      expect(map.map(({ type, data }) => [type, data])).toEqual([
+        [
+          "shareCampaignDocument",
+          { campaignId: campaign.id, campaignName: campaign.name, kind: "Document", name: "Map", actorName: null },
+        ],
+      ]);
+    });
+
     test("no player for a hidden item's change, its other Game Masters alone", async () => {
       const { gm, campaign, rogue, coGm, add } = await setup();
       const hidden = await add({ name: "Twist" });
@@ -374,6 +428,40 @@ describe("CampaignDocumentsService", () => {
       });
     });
 
+    test("a listed player's deleted account names no one, and the item still saves as it reads", async () => {
+      const { gm, campaign, rogue, bard, add } = await setup();
+      const letter = await add({
+        name: "Letter",
+        visibility: "Selected",
+        readerIds: [rogue.player.id, bard.player.id],
+      });
+      await AccountService.deleteAccount(rogue.session, "password1234");
+
+      const read = await CampaignDocumentsService.getDocument(gm, campaign.id, letter.id);
+      expect(read).toMatchObject({
+        readerIds: [bard.player.id],
+        audience: { everyone: false, playerIds: [bard.player.id] },
+      });
+      const saved = await CampaignDocumentsService.updateDocument(gm, campaign.id, letter.id, {
+        name: "Letter to the bard",
+        readerIds: read.readerIds ?? [],
+        updatedAt: read.updatedAt,
+      });
+      expect(saved).toMatchObject({ name: "Letter to the bard", readerIds: [bard.player.id] });
+    });
+
+    test("a promoted player sees every item, a demoted Game Master what admits their seat", async () => {
+      const { gm, campaign, rogue, coGm, add } = await setup();
+      await add({ name: "Twist" });
+      await add({ name: "Map", visibility: "Public" });
+      expect(await namesSeen(rogue.session, campaign.id)).toEqual(["Map"]);
+
+      await CampaignPlayersService.updatePlayer(gm, campaign.id, rogue.player.id, "Game Master");
+      await CampaignPlayersService.updatePlayer(gm, campaign.id, coGm.player.id, "Player Character");
+      expect(await namesSeen(rogue.session, campaign.id)).toEqual(["Map", "Twist"]);
+      expect(await namesSeen(coGm.session, campaign.id)).toEqual(["Map"]);
+    });
+
     test("a campaign's permanent delete deletes its folders and documents", async () => {
       const { gm, campaign, add } = await setup();
       const folder = await add({ kind: "Folder" });
@@ -382,7 +470,7 @@ describe("CampaignDocumentsService", () => {
       await CampaignsService.hardDeleteCampaign(gm, campaign.id);
 
       expect(await Campaigns.findOne(db, { id: campaign.id })).toBeUndefined();
-      expect(await Documents.count(db, { campaignId: campaign.id })).toBe(0);
+      expect((await readDocumentTree(db, campaign.id)).size).toBe(0);
     });
   });
 });
