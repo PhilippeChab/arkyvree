@@ -7,6 +7,8 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import { extractReferencedPaths, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
+import BestOfSources from "./BestOfSources.ts";
+
 interface ModifierResults {
   appliedModifiers: Modifier[];
   inactiveModifiers: Modifier[];
@@ -19,7 +21,8 @@ export default class ModifierEvaluator {
    * `contextsOf` gives the contexts a modifier applies in, each of which its target is reached in: the source a target
    * reading its source resolves by, and the part of the sheet (a scope); by default its own source, the whole sheet.
    * `onApplied` hears of each modifier once it applied, however many values it changed, wherever it's applied from (a
-   * character's build gives what it grants: `CharacterBase.grantsOf`); by default nothing does.
+   * character's build gives what it grants: `CharacterBase.grantsOf`); by default nothing does. `sourceOf` gives the
+   * source a modifier adds under to a value that keeps the best of its sources (`BestOfSources`); by default its own.
    */
   constructor(
     private readonly targetPaths: TargetPathsTraverser,
@@ -27,6 +30,7 @@ export default class ModifierEvaluator {
       { sourceId: modifier.sourceId },
     ],
     private readonly onApplied: (modifier: Modifier) => void = () => undefined,
+    private readonly sourceOf: (modifier: Modifier) => string = (modifier) => modifier.sourceId,
   ) {}
 
   private static pathsOverlap(target: string, referencedPath: string): boolean {
@@ -72,7 +76,9 @@ export default class ModifierEvaluator {
 
   /**
    * Applies the modifier's operator to the target's value in its parent object. False when the operator doesn't apply
-   * to the value's type (recorded); an unknown operator changes nothing but counts as applied, as it always has.
+   * to the value's type (recorded); an unknown operator changes nothing but counts as applied, as it always has. A number
+   * that keeps the best of its sources (`BestOfSources`: a deflection bonus) takes an add or a subtract into its source's
+   * sum, and only its best bonus and worst penalty count; any other operator sets it.
    */
   private applyOperator(
     modifier: Modifier,
@@ -90,6 +96,11 @@ export default class ModifierEvaluator {
       return this.skip(modifier, `Target ${modifier.target} is computed from the sheet: a modifier can't change it`);
 
     // The caller made sure the data has the value's type: a number meets a number, a string a string.
+    const adds = operator === "add" || operator === "subtract";
+    if (adds && typeof typedValue === "number" && BestOfSources.keepsBest(object, key)) {
+      BestOfSources.add(object, key, this.sourceOf(modifier), operator === "add" ? typedValue : -typedValue);
+      return true;
+    }
     switch (operator) {
       case "add":
         if (typeof typedValue === "number" && typeof data === "number") object[key] = data + typedValue;

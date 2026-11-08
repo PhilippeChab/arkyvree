@@ -19,9 +19,12 @@ const NAMED_ABILITIES: Record<string, readonly string[]> = {
   "physical perfection": ["Strength", "Dexterity", "Constitution"],
 };
 
-/** A bonus a variant's name gives ("Cloak of Resistance +2"), by its pattern: the modifiers of its value. */
+/**
+ * A bonus a variant's name gives ("Cloak of Resistance +2"), by its pattern: the modifiers of its value. An Amulet of
+ * Natural Armor's is an enhancement bonus to natural armor, which stacks with a natural armor bonus.
+ */
 const NAMED_BONUSES: [RegExp, (value: number) => Modifier[]][] = [
-  [/^Amulet of Natural Armor \+(\d+)$/, (value) => [bonus("combat.ac.natural", value)]],
+  [/^Amulet of Natural Armor \+(\d+)$/, (value) => [bonus("combat.ac.naturalenhancement", value)]],
   [/^Bracers of Armor \+(\d+)$/, (value) => [bonus("combat.ac.armor", value)]],
   [/^Cloak of Resistance \+(\d+)$/, (value) => [bonus("saves.*.misc", value)]],
   [/^Ring of Protection \+(\d+)$/, (value) => [bonus("combat.ac.deflection", value)]],

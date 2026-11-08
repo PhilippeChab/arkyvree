@@ -9,10 +9,11 @@ function modifiersOf(name: string, description = "") {
 }
 
 describe("A magic item's bonuses", () => {
-  test("are its variant's name's: a cloak's to every save, a ring's deflection, an amulet's natural armor", () => {
+  test("are its variant's name's: a cloak's to every save, a ring's deflection, an amulet's to natural armor", () => {
     expect(modifiersOf("Cloak of Resistance +3")).toEqual([bonus("saves.*.misc", 3)]);
     expect(modifiersOf("Ring of Protection +2")).toEqual([bonus("combat.ac.deflection", 2)]);
-    expect(modifiersOf("Amulet of Natural Armor +1")).toEqual([bonus("combat.ac.natural", 1)]);
+    // An enhancement bonus to natural armor, which adds to a natural armor bonus
+    expect(modifiersOf("Amulet of Natural Armor +1")).toEqual([bonus("combat.ac.naturalenhancement", 1)]);
     expect(modifiersOf("Bracers of Armor +8")).toEqual([bonus("combat.ac.armor", 8)]);
   });
 

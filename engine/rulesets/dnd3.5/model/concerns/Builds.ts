@@ -3,6 +3,7 @@ import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.t
 import CombatPaths from "@/engine/rulesets/dnd3.5/model/combat/CombatPaths.ts";
 import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import WeaponRuleFeats, { type WeaponRule } from "@/engine/rulesets/dnd3.5/rules/WeaponRuleFeats.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
@@ -15,6 +16,16 @@ import type { Modifier } from "@/shared/relations.ts";
  */
 export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
+    /**
+     * The source a modifier adds under to a value that keeps the best of its sources (a deflection bonus): a class
+     * level's, its class, as a class's levels give one feature that grows (a dragon disciple's natural armor increase at
+     * 1st, 4th and 7th level adds up); any other's, its own.
+     */
+    protected override bonusSourceOf(modifier: Modifier): string {
+      if (modifier.sourceType !== "class-levels") return modifier.sourceId;
+      return Dnd35View.of(this.rulesetData).classLevelsById.get(modifier.sourceId)?.ownerId ?? modifier.sourceId;
+    }
+
     /**
      * Whether a modifier applies after the spellcasting's finish (`SpellcastingComponent.finalize`): a spell's, its DC,
      * which its school's and its list's read, and its fields. A modifier that makes a spell known on a list

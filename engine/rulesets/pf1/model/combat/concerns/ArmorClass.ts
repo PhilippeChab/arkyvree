@@ -1,24 +1,39 @@
+import BestOfSources from "@/engine/core/modifiers/BestOfSources.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/pf1/entities/items/fields.ts";
 import type CombatState from "@/engine/rulesets/pf1/model/combat/CombatState.ts";
-import type { ArmorClassParts, WeaponSet } from "@/engine/rulesets/pf1/model/combat/CombatState.ts";
+import type { ArmorClassParts, CombatData, WeaponSet } from "@/engine/rulesets/pf1/model/combat/CombatState.ts";
 import type { ShieldSlot } from "@/engine/rulesets/pf1/model/combat/ShieldsComponent.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { ARMOR_CATEGORIES, COMBAT_RULES } from "@/vocabulary/pf1/combat.ts";
 import { SIZE_AC_ATTACK_MOD } from "@/vocabulary/pf1/sizes.ts";
 
 /** The parts of a set's armor class a modifier writes in the set alone, on top of what every set shares. */
-type OwnParts = Pick<ArmorClassParts, "armor" | "base" | "deflection" | "dodge" | "misc" | "natural" | "shield"> & {
-  uncannydodge: boolean | null;
-};
+type OwnParts = Pick<ArmorClassParts, "base" | "dodge" | "misc"> & { uncannydodge: boolean | null };
 
-/** The AC the equipped armors or shields give: each counted once, though an item is under several groupings. */
-function sumAc(slots: Iterable<{ ac: { total: number } }>): number {
-  return [...new Set(slots)].reduce((ac, slot) => ac + slot.ac.total, 0);
+/**
+ * The parts of an armor class that hold one bonus type each, which doesn't stack: of their modifiers, each source's sum
+ * counts, the best bonus and the worst penalty (`BestOfSources`). An enhancement bonus to armor or to natural armor is
+ * a type of its own, which adds to the bonus it enhances. Dodge bonuses stack, and the misc mixes types. The shield's
+ * and its enhancement are each set's own.
+ */
+const BEST_OF_SOURCES_PARTS = ["armor", "armorenhancement", "natural", "naturalenhancement", "deflection"] as const;
+
+/** The AC equipped armors or shields give, by item: each counted once, though an item is under several groupings. */
+function acByItem(slots: Iterable<{ ac: { total: number }; itemId: string }>): Map<string, number> {
+  return new Map([...new Set(slots)].map((slot) => [slot.itemId, slot.ac.total]));
 }
 
 /** An armor class's total: every part. */
 function totalOf(ac: ArmorClassParts): number {
-  return ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.dodge + ac.size + ac.misc;
+  return ac.base + touchless(ac) + ac.dexterity + ac.deflection + ac.dodge + ac.size + ac.misc;
+}
+
+/**
+ * What an armor class counts against everything but a touch attack: its armor, its shield, its natural armor, each with
+ * its enhancement.
+ */
+function touchless(ac: ArmorClassParts): number {
+  return ac.armor + ac.armorenhancement + ac.shield + ac.shieldenhancement + ac.natural + ac.naturalenhancement;
 }
 
 /**
@@ -29,56 +44,31 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
     /**
      * A weapon set's armor class and shield: the parts every set shares and what modifiers add in the set alone (in its
-     * scope: `CombatPaths.resolve`), its own shields' AC and their cap on Dexterity, and its totals.
+     * scope: `CombatPaths.resolve`), its own shields' AC and their cap on Dexterity, and its totals. A part of one bonus
+     * type keeps the best of its sources, the set's own and those every set shares (`BEST_OF_SOURCES_PARTS`); its shield
+     * the best of its shields', each with its own enhancement, and what modifiers add in the set.
      */
     protected override defenseOf(setKey: string): Pick<WeaponSet, "ac" | "shield"> {
       const shared = () => this.combat.ac;
-      const own: OwnParts = {
-        armor: 0,
-        base: 0,
-        deflection: 0,
-        dodge: 0,
-        misc: 0,
-        natural: 0,
-        shield: 0,
-        uncannydodge: null,
-      };
+      const own: OwnParts = { base: 0, dodge: 0, misc: 0, uncannydodge: null };
       const shields = () => this.shieldSets[setKey] ?? [];
-      const shieldAc = () => sumAc(shields());
       const dexterity = () => this.dexterityAc(shields());
       const ac: WeaponSet["ac"] = {
+        armor: 0,
+        armorenhancement: 0,
+        shield: 0,
+        shieldenhancement: 0,
+        natural: 0,
+        naturalenhancement: 0,
+        deflection: 0,
         get base() {
           return shared().base + own.base;
         },
         set base(value: number) {
           own.base = value - shared().base;
         },
-        get armor() {
-          return shared().armor + own.armor;
-        },
-        set armor(value: number) {
-          own.armor = value - shared().armor;
-        },
-        get shield() {
-          return shieldAc() + own.shield;
-        },
-        set shield(value: number) {
-          own.shield = value - shieldAc();
-        },
         get dexterity() {
           return dexterity();
-        },
-        get natural() {
-          return shared().natural + own.natural;
-        },
-        set natural(value: number) {
-          own.natural = value - shared().natural;
-        },
-        get deflection() {
-          return shared().deflection + own.deflection;
-        },
-        set deflection(value: number) {
-          own.deflection = value - shared().deflection;
         },
         get dodge() {
           return shared().dodge + own.dodge;
@@ -105,7 +95,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           return totalOf(this);
         },
         get touch() {
-          return totalOf(this) - this.armor - this.shield - this.natural;
+          return totalOf(this) - touchless(this);
         },
         // A flat-footed character loses its Dexterity bonus (a penalty stays) and its dodge bonuses, unless uncanny
         // dodge keeps them
@@ -113,6 +103,15 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           return this.uncannydodge ? totalOf(this) : totalOf(this) - Math.max(0, this.dexterity) - this.dodge;
         },
       };
+      for (const key of BEST_OF_SOURCES_PARTS) BestOfSources.define(ac, key, 0, { parent: { key, object: shared } });
+      BestOfSources.define(ac, "shield", 0, { bases: () => acByItem(shields()) });
+      // An enhancement bonus to a shield counts while the set holds one
+      BestOfSources.define(ac, "shieldenhancement", 0);
+      const enhancement = Object.getOwnPropertyDescriptor(ac, "shieldenhancement")!;
+      Object.defineProperty(ac, "shieldenhancement", {
+        ...enhancement,
+        get: () => (shields().length > 0 ? (enhancement.get!() as number) : 0),
+      });
       return {
         ac,
         shield: {
@@ -140,38 +139,38 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * The armor class's parts every weapon set shares (`CombatData.ac`): its inputs (the base, natural armor,
-     * deflection, dodge, misc, uncanny dodge), which modifiers change, and what's computed when read. The armor's AC is
-     * the equipped armor's and what modifiers add to it (a modifier's write keeps only its own part, so the armor's stays
-     * live). The shield's is no set's but each set's own, which modifiers change in each set (`scopesOf`): read outside a
-     * set, it's the greatest set's. Dexterity's bonus is capped by every shield, as a shield carried in any set is the
-     * worst case; whether one is (`combat.shield.held`) too.
+     * The armor class's parts every weapon set shares (`CombatData.ac`): its inputs (the base, natural armor and its
+     * enhancement, deflection, dodge, misc, uncanny dodge), which modifiers change, and what's computed when read. A part
+     * of one bonus type keeps the best of its sources (`BEST_OF_SOURCES_PARTS`): the armor's, the best of the equipped
+     * armors', each with its own enhancement, and what modifiers add (Bracers of Armor). The shield's is no set's but each
+     * set's own, which modifiers change in each set (`scopesOf`): read outside a set, it's the greatest set's.
+     * Dexterity's bonus is capped by every shield, as a shield carried in any set is the worst case; whether one is
+     * (`combat.shield.held`) too.
      */
     protected initializeArmorClass(): void {
-      const armorAc = () => sumAc(Object.values(this.combat.armors));
-      const shieldAc = () => {
-        const shields = Object.values(this.combat.weaponsets).map((weaponSet) => weaponSet.ac.shield);
-        return shields.length > 0 ? Math.max(...shields) : 0;
+      // The greatest set's, read outside a set
+      const greatest = (part: "shield" | "shieldenhancement") => {
+        const values = Object.values(this.combat.weaponsets).map((weaponSet) => weaponSet.ac[part]);
+        return values.length > 0 ? Math.max(...values) : 0;
       };
       const dexterityAc = () => this.dexterityAc(this.everyShield());
       const size = () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
       const held = () => this.everyShield().length > 0;
-      const bonus = this.gearBonus;
-      this.combat.ac = {
+      const ac: CombatData["ac"] = {
         base: COMBAT_RULES.DEFAULT_AC_BASE,
-        get armor() {
-          return armorAc() + bonus.armor;
-        },
-        set armor(value: number) {
-          bonus.armor = value - armorAc();
-        },
+        armor: 0,
+        armorenhancement: 0,
         get shield() {
-          return shieldAc();
+          return greatest("shield");
+        },
+        get shieldenhancement() {
+          return greatest("shieldenhancement");
         },
         get dexterity() {
           return dexterityAc();
         },
         natural: 0,
+        naturalenhancement: 0,
         deflection: 0,
         dodge: 0,
         get size() {
@@ -180,6 +179,9 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
         misc: 0,
         uncannydodge: false,
       };
+      for (const key of BEST_OF_SOURCES_PARTS) BestOfSources.define(ac, key, 0);
+      BestOfSources.define(ac, "armor", 0, { bases: () => acByItem(Object.values(this.combat.armors)) });
+      this.combat.ac = ac;
       this.combat.shield = {
         get held() {
           return held();
