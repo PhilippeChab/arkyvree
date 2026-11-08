@@ -42,9 +42,20 @@ export default class FeatRules {
    */
   canTake(featId: string, heldIds: ReadonlySet<string>): boolean {
     if (heldIds.has(featId)) return this.isStackable(featId);
+    return this.heldVersionOf(featId, heldIds) === undefined;
+  }
+
+  /**
+   * Another version of a feat taken once (`featId`, of a `FEATS_TAKEN_ONCE` family) among those a character holds
+   * (`heldIds`), by its id: Grappler (Strength) for Grappler (Dexterity). None for a feat taken once it holds no other
+   * version of, or one of no such family.
+   */
+  heldVersionOf(featId: string, heldIds: ReadonlySet<string>): string | undefined {
     const once: readonly string[] = this.familiesOf(featId).filter((family) => isOneOf(family, FEATS_TAKEN_ONCE));
-    if (once.length === 0) return true;
-    return ![...heldIds].some((heldId) => this.familiesOf(heldId).some((family) => once.includes(family)));
+    if (once.length === 0) return undefined;
+    return [...heldIds].find(
+      (heldId) => heldId !== featId && this.familiesOf(heldId).some((family) => once.includes(family)),
+    );
   }
 
   /** Whether the ruleset's feat (`featId`) stacks: a character may have it more than once. */

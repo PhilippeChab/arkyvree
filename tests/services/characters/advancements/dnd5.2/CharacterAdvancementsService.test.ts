@@ -516,7 +516,7 @@ describe("A feat taken once", () => {
       picksOf(ctx, { feats: { "Ability Score Improvement": ["Grappler (Dexterity)"] } }),
     );
     expect(CharacterAdvancementsService.addAdvancements(session, character.id, plan, true)).rejects.toMatchObject({
-      message: 'Feat "Grappler (Dexterity)" is taken once, and the character has another version of it',
+      message: 'Feat "Grappler (Dexterity)" is taken once: the character has Grappler (Strength)',
     });
   });
 
@@ -544,6 +544,11 @@ describe("A paladin's Blessed Warrior", () => {
       const { items } = await getStepOptions(session, character.id, "feats", plan, { pool: ctx.aptMap[pool] });
       return items.map(({ name }) => name);
     };
+    // A paladin's second level opens its room in its own pool, not the fighter's
+    const second = levelUpPlan([{ classId: ctx.classMap["Paladin"], level: 3, hp: 1 }]);
+    const answer = await getPlanAnswer(session, character.id, second);
+    expect(poolOf(answer, "feats", "Paladin Fighting Style")).toMatchObject({ allowed: 1 });
+    expect(poolOf(answer, "feats", "Fighting Style")?.allowed ?? 0).toBe(0);
     // A fighter's Fighting Style offers the feats alone; the paladin's own pool, the feats and Blessed Warrior
     expect(await named("Fighting Style")).not.toContain("Blessed Warrior");
     expect(await named("Paladin Fighting Style")).toEqual(expect.arrayContaining(["Blessed Warrior", "Defense"]));

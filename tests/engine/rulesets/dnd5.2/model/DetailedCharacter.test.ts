@@ -347,6 +347,37 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(await sageFighter(intelligence)).toBe(8 + 2 + 2);
   });
 
+  test("of an Acolyte paladin's Magic Initiate (Cleric) and Blessed Warrior: each its level's ability", async () => {
+    const abilities = { Strength: 15, Intelligence: 10, Charisma: 16 };
+    const character = await createDnd52Character(session, { abilities, background: "Acolyte" });
+    await addLevel(
+      session,
+      character.id,
+      "Paladin",
+      1,
+      {
+        hp: HIT_DICE.Paladin,
+        feats: { "Magic Initiate (Cleric) Ability": ["Magic Initiate (Cleric): Intelligence"] },
+        spells: { "Cleric Spells": ["Light", "Thaumaturgy", "Command"] },
+      },
+      true,
+    );
+    const blessed = { "Paladin Fighting Style": ["Blessed Warrior"] };
+    await addLevel(
+      session,
+      character.id,
+      "Paladin",
+      2,
+      { hp: 1, feats: blessed, spells: { "Cleric Spells": ["Guidance", "Sacred Flame"] } },
+      true,
+    );
+    const dcs = (await buildCharacter(character.id)).components.spellGroupings.getDcs();
+    // Magic Initiate's Command, picked with its Intelligence at the first level: 8, +2, Intelligence's +0
+    expect(dcs.command?.cleric?.total).toBe(8 + 2 + 0);
+    // Blessed Warrior's Sacred Flame, at the second: the paladin's Charisma, +3
+    expect(dcs.sacredflame?.cleric?.total).toBe(8 + 2 + 3);
+  });
+
   test("of two classes' Extra Attacks: the most either gives, whichever class came first", async () => {
     const attacksOf = async (classes: [string, number][]) =>
       (await leveled(classes)).components.combat.getCombat().attacks;

@@ -154,11 +154,13 @@ holds names the code that holds it.
   Fighter's fighter level offers the feats alone.
 - **Magic Initiate is a feat per spell list** (Cleric, Druid, Wizard), its two cantrips and its level 1 spell rooms on
   that list, and a pick of the ability its spells are cast with ("Magic Initiate (Wizard) Ability": Intelligence,
-  Wisdom or Charisma, a feat each), which sets the list's (`aptitudes.<list>.ability`). A spell picked on a list the
-  class it's picked at doesn't cast from is cast with it (`KnownSpells.applyListAbilities`): a Sage fighter of
-  Intelligence 14 who picks Intelligence casts Burning Hands at DC 12. A class's own list keeps its ability, so a
-  cleric's Magic Initiate (Cleric) spells take its Wisdom whatever it picks; a list no pick sets keeps the class's (a
-  paladin's Blessed Warrior cantrips, its Charisma).
+  Wisdom or Charisma, a feat each), which sets the list's (`aptitudes.<list>.ability`). A spell picked on that list at
+  the level the pick is made at (the SRD's "choose when you select this feat"), by a class that doesn't cast from it,
+  is cast with it (`KnownSpells.applyListAbilities`): a Sage fighter of Intelligence 14 who picks Intelligence casts
+  Burning Hands at DC 12. A spell picked at another level keeps its class's ability: an Acolyte paladin's Blessed
+  Warrior cantrips, at its second level, take its Charisma whatever its Magic Initiate (Cleric) picked. A class's own
+  list keeps its ability too, so a cleric's Magic Initiate (Cleric) spells take its Wisdom whatever it picks, as does a
+  spell a modifier grants.
 
 ## Not modelled
 

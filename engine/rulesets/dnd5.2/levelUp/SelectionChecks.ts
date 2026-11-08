@@ -284,15 +284,21 @@ export default class SelectionChecks {
     const [feat] = feats;
     if (feat) {
       const name = this.dnd52.featsById.get(feat.entityId!)?.name ?? feat.entityId;
-      // Itself held, or another version of a feat taken once (Grappler (Strength) beside Grappler (Dexterity))
-      const held = holding({ feats: {}, spells: picks.spells })
-        .getHeldFeats()
-        .some(({ entity }) => entity.id === feat.entityId);
+      // Another version of a feat taken once the character holds or the level picks (Grappler (Strength) beside
+      // Grappler (Dexterity)), else the feat itself held or given
+      const heldIds = new Set([
+        ...holding({ feats: {}, spells: picks.spells })
+          .getHeldFeats()
+          .map(({ entity }) => entity.id),
+        ...Object.values(picks.feats).flat(),
+      ]);
+      const version = this.feats.heldVersionOf(feat.entityId!, heldIds);
+      const versionName = version === undefined ? undefined : this.dnd52.featsById.get(version)?.name;
       throw new RulesError(
         "invalid",
-        held
+        versionName === undefined
           ? `Non-stackable feat "${name}" is already on this character`
-          : `Feat "${name}" is taken once, and the character has another version of it`,
+          : `Feat "${name}" is taken once: the character has ${versionName}`,
       );
     }
     const [spell] = spells;

@@ -26,7 +26,7 @@ class SpellcastingComponent extends include(SpellcastingState, KnownSpells) {
     const { appliedModifiers } = character.modifierEvaluator.getModifiers();
     this.collectAptitudeSpells(rulesetData, spells, appliedModifiers);
     this.enrichAllKnownSpells(rulesetData, spells, classSpellcastingAbilityMap, appliedModifiers);
-    this.applyListAbilities(rulesetData, spells);
+    this.applyListAbilities(rulesetData, spells, feats, appliedModifiers);
     this.buildSpellTags(feats, SpellLists.of(rulesetData).featListIds);
   }
 
