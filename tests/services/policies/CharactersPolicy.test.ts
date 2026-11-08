@@ -2,9 +2,16 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { CharacterContributors, Characters } from "@/server/repositories/index.ts";
+import {
+  Campaigns,
+  CharacterContributors,
+  Characters,
+  PlayerCharacters,
+  Players,
+} from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Character, Session } from "@/shared/relations.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { thrownBy } from "@/tests/support/errors.ts";
@@ -21,6 +28,22 @@ async function setup() {
   const { user, session: owner } = await createTestUser();
   const { user: stranger, session: other } = await createTestUser();
   return { character: await createTestCharacter(user.id), owner, other, user, stranger };
+}
+
+/** Whether the session edits, reads and may edit each of a page's characters, by `forMany`, which `for` answers alike. */
+async function standingsOf(session: Pick<Session, "userId">, page: Character[]) {
+  const policies = await CharactersPolicy.forMany(db, session, page);
+  const many = page.map((entity) => {
+    const policy = policies.get(entity.id);
+    return [policy?.isEditor(), policy?.isReadable(), policy?.isEditable()];
+  });
+  const one = [];
+  for (const entity of page) {
+    const policy = await CharactersPolicy.for(db, session, entity);
+    one.push([policy.isEditor(), policy.isReadable(), policy.isEditable()]);
+  }
+  expect(many).toEqual(one);
+  return many;
 }
 
 describe("CharactersPolicy", () => {
@@ -53,21 +76,7 @@ describe("CharactersPolicy", () => {
     const child = await createChild(user.id, character.id);
     const [archived] = await Characters.archive(db, { id: (await createTestCharacter(user.id)).id });
     const page = [character, child, archived];
-    // Whether the session edits, reads and may edit each of the page's characters, by forMany and by for
-    const standings = async (session: Pick<Session, "userId">) => {
-      const policies = await CharactersPolicy.forMany(db, session, page);
-      const many = page.map((entity) => {
-        const policy = policies.get(entity.id);
-        return [policy?.isEditor(), policy?.isReadable(), policy?.isEditable()];
-      });
-      const one = [];
-      for (const entity of page) {
-        const policy = await CharactersPolicy.for(db, session, entity);
-        one.push([policy.isEditor(), policy.isReadable(), policy.isEditable()]);
-      }
-      expect(many).toEqual(one);
-      return many;
-    };
+    const standings = (session: Pick<Session, "userId">) => standingsOf(session, page);
     // Its owner edits its characters, an archived one read-only, and reads the child; a stranger none
     expect(await standings(owner)).toEqual([
       [true, true, true],
@@ -94,6 +103,78 @@ describe("CharactersPolicy", () => {
       [false, true, true],
       [false, false, false],
     ]);
+  });
+
+  test("for and forMany: a live campaign's Game Master edits the characters linked to it, and reads their children", async () => {
+    const { character, owner, other, user, stranger } = await setup();
+    const child = await createChild(user.id, character.id);
+    const [archived] = await Characters.archive(db, { id: (await createTestCharacter(user.id)).id });
+    const unlinked = await createTestCharacter(user.id);
+    const page = [character, child, archived, unlinked];
+    const none = page.map(() => [false, false, false]);
+    // The stranger runs a campaign the owner plays in, with another player
+    const { campaign } = await createTestCampaign(stranger.id);
+    const [seat] = await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
+    const { user: fellow, session: player } = await createTestUser();
+    await Players.create(db, { userId: fellow.id, campaignId: campaign.id, role: "Player Character" });
+    expect(await standingsOf(other, page)).toEqual(none);
+
+    await PlayerCharacters.create(db, { playerId: seat.id, characterId: character.id, visibility: "Private" });
+    await PlayerCharacters.create(db, { playerId: seat.id, characterId: archived.id, visibility: "Private" });
+    // Its Game Master edits what's linked to it, whatever its visibility, an archived one read-only, as its owner does
+    expect(await standingsOf(other, page)).toEqual([
+      [true, true, true],
+      [false, true, true],
+      [true, true, false],
+      [false, false, false],
+    ]);
+    expect(await standingsOf(owner, page)).toEqual([
+      [true, true, true],
+      [false, true, true],
+      [true, true, false],
+      [true, true, true],
+    ]);
+    // A player of the campaign edits none of the others' characters
+    expect(await standingsOf(player, page)).toEqual(none);
+
+    // Its own rights stay its owner's: its Game Master is neither its owner nor one of its contributors
+    const gameMaster = await CharactersPolicy.for(db, other, character);
+    expect(thrownBy(() => gameMaster.canArchive())).toEqual(new NotFoundError("Character not found"));
+    expect(thrownBy(() => gameMaster.canManageContributors())).toEqual(
+      new ForbiddenError("Only the owner can manage contributors"),
+    );
+    expect(thrownBy(() => gameMaster.canEditPortrait())).toEqual(
+      new ForbiddenError("Only the owner can change the portrait"),
+    );
+    expect(thrownBy(() => gameMaster.canLeave())).toEqual(
+      new NotFoundError("You are not a contributor of this character"),
+    );
+
+    // An archived campaign is read-only: its Game Master edits nothing through it
+    await Campaigns.archive(db, { id: campaign.id });
+    expect(await standingsOf(other, page)).toEqual(none);
+  });
+
+  test("for: a Game Master's seat, a live one, in the character's own campaign, gives the edit", async () => {
+    const { character, other, user, stranger } = await setup();
+    const { user: master } = await createTestUser();
+    const { campaign } = await createTestCampaign(master.id);
+    const [seat] = await Players.create(db, { userId: user.id, campaignId: campaign.id, role: "Player Character" });
+    await PlayerCharacters.create(db, { playerId: seat.id, characterId: character.id });
+    // The stranger runs another campaign, and plays in this one
+    await createTestCampaign(stranger.id);
+    const [strangerSeat] = await Players.create(db, {
+      userId: stranger.id,
+      campaignId: campaign.id,
+      role: "Player Character",
+    });
+    expect((await CharactersPolicy.for(db, other, character)).isEditor()).toBe(false);
+
+    // Made a Game Master of it, it edits the character; its seat archived with its account, nothing
+    await Players.update(db, { role: "Game Master" }, { id: strangerSeat.id });
+    expect((await CharactersPolicy.for(db, other, character)).isEditor()).toBe(true);
+    await Players.archive(db, { userId: stranger.id });
+    expect((await CharactersPolicy.for(db, other, character)).isEditor()).toBe(false);
   });
 
   test("canAcceptInvite: a character that isn't archived, a 409 for an archived one", async () => {

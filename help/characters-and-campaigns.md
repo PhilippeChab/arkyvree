@@ -58,7 +58,7 @@ If you have house rules, fork the SRD ruleset and point the campaign at your for
 
 Roles:
 
-- **Game Master** — every player with that role: adds, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. A campaign keeps at least one Game Master: the last one can't be removed, leave or be made a Player Character, so their row offers neither **Edit** nor **Leave**. If the last one deletes their account, the longest-seated player takes over and is told so; with nobody else seated, the campaign is archived.
+- **Game Master** — every player with that role: adds, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits every linked character as its contributors do (**Edit Character** on its campaign page; its archive, portrait, share link and contributors stay its owner's), edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. A campaign keeps at least one Game Master: the last one can't be removed, leave or be made a Player Character, so their row offers neither **Edit** nor **Leave**. If the last one deletes their account, the longest-seated player takes over and is told so; with nobody else seated, the campaign is archived.
 - **Player Character** — sees other characters according to each character's visibility; edits their own characters; can **Leave** at any time.
 
 Campaigns are a character / ruleset organization layer. They aren't a virtual tabletop — no initiative tracker, dice roller, combat state, maps, or in-app chat.
@@ -73,12 +73,12 @@ When you link a character to a campaign, you choose how much other players can s
 | **Partial** | Physical traits only — name, race, age, gender, height and weight. Everything else is hidden: classes and level, alignment, deity, languages, description, notes, stats, feats, spells, equipment. |
 | **Public** | The full sheet. |
 
-A Game Master always sees the full sheet of every linked character, including its private notes. Visibility controls player-to-player privacy only.
+A Game Master always sees the full sheet of every linked character, including its private notes, and edits it while the campaign isn't archived. Visibility controls player-to-player privacy only.
 
 Each character has two notes fields, under its description:
 
 - **Notes** — seen by anyone who sees the full sheet: the Game Masters, the other players when the character is Public, and anyone with its share link.
-- **Private Notes** — seen only by the character's owner, its contributors (invited from the character page's **⋮** menu → **Contributors**), and the Game Masters of its campaign. The owner and contributors write them on the character's page; a Game Master reads them on the campaign's character page, and edits them only as a contributor. Other players never see them, whatever the visibility, and a share link leaves them out.
+- **Private Notes** — seen only by the character's owner, its contributors (invited from the character page's **⋮** menu → **Contributors**), and the Game Masters of its campaign. The owner, its contributors and the Game Masters write them on the character's page. Other players never see them, whatever the visibility, and a share link leaves them out.
 
 Independent of campaign visibility, a character's owner can share it with a public link: **⋮** → **Share**, then **Generate Link**. Anyone with the link sees the full sheet in a browser, without its private notes, and can download its PDF, no account required. **Revoke Link**, in the same dialog, turns it off.
 

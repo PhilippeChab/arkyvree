@@ -76,7 +76,7 @@ async function setUpCampaign(
 test.describe("A campaign character", () => {
   test.setTimeout(90_000);
 
-  test("shows to the Game Master whole, whatever its visibility, its private notes and PDF but not its editing", async ({
+  test("shows to the Game Master whole, whatever its visibility, its private notes, its PDF and its editing", async ({
     page,
     browser,
     ownerUser,
@@ -100,7 +100,7 @@ test.describe("A campaign character", () => {
       await page.getByRole("button", { name: "More Actions" }).click();
       const menu = page.getByRole("menu");
       await expect(menu.getByRole("menuitem", { name: "Download PDF" })).toBeVisible();
-      await expect(menu.getByRole("menuitem", { name: "Edit Character" })).toHaveCount(0);
+      await expect(menu.getByRole("menuitem", { name: "Edit Character" })).toBeVisible();
       await page.keyboard.press("Escape");
     }
   });

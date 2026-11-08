@@ -1,4 +1,5 @@
 import { and, eq, inArray, type InferInsertModel, isNull, not, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
 import {
@@ -28,6 +29,54 @@ class PlayerCharactersRepository extends include(
 ) {
   constructor() {
     super(playerCharactersInCampaign);
+  }
+
+  /**
+   * Of characters (`characterIds`), those linked in a campaign that isn't archived, from a live seat, where a user
+   * (`gameMasterId`) holds a live Game Master's seat: the characters they edit as its Game Master (`CharactersPolicy`).
+   */
+  private async findGameMasterCharacterIds(db: Db, where: { characterIds: string[]; gameMasterId: string }) {
+    const gameMaster = alias(playersInCampaign, "game_master");
+    const rows = await db
+      .selectDistinct({ characterId: this.table.characterId })
+      .from(this.table)
+      .innerJoin(playersInCampaign, eq(playersInCampaign.id, this.table.playerId))
+      .innerJoin(campaignsInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
+      .innerJoin(gameMaster, eq(gameMaster.campaignId, campaignsInCampaign.id))
+      .where(
+        and(
+          inArray(this.table.characterId, where.characterIds),
+          isNull(playersInCampaign.deletedAt),
+          isNull(campaignsInCampaign.deletedAt),
+          eq(gameMaster.userId, where.gameMasterId),
+          eq(gameMaster.role, "Game Master"),
+          isNull(gameMaster.deletedAt),
+        ),
+      );
+    return rows.map(({ characterId }) => characterId);
+  }
+
+  /**
+   * The characters a seat (`playerId`) holds in a campaign that isn't archived: the live ones of its user, which aren't
+   * a character's child (3.5's bonded creatures follow their parent). What an account's deletion hands on.
+   */
+  private async findSeatCharacterIds(db: Db, where: { playerId: string }) {
+    const rows = await db
+      .select({ characterId: this.table.characterId })
+      .from(this.table)
+      .innerJoin(playersInCampaign, eq(playersInCampaign.id, this.table.playerId))
+      .innerJoin(campaignsInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
+      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
+      .where(
+        and(
+          eq(this.table.playerId, where.playerId),
+          isNull(campaignsInCampaign.deletedAt),
+          eq(charactersInCharacter.userId, playersInCampaign.userId),
+          isNull(charactersInCharacter.deletedAt),
+          isNull(charactersInCharacter.parentCharacterId),
+        ),
+      );
+    return rows.map(({ characterId }) => characterId);
   }
 
   async create(db: Db, values: InferInsertModel<typeof playerCharactersInCampaign>) {
@@ -61,26 +110,20 @@ class PlayerCharactersRepository extends include(
   }
 
   /**
-   * The characters a seat (`playerId`) holds in a campaign that isn't archived: the live ones of its user, which aren't
-   * a character's child (3.5's bonded creatures follow their parent). What an account's deletion hands on.
+   * Characters in a campaign that isn't archived: those a seat (`playerId`) holds, which an account's deletion hands on;
+   * or, of some (`characterIds`), those a user (`gameMasterId`) runs the campaign of, as a live Game Master's seat.
    */
-  async findCharacterIds(db: Db, where: { campaignArchived: false; playerId: string }) {
-    const rows = await db
-      .select({ characterId: this.table.characterId })
-      .from(this.table)
-      .innerJoin(playersInCampaign, eq(playersInCampaign.id, this.table.playerId))
-      .innerJoin(campaignsInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .where(
-        and(
-          eq(this.table.playerId, where.playerId),
-          isNull(campaignsInCampaign.deletedAt),
-          eq(charactersInCharacter.userId, playersInCampaign.userId),
-          isNull(charactersInCharacter.deletedAt),
-          isNull(charactersInCharacter.parentCharacterId),
-        ),
-      );
-    return rows.map(({ characterId }) => characterId);
+  async findCharacterIds(
+    db: Db,
+    where:
+      | { campaignArchived: false; characterIds: string[]; gameMasterId: string }
+      | { campaignArchived: false; playerId: string },
+  ) {
+    if ("characterIds" in where) {
+      if (where.characterIds.length === 0) return [];
+      return await this.findGameMasterCharacterIds(db, where);
+    }
+    return await this.findSeatCharacterIds(db, where);
   }
 
   /** The links of characters (`characterIds`), whatever their campaign: one at most each, as a character has one. */

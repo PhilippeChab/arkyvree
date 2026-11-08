@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { CharacterContributors, Characters, Visibility } from "@/server/repositories/index.ts";
+import { CharacterContributors, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import type { Campaign, Character, Player, Session, User } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
@@ -16,6 +16,7 @@ interface LinkSeat {
 /** The session's standing on a character beyond owning it (`CharactersPolicy`'s flags of the same names). */
 export interface CharacterStanding {
   isActiveContributor?: boolean;
+  isCampaignGameMaster?: boolean;
   isParentArchived?: boolean;
   isParentEditor?: boolean;
 }
@@ -39,18 +40,25 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   constructor(
     session: Session,
     entity: Character,
-    { isActiveContributor = false, isParentArchived = false, isParentEditor = false }: CharacterStanding = {},
+    {
+      isActiveContributor = false,
+      isCampaignGameMaster = false,
+      isParentArchived = false,
+      isParentEditor = false,
+    }: CharacterStanding = {},
   ) {
     super(session, entity);
     this.isActiveContributor = isActiveContributor;
+    this.isCampaignGameMaster = isCampaignGameMaster;
     this.isParentArchived = isParentArchived;
     this.isParentEditor = isParentEditor;
   }
 
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
-   * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not (an
-   * archived parent's child is read-only, as the parent is).
+   * a Game Master's from their seat in the live campaign it's linked to, and a child's (3.5's bonded creature) from the
+   * session's on its parent, a player character, archived or not (an archived parent's child is read-only, as the
+   * parent is).
    */
   static async for(db: Db, session: Session, character: Character): Promise<CharactersPolicy> {
     if (!isPlayerCharacter(character)) {
@@ -62,36 +70,61 @@ export default class CharactersPolicy extends BasePolicy<Character> {
       return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
 
-    const role =
-      character.userId === session.userId
-        ? undefined
-        : await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
-    return new CharactersPolicy(session, character, { isActiveContributor: role !== undefined });
+    if (character.userId === session.userId) return new CharactersPolicy(session, character);
+
+    const role = await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
+    const mastered = await PlayerCharacters.findCharacterIds(db, {
+      campaignArchived: false,
+      characterIds: [character.id],
+      gameMasterId: session.userId,
+    });
+    return new CharactersPolicy(session, character, {
+      isActiveContributor: role !== undefined,
+      isCampaignGameMaster: mastered.length > 0,
+    });
   }
 
   /**
    * The session's policies on a page of characters (`characters`), by id, each what `for` builds: its active
-   * contributions to the page's player characters read at once, and a child's standing on its parent as `for` reads it.
+   * contributions to the page's player characters and its Game Master's seats in their campaigns read at once, and a
+   * child's standing on its parent as `for` reads it.
    */
   static async forMany(db: Db, session: Session, characters: Character[]): Promise<Map<string, CharactersPolicy>> {
-    const contributed = characters.filter(
-      (character) => isPlayerCharacter(character) && character.userId !== session.userId,
-    );
+    // The page's player characters of others', which the session may edit as a contributor or as a Game Master
+    const othersIds = characters
+      .filter((character) => isPlayerCharacter(character) && character.userId !== session.userId)
+      .map((character) => character.id);
     const contributions = await CharacterContributors.findMany(db, {
-      characterIds: contributed.map((character) => character.id),
+      characterIds: othersIds,
       status: "Active",
       userId: session.userId,
     });
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
+    const masteredIds = new Set(
+      await PlayerCharacters.findCharacterIds(db, {
+        campaignArchived: false,
+        characterIds: othersIds,
+        gameMasterId: session.userId,
+      }),
+    );
     const policies = new Map<string, CharactersPolicy>();
     for (const character of characters) {
       const policy = isPlayerCharacter(character)
-        ? new CharactersPolicy(session, character, { isActiveContributor: contributedIds.has(character.id) })
+        ? new CharactersPolicy(session, character, {
+            isActiveContributor: contributedIds.has(character.id),
+            isCampaignGameMaster: masteredIds.has(character.id),
+          })
         : await CharactersPolicy.for(db, session, character);
       policies.set(character.id, policy);
     }
     return policies;
   }
+
+  /**
+   * The session is a Game Master of the campaign the player character is linked to, a live one, from a live seat:
+   * looked up only for one it doesn't own.
+   */
+  private readonly isCampaignGameMaster: boolean;
 
   /** The child's parent is archived: looked up only for a child. */
   private readonly isParentArchived: boolean;
@@ -161,9 +194,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * Changing the character's portrait: its readers (`isReadable`), anyone else the 404 an unknown character gets; of
-   * them, a player character's owner alone (its contributors edit the sheet, not it) and a child's editors, but a
-   * demo's, which stores no file (`canUseSignedUpFeatures`), each a 403; while neither it nor a child's parent is
-   * archived, a refusal on its state (a 409), as its edit's (`canEdit`).
+   * them, a player character's owner alone (its contributors and its campaign's Game Masters edit the sheet, not it)
+   * and a child's editors, but a demo's, which stores no file (`canUseSignedUpFeatures`), each a 403; while neither it
+   * nor a child's parent is archived, a refusal on its state (a 409), as its edit's (`canEdit`).
    */
   canEditPortrait() {
     if (!this.isReadable()) throw new NotFoundError("Character not found");
@@ -335,11 +368,11 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * Whether the session edits a player character itself, its own rows (its levels, scores, inventory, modifiers)
-   * included, archived or not: its owner or an active contributor. A child's are its parent's: it has no editor of its
-   * own.
+   * included, archived or not: its owner, an active contributor, or a Game Master of the live campaign it's linked to. A
+   * child's are its parent's: it has no editor of its own.
    */
   isEditor() {
-    return this.isPlayerCharacter && (this.isOwner || this.isActiveContributor);
+    return this.isPlayerCharacter && (this.isOwner || this.isActiveContributor || this.isCampaignGameMaster);
   }
 
   /**
@@ -364,8 +397,8 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Whether the session may read the character, archived or not: a player character's owner and active contributors
-   * (its editors), and a child's parent's.
+   * Whether the session may read the character, archived or not: a player character's editors (its owner, its active
+   * contributors and its live campaign's Game Masters), and a child's parent's.
    */
   isReadable() {
     return this.isPlayerCharacter ? this.isEditor() : this.isParentEditor;
