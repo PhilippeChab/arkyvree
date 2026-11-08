@@ -10,7 +10,7 @@ dndtools.net HTML → Scraper → reference JSON (raw + overrides) → Generator
                                          Human corrections
 ```
 
-Most content is generated from scraped SRD pages. A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `codegen/dnd3.5/README.md` for the scraper and generator.
+Most content is generated from a scraped source (3.5's dndtools.net pages, above; Pathfinder's aonprd.com; D&D 5th Edition's SRD 5.2.1, the 5e-bits database's JSON). A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. See [Reference files](#reference-files) and `codegen/<ruleset>/README.md` for the scraper and generator.
 
 ## Package types
 
@@ -33,6 +33,7 @@ database/
 │   │   ├── SeederState.ts    # What every step builds on: its database and context (SeedContext: its ruleset, which a module's seeder extends with the ids it names), the customizations' rows and inserts, a copy's customizations and record
 │   │   ├── concerns/         # The steps any ruleset's content seeds alike: SeedsItems
 │   │   └── ContentSeeder.ts  # The seeder's contract (seedCore, seedExtension), on SeederState and the steps; the system rulesets its packages create (createCore, createExtension; the core one found by its package, findCoreRulesetId), from the contexts its module's seeder gives (emptyContext, extensionContext, loadContext)
+│   ├── pf1/, dnd5.2/     # Pathfinder's and D&D 5th Edition's, laid out as 3.5's (Pf1ContentSeeder, Dnd52ContentSeeder; 5e's steps its own: SeedsSpecies, SeedsBackgrounds…)
 │   └── dnd3.5/
 │       ├── Dnd35ContentSeeder.ts  # A ContentSeeder of the 3.5 content (CoreContent, BookContent), naming its rows in its context (Dnd35SeedContext: its abilities, saves, skills, aptitudes, feats and spells by name)
 │       ├── BaseSeeder.ts     # The 3.5 seeder's core, on Dnd35ContentSeeder: its steps that write aptitudes, abilities, saves and languages, feats, races and an extension's copies, and what its spell lists write
@@ -77,6 +78,8 @@ content/dnd3.5/
     ├── srd/              #   The core rules
     └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
 
+content/pf1/, content/dnd5.2/   # Laid out as 3.5's, each a core package alone (packages/core.ts) and its book (generated/core-rulebook/, generated/srd/)
+
 codegen/core/             # What every ruleset's codegen runs on
 ├── GeneratedFolder.ts    # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote, each naming the ruleset's command that generates it
 ├── cli/                  # CommandLine (a command's line: its options, its reference filters), ScrapeCommand (a parser's scrape command: its types, book and page)
@@ -109,7 +112,8 @@ codegen/dnd3.5/
         ├── BookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile, on core's GeneratedCode: where the 3.5 content types and names come from), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 
-codegen/pf1/              # The Pathfinder 1 scraper (aonprd.com), on the same core: reference/ and tools/ (cli/, references/, scraper/, types/); its detection and generator come with its engine module and content: see codegen/pf1/README.md
+codegen/pf1/              # The Pathfinder 1 parser (aonprd.com), on the same core: reference/ and tools/ (cli/, detect/, generator/, references/, scraper/, seeds/, terms/, types/): see codegen/pf1/README.md
+codegen/dnd5.2/           # The D&D 5th Edition parser (the 5e-bits database's SRD 5.2.1), laid out as Pathfinder's: see codegen/dnd5.2/README.md
 ```
 
 `content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/root-folders`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). Neither do the runner and the scripts, the dev and test seeds among them (`database/packages/`, `scripts/`, `scripts/db/seeds/`): they reach a ruleset's packages, seeder and test characters through the registry alone (`database/packages/registry.ts`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.
@@ -237,10 +241,10 @@ bun db:packages    # Apply all registered packages
 
 ### Do
 
-- Use the scraper and generator for new content; hand-write only what no page provides, in `content/dnd3.5/data/`
+- Use the scraper and generator for new content; hand-write only what no page provides, in `content/<ruleset>/data/`
 - Correct scraped content in `overrides`, the only hand-edited part of a reference file
 - Make update functions idempotent (upserts, guard clauses) so retries are safe
-- Use display name constants from `content/dnd3.5/rulesetNames.ts` to query rulesets
+- Use display name constants from `content/<ruleset>/rulesetNames.ts` to query rulesets
 - Always add modifiers and requirements when the source material defines them
 
 ### Do not
@@ -250,4 +254,4 @@ bun db:packages    # Apply all registered packages
 - Never add requirements to existing feats/class features without careful consideration — it can retroactively invalidate characters
 - Never remove or reorder an update some database doesn't have yet, and never skip a version in `updates`
 - Never hardcode entity IDs — always look them up by name
-- Never edit `content/dnd3.5/generated/` by hand — regenerate it
+- Never edit `content/<ruleset>/generated/` by hand — regenerate it

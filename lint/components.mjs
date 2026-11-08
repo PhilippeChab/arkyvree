@@ -44,10 +44,10 @@
  *   outlined).
  * - `section-headings`: a heading under a card's title is a `SubsectionTitle` (8px above its content: the column it
  *   leads takes `spacing={1}`), and an entry's name in a panel's list an `EntryTitle`: never a Typography of its own.
- * - `page-gaps`: a page starts 32px under the app bar, the theme padding its `Container` (an invite's `sm` card keeps
- *   its own), a column of the app's page width, its default (the legal page's `md` and an invite's `sm` narrower); its
- *   content sits 32px under its header (the column holding the header takes `spacing={4}`), and a tab's 56px under its
- *   tabs, in a `SectionTabPanel`.
+ * - `page-gaps`: a page starts 32px under the app bar, the theme padding its `Container` (an `sm` card, an invite's or
+ *   an app's consent, keeps its own), a column of the app's page width, its default (the legal page's `md` and an `sm`
+ *   card narrower); its content sits 32px under its header (the column holding the header takes `spacing={4}`), and a
+ *   tab's 56px under its tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite, an app's consent).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its

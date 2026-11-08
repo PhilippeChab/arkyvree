@@ -120,7 +120,8 @@ its hand-written data, the core rules' feats (`content/dnd5.2/data/feats/coreFea
 trainings' and weapons' proficiencies, each weapon's mastery, and a cleric's and a druid's sacred roles, which no
 reference lists as feats): a target may name them, and their pools are the book's.
 
-The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/dnd5.2/`: the book it reads).
+The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/dnd5.2/`: the weapon and armor tables, the
+abilities', saves', skills' and classes' names, the book it reads).
 
 ## What a reference stores
 

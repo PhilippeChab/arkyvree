@@ -87,7 +87,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md#verification) for focused checks.
 ```
 client/
   src/
-    components/         # Shared UI by domain (auth, characters, common, contributors, customization, icons, invites, layout, notifications, onboarding, rulesets)
+    components/         # Shared UI by domain (auth, characters, common, contributors, customization, icons, invites, layout, notifications, rulesets)
     contexts/           # React contexts (theme, snackbar, websocket)
     hooks/              # Shared hooks (useIsMobile, useListParams, useListboxQuery, useFormSync, …)
     lib/                # The query client, shared queries and keys, formatters, validation rules
@@ -104,6 +104,9 @@ server/
     api/                # API routes organized by domain
       validation.ts     # Shared Zod schemas (params, pagination, sanitized text)
     authentication/     # Auth routes: signedOut/, then signedIn/ behind the session
+    v1/                 # The public API (/v1), behind an API key: its routes, translators and schemas
+    mcp/                # The MCP server (/mcp): its tools over v1's routes
+    oauth/              # The MCP server's OAuth sign-in (wellKnown.ts, its discovery documents)
     static.ts           # Static file serving + SEO (the shell: PageTemplates.ts)
     ws.ts               # The websocket; health.ts, the health probe
   services/             # One folder per service, laid out like routers/api
@@ -117,7 +120,7 @@ server/
     exports/            # PDF exports
     notifications/      # Notifications
     policies/           # Authorization policies
-    rulesets/           # Ruleset and ruleset entity services (feats, spells, classes, etc.)
+    rulesets/           # Ruleset services, and one service for every kind's entities (entities/EntitiesService.ts)
       customization/    # Modifiers, requirements, target paths
   repositories/         # Database access layer (Drizzle ORM), in folders by domain; concerns/, the mixins they include
   cache/                # In-memory cache (a ruleset's rows, its COW data, its target paths)
@@ -135,6 +138,8 @@ engine/                 # The ruleset engine: computes a ruleset's rules over th
   api/                  # Engine and its handles, each bound to a view and what it's about, asking the ruleset's module
   core/                 # Machinery: modifiers, requirements, the path language, the ruleset view, COW data, the module's contract
   rulesets/dnd3.5/      # D&D 3.5e: the character, its components by domain, its entities, level-ups and printed sheet
+  rulesets/dnd5.2/      # D&D 5th Edition (SRD 5.2.1), laid out as 3.5's
+  rulesets/pf1/         # Pathfinder 1, copied from 3.5's and adapted to the Core Rulebook
 
 lib/                    # What the engine and the server share: the mixins (include)
 
@@ -142,16 +147,17 @@ content/
   core/                 # What every ruleset's content is written with: the customization builders, the seed types they share, a package's and a test character's shape
   dnd3.5/               # The 3.5 content, data: its builders, its hand-written rows, the generated books, its packages, its test characters
   dnd5.2/               # The D&D 5th Edition content, data: its builders, its hand-written rows, the SRD 5.2.1's generated book, its package, its test characters
+  pf1/                  # The Pathfinder 1 content, data: its builders, its hand-written rows, the Core Rulebook's generated book, its package, its test characters
 
 codegen/
   core/                 # What every ruleset's parser runs on: the commands' line, the references' store, a book's scraper, the HTTP client and page, the generated folder and code
   dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
   dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) parser and generator: the 5e-bits database's files into reference files, and the tools that write content/dnd5.2/generated
-  pf1/                  # The Pathfinder 1 scraper (aonprd.com): reference files; its generator comes with its engine module
+  pf1/                  # The Pathfinder 1 scraper (aonprd.com) and generator: reference files, and the tools that write content/pf1/generated
 
 database/
   packages/             # The content packages' runner and registry: each base rules' packages, seeder and test characters, which a database gets
-  seeders/              # What writes content to the database: core/ (ContentSeeder, a seeder's contract, and the steps every ruleset's content seeds alike), dnd3.5/ (its seeder)
+  seeders/              # What writes content to the database: core/ (ContentSeeder, a seeder's contract, and the steps every ruleset's content seeds alike), then each ruleset's seeder (dnd3.5/, dnd5.2/, pf1/)
 
 drizzle/
   schema.ts             # Database schema (and relations.ts), pulled from the database
@@ -162,7 +168,7 @@ shared/                 # Types and pure helpers shared by the client, the serve
 vocabulary/
   dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the content, the codegen and the seeders read
   dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) vocabulary, data only: its lists, tables and bounds, which its engine, content, codegen and seeders read
-  pf1/                  # The Pathfinder 1 vocabulary, data only: so far the core rules' book, which its codegen reads
+  pf1/                  # The Pathfinder 1 vocabulary, data only: its lists, labels, tables and bounds, which its engine, content, codegen and seeders read
 emails/                 # Email templates (React Email)
 scripts/                # Database scripts (reset, migrate, seed; db/seeds/, the dev and test data: users, each base rules' test characters) and ops scripts (prod diff, impersonate, validation)
 docs/                   # Developer docs
@@ -171,7 +177,7 @@ help/                   # The user-facing help, linked from the app
 tests/
   routers/              # API route tests, through the typed client
   services/             # Service-level tests
-  engine/               # The engine: its machinery, its operations, the 3.5 module's characters, level-ups and sheets
+  engine/               # The engine: its machinery, its operations, the ruleset modules' characters, level-ups and sheets
   cache/                # Cache tests
   cow/                  # Copy-on-write's server part: the views it composes
   seeds/                # The seeders, the seeded content, the package runner, the test data

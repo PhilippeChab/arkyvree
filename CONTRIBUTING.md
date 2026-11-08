@@ -36,8 +36,9 @@ human and automated contributors. In particular:
 - Use the normal seeded test database; do not replace integration coverage with mocks.
 - Update the relevant documentation when behavior or setup changes.
 
-For game data, follow [Content Packages](./docs/packages.md) and the
-[parser guide](./codegen/dnd3.5/README.md). Do not manually
+For game data, follow [Content Packages](./docs/packages.md) and the ruleset's
+parser guide ([D&D 3.5](./codegen/dnd3.5/README.md), [Pathfinder 1](./codegen/pf1/README.md),
+[D&D 5th Edition](./codegen/dnd5.2/README.md)). Do not manually
 edit generated files or rewrite old migrations to fix deployed data. Use the
 documented mapping and package-update workflow.
 
@@ -96,7 +97,7 @@ could not run. Do not disable or skip failing tests to obtain a green result.
 4. Include desktop and mobile screenshots for visible UI changes, without personal data.
 5. Call out migrations, package version changes, configuration changes, and breaking changes.
 
-`main` is the deployment branch; normal contributions should not target it.
+`main` is the deployment branch: a pull request deploys once it's merged.
 Never include `.env` files, credentials, database dumps, user exports, or private
 activity logs. Avoid installing packages with another package manager or adding
 a second lockfile.

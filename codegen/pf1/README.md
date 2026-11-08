@@ -87,7 +87,7 @@ saving with their overrides kept), the HTTP client and the page. The Pathfinder 
 
 - `tools/cli/scrape.ts`: `parser:pf1:scrape`, its types on core's scrape command.
 - `tools/references/References.ts`: its store, each type's file in a book's folder (`feats.json`…, a class's
-  `classes/<name>.json`). Loading a reference derives nothing yet: that's the detection's to come.
+  `classes/<name>.json`). Loading a reference derives nothing: its seeds read it as they're built.
 - `tools/scraper/`: its `Scraper`, a concern per kind of reference (`concerns/`: `ScrapesClasses`, `ScrapesFeats`…) on
   its `BaseScraper` (core's `BookScraper`, with the books it reads and their names on the site, a book's listing of a
   kind's entries, `listing`, where a link of the site's that leads to no entry is followed to the page it means,
@@ -102,7 +102,8 @@ saving with their overrides kept), the HTTP client and the page. The Pathfinder 
 - `tools/types/`: a reference's type per kind, and what every page gives (`pages.ts`: a `Printing`, a book and page an
   entry is printed on; a `LabeledText`; a `PageTable`).
 
-The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/pf1/`: the core rules' book).
+The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/pf1/`: the weapon and armor tables, the
+abilities', saves', skills' and classes' names, the books).
 
 ## What a reference stores
 
@@ -151,5 +152,5 @@ Chronicler is the Chronicler (`overrides.name`). The ruleset is shown as "Core P
 
 The descriptions the content gives what's left without one are written by hand, as 3.5's are reworded: a class's and a
 race's in its reference's overrides (a class's `overrides.description`, a race's `overrides.<race>.description`), in
-the parser's own words, from its rules, kept across re-scrapes. A feat's description will be its Benefit and a domain's
+the parser's own words, from its rules, kept across re-scrapes. A feat's description is its Benefit and a domain's
 its Granted Powers, which are rules; a spell's and an item's are their own text.

@@ -207,7 +207,7 @@ Safety: if everything in the cache is pinned and you try to insert a non-pinned 
 
 ### Warm-up
 
-`RulesetViews.warm()` runs at boot (`server/main.ts`). It pulls every `system: true` ruleset and triggers `RulesetViews.getRawData` for each so the first user of the day doesn't pay the cold cost. Typically ~7 rulesets × a few hundred ms each = ~1 second of added boot time.
+`RulesetViews.warm()` runs at boot (`server/main.ts`). It pulls every `system: true` ruleset and triggers `RulesetViews.getRawData` for each so the first user of the day doesn't pay the cold cost. Typically ~9 rulesets × a few hundred ms each = ~1 second of added boot time.
 
 ### Invalidation
 
@@ -493,7 +493,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `engine/core/cow/` — a ruleset's copy-on-write state (`CowData.ts`: what an id resolves to, and whether it's overridden or a sibling loser), its build from rows (`CowDataBuilder.ts`: the snapshot, sibling, reprint, identity, own-namesake and owned passes), and what it's read from (`CowSources.ts`: `buildSourceChain`, `getReads`, `getPairedOwnerIds`, by how a module's kinds pair, `CowKinds`: the storage's `namesakes` of each kind, the kinds that own another, and the kinds they own)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation
-- `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a child's parent's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/rulesets/dnd3.5/model/CharacterBuilder.ts`), its master first
+- `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a child's parent's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/core/character/CharacterBuilder.ts`), its parent first
 - `engine/core/character/CharacterBase.ts` — `build(rows, view, master)` reads nothing: the ruleset's data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cow/views/dnd3.5/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork resolving maps

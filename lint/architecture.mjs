@@ -23,8 +23,9 @@
  *   types alone); a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
- *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
- *   a noun-named one hands out a handle (`character(input)`, `skills()`). What the modules declare is none
+ *   An operation is a verb-named method reached through `Engine`'s handles
+ *   (`Engine.for(scope).entities("skills").planCreate`); a noun-named one hands out a handle (`character(input)`,
+ *   `entities("skills")`). What the modules declare is none
  *   (`Engine.forRules(baseRules).storage().isPlayerKind(kind)`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
  *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Copy-on-write's
