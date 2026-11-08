@@ -536,6 +536,22 @@ describe("characters", () => {
       );
     });
 
+    test("rejects a language its fork deleted, or one sent twice", async () => {
+      const { langMap } = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const entity = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
+      await expectOk(
+        entity.$delete({ param: { id: fork.id, entityType: "languages", entityId: langMap["Draconic"] } }),
+      );
+      const { id } = await postCharacter({ rulesetId: fork.id });
+
+      const put = (languageIds: string[]) =>
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
+      await expectStatus(put([langMap["Draconic"]]), 400);
+      await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
+      await expectOk(put([langMap["Common"]]));
+    });
+
     test("answers and saves a bonded creature's languages, as its master's editor edits them", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const languages = await expectOk(
