@@ -120,15 +120,9 @@ describe("v1 campaign characters", () => {
     expect(own).toMatchObject({ canArchive: true, canEdit: true, canExport: true, canShare: true });
     expect(await permissionsOf(player.api)).toEqual(own);
 
-    // The Game Master edits it as a contributor does, and exports it; what's its owner's alone stays its owner's
+    // The Game Master edits it and exports it; what's its owner's and its contributors' stays theirs
     const none = Object.fromEntries(Object.keys(own).map((key) => [key, false])) as typeof own;
-    expect(await permissionsOf(gm)).toEqual({
-      ...none,
-      canEdit: true,
-      canEditRows: true,
-      canExport: true,
-      canReadContributors: true,
-    });
+    expect(await permissionsOf(gm)).toEqual({ ...none, canEdit: true, canEditRows: true, canExport: true });
     expect(await permissionsOf(other.api)).toEqual(none);
   });
 

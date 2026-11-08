@@ -84,7 +84,9 @@ class CharactersService extends include(Object, Archives, Imports) {
       type: "updateCharacter",
     });
 
-    return updatedCharacter;
+    // Its share token is its sheet's to give (`isShareTokenReader`): its campaign's Game Master edits it without one
+    const { shareToken: _shareToken, ...edited } = updatedCharacter;
+    return edited;
   }
 
   /**
@@ -166,8 +168,8 @@ class CharactersService extends include(Object, Archives, Imports) {
   /**
    * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
    * child's, which its parent's editors read. Its editors alone read it (`findReadableCharacter`), archived or not, so it
-   * carries its share token, its private notes as its policy says who reads them (`isPrivateNotesReader`), and what they
-   * may do with it (`permissions`). Anyone else gets the 404 an unknown character gets.
+   * carries its share token to those its policy gives it (`isShareTokenReader`), its private notes as its policy says
+   * who reads them (`isPrivateNotesReader`), and what they may do with it (`permissions`). Anyone else gets the 404 an unknown character gets.
    */
   async getCharacter(session: Session, characterId: string) {
     const readable = await findReadableCharacter(db, session, characterId);
@@ -179,7 +181,8 @@ class CharactersService extends include(Object, Archives, Imports) {
       const described = Engine.for(scope)
         .character(character)
         .describe(await readChildInputs(db, character, Visibility.All), toNotesReading(policy.isPrivateNotesReader()));
-      return { ...described, shareToken: record.shareToken, permissions: describeCharacterPermissions(policy) };
+      const shareToken = policy.isShareTokenReader() ? record.shareToken : null;
+      return { ...described, shareToken, permissions: describeCharacterPermissions(policy) };
     });
   }
 

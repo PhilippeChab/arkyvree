@@ -345,7 +345,12 @@ describe("campaigns characters", () => {
     const theirs = member.api.api.characters[":id"];
     const param = { id: characterId };
 
-    // Its own sheet offers them its edit, as a contributor's does, and leaves its owner's rights to its owner
+    // Its owner shares it
+    const { shareToken } = await expectOk(api.api.characters[":id"].share.$post({ param }));
+    expect(shareToken).toEqual(expect.any(String));
+
+    // Its own sheet offers them its edit, and leaves its owner's and its contributors' rights to them: its contributors,
+    // and its share token, which would outlast their seat
     expect(await expectOk(theirs.$get({ param }))).toMatchObject({
       permissions: {
         canArchive: false,
@@ -353,10 +358,17 @@ describe("campaigns characters", () => {
         canEditRows: true,
         canLeave: false,
         canManageContributors: false,
+        canReadContributors: false,
+        canShare: false,
       },
+      shareToken: null,
     });
+    expect(await memberSheetOf(member.api, campaignId, characterId)).toMatchObject({ shareToken: null });
+    await expectStatus(theirs.contributors.$get({ param, query: {} }), 403);
     const name = "Renamed by the Game Master";
-    expect(await expectOk(theirs.$put({ param, json: { name } }))).toMatchObject({ name });
+    const edited = await expectOk(theirs.$put({ param, json: { name } }));
+    expect(edited).toMatchObject({ name });
+    expect(edited).not.toHaveProperty("shareToken");
     await expectOk(
       theirs.scores[":role"].$put({ param: { ...param, role: "score" }, json: { [abilityMap["Strength"]]: 18 } }),
     );

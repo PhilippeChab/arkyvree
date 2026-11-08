@@ -121,11 +121,12 @@ describe("CharactersPolicy", () => {
 
     await PlayerCharacters.create(db, { playerId: seat.id, characterId: character.id, visibility: "Private" });
     await PlayerCharacters.create(db, { playerId: seat.id, characterId: archived.id, visibility: "Private" });
-    // Its Game Master edits what's linked to it, whatever its visibility, an archived one read-only, as its owner does
+    // Its Game Master edits what's linked to it, whatever its visibility, and reads a child through its parent; an
+    // archived character, which its roster leaves out, is its owner's alone
     expect(await standingsOf(other, page)).toEqual([
       [true, true, true],
       [false, true, true],
-      [true, true, false],
+      [false, false, false],
       [false, false, false],
     ]);
     expect(await standingsOf(owner, page)).toEqual([
@@ -137,18 +138,17 @@ describe("CharactersPolicy", () => {
     // A player of the campaign edits none of the others' characters
     expect(await standingsOf(player, page)).toEqual(none);
 
-    // Its own rights stay its owner's: its Game Master is neither its owner nor one of its contributors
+    // Its own rights stay its owner's: its Game Master is neither its owner nor one of its contributors, so neither
+    // reads its contributors nor gets its share token, which would outlast their seat
     const gameMaster = await CharactersPolicy.for(db, other, character);
     expect(thrownBy(() => gameMaster.canArchive())).toEqual(new NotFoundError("Character not found"));
-    expect(thrownBy(() => gameMaster.canManageContributors())).toEqual(
-      new ForbiddenError("Only the owner can manage contributors"),
-    );
     expect(thrownBy(() => gameMaster.canEditPortrait())).toEqual(
       new ForbiddenError("Only the owner can change the portrait"),
     );
-    expect(thrownBy(() => gameMaster.canLeave())).toEqual(
-      new NotFoundError("You are not a contributor of this character"),
-    );
+    const notAContributor = new ForbiddenError("Only the owner and contributors can see the contributors");
+    for (const check of ["canReadContributors", "canManageContributors", "canLeave"] as const)
+      expect(thrownBy(() => gameMaster[check]())).toEqual(notAContributor);
+    expect(gameMaster.isShareTokenReader()).toBe(false);
 
     // An archived campaign is read-only: its Game Master edits nothing through it
     await Campaigns.archive(db, { id: campaign.id });
@@ -175,6 +175,16 @@ describe("CharactersPolicy", () => {
     expect((await CharactersPolicy.for(db, other, character)).isEditor()).toBe(true);
     await Players.archive(db, { userId: stranger.id });
     expect((await CharactersPolicy.for(db, other, character)).isEditor()).toBe(false);
+  });
+
+  test("isShareTokenReader: a player character's owner and active contributors, a child's no one", async () => {
+    const { character, owner, other } = await setup();
+    expect(new CharactersPolicy(owner, character).isShareTokenReader()).toBe(true);
+    expect(new CharactersPolicy(other, character, { isActiveContributor: true }).isShareTokenReader()).toBe(true);
+    expect(new CharactersPolicy(other, character, { isCampaignGameMaster: true }).isShareTokenReader()).toBe(false);
+    expect(new CharactersPolicy(other, character).isShareTokenReader()).toBe(false);
+    const child = await createChild(character.userId, character.id);
+    expect(new CharactersPolicy(owner, child, { isParentEditor: true }).isShareTokenReader()).toBe(false);
   });
 
   test("canAcceptInvite: a character that isn't archived, a 409 for an archived one", async () => {
