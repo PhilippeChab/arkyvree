@@ -183,6 +183,14 @@ test.describe("A campaign character", () => {
       await expect(otherParty.getByRole("heading", { name: "Ability Scores" })).toHaveCount(1);
       await expect(otherParty.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(1);
       await expect(otherParty.getByText(characters.Private.name, { exact: true })).toHaveCount(0);
+
+      // The partial card, short, leaves the rest of its column to the public one under it, which scrolls within it
+      const partialName = await otherParty.getByText(characters.Partial.name, { exact: true }).boundingBox();
+      const publicName = await otherParty.getByText(characters.Public.name, { exact: true }).boundingBox();
+      expect(publicName?.x).toBeCloseTo(partialName?.x ?? Number.NaN, 0);
+      expect(publicName?.y).toBeGreaterThan(partialName?.y ?? Number.POSITIVE_INFINITY);
+      const publicDetails = otherParty.getByRole("region", { name: `${characters.Public.name} Details` });
+      expect(await publicDetails.evaluate((details) => details.scrollHeight > details.clientHeight)).toBe(true);
     } finally {
       await other.context().close();
     }

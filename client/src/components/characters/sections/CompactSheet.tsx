@@ -27,6 +27,9 @@ interface CompactSheetProps {
  */
 const BOX_SX = { flex: "0 0 auto", minWidth: { xs: 72, sm: 56 } } as const;
 
+/** The kinds of block a card shows first: what a table reads at a glance (3.5's hit points, armor class), scores. */
+const LEADING_KINDS: SheetBlock["kind"][] = ["stats", "scores"];
+
 /** A row of compact boxes, wrapping onto the next line where the card's width holds no more. */
 function BoxRow({ children }: BoxRowProps) {
   return (
@@ -96,15 +99,21 @@ function isFilled(field: SheetField) {
 }
 
 /**
- * A character's sheet in brief, as a card shows it among others: its identity's facts that hold a value, each its label
- * and its value, then its scores and its stats in compact boxes and its entries' names, in its blocks' order. Its
- * tables, pools and inventory are its sheet's alone, and so is everything of a partly seen character but its identity.
+ * A character's sheet in brief, as a card shows it among others, what a table reads at a glance first: its stats and
+ * its scores in compact boxes, then its identity's facts that hold a value, each its label and its value, then its
+ * entries' names, each kind in its blocks' order. Its tables, pools and inventory are its sheet's alone, and so is
+ * everything of a partly seen character but its identity.
  */
 export function CompactSheet({ blocks }: CompactSheetProps) {
   const facts = openingBlock(blocks)?.lines.flat().filter(isFilled) ?? [];
+  const leading = LEADING_KINDS.flatMap((kind) => blocks.filter((block) => block.kind === kind));
+  const trailing = blocks.filter((block) => !LEADING_KINDS.includes(block.kind));
 
   return (
     <Stack spacing={2.5}>
+      {leading.map((block) => (
+        <CompactBlock key={block.key} block={block} />
+      ))}
       {facts.length > 0 && (
         <Stack direction="row" useFlexGap sx={{ flexWrap: "wrap", columnGap: 2.5, rowGap: 0.5 }}>
           {facts.map((field) => (
@@ -123,7 +132,7 @@ export function CompactSheet({ blocks }: CompactSheetProps) {
           ))}
         </Stack>
       )}
-      {blocks.map((block) => (
+      {trailing.map((block) => (
         <CompactBlock key={block.key} block={block} />
       ))}
     </Stack>

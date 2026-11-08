@@ -52,16 +52,17 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
 import { CharacterCarousel } from "./CharacterCarousel.tsx";
+import { groupPartyColumns } from "./partyColumns.ts";
 import { PartySheet } from "./PartySheet.tsx";
 import { VisibilityControl } from "./VisibilityControl.tsx";
 
 interface CharacterCardProps {
   animationIndex: number;
   animationOffset: number;
+  /** Its sheet in brief, under its description, which scroll within the card: the Party View's. */
+  brief?: ReactNode;
   campaignId: string;
   character: CampaignCharacter;
-  /** What it shows under its description: its sheet in brief, in the Party View. */
-  children?: ReactNode;
   portraitUrl: string | null;
 }
 
@@ -96,7 +97,7 @@ function CharacterCard({
   animationIndex,
   animationOffset,
   portraitUrl,
-  children,
+  brief,
 }: CharacterCardProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -121,8 +122,9 @@ function CharacterCard({
       description={character.isPartial ? PARTIAL_IDENTITY_NOTE : character.description}
       action={<VisibilityControl campaignId={campaignId} character={character} />}
       chips={<CharacterBuildChips chips={character.chips} />}
+      scrolls={brief !== undefined}
     >
-      {children}
+      {brief}
     </ListCard>
   );
 }
@@ -253,7 +255,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
 
-  const cards = characters.items.map((character, index) => (
+  const renderCard = (character: CampaignCharacter, index: number) => (
     <CharacterCard
       key={character.id}
       character={character}
@@ -261,10 +263,15 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       animationIndex={index}
       animationOffset={characters.offset}
       portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
-    >
-      {party && <PartySheet campaignId={campaign.id} characterId={character.id} />}
-    </CharacterCard>
-  ));
+      brief={party ? <PartySheet campaignId={campaign.id} characterId={character.id} /> : undefined}
+    />
+  );
+  // Each column keyed by its first character, its cards in the list's order
+  const placed = characters.items.map((character, index) => ({ character, index, isPartial: character.isPartial }));
+  const columns = groupPartyColumns(placed).map((column) => ({
+    key: column[0].character.id,
+    cards: column.map(({ character, index }) => renderCard(character, index)),
+  }));
 
   return (
     <SectionContent>
@@ -301,9 +308,9 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         >
           {party ? (
             // A new search starts at its first card
-            <CharacterCarousel key={searchQuery}>{cards}</CharacterCarousel>
+            <CharacterCarousel key={searchQuery} columns={columns} />
           ) : (
-            <ListCardGrid>{cards}</ListCardGrid>
+            <ListCardGrid>{characters.items.map(renderCard)}</ListCardGrid>
           )}
         </ListPageResults>
       </Stack>

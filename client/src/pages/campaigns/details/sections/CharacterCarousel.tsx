@@ -1,12 +1,15 @@
-import { IconButton, Stack } from "@mui/material";
+import { Box, IconButton, Stack } from "@mui/material";
 import { Children, type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/client/src/components/icons/index.ts";
-import { DURATION, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+import { PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface CharacterCarouselProps {
-  /** Its cards, side by side, each a slide as wide as the screen gives it. */
-  children: ReactNode;
+  /**
+   * Its columns, in order, each its key and its cards, top to bottom (`groupPartyColumns`): a card fills its height
+   * (`height: 100%`), and one that `scrolls` (a `ListCard`'s) scrolls within it.
+   */
+  columns: { cards: ReactNode[]; key: string }[];
 }
 
 /** Whether the track can slide no further back (`atStart`) or on (`atEnd`). */
@@ -16,28 +19,34 @@ interface TrackEdges {
 }
 
 /**
- * Its track: its cards in a row that scrolls sideways, each stopping at its start, smoothly but for a viewer who asked
- * for less motion, and each as tall as it needs; room above them for a card's lift on hover, and below for the
- * scrollbar. A card is a phone's width less a peek of the next, then a fixed width: past a tablet's, two show whole,
- * and a third peeks in.
+ * A column: the screen's height less the app bar and the row's buttons, within a phone's least and a desktop's most; a
+ * phone's width less a peek of the next, then a fixed width: past a tablet's, two show whole, and a third peeks in. Its
+ * cards stand 24px apart, and it stops at its start as the row scrolls.
+ */
+const COLUMN_SX = {
+  flexShrink: 0,
+  width: { xs: "calc(100% - 48px)", sm: 440, md: 480 },
+  height: "clamp(420px, calc(100dvh - 160px), 760px)",
+  scrollSnapAlign: "start",
+} as const;
+
+/** A card's place in its column: as tall as its card, but the column's last, which takes what the others leave. */
+const SLOT_SX = { flex: "0 0 auto", minHeight: 0, "&:last-child": { flexShrink: 1 } } as const;
+
+/**
+ * Its track: the columns in a row that scrolls sideways, smoothly but for a viewer who asked for less motion; room
+ * above them for a card's lift on hover, and below for the scrollbar.
  */
 const TRACK_SX = {
-  alignItems: "flex-start",
   overflowX: "auto",
+  overflowY: "hidden",
   overscrollBehaviorX: "contain",
   scrollSnapType: "x mandatory",
   scrollBehavior: "smooth",
   pt: 1,
   pb: 2,
-  "& > *": { flexShrink: 0, width: { xs: "calc(100% - 48px)", sm: 440, md: 480 }, scrollSnapAlign: "start" },
   [PREFERS_REDUCED_MOTION]: { scrollBehavior: "auto" },
 } as const;
-
-/**
- * The pause that ends a turn of the wheel: a turn slides one card, however many events it fires (a notch's, a trackpad
- * flick's and its momentum), each closer to the one before than this.
- */
-const WHEEL_TURN_GAP = DURATION.normal;
 
 /** The track's edges as it's scrolled now, `previous` kept when they didn't change: its state renders nothing again. */
 function edgesOf(track: HTMLElement, previous: TrackEdges) {
@@ -46,24 +55,7 @@ function edgesOf(track: HTMLElement, previous: TrackEdges) {
   return atStart === previous.atStart && atEnd === previous.atEnd ? previous : { atStart, atEnd };
 }
 
-/**
- * Whether the track shows whole in what scrolls the page (its nearest ancestor that scrolls, else the window): cards
- * taller than the screen leave the wheel to the page, which scrolls to read them.
- */
-function inFullView(track: HTMLElement) {
-  let view = { top: 0, bottom: window.innerHeight };
-  for (let parent = track.parentElement; parent; parent = parent.parentElement) {
-    const { overflowY } = getComputedStyle(parent);
-    if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
-      view = parent.getBoundingClientRect();
-      break;
-    }
-  }
-  const { top, bottom } = track.getBoundingClientRect();
-  return top >= view.top - 1 && bottom <= view.bottom + 1;
-}
-
-/** Slides the track a card back (`-1`) or on (`1`): its first card's width and the gap after it. */
+/** Slides the track a column back (`-1`) or on (`1`): its first column's width and the gap after it. */
 function slide(track: HTMLElement, direction: number) {
   const first = track.firstElementChild;
   const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
@@ -72,12 +64,11 @@ function slide(track: HTMLElement, direction: number) {
 }
 
 /**
- * Cards in a row that slides sideways, a card at a time: swiped, scrolled sideways, its previous and next buttons above
- * it (with two cards or more, each disabled at its end), or, while the row shows whole, the mouse wheel over it, which
- * slides it on a card a turn down and back a card a turn up, and scrolls the page once the row can't slide further that
- * way. A campaign's characters in its Party View.
+ * Cards in columns of the screen's height, which slide sideways a column at a time: swiped, scrolled sideways (the
+ * wheel with Shift held), or with the previous and next buttons above them (with two columns or more, each disabled at
+ * its end). A card scrolls within its column, the wheel scrolling it. A campaign's characters in its Party View.
  */
-export function CharacterCarousel({ children }: CharacterCarouselProps) {
+export function CharacterCarousel({ columns }: CharacterCarouselProps) {
   const trackId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState<TrackEdges>({ atStart: true, atEnd: true });
@@ -89,28 +80,11 @@ export function CharacterCarousel({ children }: CharacterCarouselProps) {
     // Its first edges once it's laid out, then as its width changes or a page of cards comes in
     const resizes = new ResizeObserver(update);
     resizes.observe(track);
-    const cards = new MutationObserver(update);
-    cards.observe(track, { childList: true });
-    let lastWheel = Number.NEGATIVE_INFINITY;
-    const handleWheel = (event: WheelEvent) => {
-      // The browser's own: a zoom or a pinch (Ctrl or Command held), and a wheel it already scrolls the page with
-      if (!event.cancelable || event.ctrlKey || event.metaKey) return;
-      // A sideways scroll moves the track itself; the page scrolls past its end, or to read cards it doesn't show whole
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !inFullView(track)) return;
-      const direction = Math.sign(event.deltaY);
-      const { atStart, atEnd } = edgesOf(track, { atStart: true, atEnd: true });
-      if (direction < 0 ? atStart : atEnd) return;
-      event.preventDefault();
-      const turns = event.timeStamp - lastWheel >= WHEEL_TURN_GAP;
-      lastWheel = event.timeStamp;
-      if (turns) slide(track, direction);
-    };
-    // Not passive: a wheel that slides the track doesn't scroll the page
-    track.addEventListener("wheel", handleWheel, { passive: false });
+    const added = new MutationObserver(update);
+    added.observe(track, { childList: true });
     return () => {
       resizes.disconnect();
-      cards.disconnect();
-      track.removeEventListener("wheel", handleWheel);
+      added.disconnect();
     };
   }, []);
 
@@ -123,7 +97,7 @@ export function CharacterCarousel({ children }: CharacterCarouselProps) {
 
   return (
     <Stack spacing={1}>
-      {Children.count(children) > 1 && (
+      {columns.length > 1 && (
         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
           <IconButton
             aria-label="Previous Character"
@@ -153,7 +127,13 @@ export function CharacterCarousel({ children }: CharacterCarouselProps) {
         }}
         sx={TRACK_SX}
       >
-        {children}
+        {columns.map(({ key, cards }) => (
+          <Stack key={key} spacing={3} useFlexGap sx={COLUMN_SX}>
+            {Children.map(cards, (card) => (
+              <Box sx={SLOT_SX}>{card}</Box>
+            ))}
+          </Stack>
+        ))}
       </Stack>
     </Stack>
   );

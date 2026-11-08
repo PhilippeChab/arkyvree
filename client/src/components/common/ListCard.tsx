@@ -33,6 +33,12 @@ interface ListCardProps extends Omit<CardProps, "children" | "title"> {
   isArchived?: boolean;
   /** Opens its record, from a click or the keyboard (`clickableProps`). */
   onClick: () => void;
+  /**
+   * Its description and what's under it scroll under its header, which stays, within the height its place gives it
+   * (its column's in a campaign's Party View), and its description takes the lines it has, none kept for a grid's row.
+   * They take focus, so the keyboard scrolls them too.
+   */
+  scrolls?: boolean;
   title: string;
 }
 
@@ -51,6 +57,7 @@ export function ListCard({
   animationIndex,
   animationOffset,
   onClick,
+  scrolls = false,
   sx,
   ...props
 }: ListCardProps) {
@@ -99,7 +106,8 @@ export function ListCard({
       ]}
       {...props}
     >
-      {/* The card's content is a column, its description and what's under it filling what's left */}
+      {/* The card's content is a column, its description and what's under it filling what's left, or, held within its
+          height, scrolling under its header */}
       <Stack sx={{ height: "100%" }}>
         {/* The header's inner space, down to the description: deeper under the chips */}
         <Stack
@@ -108,6 +116,7 @@ export function ListCard({
             p: { xs: 2, sm: 3 },
             pb: chips ? { xs: 3.5, sm: 4 } : { xs: 3, sm: 3.5 },
             position: "relative",
+            flexShrink: 0,
           }}
         >
           {corner && <Box sx={{ position: "absolute", top: 8, right: 8 }}>{corner}</Box>}
@@ -144,14 +153,23 @@ export function ListCard({
             </Stack>
           )}
         </Stack>
-        <Stack spacing={3} sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
+        <Stack
+          spacing={3}
+          {...(scrolls && { tabIndex: 0, role: "region", "aria-label": `${title} Details` })}
+          sx={[
+            { px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 },
+            // Scrolling, its blocks keep their heights: a clamped description would shrink away
+            scrolls && { ...CLICKABLE_SX, minHeight: 0, overflowY: "auto", "& > *": { flexShrink: 0 } },
+          ]}
+        >
           <Typography
             variant="body2"
             sx={{
               ...lineClampSx(4),
               color: "text.secondary",
               lineHeight: 1.6,
-              minHeight: "6.4em",
+              // Four lines, so the cards of a grid's row line up
+              minHeight: scrolls ? 0 : "6.4em",
             }}
           >
             {description || NO_DESCRIPTION}
