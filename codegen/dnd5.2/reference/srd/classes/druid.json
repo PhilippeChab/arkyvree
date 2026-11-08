@@ -10,6 +10,38 @@
     },
     "type": "class"
   },
+  "overrides": {
+    "Druid 16": {
+      "spellcasting": {
+        "cantrips_known": 4,
+        "prepared_spells": 18,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 2,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 0
+      }
+    },
+    "Druid 7": {
+      "spellcasting": {
+        "cantrips_known": 3,
+        "prepared_spells": 11,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 1,
+        "spell_slots_level_5": 0,
+        "spell_slots_level_6": 0,
+        "spell_slots_level_7": 0,
+        "spell_slots_level_8": 0,
+        "spell_slots_level_9": 0
+      }
+    }
+  },
   "raw": {
     "class": {
       "hit_die": 8,

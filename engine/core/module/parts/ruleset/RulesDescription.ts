@@ -167,12 +167,15 @@ export interface ListDescription {
  * `spell-list`), the key a progression's answer gives the class's own list by (`ownList`: `ownSpellList`, its id and
  * its name, its id none while its ruleset has none, which its list tab's first add makes), what its tables' tab
  * says of a class with no list (`none`), to an editor (how a class gets one) and to a viewer, the class's name at
- * `{ownerName}` and its tables' labels at `{tables}`, and its button that makes the class's own list there (`create`,
- * its name at `{name}`: "Create Barbarian Spells").
+ * `{ownerName}` and its tables' labels at `{tables}`, its button that makes the class's own list there (`create`,
+ * its name at `{name}`: "Create Barbarian Spells"), and the key a progression's answer lists the keys of the tables
+ * the class doesn't show by (`hidden`: D&D 5e's `hiddenTables`, a warlock's Spell Slots and any other class's Pact
+ * Magic; none where every class shows every table).
  */
 export interface ProgressionCounts {
   body: string;
   create: string;
+  hidden?: string;
   list: string;
   lists: string;
   listTab: string;
@@ -366,9 +369,10 @@ export interface RulesDescription {
   kinds: EntityKindDescription[];
   /**
    * What a system ruleset's content is licensed under, under its header (`text`: the license whose text the app
-   * serves): none where nothing needs saying
+   * serves, the Open Game License's; or the Creative Commons Attribution 4.0 license, which the notice links to): none
+   * where nothing needs saying
    */
-  license?: { notice: string; text: "ogl" };
+  license?: { notice: string; text: "cc-by-4.0" | "ogl" };
   /** Each entity type's list on its ruleset's page, by type: its columns of the entities' own values */
   lists: Partial<Record<string, ListDescription>>;
   /** How a class progresses, as its Progression and Spells tabs set it */

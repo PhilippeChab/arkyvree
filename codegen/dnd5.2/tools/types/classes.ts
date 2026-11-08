@@ -57,8 +57,11 @@ export interface ClassLevel {
 /** A class's reference: the class, its levels and its features, and each of its subclasses with theirs. */
 export interface ClassReference {
   _meta: ScrapedFrom<"class">;
-  /** Corrections made by hand: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /**
+   * Corrections made by hand, by entry's name: the class's fields the SRD gives otherwise than the database, by its
+   * name (a rogue's weapons), and a level's, by its own ("Druid 7": its cantrips), each in place of the database's.
+   */
+  overrides?: Overrides<Partial<ClassEntry> | Partial<ClassLevel>>;
   raw: {
     class: ClassEntry;
     features: ClassFeature[];

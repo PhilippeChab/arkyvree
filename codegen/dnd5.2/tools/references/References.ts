@@ -1,7 +1,7 @@
 /**
  * The D&D 5th Edition book's references, on core's store (`ReferenceStore`: found, read, written and loaded as every
  * ruleset's parser's are). A reference stores what the scraper read (`raw`) and the corrections made by hand
- * (`overrides`). Loading one derives nothing yet: what the generator will read of it is the detection's to come.
+ * (`overrides`). Loading one derives nothing: the generator's seeds read it (`tools/seeds/`), its overrides applied.
  */
 
 import { join } from "node:path";

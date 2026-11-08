@@ -30,7 +30,7 @@ export interface SpellEntry {
 /** The book's spells. */
 export interface SpellReference {
   _meta: ScrapedFrom<"spell">;
-  /** Corrections made by hand, by spell: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /** Corrections made by hand, by entry's name: its fields the SRD gives otherwise than the database, each in place of the database's. */
+  overrides?: Overrides<Partial<SpellEntry>>;
   raw: SpellEntry[];
 }

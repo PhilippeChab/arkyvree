@@ -49,7 +49,7 @@ const PART_WORDS: Readonly<Record<EntityPart, string>> = {
  */
 export default class RulesetEngine {
   constructor(private readonly view: RulesetView) {
-    this.module = Modules.of(view.ruleset.baseRules);
+    this.module = Modules.any(view.ruleset.baseRules);
   }
 
   private readonly module: Module;

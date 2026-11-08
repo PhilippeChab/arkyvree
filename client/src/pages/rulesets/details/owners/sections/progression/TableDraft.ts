@@ -144,7 +144,7 @@ export class TableDraft {
    * it, typed or saved. A draft that saves nothing shows its tables as saved.
    */
   cellOf(which: string, ownedId: string, column: number): TableCell {
-    if (this.answer) return readTableCell(this.answer.totals[which]?.get(ownedId)?.[column]);
+    if (this.answer) return readTableCell(this.answer.totals[which]?.get(ownedId)?.[this.keyOf(which, column)]);
     return this.editedCell(which, ownedId, column);
   }
 
@@ -181,9 +181,17 @@ export class TableDraft {
     return this.ownedEntities.slice(0, index).some(({ id }) => this.cellOf(which, id, column) === "all");
   }
 
+  /**
+   * The key a table's column (`column`, by index) reads its totals at, as its rules name it: a spell level, which a
+   * table of spell slots starts at 1. Its index without one.
+   */
+  keyOf(which: string, column: number): string | number {
+    return this.tableOf(which)?.columns[column]?.key ?? column;
+  }
+
   /** A cell as saved. */
   savedCell(which: string, ownedId: string, column: number) {
-    return readTableCell(this.saved[which]?.get(ownedId)?.[column]);
+    return readTableCell(this.saved[which]?.get(ownedId)?.[this.keyOf(which, column)]);
   }
 
   /** The draft of other edits (`edits`) over the same tables, its rules' answer kept. */

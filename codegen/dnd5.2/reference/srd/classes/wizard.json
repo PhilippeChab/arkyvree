@@ -10,6 +10,176 @@
     },
     "type": "class"
   },
+  "overrides": {
+    "Wizard": {
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: Arcana, History, Insight, Investigation, Medicine, Nature, or Religion",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-arcana",
+                  "name": "Skill: Arcana"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-history",
+                  "name": "Skill: History"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-investigation",
+                  "name": "Skill: Investigation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-medicine",
+                  "name": "Skill: Medicine"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-nature",
+                  "name": "Skill: Nature"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-religion",
+                  "name": "Skill: Religion"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ]
+    },
+    "Wizard 14": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 18,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 2,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 0,
+        "spell_slots_level_9": 0
+      }
+    },
+    "Wizard 15": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 19,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 2,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 0
+      }
+    },
+    "Wizard 16": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 21,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 2,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 0
+      }
+    },
+    "Wizard 17": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 22,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 2,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 1
+      }
+    },
+    "Wizard 18": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 23,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 3,
+        "spell_slots_level_6": 1,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 1
+      }
+    },
+    "Wizard 19": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 24,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 3,
+        "spell_slots_level_6": 2,
+        "spell_slots_level_7": 1,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 1
+      }
+    },
+    "Wizard 20": {
+      "spellcasting": {
+        "cantrips_known": 5,
+        "prepared_spells": 25,
+        "spell_slots_level_1": 4,
+        "spell_slots_level_2": 3,
+        "spell_slots_level_3": 3,
+        "spell_slots_level_4": 3,
+        "spell_slots_level_5": 3,
+        "spell_slots_level_6": 2,
+        "spell_slots_level_7": 2,
+        "spell_slots_level_8": 1,
+        "spell_slots_level_9": 1
+      }
+    }
+  },
   "raw": {
     "class": {
       "hit_die": 6,

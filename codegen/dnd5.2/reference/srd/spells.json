@@ -7,6 +7,12 @@
     },
     "type": "spell"
   },
+  "overrides": {
+    "Protection from Evil and Good": {
+      "concentration": true,
+      "material": "a flask of Holy Water worth 25+ GP, which the spell consumes"
+    }
+  },
   "raw": [
     {
       "attack_type": "ranged",

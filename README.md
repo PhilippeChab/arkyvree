@@ -141,11 +141,12 @@ lib/                    # What the engine and the server share: the mixins (incl
 content/
   core/                 # What every ruleset's content is written with: the customization builders, the seed types they share, a package's and a test character's shape
   dnd3.5/               # The 3.5 content, data: its builders, its hand-written rows, the generated books, its packages, its test characters
+  dnd5.2/               # The D&D 5th Edition content, data: its builders, its hand-written rows, the SRD 5.2.1's generated book, its package, its test characters
 
 codegen/
   core/                 # What every ruleset's parser runs on: the commands' line, the references' store, a book's scraper, the HTTP client and page, the generated folder and code
   dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
-  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) reader: the 5e-bits database's files into reference files; its generator comes with its engine module
+  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) parser and generator: the 5e-bits database's files into reference files, and the tools that write content/dnd5.2/generated
   pf1/                  # The Pathfinder 1 scraper (aonprd.com): reference files; its generator comes with its engine module
 
 database/
@@ -160,7 +161,7 @@ drizzle/
 shared/                 # Types and pure helpers shared by the client, the server and the database packages
 vocabulary/
   dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the content, the codegen and the seeders read
-  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) vocabulary, data only: its lists, tables and bounds, which its codegen reads, and its engine and content will
+  dnd5.2/               # The D&D 5th Edition (SRD 5.2.1) vocabulary, data only: its lists, tables and bounds, which its engine, content, codegen and seeders read
   pf1/                  # The Pathfinder 1 vocabulary, data only: so far the core rules' book, which its codegen reads
 emails/                 # Email templates (React Email)
 scripts/                # Database scripts (reset, migrate, seed; db/seeds/, the dev and test data: users, each base rules' test characters) and ops scripts (prod diff, impersonate, validation)

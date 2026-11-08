@@ -56,11 +56,13 @@ function readPastedTable(
   // A table's header rows aren't owned entities: those with a word in them ("Level", "Cantrips", "1st"), where an owned
   // entity's row has its position and counts (a cleric's "1+1" isn't a word),
   const isWord = (cell: string) => /[a-z]/i.test(cell) && parseTableCell(cell, table) === undefined;
-  // and those numbering the columns, 0 1 2… (an owned entity's counts never run so)
+  // and those numbering the columns as their keys run, 0 1 2… or, a table of spell slots, 1 2 3… (an owned entity's
+  // counts never run so)
+  const keys = table.columns.map(({ key }) => key);
   const isHeader = ([lead, ...rest]: string[]) =>
     (isWord(lead) && !POSITION_CELL.test(lead)) ||
     rest.some(isWord) ||
-    (rest.length >= 2 && [lead, ...rest].every((cell, index) => cell === String(index)));
+    (rest.length >= 2 && [lead, ...rest].every((cell, index) => cell === keys[index]));
   const header = lines.findIndex((cells) => !isHeader(cells));
   const body = header === -1 ? [] : lines.slice(header);
   // A table whose rows count up its positions from 1 or from where it's pasted (`firstPosition`), over three rows or

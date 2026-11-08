@@ -20,7 +20,7 @@ export type RulesetKind = (typeof rulesetKind.enumValues)[number];
 /** Where a ruleset stands: a draft, published, or archived. */
 export type RulesetStatus = (typeof rulesetStatus.enumValues)[number];
 
-export const BASE_RULES_OPTIONS = ["Dungeons & Dragons: 3.5", "Pathfinder: 1"] as const;
+export const BASE_RULES_OPTIONS = ["Dungeons & Dragons: 3.5", "Pathfinder: 1", "Dungeons & Dragons: 5.2"] as const;
 /** A ruleset contributor's roles, highest first: the `contributor_role` enum's. */
 export const CONTRIBUTOR_ROLES = ["Admin", "Editor", "Viewer"] as const satisfies readonly ContributorRole[];
 export const CONTRIBUTOR_STATUSES = ["Pending", "Active", "Rejected", "Revoked"] as const;

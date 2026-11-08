@@ -245,7 +245,8 @@ describe("EntitiesService: a class's levels", () => {
 
       expect(
         (await EntitiesService.getOwnedEntities(await ownerSessionOf(ruleset.id), ruleset.id, "classes", klass.id)).map(
-          (level) => level.babLabel,
+          // A 3.5 level's: another base rules' class level (D&D 5th Edition's) has no base attack
+          (level) => ("babLabel" in level ? level.babLabel : undefined),
         ),
       ).toEqual(["+0", "+6/+1", "+11/+6/+1"]);
     });

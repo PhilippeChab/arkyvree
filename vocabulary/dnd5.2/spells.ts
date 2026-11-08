@@ -1,7 +1,8 @@
 /**
  * The spells' rules' numbers and value sets, as the SRD 5.2.1 gives them: its schools, components and levels, the save
- * DC and attack bonus a spell's caster has, and the spell slots: the Multiclass Spellcaster table, by the levels a
- * character's classes count toward it, and the warlock's Pact Magic slots, by its own level.
+ * DC and attack bonus a spell's caster has, and the spell slots past a class's own table: the Multiclass Spellcaster
+ * table, by the levels a character's classes count toward it once it casts from more than one, and the warlock's Pact
+ * Magic slots, by its own level.
  */
 
 /** A level of a warlock's Pact Magic: how many slots it has, and their level. */
@@ -14,9 +15,10 @@ interface PactSlots {
 export const MAX_SPELL_LEVEL = 9;
 
 /**
- * The spell slots a character has by the levels its classes count toward them (a full caster's all, a half caster's
- * half, rounded up), as the Multiclass Spellcaster table gives them: a row per level (index 0 is level 1), a count per
- * spell level (index 0 is level 1). A single class's table gives the same slots.
+ * The spell slots a character that casts from more than one class has, by the levels its classes count toward them
+ * (`MULTICLASS_SLOTS`: all a bard's or a wizard's, half a paladin's or a ranger's, rounded up), as the Multiclass
+ * Spellcaster table gives them: a row per level (index 0 is level 1), a count per spell level (index 0 is level 1). A
+ * single class's own table, its levels' slots, gives the same at the levels it counts.
  */
 // oxfmt-ignore
 export const MULTICLASS_SPELL_SLOTS = [
@@ -78,3 +80,9 @@ export const SPELL_SCHOOLS = [
   "Necromancy",
   "Transmutation",
 ] as const;
+
+/** The level 1 spells a wizard's spellbook starts with, at its first level: six. */
+export const SPELLBOOK_FIRST_SPELLS = 6;
+
+/** The spells a wizard adds to its spellbook at each level past its first: two. */
+export const SPELLBOOK_SPELLS_A_LEVEL = 2;
