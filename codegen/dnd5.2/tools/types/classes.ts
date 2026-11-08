@@ -9,6 +9,8 @@ import type { ScrapedFrom } from "./reference.ts";
  * multiclasses into it gains, and its subclasses.
  */
 export interface ClassEntry {
+  /** Ours, in the reference's overrides: the SRD gives none */
+  description?: string;
   hit_die: number;
   index: string;
   multi_classing: {

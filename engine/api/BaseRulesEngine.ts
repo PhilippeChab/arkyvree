@@ -18,6 +18,14 @@ export default class BaseRulesEngine<B extends BaseRules> {
   }
 
   /**
+   * What an entity of a kind brings with it (a skill's feats), as the engine makes them for one a ruleset adds: what the
+   * seeders write for a book's own.
+   */
+  describeBroughtEntities(kind: string, name: string) {
+    return Modules.of(this.baseRules).content.describeBroughtEntities(kind, name);
+  }
+
+  /**
    * A class's progressions' values at each level, by how good each is: what the seeders store a class's levels by, and
    * the codegen classifies a book's class table by.
    */

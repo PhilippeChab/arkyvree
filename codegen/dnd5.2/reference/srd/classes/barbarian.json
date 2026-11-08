@@ -1089,5 +1089,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Barbarian": {
+      "description": "A fierce warrior who fights in a Rage."
+    }
   }
 }

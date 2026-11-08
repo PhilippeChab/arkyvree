@@ -56,7 +56,8 @@
       "weight": 20
     },
     "Chain Shirt": {
-      "weight": 20
+      "weight": 20,
+      "description": "A shirt of metal rings, worn under clothing."
     },
     "Chest": {
       "cost": {
@@ -88,20 +89,23 @@
       "cost": {
         "quantity": 5,
         "unit": "cp"
-      }
+      },
+      "description": "A small weighted spike, thrown by hand."
     },
     "Diplomat's Pack": {
       "weight": 39
     },
     "Half-Plate Armor": {
-      "name": "Half Plate Armor"
+      "name": "Half Plate Armor",
+      "description": "Metal plates covering most of the body."
     },
     "Hand Crossbow": {
       "cost": {
         "quantity": 75,
         "unit": "gp"
       },
-      "weight": 3
+      "weight": 3,
+      "description": "A small crossbow, fired with one hand."
     },
     "Hide Armor": {
       "equipment_categories": [
@@ -113,22 +117,26 @@
           "index": "medium-armor",
           "name": "Medium Armor"
         }
-      ]
+      ],
+      "description": "Thick furs and pelts."
     },
     "Javelin": {
       "cost": {
         "quantity": 5,
         "unit": "sp"
-      }
+      },
+      "description": "A light spear made for throwing."
     },
     "Longbow": {
       "cost": {
         "quantity": 50,
         "unit": "gp"
-      }
+      },
+      "description": "A tall bow that shoots far."
     },
     "Mace": {
-      "weight": 4
+      "weight": 4,
+      "description": "A metal club with a heavy head."
     },
     "Parchment": {
       "cost": {
@@ -137,7 +145,8 @@
       }
     },
     "Pike": {
-      "weight": 18
+      "weight": 18,
+      "description": "A very long spear that strikes from a distance."
     },
     "Poisoner's Kit": {
       "cost": {
@@ -158,14 +167,16 @@
           "index": "bludgeoning",
           "name": "Bludgeoning"
         }
-      }
+      },
+      "description": "A strap that hurls stones or bullets."
     },
     "Spear": {
       "cost": {
         "quantity": 1,
         "unit": "gp"
       },
-      "weight": 3
+      "weight": 3,
+      "description": "A pointed shaft, thrown or thrust."
     },
     "Spikes, Iron": {
       "weight": 5
@@ -184,7 +195,125 @@
           "index": "piercing",
           "name": "Piercing"
         }
-      }
+      },
+      "description": "A three-pronged spear."
+    },
+    "Battleaxe": {
+      "description": "A heavy axe, swung in one hand or two."
+    },
+    "Blowgun": {
+      "description": "A tube that shoots needles with a puff of breath."
+    },
+    "Club": {
+      "description": "A simple wooden club."
+    },
+    "Dagger": {
+      "description": "A short blade, easy to hide and to throw."
+    },
+    "Flail": {
+      "description": "A spiked ball on a chain, fixed to a handle."
+    },
+    "Glaive": {
+      "description": "A long pole topped with a heavy blade."
+    },
+    "Greataxe": {
+      "description": "A huge axe, swung with both hands."
+    },
+    "Greatclub": {
+      "description": "A massive wooden club, swung with both hands."
+    },
+    "Greatsword": {
+      "description": "A huge sword, swung with both hands."
+    },
+    "Halberd": {
+      "description": "A long pole topped with an axe blade and a spike."
+    },
+    "Handaxe": {
+      "description": "A small axe, for chopping or throwing."
+    },
+    "Heavy Crossbow": {
+      "description": "A large, powerful crossbow."
+    },
+    "Lance": {
+      "description": "A long spear used from horseback."
+    },
+    "Light Crossbow": {
+      "description": "A crossbow light enough to carry anywhere."
+    },
+    "Light Hammer": {
+      "description": "A small hammer, for striking or throwing."
+    },
+    "Longsword": {
+      "description": "A straight, double-edged blade, used in one hand or two."
+    },
+    "Maul": {
+      "description": "A huge hammer, swung with both hands."
+    },
+    "Morningstar": {
+      "description": "A club topped with a spiked metal ball."
+    },
+    "Musket": {
+      "description": "A long firearm that shoots lead balls."
+    },
+    "Pistol": {
+      "description": "A small firearm, fired with one hand."
+    },
+    "Quarterstaff": {
+      "description": "A long wooden staff, used in one hand or two."
+    },
+    "Rapier": {
+      "description": "A thin, light sword made for quick thrusts."
+    },
+    "Scimitar": {
+      "description": "A light, curved sword."
+    },
+    "Shortbow": {
+      "description": "A small bow, easy to handle."
+    },
+    "Shortsword": {
+      "description": "A short blade for quick strikes."
+    },
+    "Sickle": {
+      "description": "A curved farming blade."
+    },
+    "War Pick": {
+      "description": "A heavy pick that punches through armor."
+    },
+    "Warhammer": {
+      "description": "A heavy war hammer, used in one hand or two."
+    },
+    "Whip": {
+      "description": "A long leather lash that strikes from a distance."
+    },
+    "Breastplate": {
+      "description": "A fitted metal chest plate."
+    },
+    "Chain Mail": {
+      "description": "A full suit of interlocking metal rings."
+    },
+    "Leather Armor": {
+      "description": "Stiffened leather."
+    },
+    "Padded Armor": {
+      "description": "Quilted layers of cloth."
+    },
+    "Plate Armor": {
+      "description": "Shaped metal plates covering the whole body."
+    },
+    "Ring Mail": {
+      "description": "Leather with heavy metal rings sewn on."
+    },
+    "Scale Mail": {
+      "description": "A coat of overlapping metal scales."
+    },
+    "Shield": {
+      "description": "A wood or metal shield, carried in one hand."
+    },
+    "Splint Armor": {
+      "description": "Metal strips riveted onto leather."
+    },
+    "Studded Leather Armor": {
+      "description": "Leather reinforced with rivets."
     }
   },
   "raw": [

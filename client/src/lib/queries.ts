@@ -189,22 +189,6 @@ export function characterListQuery(filters: CharacterListFilters) {
   });
 }
 
-/** The rulesets a characters list's view (`view`) holds characters of: its ruleset filter's options, by name. */
-export function characterRulesetsQuery(view: CharacterListFilters["view"]) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.characters.rulesets(view),
-    queryFn: () =>
-      parseResponse(
-        rpc.api.characters.rulesets.$get({
-          query: {
-            visibility: view === "archived" ? "archived" : "active",
-            accessRole: view === "shared" ? "contributor" : undefined,
-          },
-        }),
-      ),
-  });
-}
-
 /** The signed-in user, as the server knows them. */
 export function currentUserQuery() {
   return queryOptions({

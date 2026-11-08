@@ -3,14 +3,12 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { SKILL_FOCUS_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
-import GeneratedFeats from "./GeneratedFeats.ts";
+import GeneratedFeats, { type GeneratedFeat } from "./GeneratedFeats.ts";
 
 /** The feats a skill makes: its Skill Focus, which a delete or a rename removes. */
 export default class SkillFocusFeats extends GeneratedFeats {
-  protected override readonly poolSlug = LevelRules.GENERAL_FEATS_APTITUDE_SLUG;
-
   /** The skill's own feat: its Skill Focus, of the Skill Focus family, +3 to its checks, as the seeded ones are. */
-  protected override featsOf(skillName: string) {
+  static describe(skillName: string): GeneratedFeat[] {
     return [
       {
         name: `Skill Focus: ${skillName}`,
@@ -27,6 +25,13 @@ export default class SkillFocusFeats extends GeneratedFeats {
         requirements: [],
       },
     ];
+  }
+
+  protected override readonly poolSlug = LevelRules.GENERAL_FEATS_APTITUDE_SLUG;
+
+  /** The skill's own feat (`describe`). */
+  protected override featsOf(skillName: string) {
+    return SkillFocusFeats.describe(skillName);
   }
 
   /** The skill's own feat a delete or a rename removes with its name: its Skill Focus, unless a character picked it. */

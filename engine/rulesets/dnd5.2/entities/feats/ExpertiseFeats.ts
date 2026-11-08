@@ -3,7 +3,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { EXPERTISE_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
-import GeneratedFeats from "./GeneratedFeats.ts";
+import GeneratedFeats, { type GeneratedFeat } from "./GeneratedFeats.ts";
 
 /**
  * The feat a skill makes in the Expertise pool (`EXPERTISE_POOL`): its Expertise, twice the Proficiency Bonus on its
@@ -11,20 +11,13 @@ import GeneratedFeats from "./GeneratedFeats.ts";
  * feat's modifier), and which a delete or a rename removes.
  */
 export default class ExpertiseFeats extends GeneratedFeats {
-  /** A skill's Expertise's name ("Expertise: Stealth"). */
-  static nameOf(skillName: string): string {
-    return `Expertise: ${skillName}`;
-  }
-
-  protected override readonly poolSlug = stripSeparators(EXPERTISE_POOL);
-
   /** The skill's Expertise, of its family, requiring the character's proficiency in it (`skills.<skill>.proficient`). */
-  protected override featsOf(skillName: string) {
+  static describe(skillName: string): GeneratedFeat[] {
     return [
       {
         name: ExpertiseFeats.nameOf(skillName),
         description: `You add twice your Proficiency Bonus to ${skillName} checks.`,
-        fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Expertise"] }),
+        fields: FEAT_FIELDS.write({ families: ["Expertise"] }),
         modifiers: [
           { target: SkillsPaths.expertise(skillName), operator: "set", value: "true", valueType: "boolean" } as const,
         ],
@@ -39,6 +32,18 @@ export default class ExpertiseFeats extends GeneratedFeats {
         ],
       },
     ];
+  }
+
+  /** A skill's Expertise's name ("Expertise: Stealth"). */
+  static nameOf(skillName: string): string {
+    return `Expertise: ${skillName}`;
+  }
+
+  protected override readonly poolSlug = stripSeparators(EXPERTISE_POOL);
+
+  /** The skill's Expertise (`describe`). */
+  protected override featsOf(skillName: string) {
+    return ExpertiseFeats.describe(skillName);
   }
 
   /** The skill's Expertise a delete or a rename removes with its name, unless a character picked it. */

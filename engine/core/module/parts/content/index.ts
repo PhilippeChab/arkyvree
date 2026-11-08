@@ -1,1 +1,1 @@
-export { default as ContentPart } from "./ContentPart.ts";
+export { type BroughtEntity, default as ContentPart } from "./ContentPart.ts";

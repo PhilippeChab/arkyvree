@@ -1216,5 +1216,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Cleric": {
+      "description": "A priest who channels divine magic."
+    }
   }
 }

@@ -65,6 +65,10 @@ the SRD, its reference's overrides say what the SRD gives:
   class's (`Rogue`) or a level's (`Druid 7`), each field in place of the database's;
 - spells: Protection from Evil and Good's Concentration, which its duration names, and its material's words.
 
+The overrides also give what neither the SRD nor its data has, in our own words, as Pathfinder's references give their
+classes' and races': a one-sentence description of each class, species, weapon and armor (`description`), which the
+seeds refuse to go without (`readOverrideDescription`).
+
 A species' trait the database links from its own side alone (a dragonborn's Draconic Ancestry) is read with the
 species it names.
 

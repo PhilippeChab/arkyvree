@@ -39,6 +39,8 @@ On top of those, the **Languages** field of its sheet adds languages of any kind
 
 Unlike the SRD, races and classes keep no list of bonus languages to pick from: a dwarf can learn Sylvan as well as Giant. A secret language, Druidic, is never picked: a character speaks it only when something grants it. The field offers only the languages that still fit, and none once every pick is made. Raising Intelligence adds picks, back to the character's first level. Removing a language always saves, even for a character that has more than its room.
 
+The characters list shows each character's ruleset. When your characters are of more than one ruleset, a **Ruleset** filter beside the search shows one ruleset's characters.
+
 **Archive** makes a character read-only and hides it from your lists; **Unarchive** it from its menu: it waits under the Archived filter of your characters. An archived character can also be removed for good with **Delete Permanently**, once it's no longer linked to an active campaign.
 
 ## What are Campaigns?

@@ -1,38 +1,28 @@
-import { setFlag } from "@/content/core/builders/customization/modifiers.ts";
-import { eq } from "@/content/core/builders/customization/requirements.ts";
-import { expertise, skillProficiency } from "@/content/dnd5.2/builders/feats/proficiencies.ts";
-import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
+import type { FeatFields, FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import type { SkillSeed } from "@/content/dnd5.2/builders/skills/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd5.2/BaseSeeder.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { stripSeparators } from "@/shared/text.ts";
-import { EXPERTISE_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
-import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { DND52_BASE_RULES } from "@/vocabulary/dnd5.2/baseRules.ts";
 
 /**
- * A skill's feats, as the engine makes them with a skill a ruleset adds (`SkillProficiencyFeats`, `ExpertiseFeats`):
- * its Skill Proficiency, in the pool of any skill's proficiency, and its Expertise, which requires proficiency in it
- * however the character has it, in the Expertise pool, each of its family and generated.
+ * A skill's feats, as the engine makes them for a skill a ruleset adds (`describeBroughtEntities`): its Skill
+ * Proficiency and its Expertise, which the engine describes alone, so a seeded skill's and a new one's are the same.
  */
 function skillFeats(skill: string): FeatSeed[] {
-  const slug = stripSeparators(skill);
-  return [
-    {
-      name: skillProficiency(skill),
-      description: `You have proficiency in the ${skill} skill.`,
-      aptitudes: [SKILL_PROFICIENCIES_POOL],
-      modifiers: [setFlag(`skills.${slug}.proficient`)],
-      fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Skill Proficiency"] },
-    },
-    {
-      name: expertise(skill),
-      description: `You have Expertise in the ${skill} skill: your Proficiency Bonus is doubled for its checks.`,
-      aptitudes: [EXPERTISE_POOL],
-      modifiers: [setFlag(`skills.${slug}.expertise`)],
-      requirements: [eq(`skills.${slug}.proficient`)],
-      fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Expertise"] },
-    },
-  ];
+  return Engine.forRules(DND52_BASE_RULES)
+    .describeBroughtEntities("skills", skill)
+    .map(({ description, fields, modifiers, name, pools, requirements }) => ({
+      name,
+      description,
+      aptitudes: pools,
+      fields: fields as FeatFields,
+      modifiers,
+      // A condition each: the engine's are conditions alone, none a group
+      requirements: requirements.flatMap(({ operator, target, value, valueType }) =>
+        operator && target && value !== null && valueType ? [{ operator, target, value, valueType }] : [],
+      ),
+    }));
 }
 
 /** Seeding skills: the skills with the ability their checks add, and each one's feats. */

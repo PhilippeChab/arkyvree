@@ -1362,5 +1362,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Paladin": {
+      "description": "A holy warrior bound by a sacred oath."
+    }
   }
 }

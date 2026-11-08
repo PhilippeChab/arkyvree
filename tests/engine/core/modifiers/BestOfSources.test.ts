@@ -68,6 +68,16 @@ describe("A value that keeps the best of its sources", () => {
     expect([shared.deflection, set.deflection]).toEqual([4, 4]);
   });
 
+  test("counts only while it says it does: a shield enhancement without a shield", () => {
+    let held = false;
+    const set = { shieldenhancement: 0 };
+    BestOfSources.define(set, "shieldenhancement", 0, { when: () => held });
+    BestOfSources.add(set, "shieldenhancement", "feat", 1);
+    expect(set.shieldenhancement).toBe(0);
+    held = true;
+    expect(set.shieldenhancement).toBe(1);
+  });
+
   test("leaves any other value alone", () => {
     const ac = { dodge: 0, deflection: 0 };
     BestOfSources.define(ac, "deflection", 0);

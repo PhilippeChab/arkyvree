@@ -86,7 +86,8 @@
           },
           "type": "proficiencies"
         }
-      ]
+      ],
+      "description": "A master of weapons and armor."
     }
   },
   "raw": {

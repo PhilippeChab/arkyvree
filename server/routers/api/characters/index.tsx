@@ -79,6 +79,7 @@ export default new Hono()
       );
     },
   )
+  // How a new character of a ruleset sets its scores of a scored link's role (3.5's `score`, its ability scores)
   .get("/creation", validate("query", z.object({ role: z.string(), rulesetId: z.string().uuid() })), async (c) => {
     const { role, rulesetId } = c.req.valid("query");
     return c.json(await CharactersService.getCreation(c.var.requestSession, rulesetId, role), 200);
@@ -126,7 +127,6 @@ export default new Hono()
       );
     },
   )
-  // How a new character of a ruleset sets its scores of a scored link's role (3.5's `score`, its ability scores)
   // The session's characters it could link to a campaign: in none yet, on its ruleset
   .get(
     "/unlinked/:campaignId",

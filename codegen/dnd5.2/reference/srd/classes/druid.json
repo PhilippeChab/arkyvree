@@ -40,6 +40,9 @@
         "spell_slots_level_8": 0,
         "spell_slots_level_9": 0
       }
+    },
+    "Druid": {
+      "description": "A guardian of nature who casts primal magic and takes animal forms."
     }
   },
   "raw": {

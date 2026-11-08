@@ -290,7 +290,8 @@
           },
           "type": "proficiencies"
         }
-      ]
+      ],
+      "description": "A martial artist who fights with fists and focus."
     }
   },
   "raw": {
