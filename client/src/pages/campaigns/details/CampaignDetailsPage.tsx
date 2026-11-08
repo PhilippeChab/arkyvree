@@ -23,6 +23,7 @@ import {
   ArchiveIcon,
   CharacterIcon,
   DeleteIcon,
+  DocumentIcon,
   EditIcon,
   PlayersIcon,
   UnarchiveIcon,
@@ -38,15 +39,17 @@ import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { CampaignSection } from "./sectionQueries.ts";
-import { CharactersSection, PlayersSection } from "./sections/index.ts";
+import { CharactersSection, DocumentsSection, PlayersSection } from "./sections/index.ts";
 
 const SECTION_COMPONENTS = {
   characters: CharactersSection,
+  documents: DocumentsSection,
   players: PlayersSection,
 } as const;
 
 const TABS: SectionTab<CampaignSection>[] = [
   { key: "characters", label: "Characters", icon: CharacterIcon },
+  { key: "documents", label: "Documents", icon: DocumentIcon },
   { key: "players", label: "Players", icon: PlayersIcon },
 ];
 
@@ -221,7 +224,7 @@ export default function CampaignDetailsPage() {
             />
           </Stack>
 
-          {/* Both tabs stay mounted so switching keeps each one's search and loaded pages. */}
+          {/* Every tab stays mounted so switching keeps each one's search and loaded pages. */}
           {TABS.map(({ key }) => {
             const Section = SECTION_COMPONENTS[key];
             return (

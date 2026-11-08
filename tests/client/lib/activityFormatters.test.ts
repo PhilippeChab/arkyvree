@@ -117,3 +117,16 @@ describe("An activity's list entry", () => {
     expect(formatActivityDetails("updateItem", linksAt(3))).toBe("Lists: added Arcane (Tier 3)");
   });
 });
+
+describe("A campaign document's share", () => {
+  test("names what was shared and where, by its Game Master, else someone", () => {
+    const shared = { campaignName: "Saltmarsh", entityName: "Act 3" };
+    expect(formatNotificationMessage("shareCampaignDocument", { ...shared, actorName: "Ann" })).toBe(
+      "Ann shared Act 3 with you in Saltmarsh",
+    );
+    // A Game Master without a username: their address isn't the players' to read
+    expect(formatNotificationMessage("shareCampaignDocument", { ...shared, actorName: null })).toBe(
+      "Someone shared Act 3 with you in Saltmarsh",
+    );
+  });
+});

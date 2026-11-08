@@ -1,6 +1,6 @@
 /**
- * A campaign, which its page and its character's page read and the list's cards prefetch, and a character's sheet as
- * the campaign shows it, which the Characters tab's cards prefetch.
+ * A campaign, which its page and its character's page read and the list's cards prefetch, a character's sheet as the
+ * campaign shows it, which the Characters tab's cards prefetch, and a folder or a document, which its page reads.
  */
 
 import { queryOptions, skipToken } from "@tanstack/react-query";
@@ -31,5 +31,19 @@ export function campaignDetailQuery(id: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.campaigns.detail(id),
     queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
+  });
+}
+
+/** A folder or a document of a campaign, as the session sees it, with a document's text; skipped while an id is missing. */
+export function campaignDocumentQuery(campaignId: string, documentId: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.campaigns.documentDetail(campaignId, documentId),
+    queryFn:
+      campaignId && documentId
+        ? () =>
+            parseResponse(
+              rpc.api.campaigns[":id"].documents[":documentId"].$get({ param: { id: campaignId, documentId } }),
+            )
+        : skipToken,
   });
 }
