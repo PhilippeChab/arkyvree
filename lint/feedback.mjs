@@ -162,7 +162,7 @@ function createDialogMounts(context) {
 }
 
 function createMenus(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/ActionMenuItem.tsx") return {};
+  if (!inClient(context)) return {};
   return {
     JSXElement(node) {
       const name = elementName(node);

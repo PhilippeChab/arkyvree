@@ -173,7 +173,6 @@ describe("frontend rules", () => {
           "client/src/a.ts": "export const a = { queryKey: [...QUERY_KEYS.feats(id), search] };\n",
           "client/src/b.ts": "export const b = { queryKey: QUERY_KEYS.feats(id) };\n",
           "client/src/c.ts": 'export const c = { queryKey: ["feats", id] };\n',
-          "client/src/lib/queryKeys.ts": 'export const k = { queryKey: ["feats"] };\n',
         },
         ["query-keys"],
       ),
@@ -252,17 +251,14 @@ describe("frontend rules", () => {
     ).toEqual(["query-keys client/src/sheet.ts"]);
   });
 
-  test("a mutation runs with mutate, and a loader is a DiceSpinner", async () => {
+  test("a mutation runs with mutate, and is held whole", async () => {
     expect(
       await lintRepo(
         {
           "client/src/a.ts": "export const a = () => save.mutate(values);\n",
           "client/src/b.ts": "export const b = () => save.mutateAsync(values);\n",
-          "client/src/c.tsx":
-            'import { Box, CircularProgress } from "@mui/material";\nexport const c = [Box, CircularProgress];\n',
           "client/src/d.ts":
             "export const d = () => {\n  const { mutateAsync } = useSave();\n  return mutateAsync;\n};\n",
-          "client/src/e.tsx": 'import * as Mui from "@mui/material";\nexport const e = <Mui.CircularProgress />;\n',
           "client/src/f.ts":
             "export const f = () => {\n  const { mutate: save } = useMutation({ mutationFn });\n  return save;\n};\n",
           "client/src/g.ts":
@@ -270,13 +266,7 @@ describe("frontend rules", () => {
         },
         ["client-apis"],
       ),
-    ).toEqual([
-      "client-apis client/src/b.ts",
-      "client-apis client/src/c.tsx",
-      "client-apis client/src/d.ts",
-      "client-apis client/src/e.tsx",
-      "client-apis client/src/f.ts",
-    ]);
+    ).toEqual(["client-apis client/src/b.ts", "client-apis client/src/d.ts", "client-apis client/src/f.ts"]);
   });
 
   test("a form's field is bound through useController: never register, never a watched value", async () => {
@@ -920,29 +910,6 @@ describe("frontend rules", () => {
       "browser-storage client/src/page.ts",
       "browser-storage client/src/session.ts",
       "browser-storage client/src/stores/raw.ts",
-    ]);
-  });
-
-  test("whether the user is a demo's is useIsDemo, and its countdown the demo banner's", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/gate.tsx": "export function G() {\n  return useIsDemo() && <Banner />;\n}\n",
-          "client/src/read.tsx": "export function R() {\n  return useAuthStore((s) => !!s.user?.expiresAt);\n}\n",
-          "client/src/user.ts": "export const u = (user: AuthUser) => !!user.expiresAt;\n",
-          "client/src/share.ts": "export const s = (link: ShareLink) => link.expiresAt;\n",
-          "client/src/countdown.tsx": "export function C() {\n  return useDemoTimeRemaining().minutes;\n}\n",
-          "client/src/components/layout/DemoBanner.tsx":
-            "export function D() {\n  return useDemoTimeRemaining().minutes;\n}\n",
-          "client/src/hooks/useIsDemo.ts": "export const i = () => useAuthStore((s) => !!s.user?.expiresAt);\n",
-          "client/src/stores/authUser.ts": "export const a = (user: AuthUser) => user.expiresAt;\n",
-        },
-        ["demo-reads"],
-      ),
-    ).toEqual([
-      "demo-reads client/src/countdown.tsx",
-      "demo-reads client/src/read.tsx",
-      "demo-reads client/src/user.ts",
     ]);
   });
 

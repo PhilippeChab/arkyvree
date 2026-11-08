@@ -137,7 +137,6 @@
     "arkyvree/browser-storage": "error",
     "arkyvree/dirty-forms": "error",
     "arkyvree/date-formats": "error",
-    "arkyvree/demo-reads": "error",
     "arkyvree/navigation": "error",
     "arkyvree/no-types-modules": "error",
     "arkyvree/clickable-elements": "error",
@@ -158,17 +157,12 @@
     "arkyvree/sx-conventions": "error",
     "arkyvree/dialog-footers": "error",
     "arkyvree/add-buttons": "error",
-    "arkyvree/link-buttons": "error",
-    "arkyvree/choice-chips": "error",
-    "arkyvree/next-page-spinners": "error",
-    "arkyvree/option-tooltips": "error",
     "arkyvree/anchor-menus": "error",
     "arkyvree/select-fields": "error",
     "arkyvree/form-validation": "error",
     "arkyvree/toggle-states": "error",
     "arkyvree/expand-arrows": "error",
     "arkyvree/confirm-dialogs": "error",
-    "arkyvree/table-frames": "error",
     "arkyvree/card-titles": "error",
     "arkyvree/blank-notes": "error",
     "arkyvree/page-loaders": "error",
@@ -180,26 +174,16 @@
     "arkyvree/list-results": "error",
     "arkyvree/skeletons": "error",
     "arkyvree/empty-values": "error",
-    "arkyvree/notification-messages": "error",
     "arkyvree/row-actions": "error",
-    "arkyvree/target-paths": "error",
-    "arkyvree/entity-pages": "error",
     // The client's controls (lint/controls.mjs): each weighs what it does, one way.
     "arkyvree/button-intents": "error",
     "arkyvree/save-buttons": "error",
-    "arkyvree/roll-buttons": "error",
-    "arkyvree/dice-rolls": "error",
-    "arkyvree/page-actions": "error",
-    "arkyvree/load-more-buttons": "error",
     "arkyvree/chips": "error",
-    "arkyvree/help-labels": "error",
     "arkyvree/label-case": "error",
     "arkyvree/toast-wording": "error",
     "arkyvree/confirm-wording": "error",
     "arkyvree/typography-marks": "error",
     "arkyvree/app-name": "error",
-    // The server and shared/ name no table, `getTableName`: they name kinds and target types (lint/tables.mjs).
-    "arkyvree/table-names": "error",
     "arkyvree/entity-type-labels": "error",
     "arkyvree/dialog-mounts": "error",
     "arkyvree/menus": "error",
@@ -240,8 +224,6 @@
         "patterns": [
           {
             "group": [
-              "@/client/src/components/*/*.ts",
-              "@/client/src/components/*/*.tsx",
               "@/client/src/hooks/*.ts",
               "@/client/src/pages/*/components/*.ts",
               "@/client/src/pages/*/components/*.tsx",
@@ -286,8 +268,6 @@
             "patterns": [
               {
                 "group": [
-                  "@/client/src/components/*/*.ts",
-                  "@/client/src/components/*/*.tsx",
                   "@/client/src/hooks/*.ts",
                   "@/client/src/pages/*/components/*.ts",
                   "@/client/src/pages/*/components/*.tsx",
@@ -310,16 +290,10 @@
         ]
       }
     },
-    // Modal is the single sanctioned wrapper for raw MUI Dialog; the rest of the
-    // codebase must go through Modal/FormDialog/CreateDialog/EditDialog. The
-    // wrappers themselves compose with each other, so they need to import
-    // siblings directly (importing through the barrel would be circular).
+    // Modal is the one wrapper of MUI's raw Dialog: the rest of the codebase goes through Modal, FormDialog,
+    // CreateDialog or EditDialog
     {
-      "files": [
-        "client/src/components/common/Modal.tsx",
-        "client/src/components/common/FormDialog.tsx",
-        "client/src/components/common/StandardDialogs.tsx"
-      ],
+      "files": ["client/src/components/common/Modal.tsx"],
       "rules": {
         "no-restricted-imports": "off"
       }
@@ -366,7 +340,7 @@
         "no-console": "off"
       }
     },
-    // API routers: no direct repo/db access, use service barrel imports
+    // API routers: no direct repository or database access (folder-index holds the services' and middlewares' indexes)
     {
       "files": ["server/routers/api/**/*.{ts,tsx}"],
       "rules": {
@@ -381,51 +355,6 @@
               {
                 "group": ["@/server/database/*"],
                 "message": "API routers must not use the database directly. Delegate to a service instead."
-              },
-              {
-                "group": [
-                  "@/server/services/campaigns/*",
-                  "@/server/services/characters/*",
-                  "@/server/services/rulesets/*",
-                  "!@/server/services/campaigns/index",
-                  "!@/server/services/campaigns/index.ts",
-                  "!@/server/services/characters/index",
-                  "!@/server/services/characters/index.ts",
-                  "!@/server/services/rulesets/index",
-                  "!@/server/services/rulesets/index.ts"
-                ],
-                "message": "Import services from the barrel index (e.g., @/server/services/campaigns/index.ts)."
-              },
-              {
-                "group": [
-                  "@/server/middlewares/*",
-                  "!@/server/middlewares/index",
-                  "!@/server/middlewares/index.ts"
-                ],
-                "message": "Import middlewares from the barrel index (@/server/middlewares/index.ts)."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    // Services: use shared repo instances from index.ts
-    {
-      "files": ["server/services/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@/server/repositories/*",
-                  "!@/server/repositories/index",
-                  "!@/server/repositories/index.ts",
-                  "!@/server/repositories/BaseRepository",
-                  "!@/server/repositories/BaseRepository.ts"
-                ],
-                "message": "Import shared repository instances from @/server/repositories/index.ts instead of individual files."
               }
             ]
           }

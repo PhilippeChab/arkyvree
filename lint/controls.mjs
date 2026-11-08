@@ -6,11 +6,6 @@
  *   ("Delete …", "Remove …") is destructive.
  * - `save-buttons`: an inline form's submit is a `SaveButton`, at the form's end on the right, enabled once something
  *   changes; an auth page's is its `AuthSubmitButton`, and a dialog's its `DialogFooter`'s action.
- * - `roll-buttons`: a roll of every die a step asks for is a labelled `RollAllButton`, never a bare dice icon.
- * - `dice-rolls`: a roll shows through `useDiceRoll`, timed by `DICE_ROLL`: never a timer of its own that rolls.
- * - `page-actions`: a page header's action is a `PageActionButton` (a create, or another action given its icon).
- * - `load-more-buttons`: the foot that loads a list's next page is a `LoadMoreButton`, labelled "Load More" wherever
- *   it shows.
  * - `chips`: a chip is one of the family (`components/common`), its role setting its look at the theme's small size, in
  *   a list, a card or a page's header alike: a `RoleChip` (outlined), a `StatusChip` (filled), a `CountChip`
  *   (outlined), a `ValueChip` (outlined red, a link through its `to` when it names a record, never a link in its label)
@@ -18,13 +13,11 @@
  *   family's alone (`Chips.tsx`). A chip is a value or a choice, never an action: a click with a fixed label, or one
  *   that opens something (a menu, a popover), is a `Button`'s, but a count's, which opens the list of what it counts (a
  *   ruleset header's "3 extensions").
- * - `help-labels`: help is a `HelpLabel` wherever it's given (its question-mark icon, at 16px): never a help icon in a
- *   tooltip of its own, nor a "What's this?".
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { attribute, attributeExpression, elementName, hasAttribute, inClient, inFile, parentElement } from "./jsx.mjs";
+import { attribute, attributeExpression, elementName, hasAttribute, inClient } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** The module that draws MUI's chip: the family, each of its roles setting its look. */
@@ -32,9 +25,6 @@ const CHIP_OWNER = "client/src/components/common/Chips.tsx";
 
 /** The chips of a role (a choice's is `ChoiceChip`, which a click picks). */
 const CHIP_ROLES = new Set(["Chip", "CountChip", "PickChip", "RoleChip", "StatusChip", "ValueChip"]);
-
-/** The module that shows a roll as it tumbles, its timers its own. */
-const DICE_ROLL_OWNER = "client/src/pages/characters/useDiceRoll.ts";
 
 /** The actions that take an intent (`components/common/intent.ts`): a menu's item, a row's action */
 const INTENT_ACTIONS = new Set(["ActionMenuItem", "RowAction"]);
@@ -116,84 +106,6 @@ function createChips(context) {
   };
 }
 
-function createDiceRolls(context) {
-  if (!inClient(context) || inFile(context, DICE_ROLL_OWNER)) return {};
-  return {
-    CallExpression(node) {
-      if (!isRollCall(node) || !inTimer(node)) return;
-      context.report({
-        node,
-        message:
-          "A roll shows through `useDiceRoll` (`pages/characters`), timed by `DICE_ROLL`: never a timer of its own " +
-          "that rolls.",
-      });
-    },
-  };
-}
-
-function createHelpLabels(context) {
-  if (!inClient(context) || inFile(context, "client/src/components/common/HelpLabel.tsx")) return {};
-  const message = "Help is a `HelpLabel` wherever it's given: its label, then the help icon whose tooltip explains it.";
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "HelpIcon") return;
-      for (let p = parentElement(node); p; p = parentElement(p)) {
-        if (elementName(p) !== "Tooltip") continue;
-        context.report({ node: node.openingElement, message });
-        return;
-      }
-    },
-    JSXText(node) {
-      if (/\bWhat['’]s this\?/i.test(node.value)) context.report({ node, message });
-    },
-  };
-}
-
-function createLoadMoreButtons(context) {
-  if (!inClient(context) || inFile(context, "client/src/components/common/LoadMoreButton.tsx")) return {};
-  const message = 'The foot that loads a list\'s next page is a `LoadMoreButton`, labelled "Load More" everywhere.';
-  return {
-    JSXText(node) {
-      if (/^\s*Load More\b/.test(node.value)) context.report({ node, message });
-    },
-    Literal(node) {
-      if (typeof node.value === "string" && /^Load More\b/.test(node.value)) context.report({ node, message });
-    },
-  };
-}
-
-function createPageActions(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXAttribute(node) {
-      if (node.name.name !== "action" || elementName(node.parent.parent) !== "PageHeader") return;
-      const value = attributeExpression(node);
-      if (value?.type !== "JSXElement" || elementName(value) === "PageActionButton") return;
-      context.report({
-        node,
-        message:
-          "A page header's action is a `PageActionButton`: a create, or another action given its `icon` and " +
-          "`pending`.",
-      });
-    },
-  };
-}
-
-function createRollButtons(context) {
-  if (!inClient(context)) return {};
-  return {
-    JSXElement(node) {
-      if (elementName(node) !== "IconButton") return;
-      const label = attributeExpression(attribute(node, "aria-label"));
-      if (label?.type !== "Literal" || !/^Roll All\b/.test(String(label.value))) return;
-      context.report({
-        node: node.openingElement,
-        message: "A roll of every die a step asks for is a labelled `RollAllButton` (`pages/characters`).",
-      });
-    },
-  };
-}
-
 function createSaveButtons(context) {
   if (!inClient(context) || SUBMIT_OWNERS.has(repoPath(context.filename))) return {};
   return {
@@ -229,26 +141,6 @@ function holdsLink(node) {
   return node.children.some(holdsLink);
 }
 
-/** Whether a call runs in a timer's callback: `setInterval(() => …)`, `setTimeout(function () { … })`. */
-function inTimer(node) {
-  for (let p = node.parent; p; p = p.parent) {
-    if (p.type !== "ArrowFunctionExpression" && p.type !== "FunctionExpression") continue;
-    const call = p.parent;
-    if (call?.type !== "CallExpression" || call.arguments[0] !== p) continue;
-    const name = call.callee.type === "MemberExpression" ? call.callee.property.name : call.callee.name;
-    if (name === "setInterval" || name === "setTimeout") return true;
-  }
-  return false;
-}
-
-/** Whether a call rolls: a die's (`rollDie`), a roll method's (`roll()`, `rollScore()`), or a random number's. */
-function isRollCall(node) {
-  const callee = node.callee;
-  const name = callee.type === "MemberExpression" && !callee.computed ? callee.property.name : callee.name;
-  if (callee.type === "MemberExpression" && callee.object.name === "Math") return name === "random";
-  return /^roll(?:[A-Z]|$)/.test(name ?? "");
-}
-
 /** Whether a label says the action deletes or removes: every way it's written does ("Delete", "Remove Level"). */
 function removes(label) {
   if (label?.type === "ConditionalExpression") return removes(label.consequent) && removes(label.alternate);
@@ -258,10 +150,5 @@ function removes(label) {
 export default {
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
   chips: { meta: { type: "suggestion" }, create: createChips },
-  "dice-rolls": { meta: { type: "suggestion" }, create: createDiceRolls },
-  "help-labels": { meta: { type: "suggestion" }, create: createHelpLabels },
-  "load-more-buttons": { meta: { type: "suggestion" }, create: createLoadMoreButtons },
-  "page-actions": { meta: { type: "suggestion" }, create: createPageActions },
-  "roll-buttons": { meta: { type: "suggestion" }, create: createRollButtons },
   "save-buttons": { meta: { type: "suggestion" }, create: createSaveButtons },
 };

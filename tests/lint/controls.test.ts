@@ -54,76 +54,6 @@ describe("control rules", () => {
     ).toEqual(["save-buttons client/src/raw.tsx"]);
   });
 
-  test("a roll of every die is a labelled RollAllButton", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/bare.tsx":
-            'export const b = <IconButton aria-label="Roll All Ability Scores" onClick={roll}><CasinoIcon /></IconButton>;\n',
-          "client/src/one.tsx":
-            'export const o = <IconButton aria-label="Roll d8" onClick={roll}><CasinoIcon /></IconButton>;\n',
-          "client/src/labelled.tsx": "export const l = <RollAllButton onClick={roll} />;\n",
-        },
-        ["roll-buttons"],
-      ),
-    ).toEqual(["roll-buttons client/src/bare.tsx"]);
-  });
-
-  test("a roll shows through useDiceRoll, never a timer of its own", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/die.ts": "export const d = () => setInterval(() => setFace(rollDie(6)), 50);\n",
-          "client/src/random.ts":
-            "export const r = () => setInterval(() => setFace(Math.floor(Math.random() * 16) + 3), 50);\n",
-          "client/src/method.ts": "export const m = () => setTimeout(function () { land(rollScore()); }, 800);\n",
-          "client/src/click.ts": "export const c = () => setHp(rollDie(8));\n",
-          "client/src/bell.ts": "export const b = () => setTimeout(() => setShake(false), 600);\n",
-          "client/src/pages/characters/useDiceRoll.ts":
-            "export const o = () => setInterval(() => setFace(die.roll()), DICE_ROLL.face);\n",
-        },
-        ["dice-rolls"],
-      ),
-    ).toEqual(["dice-rolls client/src/die.ts", "dice-rolls client/src/method.ts", "dice-rolls client/src/random.ts"]);
-  });
-
-  test("a page header's action is a PageActionButton", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/raw.tsx":
-            'export const r = <PageHeader title="T" subtitle="S" action={<Button variant="outlined">Mark All as Read</Button>} />;\n',
-          "client/src/shared.tsx":
-            'export const s = <PageHeader title="T" subtitle="S" action={<PageActionButton label="Create" onClick={go} />} />;\n',
-          "client/src/called.tsx":
-            'export const c = <PageHeader title="T" subtitle="S" action={createButton("Create")} />;\n',
-        },
-        ["page-actions"],
-      ),
-    ).toEqual(["page-actions client/src/raw.tsx"]);
-  });
-
-  test("a list's next page loads through a LoadMoreButton, labelled one way", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/hand.tsx": 'export const h = <Button size="small" onClick={next}>Load More</Button>;\n',
-          "client/src/spinner.tsx":
-            'export const s = <Button onClick={next}><DiceSpinner size="small" loading={busy}>Load More</DiceSpinner></Button>;\n',
-          "client/src/label.tsx": 'export const l = <Foot label="Load More Characters" />;\n',
-          "client/src/shared.tsx":
-            "export const s = <LoadMoreButton hasNextPage isFetchingNextPage={busy} onClick={next} />;\n",
-          "client/src/components/common/LoadMoreButton.tsx": "export const b = <Button>Load More</Button>;\n",
-        },
-        ["load-more-buttons"],
-      ),
-    ).toEqual([
-      "load-more-buttons client/src/hand.tsx",
-      "load-more-buttons client/src/label.tsx",
-      "load-more-buttons client/src/spinner.tsx",
-    ]);
-  });
-
   test("a chip is one of the family, and never an action: a fixed label's click, nor one that opens something but a count's", async () => {
     expect(
       await lintRepo(
@@ -174,22 +104,5 @@ describe("control rules", () => {
         ["chips"],
       ),
     ).toEqual(["chips client/src/madeLink.tsx", "chips client/src/muiLink.tsx", "chips client/src/routerLink.tsx"]);
-  });
-
-  test("help is a HelpLabel wherever it's given", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/icon.tsx":
-            "export const i = <Tooltip title={help}><HelpIcon sx={{ fontSize: 18 }} /></Tooltip>;\n",
-          "client/src/caption.tsx": 'export const c = <Typography variant="caption">What\'s this?</Typography>;\n',
-          "client/src/link.tsx": "export const l = <ListItemIcon><HelpIcon /></ListItemIcon>;\n",
-          "client/src/label.tsx": 'export const b = <HelpLabel label="Template" help={help} />;\n',
-          "client/src/components/common/HelpLabel.tsx":
-            "export const h = <Tooltip title={help}><HelpIcon /></Tooltip>;\n",
-        },
-        ["help-labels"],
-      ),
-    ).toEqual(["help-labels client/src/caption.tsx", "help-labels client/src/icon.tsx"]);
   });
 });

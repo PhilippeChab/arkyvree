@@ -14,8 +14,7 @@
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
  *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
- * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
- *   `DiceSpinner`, never MUI's `CircularProgress`.
+ * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and is held whole.
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
  *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
  *   with a `setValue` for its change. A form starts every field with a value: it's made with `useFormWith` (a whole
@@ -69,8 +68,6 @@
  *   written through `stores/browserStorage.ts`, whose guards a blocked storage (a private window, blocked site data)
  *   never makes throw.
  * - `date-formats`: a date is shown through `lib/formatDate.ts`, in the viewer's language.
- * - `demo-reads`: whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt`
- *   again; a demo's countdown, `useDemoTimeRemaining`, which re-renders as it ticks, is the demo banner's alone.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
  *   `MuiLink`; a customization page's path is `buildCustomizationPath(entityType, id)`, never written by hand. A page's
@@ -175,13 +172,6 @@ const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
 
 /** A date's own formatters, which a date never goes through outside `lib/formatDate.ts` */
 const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
-
-/** The modules that read when a demo's session ends: its hooks, and the query client's 401, outside React */
-const DEMO_READERS = new Set([
-  "client/src/components/layout/useDemoTimeRemaining.ts",
-  "client/src/hooks/useIsDemo.ts",
-  "client/src/lib/queryClient.ts",
-]);
 
 /** The padding a dialog's content keeps: the theme's, under its title and above its footer */
 const DIALOG_PADDINGS = new Set(["p", "padding", "pb", "paddingBottom", "pt", "paddingTop", "py"]);
@@ -468,7 +458,6 @@ function createClickableElements(context) {
 
 function createClientApis(context) {
   if (!inClient(context)) return {};
-  const muiNamespaces = new Set();
   return {
     CallExpression(node) {
       if (node.callee.type === "MemberExpression" && node.callee.property.name === "mutateAsync") {
@@ -495,28 +484,6 @@ function createClientApis(context) {
         context.report({
           node,
           message: "Run a mutation with `.mutate()` and its `onSuccess` / `onError`, not `.mutateAsync()`.",
-        });
-      }
-    },
-    // <Mui.CircularProgress />
-    JSXMemberExpression(node) {
-      if (node.property.name === "CircularProgress" && muiNamespaces.has(node.object.name)) {
-        context.report({
-          node,
-          message: "A loader is a `DiceSpinner` (`components/common`), never `CircularProgress`.",
-        });
-      }
-    },
-    ImportDeclaration(node) {
-      if (!String(node.source.value).startsWith("@mui/material")) return;
-      for (const s of node.specifiers ?? []) if (s.type === "ImportNamespaceSpecifier") muiNamespaces.add(s.local.name);
-      const named = (node.specifiers ?? []).some(
-        (s) => s.type === "ImportSpecifier" && s.imported.name === "CircularProgress",
-      );
-      if (named || node.source.value === "@mui/material/CircularProgress") {
-        context.report({
-          node,
-          message: "A loader is a `DiceSpinner` (`components/common`), never `CircularProgress`.",
         });
       }
     },
@@ -745,32 +712,6 @@ function createDateFormats(context) {
     MemberExpression(node) {
       const ofIntl = !node.computed && node.object.type === "Identifier" && node.object.name === "Intl";
       if (ofIntl && INTL_DATE_FORMATS.has(node.property.name)) report(node);
-    },
-  };
-}
-
-function createDemoReads(context) {
-  const file = repoPath(context.filename);
-  if (!inClient(context) || file.startsWith("client/src/stores/")) return {};
-  return {
-    CallExpression(node) {
-      if (calleeName(node) !== "useDemoTimeRemaining" || file === "client/src/components/layout/DemoBanner.tsx") return;
-      context.report({
-        node,
-        message:
-          "A demo's countdown, `useDemoTimeRemaining`, is the demo banner's alone: it re-renders as it ticks. Whether " +
-          "the user is a demo's is `useIsDemo()`.",
-      });
-    },
-    // `user.expiresAt`, `state.user?.expiresAt`
-    MemberExpression(node) {
-      if (DEMO_READERS.has(file) || node.property.name !== "expiresAt") return;
-      const owner = node.object.type === "Identifier" ? node.object.name : node.object.property?.name;
-      if (owner !== "user") return;
-      context.report({
-        node,
-        message: "Whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt`.",
-      });
     },
   };
 }
@@ -1460,7 +1401,7 @@ function createQueries(context) {
 
 function createQueryKeyRule(context) {
   const file = repoPath(context.filename);
-  if (!inClient(context) || file === "client/src/lib/queryKeys.ts") return {};
+  if (!inClient(context)) return {};
   return {
     Property(node) {
       if (node.key.type !== "Identifier" || node.key.name !== "queryKey") return;
@@ -2051,7 +1992,6 @@ export default {
   "error-reads": { meta: { type: "suggestion" }, create: createErrorReads },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
-  "demo-reads": { meta: { type: "suggestion" }, create: createDemoReads },
   navigation: { meta: { type: "suggestion" }, create: createNavigation },
   "no-types-modules": { meta: { type: "suggestion" }, create: createNoTypesModules },
   "clickable-elements": { meta: { type: "suggestion" }, create: createClickableElements },

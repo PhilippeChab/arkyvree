@@ -40,76 +40,6 @@ describe("component rules", () => {
     ).toEqual(["add-buttons client/src/raw.tsx", "add-buttons client/src/words.tsx"]);
   });
 
-  test("an action written as a link is a LinkButton", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/raw.tsx": 'export const r = <MuiLink component="button" onClick={go}>Go</MuiLink>;\n',
-          "client/src/anchor.tsx": 'export const a = <MuiLink href="/help">Help</MuiLink>;\n',
-          "client/src/components/common/LinkButton.tsx": 'export const l = <MuiLink component="button" />;\n',
-        },
-        ["link-buttons"],
-      ),
-    ).toEqual(["link-buttons client/src/raw.tsx"]);
-  });
-
-  test("a chip switched by a selection is a ChoiceChip, and buttons switched one among a few an OptionToggle", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/raw.tsx": 'export const r = <Chip variant={on ? "filled" : "outlined"} label="A" />;\n',
-          "client/src/plain.tsx": 'export const p = <Chip variant="outlined" label="A" />;\n',
-          "client/src/components/common/Chips.tsx": 'export const c = <Chip variant={on ? "filled" : "outlined"} />;\n',
-          "client/src/group.tsx":
-            'import { ToggleButtonGroup } from "@mui/material";\nexport const g = ToggleButtonGroup;\n',
-          "client/src/components/common/OptionToggle.tsx":
-            'import { ToggleButtonGroup } from "@mui/material";\nexport const o = ToggleButtonGroup;\n',
-        },
-        ["choice-chips"],
-      ),
-    ).toEqual(["choice-chips client/src/group.tsx", "choice-chips client/src/raw.tsx"]);
-  });
-
-  test("the spinner at a list's foot is a NextPageSpinner", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/raw.tsx": 'export const r = <List><Stack><DiceSpinner size="small" /></Stack></List>;\n',
-          "client/src/section.tsx": "export const s = <Stack><DiceSpinner /></Stack>;\n",
-          "client/src/next.tsx": "export const n = <List><NextPageSpinner loading={busy} /></List>;\n",
-        },
-        ["next-page-spinners"],
-      ),
-    ).toEqual(["next-page-spinners client/src/raw.tsx"]);
-  });
-
-  test("an option's tooltip is an OptionTooltip", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/tree.tsx": "export const t = <Tooltip title={feat.requirementTree}><span /></Tooltip>;\n",
-          "client/src/cut.tsx": "export const c = <Tooltip title={text.slice(0, 200)}><span /></Tooltip>;\n",
-          "client/src/plain.tsx": 'export const p = <Tooltip title="Edit"><span /></Tooltip>;\n',
-          "client/src/pages/characters/details/components/dnd3.5/SkillsStep.tsx":
-            "export const s = <Tooltip title={skill.description}><span /></Tooltip>;\n",
-          "client/src/pages/characters/details/components/dnd3.5/OptionTooltip.tsx":
-            'export const w = <Tooltip title="Edit"><span /></Tooltip>;\n',
-          // Every ruleset's wizard alike
-          "client/src/pages/characters/details/components/pf1/FeatsStep.tsx":
-            "export const f = <Tooltip title={feat.description}><span /></Tooltip>;\n",
-          "client/src/pages/characters/details/components/pf1/OptionTooltip.tsx":
-            'export const o = <Tooltip title="Edit"><span /></Tooltip>;\n',
-        },
-        ["option-tooltips"],
-      ),
-    ).toEqual([
-      "option-tooltips client/src/cut.tsx",
-      "option-tooltips client/src/pages/characters/details/components/dnd3.5/SkillsStep.tsx",
-      "option-tooltips client/src/pages/characters/details/components/pf1/FeatsStep.tsx",
-      "option-tooltips client/src/tree.tsx",
-    ]);
-  });
-
   test("a menu keeps its anchor through useAnchorMenu", async () => {
     expect(
       await lintRepo(
@@ -272,44 +202,6 @@ describe("component rules", () => {
         ["confirm-dialogs"],
       ),
     ).toEqual(["confirm-dialogs client/src/closed.tsx", "confirm-dialogs client/src/flag.tsx"]);
-  });
-
-  test("a table's frame is a TableFrame, the theme draws its header, and a TableColumnsHead its columns'", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/framed.tsx": "export const f = <TableContainer component={Paper}><Table /></TableContainer>;\n",
-          "client/src/bare.tsx": "export const b = <TableContainer><Table /></TableContainer>;\n",
-          "client/src/strong.tsx":
-            "export const s = <TableHead><TableRow><TableCell><strong>Name</strong></TableCell></TableRow></TableHead>;\n",
-          "client/src/tinted.tsx":
-            'export const t = <TableHead><TableRow sx={{ bgcolor: "action.hover" }} /></TableHead>;\n',
-          "client/src/weighted.tsx":
-            "const HEADER_SX = { fontWeight: 600 };\n" +
-            "export const w = <TableHead><TableRow><TableCell sx={HEADER_SX}>Name</TableCell></TableRow></TableHead>;\n",
-          "client/src/sized.tsx":
-            'export const z = <TableHead><TableRow><TableCell sx={{ width: "20%" }}>Name</TableCell></TableRow></TableHead>;\n',
-          "client/src/body.tsx":
-            "export const y = <TableBody><TableRow><TableCell sx={{ fontWeight: 600 }}>Total</TableCell></TableRow></TableBody>;\n",
-          "client/src/components/common/TableFrame.tsx":
-            'export const o = <TableContainer component={Paper} variant="outlined" />;\n',
-          "client/src/columns.tsx":
-            "export const c = <TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
-          "client/src/labels.tsx":
-            "export const l = <TableHead><TableRow>{labels.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>;\n",
-          "client/src/components/common/TableColumnsHead.tsx":
-            "export const h = <TableHead><TableRow>{columns.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
-        },
-        ["table-frames"],
-      ),
-    ).toEqual([
-      "table-frames client/src/columns.tsx",
-      "table-frames client/src/framed.tsx",
-      "table-frames client/src/labels.tsx",
-      "table-frames client/src/strong.tsx",
-      "table-frames client/src/tinted.tsx",
-      "table-frames client/src/weighted.tsx",
-    ]);
   });
 
   test("a card's title is a CardTitle", async () => {
@@ -588,12 +480,10 @@ describe("component rules", () => {
     expect(
       await lintRepo(
         {
-          "client/src/table.tsx":
-            "export const t = <Table><TableHead /><TableBody><TableRow><TableCell><Skeleton /></TableCell></TableRow></TableBody></Table>;\n",
           "client/src/data-table.tsx":
             'export const d = <DataTable columns={COLUMNS}><DataRow><DataCell slot="primary"><Skeleton /></DataCell></DataRow></DataTable>;\n',
           "client/src/rows.tsx":
-            "export const r = <TableRow><TableCell colSpan={2}><Skeleton /></TableCell></TableRow>;\n",
+            'export const r = <DataRow><DataCell slot="primary"><Skeleton /></DataCell></DataRow>;\n',
           "client/src/hidden.tsx": 'export const h = <>{partial && <Skeleton variant="rounded" height={40} />}</>;\n',
           "client/src/bars.tsx": 'export const b = <Stack spacing={1}><Skeleton variant="rectangular" /></Stack>;\n',
           "client/src/components/common/TableSkeleton.tsx": own,
@@ -606,7 +496,6 @@ describe("component rules", () => {
       "skeletons client/src/bars.tsx",
       "skeletons client/src/data-table.tsx",
       "skeletons client/src/hidden.tsx",
-      "skeletons client/src/table.tsx",
     ]);
   });
 
@@ -637,23 +526,6 @@ describe("component rules", () => {
       "empty-values client/src/text.tsx",
       "empty-values client/src/words.tsx",
     ]);
-  });
-
-  test("a notification shows through NotificationMessage, and what it changed through ActivityDetails", async () => {
-    const details = "export const d = <Tooltip title={formatActivityDetails(data)} />;\n";
-    const own = "export const m = <Typography>{formatNotificationMessage(type, data)}</Typography>;\n";
-    expect(
-      await lintRepo(
-        {
-          "client/src/bell.tsx": own,
-          "client/src/card.tsx": "export const c = <NotificationMessage notification={notification} unread />;\n",
-          "client/src/components/notifications/ActivityDetails.tsx": details,
-          "client/src/components/notifications/NotificationMessage.tsx": own,
-          "client/src/log.tsx": details,
-        },
-        ["notification-messages"],
-      ),
-    ).toEqual(["notification-messages client/src/bell.tsx", "notification-messages client/src/log.tsx"]);
   });
 
   test("a row's actions are a RowActions of RowActions, in a row that reveals them", async () => {
@@ -715,86 +587,6 @@ describe("component rules", () => {
       "row-actions client/src/class.tsx",
       "row-actions client/src/hidden.tsx",
       "row-actions client/src/render.tsx",
-    ]);
-  });
-
-  test("a ruleset entity page's details are useEntityForm's, saved through useEntitySave, and deletes through its layout", async () => {
-    const page =
-      "export const p = <EntityDetailLayout backTo={back} deletion={deletion}>{card}</EntityDetailLayout>;\n";
-    const dialog = "export const d = <EntityDeleteDialog open={open} what={what} restorable={restorable} />;\n";
-    const saved = "export const s = () => sync.saved(values, saved.updatedAt);\n";
-    const save = "export const v = () => useEntitySave({ ...options, sync });\n";
-    expect(
-      await lintRepo(
-        {
-          "client/src/pages/rulesets/Page.tsx": page,
-          "client/src/pages/rulesets/OwnDelete.tsx": page + dialog,
-          "client/src/pages/rulesets/Section.tsx": dialog,
-          "client/src/pages/rulesets/Editor.tsx": saved,
-          "client/src/pages/profile/ProfilePage.tsx": saved,
-          "client/src/pages/rulesets/hooks/useEntitySave.ts": saved,
-          "client/src/pages/rulesets/hooks/useEntityForm.ts": save,
-          "client/src/pages/rulesets/OwnSave.tsx": save,
-          "client/src/pages/rulesets/components/EntityDetailLayout.tsx": page + dialog,
-        },
-        ["entity-pages"],
-      ),
-    ).toEqual([
-      "entity-pages client/src/pages/rulesets/Editor.tsx",
-      "entity-pages client/src/pages/rulesets/OwnDelete.tsx",
-      "entity-pages client/src/pages/rulesets/OwnSave.tsx",
-    ]);
-  });
-
-  test("a ruleset entity page's error goes back where the page was opened from: entityPageBack's", async () => {
-    const error = (label: string) =>
-      `export const e = <EntityPageError message={message} backLabel=${label} backTo={back.to} />;\n`;
-    expect(
-      await lintRepo(
-        {
-          "client/src/pages/rulesets/Back.tsx": error("{back.label}"),
-          "client/src/pages/rulesets/Written.tsx": error('"Back to Ruleset"'),
-          "client/src/pages/rulesets/Template.tsx": error("{`Back to ${what}`}"),
-          "client/src/pages/campaigns/Page.tsx": 'export const p = <PageError backLabel="Back to Campaigns" />;\n',
-        },
-        ["entity-pages"],
-      ),
-    ).toEqual([
-      "entity-pages client/src/pages/rulesets/Template.tsx",
-      "entity-pages client/src/pages/rulesets/Written.tsx",
-    ]);
-  });
-
-  test("a target path's breadcrumbs and a modifier's cells are drawn by their one module each", async () => {
-    const crumbs = lines(
-      "export const c = segments.map((segment, index) => (",
-      '  <Stack key={index} direction="row">',
-      "    {index > 0 && <ChevronRightIcon />}",
-      "    <ValueChip label={segment} />",
-      "  </Stack>",
-      "));",
-    );
-    const value = "export const v = extractTemplatePath(modifier.value);\n";
-    const operator = 'export const o = <ValueChip label={formatOperator("modifier", modifier.operator)} />;\n';
-    expect(
-      await lintRepo(
-        {
-          "client/src/crumbs.tsx": crumbs,
-          "client/src/value.tsx": value,
-          "client/src/operator.tsx": operator,
-          "client/src/requirement.tsx": 'export const r = <ValueChip label={formatOperator("requirement", op)} />;\n',
-          "client/src/group.tsx":
-            "export const g = <Stack><Typography>Abilities</Typography><ChevronRightIcon /></Stack>;\n",
-          "client/src/table.tsx": "export const t = <ModifierValueCell modifier={modifier} />;\n",
-          "client/src/components/customization/TargetPathBreadcrumbs.tsx": crumbs,
-          "client/src/components/customization/ModifierCells.tsx": value + operator,
-        },
-        ["target-paths"],
-      ),
-    ).toEqual([
-      "target-paths client/src/crumbs.tsx",
-      "target-paths client/src/operator.tsx",
-      "target-paths client/src/value.tsx",
     ]);
   });
 });
