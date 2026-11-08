@@ -22,6 +22,7 @@ import {
   ListCard,
   ListCardGrid,
   ListPageResults,
+  LoadMoreButton,
   Modal,
   ScrollSafeListbox,
   SearchBar,
@@ -291,6 +292,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
         <Box ref={resultsRef}>
           <ListPageResults
+            loadsMore={party}
             variant="section"
             list={characters}
             search={searchQuery}
@@ -312,6 +314,16 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                   isPartial: character.isPartial,
                   card: renderCard(character, index),
                 }))}
+                // Its next page loads from its end, sideways
+                end={
+                  characters.hasNextPage && (
+                    <LoadMoreButton
+                      hasNextPage={characters.hasNextPage}
+                      isFetchingNextPage={characters.isFetchingNextPage}
+                      onClick={characters.loadMore}
+                    />
+                  )
+                }
               />
             ) : (
               <ListCardGrid>{characters.items.map(renderCard)}</ListCardGrid>
