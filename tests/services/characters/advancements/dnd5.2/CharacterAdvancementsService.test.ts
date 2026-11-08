@@ -594,30 +594,19 @@ describe("A Fighting Style feat's prerequisite", () => {
 });
 
 describe("A feat taken once", () => {
-  test("is taken in one version: Grappler (Dexterity) left out, and refused, beside Grappler (Strength)", async () => {
+  test("is taken in one version: Grappler (Dexterity) not eligible, and refused, beside Grappler (Strength)", async () => {
     const ctx = await getDnd52SeedCtx();
     const character = await fighter(5, { 4: { "Ability Score Improvement": ["Grappler (Strength)"] } });
-    // Its 6th level's picker offers neither version: one it has, the other a version of a feat it takes once
-    expect(await grapplersOffered(character.id, 6)).toEqual([]);
-    // Its save refuses the other version, forced or not
+    // Its 6th level's picker leaves out the version it has, and offers the other as not eligible: its requirement
+    expect(await grapplersOffered(character.id, 6)).toEqual([{ eligible: false, name: "Grappler (Dexterity)" }]);
+    // Its save refuses the other version unforced, as any unmet requirement
     const plan = levelUpPlan(
       [{ classId: ctx.classMap["Fighter"], level: 6, hp: 1 }],
       picksOf(ctx, { feats: { "Ability Score Improvement": ["Grappler (Dexterity)"] } }),
     );
-    expect(CharacterAdvancementsService.addAdvancements(session, character.id, plan, true)).rejects.toMatchObject({
-      message: 'Feat "Grappler (Dexterity)" is taken once: the character has Grappler (Strength)',
-    });
-  });
-
-  test("doesn't name its versions: a fork that deletes one still offers the other", async () => {
-    const ctx = await getDnd52SeedCtx();
-    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
-      name: `Fork ${uniqueId()}`,
-      private: true,
-    });
-    await EntitiesService.deleteEntity(session, fork.id, "feats", ctx.featMap["Grappler (Dexterity)"]);
-    const character = await fighter(3, {}, fork.id);
-    expect(await grapplersOffered(character.id, 4)).toEqual([{ eligible: true, name: "Grappler (Strength)" }]);
+    expect(CharacterAdvancementsService.addAdvancements(session, character.id, plan)).rejects.toThrow(
+      /Grappler \(Dexterity\)/,
+    );
   });
 });
 

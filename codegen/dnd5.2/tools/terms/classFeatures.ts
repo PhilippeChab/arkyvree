@@ -16,7 +16,6 @@ import {
   classFightingStyle,
   classSkills,
   DIVINE_ORDER_POOL,
-  FIGHTING_STYLE_OPTION_CLASSES,
   mysticArcanum,
   PRIMAL_ORDER_POOL,
   WEAPON_MASTERY_POOL,
@@ -27,6 +26,7 @@ import { savingThrowProficiency } from "@/content/dnd5.2/builders/feats/proficie
 import { grantLanguage, languagePick } from "@/content/dnd5.2/builders/languages/knowledge.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
+import { FIGHTING_STYLE_OPTION_CLASSES } from "@/vocabulary/dnd5.2/classes.ts";
 import { ABILITY_SCORE_IMPROVEMENT_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 import { UNARMED_STRIKE, WEAPON_DEFINITIONS } from "@/vocabulary/dnd5.2/weapons.ts";
 

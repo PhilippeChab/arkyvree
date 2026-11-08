@@ -27,6 +27,12 @@ export const EXPERIENCE_BY_LEVEL = [
 ] as const;
 
 /**
+ * The classes whose Fighting Style offers an option of its own beside the Fighting Style feats (a paladin's Blessed
+ * Warrior, a ranger's Druidic Warrior), picked in the class's own pool (`classFightingStyle`).
+ */
+export const FIGHTING_STYLE_OPTION_CLASSES = ["Paladin", "Ranger"] as const;
+
+/**
  * The hit points a level after the first gives in place of a roll, by its class's hit die, as the Fixed Hit Points by
  * Class table gives them: half the die, plus 1 (a d10's 6). A character's first level gives its die's highest.
  */

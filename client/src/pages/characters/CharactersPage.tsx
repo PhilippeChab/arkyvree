@@ -20,6 +20,7 @@ import {
   SearchBar,
   type SortOption,
   StatusChip,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, CharacterIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import {
@@ -197,7 +198,7 @@ export default function CharactersPage() {
                     chips={
                       <>
                         {character.accessRole === "contributor" && <StatusChip label="Shared" color="info" />}
-                        <StatusChip label={character.ruleset.name} />
+                        <ValueChip label={character.ruleset.name} />
                         <CharacterBuildChips chips={character.chips} />
                       </>
                     }

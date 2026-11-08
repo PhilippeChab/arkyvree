@@ -152,11 +152,12 @@ holds names the code that holds it.
   subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
 - **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
   character.
-- **A feat is taken once unless the SRD calls it Repeatable,** whichever version: a character holding a version of
-  Grappler, or of an Epic Boon that raises an ability of your choice (`FEATS_TAKEN_ONCE`, by family), takes no other
-  (`FeatRules.canTake`), so a character with Grappler (Strength) isn't offered Grappler (Dexterity) and its save is
-  refused. No version names another: a fork that deletes one keeps the others. The Ability Score Improvement, Magic
-  Initiate (on another spell list) and Skilled repeat.
+- **A feat is taken once unless the SRD calls it Repeatable,** whichever version: each version of Grappler, or of an
+  Epic Boon that raises an ability of your choice, requires not having the others (`feats.<version>.possessed` false,
+  as 3.5's Ninja AC Bonus requires no Monk's; `FeatSeeds`), so a character with Grappler (Strength) is offered Grappler
+  (Dexterity) as not eligible, and its save is refused unforced. A fork's own feat with versions does the same with its
+  requirements; a fork that deletes a version edits the others' requirement, which names it. The Ability Score
+  Improvement, Magic Initiate (on another spell list) and Skilled repeat.
 - **A feat that requires a class feature requires its family.** A Fighting Style feat's "Fighting Style Feature" and
   Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
   family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class

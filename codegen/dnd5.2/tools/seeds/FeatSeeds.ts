@@ -10,21 +10,17 @@ import {
 } from "@/codegen/dnd5.2/tools/terms/feats.ts";
 import type { FeatEntry, FeatReference } from "@/codegen/dnd5.2/tools/types/feats.ts";
 import { bonus, setStr } from "@/content/core/builders/customization/modifiers.ts";
-import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { eq, eqFalse, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import {
-  classFightingStyle,
-  classSpells,
-  FIGHTING_STYLE_OPTION_CLASSES,
-  spellcastingAbilityPool,
-} from "@/content/dnd5.2/builders/aptitudes/names.ts";
+import { classFightingStyle, classSpells, spellcastingAbilityPool } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { poolRoom, spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import type { FeatSeed } from "@/content/dnd5.2/builders/feats/types.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
-import { FEAT_CATEGORY_POOLS, FEAT_FAMILIES, FEATS_TAKEN_ONCE, FEATURE_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
+import { FIGHTING_STYLE_OPTION_CLASSES } from "@/vocabulary/dnd5.2/classes.ts";
+import { FEAT_CATEGORY_POOLS, FEAT_FAMILIES, FEATURE_FAMILIES } from "@/vocabulary/dnd5.2/feats.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import { Memos } from "./Memos.ts";
@@ -163,17 +159,24 @@ export class FeatSeeds {
     if (entry.name === ASI) return asiVariants(base).map((variant) => ({ ...variant, fields }));
     const increase = readAbilityIncrease(entry.description);
     if (increase) {
-      // A feat that isn't Repeatable is taken once, whichever ability it raises: the vocabulary names it, which the
-      // engine's feat rules read (`FeatRules.canTake`)
+      // A feat that isn't Repeatable is taken once, whichever ability it raises: each version requires the character
+      // not to have the others, as 3.5's Ninja AC Bonus requires no Monk's
       const once = !REPEATABLE.test(entry.description);
-      if (once !== isOneOf(entry.name, FEATS_TAKEN_ONCE))
-        throw new Error(`${entry.name}: FEATS_TAKEN_ONCE should ${once ? "" : "not "}name it`);
-      return increase.abilities.map((ability) => ({
-        ...base,
-        name: `${entry.name} (${ability})`,
-        modifiers: [bonus(abilityMisc(ability), increase.amount), ...own],
-        fields,
-      }));
+      const names = increase.abilities.map((ability) => `${entry.name} (${ability})`);
+      return increase.abilities.map((ability, index) => {
+        const others = once ? names.filter((_, other) => other !== index) : [];
+        const requirements = [
+          ...(base.requirements ?? []),
+          ...others.map((other) => eqFalse(`feats.${stripSeparators(other)}.possessed`)),
+        ];
+        return {
+          ...base,
+          name: names[index],
+          ...(requirements.length > 0 ? { requirements } : {}),
+          modifiers: [bonus(abilityMisc(ability), increase.amount), ...own],
+          fields,
+        };
+      });
     }
     const lists = readSpellLists(entry.description);
     if (lists.length === 0) return [base];

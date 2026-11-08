@@ -12,12 +12,6 @@ export const ARMOR_TRAINING_POOL = "Armor Training";
 /** A cleric's Divine Order: its sacred roles, a feat each, one picked at its first level. */
 export const DIVINE_ORDER_POOL = "Divine Order";
 
-/**
- * The classes whose Fighting Style offers an option of its own beside the Fighting Style feats (a paladin's Blessed
- * Warrior, a ranger's Druidic Warrior), picked in the class's own pool (`classFightingStyle`).
- */
-export const FIGHTING_STYLE_OPTION_CLASSES = ["Paladin", "Ranger"] as const;
-
 /** A druid's Primal Order: its sacred roles, a feat each, one picked at its first level. */
 export const PRIMAL_ORDER_POOL = "Primal Order";
 
