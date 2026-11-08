@@ -89,11 +89,18 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
   const snackbar = useSnackbar();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const { tables } = rules.progression;
+  const { data: progression, error: progressionError } = useQuery(ownerProgressionQuery(rulesetId, ownerType, ownerId));
+  // The list its counts go to, and why its tables take no save (none when they take one), at the keys its rules say
+  const answer: Record<string, unknown> | undefined = progression;
+  // The tables it shows: its rules' but those its answer hides (D&D 5e's warlock's Spell Slots, another class's Pact
+  // Magic)
+  const hidden = readHiddenTables(counts.hidden === undefined ? undefined : answer?.[counts.hidden]);
+  const shownTables = tables.filter(({ key }) => !hidden.includes(key));
   // Its rules' words for what its tables count ("Spell", "Spells")
   const [one, many] = [entityTypeLabel(counts.type, rules.words), entityTypeLabel(counts.type, rules.words, true)];
   // The table it shows is its address's (which its old Spells Known tab's opens on), else its first
-  const tableParam = useSearchParam("table", tables[0]?.key ?? "");
-  const shown = tables.find((rules) => rules.key === tableParam.value) ?? tables.at(0);
+  const tableParam = useSearchParam("table", shownTables[0]?.key ?? "");
+  const shown = shownTables.find((rules) => rules.key === tableParam.value) ?? shownTables.at(0);
   const table = shown?.key ?? "";
   // Its page's state (where Back goes) stays with it
   const location = useLocation();
@@ -104,9 +111,6 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
   const reads = useQueries({
     queries: tables.map((rules) => ownerTableQuery(rulesetId, ownerType, ownerId, rules.table)),
   });
-  const { data: progression, error: progressionError } = useQuery(ownerProgressionQuery(rulesetId, ownerType, ownerId));
-  // The list its counts go to, and why its tables take no save (none when they take one), at the keys its rules say
-  const answer: Record<string, unknown> | undefined = progression;
   const list = answer?.[counts.list];
   const refusal = answer?.[counts.refusal];
   // Without a list, its own one, which its editor can make here, as its list tab's first add does
@@ -314,7 +318,7 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
               label="Table"
               value={table}
               onChange={setTable}
-              options={tables.map(({ key, label }) => ({
+              options={shownTables.map(({ key, label }) => ({
                 label: `${label}${draft.countChanged(key) > 0 ? " •" : ""}`,
                 value: key,
               }))}
@@ -394,6 +398,11 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
       {saveBar}
     </Stack>
   );
+}
+
+/** The keys of the tables an owner's progression answer hides (`value`, its rules' `counts.hidden` key's): none else. */
+function readHiddenTables(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((key): key is string => typeof key === "string") : [];
 }
 
 /**

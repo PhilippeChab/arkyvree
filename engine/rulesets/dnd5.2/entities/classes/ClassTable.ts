@@ -50,7 +50,7 @@ export default class ClassTable {
   }
 
   /**
-   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells`, `spells-known`): refused as not
+   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells`, `spells-known`, `pact-magic`): refused as not
    * found for a table it has none of. Its spell tables read its levels' modifiers as the view has them, or as a save
    * would leave them (`modifiers`: its progression's plan's).
    */
@@ -59,6 +59,7 @@ export default class ClassTable {
     if (table === "spell-lists") return this.describeSpellLists();
     if (table === "spells") return this.describeSpells(modifiers);
     if (table === "spells-known") return this.describeSpellsKnown(modifiers);
+    if (table === "pact-magic") return this.describePactMagic(modifiers);
     throw new RulesError("not-found", `No ${table} table for classes`);
   }
 
@@ -105,6 +106,17 @@ export default class ClassTable {
     const { aptitudeIdBySlug, aptitudesById } = Dnd52View.of(this.view.rulesetData);
     const aptitude = aptitudesById.get(aptitudeIdBySlug.get(stripSeparators(name)) ?? "");
     return aptitude ? { id: aptitude.id, name: aptitude.name } : { id: null, name };
+  }
+
+  /**
+   * The class's levels, each with its Pact Magic by then (`pactMagic`: its `slots` and their `level`), what its levels'
+   * modifiers add to them (`spellcasting.pact.slots`, `.level`: a warlock's). Of its levels' modifiers as the view has
+   * them, or as a save would leave them (`modifiers`: its progression's plan's).
+   */
+  describePactMagic(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {
+    const { levels } = this;
+    const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readPactStep);
+    return levels.map((level) => ({ ...level, pactMagic: totals.get(level.id) ?? {} }));
   }
 
   /**

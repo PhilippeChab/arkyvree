@@ -110,7 +110,11 @@ holds names the code that holds it.
 - **A warlock's Pact Magic is apart.** Its levels add its slots and raise their level (`spellcasting.pact.slots`,
   `spellcasting.pact.level`), by its table (`PACT_MAGIC_SLOTS`), and count toward no other slots: Pact Magic isn't the
   Spellcasting feature. A Warlock 3 / Wizard 2 has two level 2 Pact Magic slots and the wizard's own three level 1
-  slots. The SRD has no third caster.
+  slots. The SRD has no third caster. A class's page shows them in a Pact Magic table, its slots and their level by
+  each level, as the SRD's Warlock table prints them, which a save writes back as each level's increases
+  (`ClassTable.describePactMagic`, `ClassProgression.planPact`); the table shows for a class whose levels give Pact
+  Magic, in place of its Spell Slots when they give no other slot (a warlock's: `hiddenTables`, the progression
+  answer's tables a class doesn't show, which the client leaves out).
 - **Prepared spells mix levels freely.** A class's table gives its cantrips and its prepared spells by level, a level's
   new spells counted at the highest level it casts then; the room past cantrips is one count, which any spell of level 1
   up to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination). A spell above it

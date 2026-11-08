@@ -20,6 +20,9 @@ export interface TableStep<V> {
   step: (total: V | undefined) => V;
 }
 
+/** What the Pact Magic table counts by a level, a column each: its slots, and their level. */
+export const PACT_KEYS = ["slots", "level"] as const;
+
 /**
  * What a class's levels' modifiers add up to by each level (`computeRunning`), and the steps its spell tables take of
  * them: its cantrips' and prepared spells', and its spell slots'.
@@ -60,6 +63,17 @@ export default class LevelTotals {
     if (target?.field !== "allowed" || typeof value !== "number") return undefined;
     const setsAll = AptitudeTargets.setsAllKnown(modifier);
     return { key: target.level, step: (total) => (setsAll || total === "All" ? "All" : (total ?? 0) + value) };
+  }
+
+  /**
+   * A modifier's step on the Pact Magic, by what it counts (`slots`, `level`): `spellcasting.pact.slots` and
+   * `spellcasting.pact.level` add to them, as a warlock's levels do.
+   */
+  static readPactStep(modifier: TableModifier): TableStep<number> | undefined {
+    const key = PACT_KEYS.find((column) => modifier.target === `spellcasting.pact.${column}`);
+    const value = LiteralValue.parse(modifier.value, "number");
+    if (key === undefined || modifier.operator !== "add" || typeof value !== "number") return undefined;
+    return { key, step: (total) => (total ?? 0) + value };
   }
 
   /** A modifier's step on the spell slots by spell level: a list's spell level's `uses` adds to them. */

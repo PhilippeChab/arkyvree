@@ -25,7 +25,7 @@ import { MAX_SPELL_LEVEL, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
 import type ClassTable from "./ClassTable.ts";
-import LevelTotals, { type TableModifier } from "./LevelTotals.ts";
+import LevelTotals, { PACT_KEYS, type TableModifier } from "./LevelTotals.ts";
 import { PROGRESSION } from "./progression.ts";
 
 /** A modifier a class level keeps or a progression's save writes on it: a stored one's id, and whether it's gated. */
@@ -75,6 +75,7 @@ const COUNTS = z.object({
   spells: z
     .object({
       known: z.array(z.object({ counts: z.array(KNOWN.nullable()).max(SPELL_LEVELS.length) })).optional(),
+      pact: z.array(z.object({ counts: z.array(COUNT.nullable()).max(PACT_KEYS.length) })).optional(),
       perDay: z.array(z.object({ counts: z.array(COUNT.nullable()).max(MAX_SPELL_LEVEL) })).optional(),
     })
     .optional(),
@@ -90,7 +91,7 @@ const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected a
  * A progression's save, as its form sends it: its class levels' forms (`owned`, each its fields, and its links: the
  * feats it grants, by role), its pools' picks by level (each pool by its `id`), and its
  * spell tables' totals, a level's one a column of its table (`null` for none): a spell level, from 0 for its cantrips
- * and prepared spells, from 1 for its spell slots. Each part refuses a key it doesn't take,
+ * and prepared spells, from 1 for its spell slots; its Pact Magic's slots and their level. Each part refuses a key it doesn't take,
  * as an entity's form does.
  */
 const PROGRESSION_BODY = z.strictObject({
@@ -114,6 +115,9 @@ const PROGRESSION_BODY = z.strictObject({
             counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
           }),
         )
+        .optional(),
+      pact: z
+        .array(z.strictObject({ ownedId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
         .optional(),
       perDay: z
         .array(z.strictObject({ ownedId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
@@ -300,6 +304,20 @@ export default class ClassProgression {
     return Dnd52View.of(this.rulesetData);
   }
 
+  /**
+   * The tables the class's tabs don't show, by their keys (`hiddenTables`): its Pact Magic unless its levels give it
+   * (`spellcasting.pact.*`), and its Spell Slots when they give it and no slot on a list (a warlock's).
+   */
+  private hiddenTables(): string[] {
+    const pact = this.classLevels.some((level) =>
+      this.modifiersOf(level.id).some((modifier) => modifier.target.startsWith("spellcasting.pact.")),
+    );
+    if (!pact) return ["pact"];
+    // Its levels' slots on a list, as its Spell Slots table counts them: a warlock's prepared spells' list gives none
+    const slots = this.table.describeSpells().some(({ spellsPerDay }) => Object.keys(spellsPerDay).length > 0);
+    return slots ? [] : ["perDay"];
+  }
+
   /** The entities a save names by id, as the view reads them: refused, naming one it shows none of. */
   private get ids() {
     return new RequestIds<Dnd52Kinds>(this.rulesetData, "this ruleset");
@@ -322,6 +340,14 @@ export default class ClassProgression {
     return { repeat: words?.repeat ?? "", single: words?.single ?? "" };
   }
 
+  /** The Pact Magic's totals by each level (its `slots`, their `level`), of the levels' modifiers as a save plans them. */
+  private pactTotals(
+    working: Map<string, LevelModifier[]>,
+    keep: (modifier: LevelModifier) => boolean = () => true,
+  ): Map<string, Record<string | number, number>> {
+    return LevelTotals.computeRunning(this.classLevels, readTableModifiers(working, keep), LevelTotals.readPactStep);
+  }
+
   /**
    * A save's levels' modifiers (`sent`, read by its schema, refused as invalid when it isn't one or a count is past the
    * rules' bounds): each level's as the view has them (`original`), and as its pools' picks and its spell tables leave
@@ -338,8 +364,48 @@ export default class ClassProgression {
     if (body.spells?.known)
       this.planSpells(working, body.spells.known, "allowed", this.spellTotals("allowed", working));
     if (body.spells?.perDay) this.planSpells(working, body.spells.perDay, "uses", slots);
+    if (body.spells?.pact) this.planPact(working, body.spells.pact);
     if (body.spells) this.checkListKept(working);
     return { body, original, working };
+  }
+
+  /**
+   * The Pact Magic's totals (`rows`: each level's slots and their level, a column each) over the ones it had before the
+   * save, as each level's own modifiers on the class's Pact Magic (`spellcasting.pact.slots`, `.level`, a warlock's):
+   * each level adds what its total gains on the level before. Refused for a slot level past the highest spell level, and
+   * where a level's modifier the table can't read as a count would change.
+   */
+  private planPact(working: Map<string, LevelModifier[]>, rows: SpellRow<number>[]) {
+    const levels = this.classLevels;
+    const totals = this.pactTotals(working);
+    const given = new Map(rows.map(({ counts, ownedId }) => [this.levels.find(ownedId).id, counts]));
+    for (const [column, key] of PACT_KEYS.entries()) {
+      const target = `spellcasting.pact.${key}`;
+      const isOwn = (modifier: LevelModifier) => modifier.target === target && isPlainAdd(modifier);
+      const kept = this.pactTotals(working, (modifier) => !isOwn(modifier));
+      const asked = levels.map(({ id }): SpellTotal => {
+        const counts = given.get(id);
+        if (counts === undefined || counts[column] === undefined) return totals.get(id)?.[key];
+        return counts[column] ?? undefined;
+      });
+      const wanted = normalizedColumn(asked);
+      if (key === "level" && wanted.some((total) => typeof total === "number" && total > MAX_SPELL_LEVEL))
+        throw new RulesError("invalid", `Pact Magic's slot level is ${MAX_SPELL_LEVEL} at most`);
+      const unread = (modifier: LevelModifier) => modifier.target === target && !isPlainAdd(modifier);
+      const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[key]));
+      const changes = wanted.some((total, index) => total !== current[index]);
+      if (changes && levels.some(({ id }) => working.get(id)?.some(unread)))
+        throw new RulesError("invalid", "Pact Magic has modifiers this table can't edit: edit its levels'");
+      const columnModifiers = planColumn(
+        target,
+        wanted,
+        levels.map(({ id }) => kept.get(id)?.[key]),
+      );
+      for (const [index, { id }] of levels.entries()) {
+        const next = columnModifiers[index];
+        if (next) replaceOwn(working, id, isOwn, next);
+      }
+    }
   }
 
   /**
@@ -479,7 +545,8 @@ export default class ClassProgression {
    * own picks (what the pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), the
    * spell list its spells go to (none for a class without one), whether its levels give spells in several
    * (`severalSpellLists`, which the public API answers), why its spell tables take no save (`spellTablesRefusal`, in
-   * the save's words: a class without a list, or with several; none when they take one), its own list (`ownSpellList`:
+   * the save's words: a class without a list, or with several; none when they take one), the tables it doesn't show
+   * (`hiddenTables`: a warlock's Spell Slots, any other class's Pact Magic), its own list (`ownSpellList`:
    * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), the picks
    * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
    * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
@@ -516,6 +583,7 @@ export default class ClassProgression {
       ownSpellList: this.table.describeOwnList(),
       pools,
       featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(new Map(), this.noteWords),
+      hiddenTables: this.hiddenTables(),
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
       spellTablesRefusal: this.spellTables.refusal ?? null,

@@ -18,6 +18,24 @@ async function forkWithClass(name: string) {
   return { fork, klass };
 }
 
+/** The tables a class's Spells tab leaves out, by their keys, as its progression's answer lists them. */
+async function hiddenTablesOf(rulesetId: string, classId: string) {
+  const answer = (await EntitiesService.getProgression(session, rulesetId, "classes", classId)) as unknown as {
+    hiddenTables: string[];
+  };
+  return answer.hiddenTables;
+}
+
+/** A class's Pact Magic table (`classId`, in `rulesetId`): each level's slots and their level, by the level's number. */
+async function pactByLevel(rulesetId: string, classId: string) {
+  const rows = (await EntitiesService.getEntityTable(session, rulesetId, "classes", classId, "pact-magic")) as {
+    id: string;
+    pactMagic: Record<string, number>;
+    position: number;
+  }[];
+  return new Map(rows.map((row) => [row.position, row]));
+}
+
 /** A class's Spell Slots table (`classId`, in `rulesetId`): each level's slots by spell level, by the level's number. */
 async function slotsByLevel(rulesetId: string, classId: string) {
   const rows = (await EntitiesService.getEntityTable(session, rulesetId, "classes", classId, "spells")) as {
@@ -52,5 +70,38 @@ describe("A D&D 5th Edition class's Spell Slots table", () => {
     expect(after.get(3)!.spellsPerDay).toEqual({ 1: 3 });
     expect(after.get(4)!.spellsPerDay).toEqual({ 1: 3, 2: 2 });
     expect(after.get(5)!.spellsPerDay).toEqual({ 1: 4, 2: 2 });
+  });
+});
+
+describe("A D&D 5th Edition class's Pact Magic table", () => {
+  test("gives a warlock's slots and their level by each level, shown in place of its empty Spell Slots", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const warlock = await pactByLevel(ctx.rulesetId, ctx.classMap["Warlock"]);
+    expect(warlock.get(1)!.pactMagic).toEqual({ slots: 1, level: 1 });
+    expect(warlock.get(3)!.pactMagic).toEqual({ slots: 2, level: 2 });
+    expect(warlock.get(11)!.pactMagic).toEqual({ slots: 3, level: 5 });
+    expect(warlock.get(20)!.pactMagic).toEqual({ slots: 4, level: 5 });
+    // A warlock's tab shows Pact Magic, not Spell Slots it has none of; a wizard's, its Spell Slots alone
+    expect(await hiddenTablesOf(ctx.rulesetId, ctx.classMap["Warlock"])).toEqual(["perDay"]);
+    expect(await hiddenTablesOf(ctx.rulesetId, ctx.classMap["Wizard"])).toEqual(["pact"]);
+    expect((await pactByLevel(ctx.rulesetId, ctx.classMap["Wizard"])).get(20)!.pactMagic).toEqual({});
+  });
+
+  test("saves a level's slots and slot level as its levels' increases, the others' totals kept", async () => {
+    const { fork, klass } = await forkWithClass("Warlock");
+    const before = await pactByLevel(fork.id, klass.id);
+    // A fifth slot at the 20th level: only it changes
+    await EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
+      spells: { pact: [{ ownedId: before.get(20)!.id, counts: [5, 5] }] },
+    });
+    const after = await pactByLevel(fork.id, klass.id);
+    expect(after.get(19)!.pactMagic).toEqual({ slots: 4, level: 5 });
+    expect(after.get(20)!.pactMagic).toEqual({ slots: 5, level: 5 });
+    // A slot level past the 9th is refused
+    expect(
+      EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
+        spells: { pact: [{ ownedId: before.get(20)!.id, counts: [5, 10] }] },
+      }),
+    ).rejects.toMatchObject({ message: "Pact Magic's slot level is 9 at most" });
   });
 });
