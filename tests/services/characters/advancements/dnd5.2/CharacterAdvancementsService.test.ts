@@ -149,6 +149,14 @@ async function pickedIds(step: string, advancementId: string) {
   return (await findPicks(step, [advancementId])).map(({ entityId }) => entityId).sort();
 }
 
+/** The unmet prerequisites of the character's own feats, by their messages. */
+async function unmetPrerequisites(characterId: string) {
+  return (await buildCharacter(characterId))
+    .validate()
+    .issues.map(({ message }) => message)
+    .filter((message) => message.startsWith("Unmet prerequisite"));
+}
+
 describe("A D&D 5th Edition character's levels", () => {
   describe("creating a character", () => {
     test("makes one on the seeded core rules, of its species and background, with its scores", async () => {
@@ -599,14 +607,36 @@ describe("A feat taken once", () => {
     const character = await fighter(5, { 4: { "Ability Score Improvement": ["Grappler (Strength)"] } });
     // Its 6th level's picker leaves out the version it has, and offers the other as not eligible: its requirement
     expect(await grapplersOffered(character.id, 6)).toEqual([{ eligible: false, name: "Grappler (Dexterity)" }]);
-    // Its save refuses the other version unforced, as any unmet requirement
     const plan = levelUpPlan(
       [{ classId: ctx.classMap["Fighter"], level: 6, hp: 1 }],
       picksOf(ctx, { feats: { "Ability Score Improvement": ["Grappler (Dexterity)"] } }),
     );
+    // Its save refuses the other version unforced, on its requirement
     expect(CharacterAdvancementsService.addAdvancements(session, character.id, plan)).rejects.toThrow(
-      /Grappler \(Dexterity\)/,
+      /Unmet prerequisite on Grappler \(Dexterity\)/,
     );
+    // Which the other version alone brings: none before it, its own once forced
+    expect(await unmetPrerequisites(character.id)).toEqual([]);
+    await CharacterAdvancementsService.addAdvancements(session, character.id, plan, true);
+    expect((await unmetPrerequisites(character.id)).join("; ")).toMatch(/Unmet prerequisite on Grappler \(Dexterity\)/);
+  });
+
+  test("is refused at an edited level beside a later level's version", async () => {
+    const ctx = await getDnd52SeedCtx();
+    const character = await createDnd52Character(session, { abilities: FIGHTER_SCORES });
+    const saved = [];
+    for (let level = 1; level <= 8; level++) {
+      const feats = level === 8 ? { "Ability Score Improvement": ["Grappler (Strength)"] } : undefined;
+      saved.push(await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 1, feats }, true));
+    }
+    // Its 4th level, edited, offers Grappler (Dexterity) as not eligible, as its save refuses it
+    const edit = { ...levelEditPlan(1), editedAdvancementId: saved[3]!.id };
+    const at = { pool: ctx.aptMap["Ability Score Improvement"] };
+    const { items } = await getStepOptions(session, character.id, "feats", edit, at, { search: "Grappler" });
+    expect(items.map(({ eligible, name }) => ({ eligible, name }))).toEqual([
+      { eligible: false, name: "Grappler (Dexterity)" },
+    ]);
+    expect(items[0]?.requirementTree).toMatch(/grapplerstrength/);
   });
 });
 

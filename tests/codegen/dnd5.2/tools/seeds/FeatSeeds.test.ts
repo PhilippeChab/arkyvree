@@ -62,7 +62,7 @@ describe("The SRD 5.2.1's feats, as the generator reads them", () => {
       ],
       modifiers: [{ target: "abilities.dexterity.misc", value: "1" }],
     });
-    // A feat taken once: each version requires not having the other, as 3.5's Ninja AC Bonus requires no Monk's
+    // A feat taken once: each version requires not having the other
     expect(named("Grappler (Dexterity)")?.requirements).toHaveLength(3);
     expect(named("Grappler (Dexterity)")?.requirements).toContainEqual({
       target: "feats.grapplerstrength.possessed",

@@ -154,10 +154,12 @@ holds names the code that holds it.
   character.
 - **A feat is taken once unless the SRD calls it Repeatable,** whichever version: each version of Grappler, or of an
   Epic Boon that raises an ability of your choice, requires not having the others (`feats.<version>.possessed` false,
-  as 3.5's Ninja AC Bonus requires no Monk's; `FeatSeeds`), so a character with Grappler (Strength) is offered Grappler
-  (Dexterity) as not eligible, and its save is refused unforced. A fork's own feat with versions does the same with its
-  requirements; a fork that deletes a version edits the others' requirement, which names it. The Ability Score
-  Improvement, Magic Initiate (on another spell list) and Skilled repeat.
+  the condition 3.5's Ninja AC Bonus puts on its Wisdom bonus; `FeatSeeds`), so a character with Grappler (Strength),
+  at an earlier level or a later one, is offered Grappler (Dexterity) as not eligible, and its save is refused unforced.
+  A forced save keeps both, each then failing its requirement, so neither raises its ability. A fork's own feat with
+  versions does the same with its requirements; a fork that deletes a version edits the others' requirement, which
+  names it, until which they're not eligible. The Ability Score Improvement, Magic Initiate (on another spell list) and
+  Skilled repeat.
 - **A feat that requires a class feature requires its family.** A Fighting Style feat's "Fighting Style Feature" and
   Boon of Spell Recall's "Spellcasting Feature" are families (`FEATURE_FAMILIES`), each class's feature a feat of its
   family ("Fighting Style (Paladin)"), which the prerequisite reads (`feats.fightingstyle.*.possessed`): a fork's class

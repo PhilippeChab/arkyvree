@@ -8,8 +8,10 @@ import type {
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity from "@/engine/rulesets/dnd5.2/entities/feats/FeatEntity.ts";
 import type { FeatPickQuery } from "@/engine/rulesets/dnd5.2/levelUp/requests.ts";
+import FeatsPaths from "@/engine/rulesets/dnd5.2/model/feats/FeatsPaths.ts";
 import FeatRules from "@/engine/rulesets/dnd5.2/rules/FeatRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
+import type { Requirement } from "@/shared/relations.ts";
 import { FEAT_SELECTABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
@@ -18,7 +20,9 @@ import LevelPicker from "./LevelPicker.ts";
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's variants when the query names
  * one; `groupFilters`, grouped by family), but those that don't stack it holds (`holder`: picked or granted at any of its
  * levels, a later one and a planned one too, or made possessed by its modifiers, the feats' and spells' picked so far
- * too), or picked so far; a family's row described when the picker opens it (`describeGroups`).
+ * too), or picked so far; a family's row described when the picker opens it (`describeGroups`). A feat that requires
+ * another not possessed (a version of a feat taken once) is checked against that holder too: an edited level's picker
+ * offers Grappler (Dexterity) as not eligible beside a later level's Grappler (Strength), as the save refuses it.
  */
 export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
@@ -30,7 +34,7 @@ export default class FeatPicker extends LevelPicker {
       // A feat a character picks is a selectable one
       fields: { [FEAT_SELECTABLE]: true },
       ids,
-      // Those it can't take again: one that doesn't stack it holds, another version of a feat taken once it holds
+      // Those it can't take again: one that doesn't stack it holds
       excludeIds: [...new Set([...heldIds, ...ids])].filter((featId) => !rules.canTake(featId, heldIds)),
     };
     const groups = this.feats.groupByFamily(offered.ids);
@@ -41,6 +45,25 @@ export default class FeatPicker extends LevelPicker {
     this.groupFilters = { ...offered, groups };
   }
 
+  /**
+   * Each group's top-level conditions that a feat isn't possessed (`feats.<slug>.possessed` false), the groups with
+   * none left out: Grappler (Dexterity)'s no Grappler (Strength).
+   */
+  private static notPossessed(groups: Requirement[][]): Requirement[][] {
+    return groups
+      .map((group) =>
+        group.filter(
+          ({ level, operator, target, value }) =>
+            !level.includes(".") &&
+            operator === "equal" &&
+            value === "false" &&
+            target !== null &&
+            FeatsPaths.parsePossessed(target) !== undefined,
+        ),
+      )
+      .filter((group) => group.length > 0);
+  }
+
   /** The feats' rules: the families a feat is grouped in. */
   private readonly feats = new FeatEntity(this.view);
 
@@ -49,6 +72,22 @@ export default class FeatPicker extends LevelPicker {
 
   /** What the picker offers grouped by family: its feats, and the family each of them is grouped in. */
   readonly groupFilters: PickGroupFilters;
+
+  /** The tree of what a feat fails: the character's requirements, else the feats the holder has that it requires not. */
+  protected override describeFailed(groups: Requirement[][]) {
+    if (!this.character.areRequirementsMet(groups)) return super.describeFailed(groups);
+    return FeatPicker.notPossessed(groups)
+      .map((group) => this.holder.formatRequirements(group))
+      .join("\n");
+  }
+
+  /**
+   * Whether the character meets a feat's requirements, and the holder (with its every level) those that a feat isn't
+   * possessed: a later level's Grappler (Strength) refuses Grappler (Dexterity).
+   */
+  protected override meets(groups: Requirement[][], row: { id: string }) {
+    return super.meets(groups, row) && this.holder.areRequirementsMet(FeatPicker.notPossessed(groups));
+  }
 
   /**
    * A page of the grouped feat options as the step's: a feat without variants described as a flat option is, a

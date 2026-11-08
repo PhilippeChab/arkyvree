@@ -160,7 +160,7 @@ export class FeatSeeds {
     const increase = readAbilityIncrease(entry.description);
     if (increase) {
       // A feat that isn't Repeatable is taken once, whichever ability it raises: each version requires the character
-      // not to have the others, as 3.5's Ninja AC Bonus requires no Monk's
+      // not to have the others, the condition 3.5's Ninja AC Bonus puts on its Wisdom bonus (no Monk's AC Bonus)
       const once = !REPEATABLE.test(entry.description);
       const names = increase.abilities.map((ability) => `${entry.name} (${ability})`);
       return increase.abilities.map((ability, index) => {
