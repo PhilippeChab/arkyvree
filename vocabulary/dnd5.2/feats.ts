@@ -1,0 +1,42 @@
+/**
+ * The feats' categories, as the SRD 5.2.1 names them, each a pool a feat of it is picked in (a character's background
+ * gives an Origin feat; a class's Ability Score Improvement, the Ability Score Improvement feat or another feat the
+ * character qualifies for; its Fighting Style, a feat of that category; its Epic Boon, an Epic Boon feat or another
+ * feat it qualifies for), and the families its feats are grouped by: a feat taken with a choice (an ability score to
+ * raise, a spell list) is a family of a feat per choice.
+ */
+
+/** The feats' categories, as the SRD names them, each its feats' pool. */
+export const FEAT_CATEGORIES = ["Origin", "General", "Fighting Style", "Epic Boon"] as const;
+
+/**
+ * The families of feats the seeded rules have (a feat's FEAT_FAMILY field): the values the customization offers, and
+ * the families a prerequisite names. A feat taken with a choice is a family of its name, a feat per choice ("Grappler
+ * (Strength)"); so is a proficiency, a feat per thing it's proficient with ("Skill Proficiency (Athletics)").
+ */
+export const FEAT_FAMILIES = [
+  // Taken with a choice: the SRD's feats that raise an ability score of the player's choice, or take a spell list
+  "Ability Score Improvement",
+  "Grappler",
+  "Magic Initiate",
+  "Skilled",
+  "Boon of Combat Prowess",
+  "Boon of Dimensional Travel",
+  "Boon of Fate",
+  "Boon of Irresistible Offense",
+  "Boon of Spell Recall",
+  "Boon of the Night Spirit",
+  "Boon of Truesight",
+  // What a character is proficient in, a feat each
+  "Armor Training",
+  "Expertise",
+  "Saving Throw Proficiency",
+  "Skill Proficiency",
+  "Tool Proficiency",
+  "Weapon Mastery",
+  "Weapon Proficiency",
+  // A background's ability score increases, a feat per way to spread them
+  "Background Ability Scores",
+  // A class's subclasses, a feat each
+  "Subclass",
+] as const;
