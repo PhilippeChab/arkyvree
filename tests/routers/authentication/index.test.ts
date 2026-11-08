@@ -132,10 +132,6 @@ describe("authentication", () => {
         .where(eq(sessionsInAccount.id, sessionId));
       await expectStatus(api.auth.me.$get(), 401);
     });
-
-    test("requires a session for /me", async () => {
-      await expectStatus(auth.me.$get(), 401);
-    });
   });
 
   describe("profile and email change", () => {

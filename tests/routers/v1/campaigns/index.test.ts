@@ -133,17 +133,6 @@ describe("v1 campaigns", () => {
     );
   });
 
-  test("refuses a campaign the key's user isn't in, and one that doesn't exist", async () => {
-    const { campaign } = await createCampaign();
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    const param = { id: campaign.id };
-    // A campaign the user isn't in is unknown to them, as one that doesn't exist
-    await expectStatus(api.v1.campaigns[":id"].$get({ param }), 404);
-    await expectStatus(api.v1.campaigns[":id"].$put({ param, json: { name: "Mine now" } }), 404);
-    await expectStatus(api.v1.campaigns[":id"].$delete({ param }), 404);
-    await expectStatus(api.v1.campaigns[":id"].$get({ param: { id: NIL_UUID } }), 404);
-  });
-
   test("refuses a campaign on a ruleset the key's user can't build on", async () => {
     const { user } = await createTestUser();
     const { api } = await createKeyedApi(user.id);

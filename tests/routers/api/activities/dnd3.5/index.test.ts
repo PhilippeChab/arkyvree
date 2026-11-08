@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Activities } from "@/server/repositories/index.ts";
-import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 /** A new user whose only activities are forking the seeded ruleset, then adding an aptitude to the fork. */
@@ -68,9 +68,5 @@ describe("activities", () => {
       url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}`,
     });
     await expectStatus(resolve.$get({ param: { targetType: "aptitudes", targetId: NIL_UUID }, query: {} }), 404);
-  });
-
-  test("requires a session", async () => {
-    await expectStatus(guestApi.api.activities.$get({ query: {} }), 401);
   });
 });

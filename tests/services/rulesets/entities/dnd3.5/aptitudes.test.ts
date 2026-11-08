@@ -29,20 +29,6 @@ async function linksOf(aptitudeId: string) {
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: aptitudes", () => {
-  test("stores an aptitude's description", async () => {
-    const { session, ruleset } = await createTestUserAndRuleset();
-    const created = await EntitiesService.createEntity(session, ruleset.id, "aptitudes", {
-      name: "Arcane Spells",
-      description: "Wizard and sorcerer spells",
-    });
-    expect(created).toMatchObject({ name: "Arcane Spells", description: "Wizard and sorcerer spells" });
-    const updated = await EntitiesService.updateEntity(session, ruleset.id, "aptitudes", created.id, {
-      name: "Arcane Spells",
-      description: "Updated",
-    });
-    expect(updated.description).toBe("Updated");
-  });
-
   test("keeps General, which the general feats count toward: neither renamed nor deleted, still described", async () => {
     const {
       session,

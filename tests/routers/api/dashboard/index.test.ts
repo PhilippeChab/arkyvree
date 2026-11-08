@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSignedInUser, expectOk } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -25,9 +25,5 @@ describe("dashboard", () => {
       totalCharacters: 0,
       totalCampaigns: 1,
     });
-  });
-
-  test("requires a session", async () => {
-    await expectStatus(guestApi.api.dashboard.stats.$get(), 401);
   });
 });

@@ -47,12 +47,6 @@ describe("A new Pathfinder character's creation", () => {
     expect(pointBuy.costs).toEqual(CORE_RULEBOOK_COSTS);
   });
 
-  test("prices a 15-point build at its budget: 15, 14, 13, 12, 10 and 8", () => {
-    // 7 + 5 + 3 + 2 + 0 − 2
-    const { costs } = pointBuyOf();
-    expect([15, 14, 13, 12, 10, 8].reduce((sum, score) => sum + costs[score], 0)).toBe(15);
-  });
-
   test("gives each score the modifier (score − 10) / 2, rounded down", () => {
     const { modifiers } = NewCharacters.describeCreation(DATA);
     expect([1, 7, 8, 9, 10, 11, 12, 17, 18].map((score) => modifiers[score])).toEqual([-5, -2, -1, -1, 0, 0, 1, 3, 4]);

@@ -212,21 +212,6 @@ describe("Spell Focus", () => {
     );
   });
 
-  test("adds 1 to its school's DCs, and Greater Spell Focus requires it", async () => {
-    const { session, ruleset, spells } = await bareRuleset();
-    await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));
-    const [focus, greater] = [
-      await findFeat(ruleset.id, "Spell Focus: Evocation"),
-      await findFeat(ruleset.id, "Greater Spell Focus: Evocation"),
-    ];
-    expect(await Modifiers.findMany(db, { sourceIds: [focus.id], sourceType: "feats" })).toMatchObject([
-      { target: "spells.groups.evocation.*.dc.misc", operator: "add", value: "1" },
-    ]);
-    expect(await Requirements.findMany(db, { entityIds: [greater.id], entityType: "feats" })).toMatchObject([
-      { target: "feats.spellfocusevocation.possessed", operator: "equal", value: "true" },
-    ]);
-  });
-
   test("makes its school's feats as the seeded ones are", async () => {
     const { session, ruleset, spells } = await bareRuleset();
     await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));

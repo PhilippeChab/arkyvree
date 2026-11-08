@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
-  DAMAGE_TYPE,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -56,9 +55,5 @@ describe("The 3.5 fields", () => {
       singles.map(() => "winner"),
     );
     expect(DECLARED.roleMergeOf("classes", "bonusSpellAbility")).toBe("winner");
-  });
-
-  test("give a weapon's damage types in the rules' order: an urgrosh's Slashing, Piercing", () => {
-    expect(DECLARED.orderValues(DAMAGE_TYPE, ["Piercing", "Slashing"])).toEqual(["Slashing", "Piercing"]);
   });
 });

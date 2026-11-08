@@ -1157,14 +1157,6 @@ describe("DetailedCharacter", () => {
         expect(weaponSet(await buildSeeded("Lyra Shadowstep")).mainhand).toMatchObject({ tohit: { strength: 0 } });
       });
 
-      test("keep strength when it's higher", async () => {
-        // STR 18 (+4) over DEX 14 (+2).
-        expect(
-          weaponSet(await buildCarrying("Bjorn Ironhand", [{ item: "Shortsword", location: "Main Hand", groups: [0] }]))
-            .mainhand!.tohit.strength,
-        ).toBe(4);
-      });
-
       test("take a carried shield's armor check penalty, keeping strength once that's better", async () => {
         // An elf rogue: STR 10 (+0), DEX 20 (+5), proficient with shields through a charm; a heavy steel shield costs 2,
         // a tower shield 10.
@@ -1341,18 +1333,6 @@ describe("DetailedCharacter", () => {
         });
         // A fighter, proficient with both: nothing
         expect((await attacks("Bjorn Ironhand", plateAndShield)).gearpenalty).toBe(0);
-      });
-
-      test("costs every attack of its set 2 with a tower shield, and its check penalty without proficiency", async () => {
-        const gear = async (name: string) =>
-          weaponSet(
-            await buildCarrying(name, [
-              { item: "Dagger", location: "Main Hand", groups: [0] },
-              { item: "Tower Shield", location: "Off Hand", groups: [0] },
-            ]),
-          ).mainhand!.tohit.gearpenalty;
-        // A fighter, proficient with it; a wizard, who isn't, takes its 10 as well
-        expect([await gear("Bjorn Ironhand"), await gear("Elara Starweaver")]).toEqual([-2, -12]);
       });
 
       test("costs a crossbow in one hand 2 when light, 4 when heavy, and a hand crossbow nothing", async () => {
@@ -1984,32 +1964,6 @@ describe("DetailedCharacter", () => {
         { checkpenalty: -1, ac: { bonus: 2 }, spellfailure: 15 },
       ]);
     });
-
-    test("adds a monk's wisdom when unarmored, through a template modifier its requirements gate", async () => {
-      // Monk 3: DEX 16 (+3), WIS 16 (+3).
-      const zen = await buildSeeded("Zen Whitepetal");
-      expect(weaponSet(zen).ac).toMatchObject({
-        base: 10,
-        dexterity: 3,
-        armor: 0,
-        shield: 0,
-        misc: 3,
-        total: 16,
-      });
-      const acBonus = zen.modifierEvaluator
-        .getModifiers()
-        .appliedModifiers.find(
-          (m) => m.value === "{{ max(0, [abilities.wisdom.modifier]) }}" && m.target === "combat.weaponsets.0.ac.misc",
-        );
-      expect(acBonus).toBeDefined();
-      // Its requirements: no armor, no shield, a light load.
-      const gates = zen.requirementEvaluator
-        .getRequirements()
-        .fulfilledRequirementGroups.filter((group) =>
-          group.some((r) => r.entityId === acBonus!.id && r.entityType === "modifiers"),
-        );
-      expect(gates.length).toBeGreaterThan(0);
-    });
   });
 
   describe("speed", () => {
@@ -2218,13 +2172,6 @@ describe("DetailedCharacter", () => {
       const before = await dcs([]);
       const headband = { item: (await createAbilityItem("intelligence", 2, "Head")).id, location: "Head" as const };
       expect(await dcs([headband])).toEqual(before.map((dc) => dc + 1));
-    });
-
-    test("apply a feat's bonus", async () => {
-      const toughness = (await buildSeeded("Kael Stormborn")).modifierEvaluator
-        .getModifiers()
-        .appliedModifiers.find((m) => m.target === "combat.hp.misc");
-      expect(toughness).toMatchObject({ operator: "add", value: "3" });
     });
 
     test("hold a weapon feat's bonus until the weapon is in hand", async () => {

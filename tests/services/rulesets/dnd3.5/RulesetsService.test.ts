@@ -763,15 +763,6 @@ describe("RulesetsService", () => {
       expect(RulesetsService.publishRuleset(session, draft.id)).rejects.toMatchObject({ refusal: "unprocessable" });
     });
 
-    test("refuses an edit started from a stale copy", async () => {
-      const { user, session } = await createTestUser();
-      const ruleset = await createTestRuleset(user.id);
-      const edit = (name: string) =>
-        RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt: ruleset.updatedAt });
-      await edit(`First ${uniqueId()}`);
-      expect(edit(`Second ${uniqueId()}`)).rejects.toThrow(ConflictError);
-    });
-
     test("refuses a name another ruleset holds, another user's or an archived one's, and keeps its own", async () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id);

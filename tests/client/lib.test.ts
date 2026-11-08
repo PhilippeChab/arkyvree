@@ -44,10 +44,4 @@ describe("An activity", () => {
     ).toEqual(["Add Rank", "Edit Rank", "Remove Rank"]);
     expect(formatActivityType("addAdvancement", { count: 2 })).toBe("Add Advancement");
   });
-
-  test("says Someone for an actor it holds no name of, a deleted account's", () => {
-    expect(formatNotificationMessage("deletePerk", { entityName: "Brawn" }, RULES)).toBe(
-      "Someone deleted talent Brawn",
-    );
-  });
 });

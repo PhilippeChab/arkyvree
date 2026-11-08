@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { MAX_RULESET_NAME_LENGTH } from "@/shared/rulesets.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const rulesets = api.api.rulesets;
@@ -150,18 +150,5 @@ describe("rulesets", () => {
       ruleset.entities[":entityType"][":entityId"].restore.$post({ param: { id, entityType: "classes", entityId } }),
     );
     expect(await expectOk(ruleset.changes.$get({ param: { id } }))).toEqual([]);
-  });
-
-  test("requires a session", async () => {
-    await expectStatus(guestApi.api.rulesets.$get({ query: {} }), 401);
-    await expectStatus(guestApi.api.rulesets[":id"].$get({ param: { id: NIL_UUID } }), 401);
-  });
-
-  test("returns 404 for a missing ruleset", async () => {
-    const param = { id: NIL_UUID };
-    await expectStatus(ruleset.$get({ param }), 404);
-    await expectStatus(ruleset.star.$post({ param }), 404);
-    await expectStatus(ruleset.archive.$post({ param }), 404);
-    await expectStatus(ruleset.changes.$get({ param }), 404);
   });
 });

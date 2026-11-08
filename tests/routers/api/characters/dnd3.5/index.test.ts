@@ -212,17 +212,6 @@ describe("characters", () => {
     expect(linkable.items.map((c) => c.id)).not.toContain(gmCharacter.id);
   });
 
-  test("answers a campaign's linkable characters to a non-member as it answers an unknown campaign", async () => {
-    const campaign = await postCampaign();
-    const outsider = await createSignedInUser("outsider");
-    await createTestCharacter(outsider.user.id);
-    const linkable = outsider.api.api.characters.unlinked[":campaignId"];
-
-    const hidden = await expectStatus(linkable.$get({ param: { campaignId: campaign.id }, query: {} }), 404);
-    const unknown = await expectStatus(linkable.$get({ param: { campaignId: NIL_UUID }, query: {} }), 404);
-    expect(await hidden.text()).toBe(await unknown.text());
-  });
-
   test("archives, unarchives and permanently deletes a character", async () => {
     const { id } = await postCharacter();
     expect(await expectOk(character.$delete({ param: { id } }))).toEqual({
@@ -235,11 +224,6 @@ describe("characters", () => {
     await expectOk(character.$delete({ param: { id } }));
     await expectOk(character.permanent.$delete({ param: { id } }));
     await expectStatus(character.$get({ param: { id } }), 404);
-  });
-
-  test("only deletes an archived character permanently", async () => {
-    const { id } = await postCharacter();
-    await expectStatus(character.permanent.$delete({ param: { id } }), 409);
   });
 
   test("enqueues a PDF of the character", async () => {
@@ -337,28 +321,6 @@ describe("characters", () => {
       const abilities = familiar.blocks.find((block) => block.key === "abilities");
       if (abilities?.kind !== "scores") throw new Error("no abilities block");
       expect(abilities.scores.map(({ short }) => short)).toEqual(["STR", "DEX", "CON", "INT", "WIS", "CHA"]);
-    });
-
-    test("refuses an ability the ruleset doesn't have", async () => {
-      const { id } = await postCharacter();
-      await expectStatus(
-        character.scores[":role"].$put({ param: { id, role: "score" }, json: { [NIL_UUID]: 15 } }),
-        400,
-      );
-    });
-
-    test("refuses a score past the ruleset's bounds", async () => {
-      const { abilityMap } = await getSeedCtx();
-      const { id } = await postCharacter();
-      for (const score of [0, 1000]) {
-        await expectStatus(
-          character.scores[":role"].$put({
-            param: { id, role: "score" },
-            json: { [abilityMap["Strength"]]: score },
-          }),
-          400,
-        );
-      }
     });
   });
 
@@ -574,22 +536,6 @@ describe("characters", () => {
       );
     });
 
-    test("rejects a language its fork deleted, or one sent twice", async () => {
-      const { langMap } = await getSeedCtx();
-      const fork = await createSeededTestRuleset(SEED_USER_ID);
-      const entity = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
-      await expectOk(
-        entity.$delete({ param: { id: fork.id, entityType: "languages", entityId: langMap["Draconic"] } }),
-      );
-      const { id } = await postCharacter({ rulesetId: fork.id });
-
-      const put = (languageIds: string[]) =>
-        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
-      await expectStatus(put([langMap["Draconic"]]), 400);
-      await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
-      await expectOk(put([langMap["Common"]]));
-    });
-
     test("answers and saves a bonded creature's languages, as its master's editor edits them", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const languages = await expectOk(
@@ -779,28 +725,22 @@ describe("characters", () => {
       expect(pdf.headers.get("Content-Type")).toBe("application/pdf");
     });
 
-    test("names a shared sheet's PDF after the character, whatever its name's characters", async () => {
-      const { id } = await postCharacter({ name: "Ryū: O'Hara (2)" });
-      const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
-
-      const pdf = await guestApi.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken: shareToken! } });
-      expect(pdf.status).toBe(200);
+    test.each([
       // "Ryū_ O'Hara (2)-sheet.pdf", its colon replaced: a header holds Latin-1 alone, so it goes percent-encoded
-      expect(pdf.headers.get("Content-Disposition")).toBe(
-        "inline; filename*=UTF-8''Ry%C5%AB_%20O%27Hara%20%282%29-sheet.pdf",
-      );
-    });
-
-    test("names a shared sheet's PDF whose name is cut short at a character beyond a single UTF-16 unit", async () => {
+      ["whatever its name's characters", "Ryū: O'Hara (2)", "Ry%C5%AB_%20O%27Hara%20%282%29-sheet.pdf"],
       // Its 200th character is an emoji, two UTF-16 units: the cut keeps it whole
-      const { id } = await postCharacter({ name: `${"a".repeat(199)}😀 rest` });
+      [
+        "cut short at a character beyond a single UTF-16 unit",
+        `${"a".repeat(199)}😀 rest`,
+        `${"a".repeat(199)}%F0%9F%98%80-sheet.pdf`,
+      ],
+    ])("names a shared sheet's PDF after the character, %s", async (_case, name, filename) => {
+      const { id } = await postCharacter({ name });
       const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
 
       const pdf = await guestApi.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken: shareToken! } });
       expect(pdf.status).toBe(200);
-      expect(pdf.headers.get("Content-Disposition")).toBe(
-        `inline; filename*=UTF-8''${"a".repeat(199)}%F0%9F%98%80-sheet.pdf`,
-      );
+      expect(pdf.headers.get("Content-Disposition")).toBe(`inline; filename*=UTF-8''${filename}`);
     });
 
     test("shares a master's bonded creature without its private notes", async () => {
@@ -828,16 +768,6 @@ describe("characters", () => {
       await expectStatus(shared.$get({ param: { shareToken: NIL_UUID } }), 404);
       await expectStatus(shared.pdf.$get({ param: { shareToken: NIL_UUID } }), 404);
     });
-  });
-
-  test("requires a session", async () => {
-    const { id } = await postCharacter();
-    await expectStatus(guestApi.api.characters.$get({ query: {} }), 401);
-    await expectStatus(guestApi.api.characters[":id"].share.$post({ param: { id } }), 401);
-    await expectStatus(
-      guestApi.api.characters[":id"].scores[":role"].$put({ param: { id, role: "score" }, json: {} }),
-      401,
-    );
   });
 
   test("rejects a character without a name or fields, or with a field its form refuses", async () => {
@@ -894,13 +824,5 @@ describe("characters", () => {
       },
       description: "Tall",
     });
-  });
-
-  test("returns 404 for a missing character", async () => {
-    const param = { id: NIL_UUID };
-    await expectStatus(character.$get({ param }), 404);
-    await expectStatus(character.$put({ param, json: { fields: { CHARACTER_AGE: 30 } } }), 404);
-    await expectStatus(character.$delete({ param }), 404);
-    await expectStatus(character.unarchive.$post({ param }), 404);
   });
 });

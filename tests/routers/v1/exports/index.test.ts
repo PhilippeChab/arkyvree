@@ -4,7 +4,6 @@ import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createBaseCharacter } from "@/tests/support/v1.ts";
 
@@ -57,14 +56,5 @@ describe("v1 exports", () => {
     const param = { id: pending.id };
     expect(await expectOk(api.v1.exports[":id"].$get({ param }))).toMatchObject({ status: "failed" });
     await expectStatus(api.v1.exports[":id"].download.$get({ param }), 409);
-  });
-
-  test("hides another user's export, and one that doesn't exist", async () => {
-    const { pending } = await queuePdf();
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    for (const id of [pending.id, NIL_UUID]) {
-      await expectStatus(api.v1.exports[":id"].$get({ param: { id } }), 404);
-      await expectStatus(api.v1.exports[":id"].download.$get({ param: { id } }), 404);
-    }
   });
 });

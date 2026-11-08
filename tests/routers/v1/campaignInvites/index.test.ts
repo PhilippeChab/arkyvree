@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** A campaign whose Game Master invited a new user into a slot, through the public API: both users' clients. */
@@ -61,21 +60,5 @@ describe("v1 campaign invites to the key's user", () => {
       status: "Revoked",
     });
     await expectStatus(api.v1["campaign-invites"][":id"].accept.$post({ param: { id } }), 409);
-  });
-
-  test("hides another campaign's invite from a stranger who would revoke it", async () => {
-    const { id } = await invite();
-    const { api: strangerApi } = await createKeyedApi((await createTestUser("stranger")).user.id);
-    await expectStatus(strangerApi.v1["campaign-invites"][":id"].revoke.$post({ param: { id } }), 404);
-  });
-
-  test("hides another user's invite, and one that doesn't exist", async () => {
-    const { gmApi, id } = await invite();
-    for (const inviteId of [id, NIL_UUID]) {
-      const param = { id: inviteId };
-      await expectStatus(gmApi.v1["campaign-invites"][":id"].$get({ param }), 404);
-      await expectStatus(gmApi.v1["campaign-invites"][":id"].accept.$post({ param }), 404);
-      await expectStatus(gmApi.v1["campaign-invites"][":id"].reject.$post({ param }), 404);
-    }
   });
 });

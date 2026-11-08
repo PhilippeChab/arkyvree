@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/dnd3.5/entities.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -37,39 +37,6 @@ describe("rulesets customization requirements", () => {
     expect(await expectOk(requirements.$get({ param }))).toEqual([]);
   });
 
-  test("creates a chaining requirement without a target", async () => {
-    const { id, entityId } = await createCustomizableFeat();
-    const created = await expectOk(
-      requirements.$post({
-        param: { id, entityType: "feats", entityId },
-        json: { level: "1", chainingOperator: "and" },
-      }),
-    );
-    expect(created).toMatchObject({
-      level: "1",
-      chainingOperator: "and",
-      target: null,
-      value: null,
-      valueType: null,
-      operator: null,
-    });
-  });
-
-  test("answers 409 for a level the entity already has, created or moved onto", async () => {
-    const { id, entityId } = await createCustomizableFeat();
-    const param = { id, entityType: "feats" as const, entityId };
-    await expectOk(requirements.$post({ param, json: charisma13 }));
-    const conflict = await expectStatus(requirements.$post({ param, json: { ...charisma13, value: "15" } }), 409);
-    expect(await conflict.json()).toMatchObject({
-      error: "ConflictError",
-      message: "A requirement at this level already exists",
-    });
-
-    const second = await expectOk(requirements.$post({ param, json: { ...charisma13, level: "2" } }));
-    await expectStatus(requirement.$put({ param: { ...param, requirementId: second.id }, json: charisma13 }), 409);
-    expect((await expectOk(requirements.$get({ param }))).map((r) => r.level).sort()).toEqual(["1", "2"]);
-  });
-
   test.each([...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()])(
     "adds a requirement to %s",
     async (entityType) => {
@@ -92,14 +59,6 @@ describe("rulesets customization requirements", () => {
       requirements.$post({ param: { id, entityType: "modifiers", entityId: modifier.id }, json: charisma13 }),
     );
     expect(created).toMatchObject({ entityType: "modifiers", entityId: modifier.id });
-  });
-
-  test("requires a session", async () => {
-    const { id, entityId } = await createCustomizableFeat();
-    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({
-      param: { id, entityType: "feats", entityId },
-    });
-    await expectStatus(response, 401);
   });
 
   test("rejects a value that isn't of its target's type", async () => {

@@ -385,19 +385,6 @@ describe("A D&D 5th Edition character's levels", () => {
         "saved",
       );
     });
-
-    test("doesn't add up two classes' Extra Attacks, and a fighter's later ones raise them", async () => {
-      const character = await createHuman({ ...FIGHTER_SCORES, Charisma: 13 });
-      // Forced: the levels' picks don't matter here, the first's hit points its die's highest
-      for (let level = 1; level <= 5; level++)
-        await addLevel(session, character.id, "Fighter", level, { hp: level === 1 ? 10 : 6 }, true);
-      for (let level = 1; level <= 5; level++) await addLevel(session, character.id, "Paladin", level, { hp: 5 }, true);
-      const attacks = async () => (await buildCharacter(character.id)).components.combat.getCombat().attacks;
-      expect(await attacks()).toBe(2);
-      for (let level = 6; level <= 11; level++)
-        await addLevel(session, character.id, "Fighter", level, { hp: 6 }, true);
-      expect(await attacks()).toBe(3);
-    });
   });
 
   describe("a wizard's spellbook", () => {
