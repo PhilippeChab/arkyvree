@@ -913,6 +913,29 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("whether the user is a demo's is useIsDemo, and its countdown the demo banner's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/gate.tsx": "export function G() {\n  return useIsDemo() && <Banner />;\n}\n",
+          "client/src/read.tsx": "export function R() {\n  return useAuthStore((s) => !!s.user?.expiresAt);\n}\n",
+          "client/src/user.ts": "export const u = (user: AuthUser) => !!user.expiresAt;\n",
+          "client/src/share.ts": "export const s = (link: ShareLink) => link.expiresAt;\n",
+          "client/src/countdown.tsx": "export function C() {\n  return useDemoTimeRemaining().minutes;\n}\n",
+          "client/src/components/layout/DemoBanner.tsx":
+            "export function D() {\n  return useDemoTimeRemaining().minutes;\n}\n",
+          "client/src/hooks/useIsDemo.ts": "export const i = () => useAuthStore((s) => !!s.user?.expiresAt);\n",
+          "client/src/stores/authUser.ts": "export const a = (user: AuthUser) => user.expiresAt;\n",
+        },
+        ["demo-reads"],
+      ),
+    ).toEqual([
+      "demo-reads client/src/countdown.tsx",
+      "demo-reads client/src/read.tsx",
+      "demo-reads client/src/user.ts",
+    ]);
+  });
+
   test("a date is shown through lib/formatDate.ts", async () => {
     expect(
       await lintRepo(

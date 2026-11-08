@@ -7,6 +7,13 @@
  * - `confirm-dialogs`: a confirmation is a `ConfirmDialog` (`DeleteDialog`), over a page or over a dialog alike; a
  *   save's rules warnings are a `ValidationIssuesAlert`. No other alert carries actions, and no "Are you sure" is
  *   written by hand. One that sends a request closes in its mutation's `onSuccess`, never as it sends it.
+ * - `link-buttons`: an action written as a link is a `LinkButton`, never a `MuiLink component="button"`.
+ * - `choice-chips`: a chip that is one of several to choose (its look switched by a selection) is a `ChoiceChip`, and a
+ *   choice of one among a few as buttons is an `OptionToggle`, MUI's `ToggleButtonGroup` its alone.
+ * - `next-page-spinners`: the spinner at the foot of a list that loads its next page as it scrolls is a
+ *   `NextPageSpinner`.
+ * - `option-tooltips`: an advancement wizard's option tooltip (a description, or the tree of what it asks) is its
+ *   ruleset's `OptionTooltip`, every tooltip of its steps.
  * - `anchor-menus`: a menu that opens from what was clicked keeps its anchor through `useAnchorMenu`.
  * - `select-fields`: a select bound to a form's field is a `SelectField`; a custom input its owner binds (handed the
  *   field's ref) keeps its own select.
@@ -49,8 +56,18 @@
  *   `animationOffset` is `itemsBeforeLastPage(data)`.
  * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own, and a description that isn't
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
+ * - `entity-pages`: a ruleset entity page's details are `useEntityForm`'s, its form saved through `useEntitySave`,
+ *   which nothing else under `pages/rulesets/` calls (no `sync.saved` of its own there either), and it deletes through
+ *   its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it). It goes back where it was opened from:
+ *   its error's way back is `entityPageBack`'s, never a label written in place.
+ * - `notification-messages`: a notification shows through `NotificationMessage` (`components/notifications`), its
+ *   message, its details and its unread dot, wherever it shows; what an activity or a notification changed shows
+ *   inline under it, in an `ActivityDetails`, never in a tooltip.
  * - `row-actions`: a row's actions are a `RowActions` of `RowAction`s (`components/common`), in a row that spreads
  *   `ROW_ACTIONS_HOVER_SX`: never buttons of their own, nor a `row-actions` class written by hand.
+ * - `target-paths`: a target path's breadcrumbs are `TargetPathBreadcrumbs` (no chevron beside a chip of its own), and
+ *   a modifier's row is drawn by `ModifierCells` (`components/customization`): its operator's chip and its value,
+ *   which reads a template's path (`extractTemplatePath`) there alone.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -81,6 +98,12 @@ const ACTION_ALERTS = [
 const CONFIRMATIONS = new Set(["ConfirmDialog", "DeleteDialog", "EntityDeleteDialog"]);
 /** How a row pushes what it holds to its end: a list's actions there sit in its toolbar instead */
 const END_JUSTIFICATIONS = new Set(["flex-end", "space-between"]);
+/** The modules of a ruleset entity page's save and delete: its inline save's hook, its layout's delete */
+const ENTITY_PAGE_MODULES = {
+  layout: "client/src/pages/rulesets/components/EntityDetailLayout.tsx",
+  form: "client/src/pages/rulesets/hooks/useEntityForm.ts",
+  save: "client/src/pages/rulesets/hooks/useEntitySave.ts",
+};
 
 /** A list's own actions, which sit in its toolbar: its add button, a ruleset section's `SectionActions` */
 const LIST_ACTIONS = new Set(["AddButton", "SectionActions"]);
@@ -97,6 +120,22 @@ const LIST_TOOLBARS = new Set(["DialogLead", "ListToolbar", "SearchBar", "Sectio
 
 /** The words a missing description is said in, which `NO_DESCRIPTION` holds */
 const NO_DESCRIPTION_WORDS = /^No description\b/;
+
+/** The words of a notification or an activity, each said by its one component, the same on every surface */
+const NOTIFICATION_FORMATTERS = {
+  formatActivityDetails: {
+    file: "client/src/components/notifications/ActivityDetails.tsx",
+    message:
+      "What an activity or a notification changed shows through `ActivityDetails` (`components/notifications`), " +
+      "inline under it: a tooltip never opens on a phone.",
+  },
+  formatNotificationMessage: {
+    file: "client/src/components/notifications/NotificationMessage.tsx",
+    message:
+      "A notification shows through `NotificationMessage` (`components/notifications`): its message, its details " +
+      "inline and its unread dot, one way on every surface.",
+  },
+};
 
 /** The pairs of words whose labels name a state and its opposite, A to Z within each; `Un…` pairs aside. */
 const OPPOSITES = new Set(["Close Open", "Collapse Expand", "Hide Show"]);
@@ -150,8 +189,17 @@ const SUBHEADING_LEVELS = new Set(["h3", "h4", "h5", "h6"]);
 /** What paints a surface of its own, a banner's (`PageHeader`'s, the dashboard's hero): not a panel's paper */
 const SURFACES = new Set(["background", "backgroundColor", "bgcolor"]);
 
+/** The modules that draw a target path and a modifier's row, each one way: its breadcrumbs, a list's cells */
+const TARGET_PATH_MODULES = {
+  breadcrumbs: "client/src/components/customization/TargetPathBreadcrumbs.tsx",
+  modifierCells: "client/src/components/customization/ModifierCells.tsx",
+};
+
 /** A box's padding at its top: a page's column takes the theme's */
 const TOP_PADDINGS = new Set(["p", "padding", "paddingTop", "paddingY", "pt", "py"]);
+
+/** A ruleset's advancement wizard: its folder of the character page's components, its steps and its option tooltip. */
+const WIZARD_FOLDER = /^client\/src\/pages\/characters\/details\/components\/[^/]+\//;
 
 /** Whether a call closes a dialog: `dialog.close()`, `onClose()`, `setDeleteOpen(false)`. */
 function closesDialog(call) {
@@ -244,6 +292,32 @@ function createCardTitles(context) {
       );
       if (sized)
         context.report({ node: node.openingElement, message: "A card's or a panel's title is a `CardTitle`." });
+    },
+  };
+}
+
+function createChoiceChips(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/Chips.tsx")) return {};
+  const toggle = inFile(context, "client/src/components/common/OptionToggle.tsx");
+  return {
+    ImportSpecifier(node) {
+      if (toggle || node.imported.name !== "ToggleButtonGroup" || node.parent.source.value !== "@mui/material") return;
+      context.report({
+        node,
+        message:
+          "A choice of one among a few, as buttons under its label, is an `OptionToggle`: MUI's group is its own.",
+      });
+    },
+    JSXElement(node) {
+      if (
+        elementName(node) !== "Chip" ||
+        attributeExpression(attribute(node, "variant"))?.type !== "ConditionalExpression"
+      )
+        return;
+      context.report({
+        node: node.openingElement,
+        message: "A chip that is one of several to choose, its look switched by a selection, is a `ChoiceChip`.",
+      });
     },
   };
 }
@@ -345,6 +419,58 @@ function createEmptyValues(context) {
   };
 }
 
+function createEntityPages(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("client/src/pages/rulesets/")) return {};
+  const report = (node, message) => context.report({ node, message });
+  let layout = false;
+  const deleteDialogs = [];
+  return {
+    // An inline form's `sync.saved(…)`, once its save is in, and its save made beside its form
+    CallExpression(node) {
+      if (calleeName(node) === "useEntitySave" && file !== ENTITY_PAGE_MODULES.form) {
+        report(
+          node,
+          "A ruleset entity page's details are `useEntityForm`'s (`pages/rulesets/hooks`): its form, kept in step " +
+            "with the record, and its save, which its card takes whole.",
+        );
+      }
+      if (file === ENTITY_PAGE_MODULES.save || node.callee.type !== "MemberExpression") return;
+      if (calleeName(node) !== "saved") return;
+      report(
+        node,
+        "A ruleset entity page saves its details through `useEntitySave` (`pages/rulesets/hooks`): the form " +
+          "rebaselined, the saved row cached, a copy followed, its list refreshed and a toast.",
+      );
+    },
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "EntityDetailLayout") layout = true;
+      if (name === "EntityDeleteDialog") deleteDialogs.push(node);
+      const backLabel = node.openingElement.attributes.find(
+        (a) => a.type === "JSXAttribute" && a.name.name === "backLabel",
+      );
+      const label = backLabel?.value?.type === "JSXExpressionContainer" ? backLabel.value.expression : backLabel?.value;
+      if (name !== "EntityPageError" || !["Literal", "TemplateLiteral"].includes(label?.type)) return;
+      report(
+        backLabel,
+        "An entity page goes back where it was opened from: its error's way back is `entityPageBack(location.state, " +
+          "fallback)`'s, its `label` and its `to`.",
+      );
+    },
+    "Program:exit"() {
+      if (!layout || file === ENTITY_PAGE_MODULES.layout) return;
+      for (const dialog of deleteDialogs) {
+        report(
+          dialog.openingElement,
+          "An entity page's delete is its `EntityDetailLayout`'s `deletion`: its header's menu, its confirmation, " +
+            "the toast and the way Back.",
+        );
+      }
+    },
+  };
+}
+
 function createExpandArrows(context) {
   if (!inClient(context)) return {};
   const file = repoPath(context.filename);
@@ -432,6 +558,17 @@ function createFormValidation(context) {
   };
 }
 
+function createLinkButtons(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/LinkButton.tsx")) return {};
+  return {
+    JSXElement(node) {
+      const component = attributeExpression(attribute(node, "component"));
+      if (elementName(node) !== "MuiLink" || component?.type !== "Literal" || component.value !== "button") return;
+      context.report({ node: node.openingElement, message: "An action written as a link is a `LinkButton`." });
+    },
+  };
+}
+
 function createListResults(context) {
   if (!inClient(context) || LIST_RESULTS_OWNERS.has(repoPath(context.filename))) return {};
   return {
@@ -513,6 +650,53 @@ function createListToolbars(context) {
         message:
           "A list's actions sit in its toolbar, a `ListToolbar`'s `actions` (in a dialog, `DialogLead`'s): never a bare " +
           "row of their own.",
+      });
+    },
+  };
+}
+
+function createNextPageSpinners(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/NextPageSpinner.tsx")) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "DiceSpinner") return;
+      const stack = parentElement(node);
+      const list = stack && elementName(stack) === "Stack" ? parentElement(stack) : null;
+      if (!list || elementName(list) !== "List") return;
+      context.report({
+        node: node.openingElement,
+        message: "The spinner at the foot of a list that loads its next page is a `NextPageSpinner`.",
+      });
+    },
+  };
+}
+
+function createNotificationMessages(context) {
+  if (!inClient(context)) return {};
+  return {
+    CallExpression(node) {
+      const name = calleeName(node);
+      if (!Object.hasOwn(NOTIFICATION_FORMATTERS, name) || inFile(context, NOTIFICATION_FORMATTERS[name].file)) return;
+      context.report({ node, message: NOTIFICATION_FORMATTERS[name].message });
+    },
+  };
+}
+
+function createOptionTooltips(context) {
+  const file = repoPath(context.filename);
+  const wizard = WIZARD_FOLDER.test(file);
+  if (!inClient(context) || (wizard && file.endsWith("/OptionTooltip.tsx"))) return {};
+  // Every tooltip a ruleset's advancement step shows is an option's (a skill's description, a feat's)
+  const step = wizard && /\/\w+Step\.tsx$/.test(file);
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Tooltip") return;
+      const title = attributeExpression(attribute(node, "title"));
+      const text = title ? context.sourceCode.getText(title) : "";
+      if (!step && !/requirementTree|\.slice\(0,/.test(text)) return;
+      context.report({
+        node: node.openingElement,
+        message: "An option's tooltip (its description, or the tree of what it asks) is an `OptionTooltip`.",
       });
     },
   };
@@ -773,6 +957,44 @@ function createSkeletons(context) {
   };
 }
 
+function createTargetPaths(context) {
+  if (!inClient(context)) return {};
+  const cells = inFile(context, TARGET_PATH_MODULES.modifierCells);
+  const report = (node, message) => context.report({ node, message });
+  return {
+    CallExpression(node) {
+      if (cells || calleeName(node) !== "extractTemplatePath") return;
+      report(
+        node,
+        "A modifier's value shows through `ModifierValueCell` (`components/customization`): a template's path as " +
+          "breadcrumbs, else the value, named.",
+      );
+    },
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "ValueChip" && !cells) {
+        const label = attributeExpression(attribute(node, "label"));
+        const kind = label?.type === "CallExpression" && calleeName(label) === "formatOperator" && label.arguments[0];
+        if (kind?.type === "Literal" && kind.value === "modifier") {
+          report(
+            node.openingElement,
+            "A modifier's operator shows through `ModifierOperatorCell` (`components/customization`).",
+          );
+        }
+      }
+      // A chevron beside a chip: a path's segments, drawn by hand
+      if (name !== "ChevronRightIcon" || inFile(context, TARGET_PATH_MODULES.breadcrumbs)) return;
+      const parent = parentElement(node);
+      if (!parent || !childElements(parent).some((child) => elementName(child)?.endsWith("Chip"))) return;
+      report(
+        node.openingElement,
+        "A target path's breadcrumbs are `TargetPathBreadcrumbs` (`components/customization`): its segments' chips, a " +
+          "chevron between them, in a list's cell or a picker.",
+      );
+    },
+  };
+}
+
 function createToggleStates(context) {
   if (!inClient(context)) return {};
   return {
@@ -952,6 +1174,7 @@ function styleProperties(expression, node) {
 export default {
   "add-buttons": { meta: { type: "suggestion" }, create: createAddButtons },
   "anchor-menus": { meta: { type: "suggestion" }, create: createAnchorMenus },
+  "choice-chips": { meta: { type: "suggestion" }, create: createChoiceChips },
   "dialog-footers": { meta: { type: "suggestion" }, create: createDialogFooters },
   "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "form-validation": { meta: { type: "suggestion" }, create: createFormValidation },
@@ -959,6 +1182,7 @@ export default {
   "card-titles": { meta: { type: "suggestion" }, create: createCardTitles },
   "confirm-dialogs": { meta: { type: "suggestion" }, create: createConfirmDialogs },
   "empty-values": { meta: { type: "suggestion" }, create: createEmptyValues },
+  "entity-pages": { meta: { type: "suggestion" }, create: createEntityPages },
   "list-results": { meta: { type: "suggestion" }, create: createListResults },
   "list-toolbars": { meta: { type: "suggestion" }, create: createListToolbars },
   "page-gaps": { meta: { type: "suggestion" }, create: createPageGaps },
@@ -966,6 +1190,11 @@ export default {
   "page-titles": { meta: { type: "suggestion" }, create: createPageTitles },
   panels: { meta: { type: "suggestion" }, create: createPanels },
   "section-headings": { meta: { type: "suggestion" }, create: createSectionHeadings },
+  "target-paths": { meta: { type: "suggestion" }, create: createTargetPaths },
+  "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
+  "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },
+  "notification-messages": { meta: { type: "suggestion" }, create: createNotificationMessages },
+  "option-tooltips": { meta: { type: "suggestion" }, create: createOptionTooltips },
   "row-actions": { meta: { type: "suggestion" }, create: createRowActions },
   "select-fields": { meta: { type: "suggestion" }, create: createSelectFields },
   skeletons: { meta: { type: "suggestion" }, create: createSkeletons },

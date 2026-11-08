@@ -68,6 +68,8 @@
  *   written through `stores/browserStorage.ts`, whose guards a blocked storage (a private window, blocked site data)
  *   never makes throw.
  * - `date-formats`: a date is shown through `lib/formatDate.ts`, in the viewer's language.
+ * - `demo-reads`: whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt`
+ *   again; a demo's countdown, `useDemoTimeRemaining`, which re-renders as it ticks, is the demo banner's alone.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
  *   `MuiLink`; a customization page's path is `buildCustomizationPath(entityType, id)`, never written by hand. A page's
@@ -172,6 +174,13 @@ const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
 
 /** A date's own formatters, which a date never goes through outside `lib/formatDate.ts` */
 const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
+
+/** The modules that read when a demo's session ends: its hooks, and the query client's 401, outside React */
+const DEMO_READERS = new Set([
+  "client/src/components/layout/useDemoTimeRemaining.ts",
+  "client/src/hooks/useIsDemo.ts",
+  "client/src/lib/queryClient.ts",
+]);
 
 /** The padding a dialog's content keeps: the theme's, under its title and above its footer */
 const DIALOG_PADDINGS = new Set(["p", "padding", "pb", "paddingBottom", "pt", "paddingTop", "py"]);
@@ -712,6 +721,32 @@ function createDateFormats(context) {
     MemberExpression(node) {
       const ofIntl = !node.computed && node.object.type === "Identifier" && node.object.name === "Intl";
       if (ofIntl && INTL_DATE_FORMATS.has(node.property.name)) report(node);
+    },
+  };
+}
+
+function createDemoReads(context) {
+  const file = repoPath(context.filename);
+  if (!inClient(context) || file.startsWith("client/src/stores/")) return {};
+  return {
+    CallExpression(node) {
+      if (calleeName(node) !== "useDemoTimeRemaining" || file === "client/src/components/layout/DemoBanner.tsx") return;
+      context.report({
+        node,
+        message:
+          "A demo's countdown, `useDemoTimeRemaining`, is the demo banner's alone: it re-renders as it ticks. Whether " +
+          "the user is a demo's is `useIsDemo()`.",
+      });
+    },
+    // `user.expiresAt`, `state.user?.expiresAt`
+    MemberExpression(node) {
+      if (DEMO_READERS.has(file) || node.property.name !== "expiresAt") return;
+      const owner = node.object.type === "Identifier" ? node.object.name : node.object.property?.name;
+      if (owner !== "user") return;
+      context.report({
+        node,
+        message: "Whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt`.",
+      });
     },
   };
 }
@@ -1992,6 +2027,7 @@ export default {
   "error-reads": { meta: { type: "suggestion" }, create: createErrorReads },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
+  "demo-reads": { meta: { type: "suggestion" }, create: createDemoReads },
   navigation: { meta: { type: "suggestion" }, create: createNavigation },
   "no-types-modules": { meta: { type: "suggestion" }, create: createNoTypesModules },
   "clickable-elements": { meta: { type: "suggestion" }, create: createClickableElements },
