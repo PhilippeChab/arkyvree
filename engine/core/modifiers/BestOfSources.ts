@@ -5,7 +5,9 @@
  * source's own modifiers add up (a magic armor's enhancement on its armor bonus). An object defines such a value
  * (`define`), with what its sources hold before any modifier (`bases`: a worn armor's armor bonus, by the armor's item)
  * and the value it shares its sources with (`parent`: a weapon set's deflection bonus, the character's); it's read
- * live, as its sources stand. The modifiers' evaluator adds to a source (`add`) where it would add to the value.
+ * live, as its sources stand. The modifiers' evaluator adds to a source (`add`) where it would add to the value. Setting
+ * it (a set modifier, a multiply, a creature's natural armor its stat block gives) makes what it's set to a source of
+ * its own, in place of everything before: a later add from another source competes with it.
  */
 
 /** What a value keeps: what isn't any source's, its modifiers' sums by source, and where else its sources come from. */
@@ -14,13 +16,18 @@ interface Stack {
   bases?: () => ReadonlyMap<string, number>;
   /** The value of another object it shares its sources with, read live (a weapon set's, the character's) */
   parent?: { key: string; object: () => object };
-  /** What isn't any source's: what it was set to, past what its sources gave then */
+  /** What isn't any source's, from its definition: none once it's set */
   rest: number;
+  /** What it was set to last, a source of its own in place of its parent, its bases and what was added before */
+  set?: number;
   sums: Sources;
 }
 
 /** A value's sources, as they stand: by source, what each adds up to. */
 type Sources = Map<string, number>;
+
+/** The source a value's set value counts as: no modifier's source is it. */
+const SET_SOURCE = "\u0000set";
 
 /** Where an object keeps its values that keep the best, by key: not enumerable, so the object reads as before. */
 const STACKS = Symbol("bestOfSources");
@@ -36,15 +43,20 @@ function bestAndWorst(amounts: Iterable<number>): number {
   return best + worst;
 }
 
-/** What isn't any source's in a value (`stack`): its own, and its parent's. */
+/** What isn't any source's in a value (`stack`): its own, and its parent's; none once it's set. */
 function restOf(stack: Stack): number {
+  if (stack.set !== undefined) return 0;
   const parent = stack.parent && stackOf(stack.parent.object(), stack.parent.key);
   return stack.rest + (parent ? restOf(parent) : 0);
 }
 
-/** A value's sources (`stack`), as they stand: its parent's, its bases and its modifiers' sums, a source's added up. */
+/**
+ * A value's sources (`stack`), as they stand: its parent's, its bases and its modifiers' sums, a source's added up; once
+ * it's set, what it was set to and the modifiers added since.
+ */
 function sourcesOf(stack: Stack): Sources {
   const parent = stack.parent && stackOf(stack.parent.object(), stack.parent.key);
+  if (stack.set !== undefined) return new Map([[SET_SOURCE, stack.set], ...stack.sums]);
   const sources: Sources = parent ? sourcesOf(parent) : new Map();
   const add = (entries: Iterable<[string, number]>) => {
     for (const [source, amount] of entries) sources.set(source, (sources.get(source) ?? 0) + amount);
@@ -78,7 +90,7 @@ export default class BestOfSources {
   /**
    * Defines `object`'s value at `key` as keeping the best of its sources, from `value` (what isn't any source's), with
    * its bases (`bases`) and its parent (`parent`, its value read on another object), if any. Setting it (a set, a
-   * multiply) drops its modifiers' sums: it reads what it's set to, its bases and parent as they stood then.
+   * multiply, an assignment) makes what it's set to its one source, which later adds compete with.
    */
   static define(object: object, key: string, value: number, options: Pick<Stack, "bases" | "parent"> = {}): void {
     const holder = object as { [STACKS]?: Map<string, Stack> };
@@ -91,8 +103,7 @@ export default class BestOfSources {
       get: () => valueOf(stack),
       set: (set: number) => {
         stack.sums.clear();
-        stack.rest = 0;
-        stack.rest = set - valueOf(stack);
+        stack.set = set;
       },
     });
   }

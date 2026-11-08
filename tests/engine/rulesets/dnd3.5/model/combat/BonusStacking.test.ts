@@ -23,8 +23,12 @@ async function bjornCarrying(carried: Carried[]) {
  * A new ring, worn on a finger, whose modifiers add to these targets (`bonuses`, each its amount: a negative one a
  * penalty), each gated by `requirements` when given.
  */
-async function ringGiving(bonuses: Record<string, number>, requirements: (typeof NO_SHIELD_HELD)[] = []) {
-  const ring = await createTestItem({}, { [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" });
+async function ringGiving(
+  bonuses: Record<string, number>,
+  requirements: (typeof NO_SHIELD_HELD)[] = [],
+  worn: { slot: string; type: string } = { slot: "Finger", type: "Ring" },
+) {
+  const ring = await createTestItem({}, { [ITEM_TYPE]: worn.type, [ITEM_SLOT]: worn.slot });
   for (const [target, amount] of Object.entries(bonuses)) {
     const [modifier] = await Modifiers.create(db, {
       sourceId: ring.id,
@@ -123,13 +127,15 @@ describe("Bonuses of one type to AC", () => {
     const dodges = [await ringGiving({ "combat.ac.dodge": 1 }), await ringGiving({ "combat.ac.dodge": 1 })];
     const dodging = await bjornCarrying(dodges.map((item) => ({ item, location: "Finger" })));
     expect(dodging.components.combat.getCombat().ac.dodge).toBe(2);
-    // A Ring of Protection +1 and a −1 deflection penalty
+    // A Ring of Protection +1, and −1 and −2 deflection penalties: the best bonus and the worst penalty
     const cursed = await ringGiving({ "combat.ac.deflection": -1 });
+    const hexed = await ringGiving({ "combat.ac.deflection": -2 }, [], { slot: "Neck", type: "Wondrous Item" });
     const penalized = await bjornCarrying([
       { item: "Ring of Protection +1", location: "Finger" },
       { item: cursed, location: "Finger" },
+      { item: hexed, location: "Neck" },
     ]);
-    expect(penalized.components.combat.getCombat().ac.deflection).toBe(0);
+    expect(penalized.components.combat.getCombat().ac.deflection).toBe(-1);
   });
 
   test("don't stack across a weapon set and every set: a set's own deflection bonus against the ring's", async () => {
