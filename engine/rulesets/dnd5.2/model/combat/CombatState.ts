@@ -18,14 +18,20 @@ import type { ShieldsData, ShieldSlot } from "./ShieldsComponent.ts";
 type WornArmorCategory = (typeof WORN_ARMOR_CATEGORIES)[number];
 
 /**
- * An Armor Class's parts: its base (10 unarmored, its armor's otherwise), the Dexterity modifier its armor lets it add,
- * its shield's bonus, and what modifiers add (`misc`: a Barbarian's Constitution unarmored, a ring's +1).
+ * An Armor Class's parts: its base (its armor's; unarmored, 10, and the best ability an Unarmored Defense adds), the
+ * Dexterity modifier its armor lets it add, its shield's bonus, and what modifiers add (`misc`: a ring's +1).
  */
 export interface ArmorClassParts {
   readonly base: number;
   readonly dexterity: number;
   misc: number;
   shield: number;
+  /**
+   * The abilities its unarmored base can add, by their keys, each an Unarmored Defense's to set (a Barbarian's
+   * Constitution, a Monk's Wisdom): the best of them counts, none when none is above 0. A set's own holds what a
+   * modifier gated on the set sets (a monk's, no Shield in the set), the sheet's what every set shares.
+   */
+  readonly unarmored: Record<string, boolean>;
 }
 
 /**
@@ -45,7 +51,10 @@ export interface CombatData {
   armors: ArmorsData;
   /** Training with each armor category and with shields, each a feat's to set. */
   armortraining: { heavy: boolean; light: boolean; medium: boolean; shields: boolean };
-  /** The attacks it makes when it takes the Attack action: 1, more with Extra Attack. */
+  /**
+   * The attacks it makes when it takes the Attack action: 1, or the most a feature sets (Extra Attack's 2, the
+   * Fighter's Two Extra Attacks' 3), whatever the order its features apply in. A modifier raises it, never lowers it.
+   */
   attacks: number;
   carrying: CarryingData;
   /** How many rolls score a critical hit, the 20 and those under it: 1 = 20, 2 = 19–20 (a Champion's). */
@@ -61,7 +70,11 @@ export interface CombatData {
     misc: number;
     readonly total: number;
   };
-  readonly proficiency: number;
+  /**
+   * Its Proficiency Bonus, the classes' (`getProficiencyBonus`): its level's (`base`), what modifiers add (`misc`: an
+   * Ioun Stone of Mastery's +1), and their total, which saves, skills, attacks and spell DCs read.
+   */
+  proficiency: { readonly base: number; misc: number; readonly total: number };
   shield: { readonly held: boolean };
   shields: ShieldsData;
   speed: {
@@ -107,18 +120,26 @@ export interface WeaponSet {
  * misc), its properties, range and mastery, which it uses when its wielder has mastered its kind.
  */
 export interface WeaponSlot {
-  /** The ability its attack and damage add: Strength in melee, Dexterity at range, the better one with Finesse. */
+  /**
+   * The ability its attack and damage add: Strength in melee, Dexterity at range, the better one with Finesse or when
+   * it's `finesse`.
+   */
   readonly ability: "Dexterity" | "Strength";
   damage: {
     /** Its ability's modifier, an off-hand attack's only when negative without Two-Weapon Fighting. */
     readonly ability: number;
+    /** Its own dice: a Versatile weapon's two-handed ones in two hands. */
     dice: string;
+    /** The sides of a die it can roll in place of its dice (a monk's Martial Arts die), the better counting: 0, none. */
+    die: number;
     magic: number;
     misc: number;
     readonly total: string;
     type: string;
   };
   entryId: string | null;
+  /** Whether it can use Dexterity as a Finesse weapon does: a monk's Unarmed Strike and Monk weapons. */
+  finesse: boolean;
   itemId: string | null;
   mastered: boolean;
   /** Its mastery property, when its wielder has mastered its kind (`mastered`). */
@@ -174,18 +195,36 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
     shields: ShieldsData,
     carrying: CarryingData,
   ): CombatData {
+    // Two classes' Extra Attacks don't stack: the attacks are the most any feature gives (`attacks`)
+    let attacks = 1;
     return {
-      ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0 },
+      ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0, unarmored: {} },
       armor: { category: "none", strengthmet: true, trained: true },
       armortraining: { light: false, medium: false, heavy: false, shields: false },
       armors,
-      attacks: 1,
+      get attacks() {
+        return attacks;
+      },
+      set attacks(value: number) {
+        attacks = Math.max(attacks, value);
+      },
       carrying,
       critical: { range: 1 },
       hp: { base: 0, constitution: 0, misc: 0, total: 0 },
       initiative: { dexterity: 0, misc: 0, total: 0 },
-      get proficiency() {
-        return classes.getProficiencyBonus();
+      proficiency: {
+        get base() {
+          return classes.getProficiencyByLevel();
+        },
+        get misc() {
+          return classes.getProficiencyMisc();
+        },
+        set misc(value: number) {
+          classes.setProficiencyMisc(value);
+        },
+        get total() {
+          return classes.getProficiencyBonus();
+        },
       },
       shield: { held: false },
       shields,

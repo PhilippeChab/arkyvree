@@ -15,21 +15,20 @@ import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
   { path: "ability", description: "From its ability's modifier", type: "number" as const, requirementOnly: true },
-  { path: "proficient", description: "Whether the character is proficient in the skill", type: "boolean" as const },
+  { path: "proficient", description: "Whether proficient in the skill", type: "boolean" as const },
   {
     path: "expertise",
-    description: "Whether the character has Expertise in the skill: twice its Proficiency Bonus",
+    description: "Whether it has Expertise (twice the Proficiency Bonus)",
     type: "boolean" as const,
   },
   {
     path: "halfproficient",
-    description: "Whether the character adds half its Proficiency Bonus, unproficient (Jack of All Trades)",
+    description: "Adds half the Proficiency Bonus (Jack of All Trades)",
     type: "boolean" as const,
   },
   {
     path: "proficiency",
-    description:
-      "The Proficiency Bonus it adds: all of it proficient, twice with Expertise, half with Jack of All Trades",
+    description: "From the Proficiency Bonus",
     type: "number" as const,
     requirementOnly: true,
   },
@@ -73,7 +72,7 @@ export default class SkillsPaths implements PathCategory<Dnd52Components> {
       paths.push({
         path: "skills.*.halfproficient",
         category: "skills",
-        description: "Half the Proficiency Bonus on every skill the character isn't proficient in",
+        description: "Half the Proficiency Bonus on every skill (Jack of All Trades)",
         groupDescription: "All skills",
         valueType: "boolean",
         operators: getOperators("boolean", kind),

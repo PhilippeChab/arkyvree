@@ -31,6 +31,9 @@ interface ClassesData {
 export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly classes: ClassesData = {};
 
+  /** What modifiers add to the Proficiency Bonus past its level's (an Ioun Stone of Mastery's +1): the sheet's input. */
+  private proficiencyMisc = 0;
+
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
     {
@@ -96,13 +99,23 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     return this.classes;
   }
 
+  /** The character's Proficiency Bonus: its level's (`getProficiencyByLevel`) and what modifiers add to it. */
+  getProficiencyBonus(): number {
+    return this.getProficiencyByLevel() + this.proficiencyMisc;
+  }
+
   /**
-   * The character's Proficiency Bonus, by its level (`getTotalLevel`), as the Character Advancement table gives it: a
+   * The Proficiency Bonus of the character's level (`getTotalLevel`), as the Character Advancement table gives it: a
    * character before its first level has its first level's.
    */
-  getProficiencyBonus(): number {
+  getProficiencyByLevel(): number {
     const level = Math.min(Math.max(this.getTotalLevel(), 1), PROFICIENCY_BONUS_BY_LEVEL.length);
     return PROFICIENCY_BONUS_BY_LEVEL[level - 1];
+  }
+
+  /** What modifiers add to the Proficiency Bonus past its level's (`combat.proficiency.misc`). */
+  getProficiencyMisc(): number {
+    return this.proficiencyMisc;
   }
 
   /** The character's level: every class's levels together, what its Proficiency Bonus is by. */
@@ -116,5 +129,10 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
     entry.levels.pop();
     entry.level--;
+  }
+
+  /** Sets what modifiers add to the Proficiency Bonus (`combat.proficiency.misc`, which a modifier writes). */
+  setProficiencyMisc(value: number): void {
+    this.proficiencyMisc = value;
   }
 }

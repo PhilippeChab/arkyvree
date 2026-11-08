@@ -207,8 +207,12 @@ describe("The rules' engine", () => {
         .storage()
         .standaloneKinds()
         .filter((type) => accepts(() => Engine.for(scope).entities(type, "update")));
-      expect(Engine.rules().restorableKinds()).toEqual(editable);
+      expect(Engine.rules().restorableKindsOf(DND35_BASE_RULES)).toEqual(editable);
     });
+    // Every module's, each once: another base rules' own (D&D 5th Edition's species and backgrounds) among them
+    const each = Modules.all().flatMap(([baseRules]) => Engine.rules().restorableKindsOf(baseRules));
+    expect(Engine.rules().restorableKinds().toSorted()).toEqual([...new Set(each)].toSorted());
+    expect(Engine.rules().restorableKinds()).toEqual(expect.arrayContaining(["species", "backgrounds", "races"]));
   });
 
   test("refuses, as it's built, a module whose kinds' declarations its rules or storage contradict", () => {

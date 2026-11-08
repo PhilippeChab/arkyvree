@@ -17,7 +17,7 @@ const NAVIGATABLE_PATHS = [
   { path: "ability", description: "From its ability's modifier", type: "number" as const, requirementOnly: true },
   {
     path: "proficient",
-    description: "Whether the character is proficient in the saving throw",
+    description: "Whether proficient in the saving throw",
     type: "boolean" as const,
   },
   {

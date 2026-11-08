@@ -3,7 +3,9 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd5.2/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd5.2/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
+import AbilityRules from "@/engine/rulesets/dnd5.2/rules/AbilityRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
+import type { RulesetSave } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface SavesData {
@@ -32,11 +34,17 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
 
   private readonly saves: SavesData = {} as SavesData;
 
-  /** Each of the ruleset's saves, its ability's modifier and its proficiency counted when read. */
+  /**
+   * Each of the ruleset's saves, its ability's modifier and its proficiency counted when read, in the order the sheet
+   * lists the abilities (Strength, Dexterity…: `AbilityRules.orderAbilities`), by their abilities.
+   */
   override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
     const { abilities, classes } = this;
-    for (const save of Dnd52View.of(rulesetData).saves) {
-      const abilityName = (save.links.keyAbility && abilities.getAbilityName(save.links.keyAbility)) ?? "";
+    const abilityOf = (save: RulesetSave) =>
+      (save.links.keyAbility && abilities.getAbilityName(save.links.keyAbility)) ?? "";
+    const saves = AbilityRules.orderAbilities(Dnd52View.of(rulesetData).saves, (save) => abilityOf(save) || save.name);
+    for (const save of saves) {
+      const abilityName = abilityOf(save);
       // What's computed is computed when read, so it follows the abilities, the level and the parts
       this.saves[stripSeparators(save.name)] = {
         name: save.name,

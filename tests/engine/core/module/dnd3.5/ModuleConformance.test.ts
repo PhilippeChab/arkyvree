@@ -238,13 +238,13 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const { max, min } = characters.describeCreation("score").scores;
       for (const score of [min - 1, max + 1]) {
         expect(() => characters.planScores("score", { [abilityId]: score })).toThrow(refusal);
-        const start = { picks: { race: record.links.race }, scores: { score: { [abilityId]: score } } };
+        const start = { picks: record.links, scores: { score: { [abilityId]: score } } };
         expect(() => characters.planStart(start)).toThrow(refusal);
       }
       expect(characters.planScores("score", { [abilityId]: max }).links).toEqual([
         { entityId: abilityId, amount: max },
       ]);
-      const start = { picks: { race: record.links.race }, scores: { score: { [abilityId]: min } } };
+      const start = { picks: record.links, scores: { score: { [abilityId]: min } } };
       expect(characters.planStart(start).links.score).toContainEqual({ entityId: abilityId, amount: min });
     });
   });
@@ -254,7 +254,10 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const described = Engine.rules()
       .describeAll()
       [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
-    expect(described.length).toBeGreaterThan(0);
+    // Some module's pages edit links one at a time (3.5's class skills): a module whose pages edit none describes none
+    expect(BASE_RULES_OPTIONS.some((baseRules) => Engine.forRules(baseRules).storage().editedLinks().size > 0)).toBe(
+      true,
+    );
     expect(edited).toEqual(new Map(described as [string, { from: string; to: string }][]));
   });
 
@@ -295,7 +298,8 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const characters = Engine.for(scope).characters();
-      const start = { picks: { race: record.links.race }, scores: {} };
+      // Its creation picks, its single links (a race; a species and a background)
+      const start = { picks: record.links, scores: {} };
       const plan = characters.planCreate({ ...start, fields });
       // Its fields' values, and every own column its rules' fields write (its row past its kind and single links)
       const { fields: values, kind: _kind, links: _links, ...own } = plan.row;

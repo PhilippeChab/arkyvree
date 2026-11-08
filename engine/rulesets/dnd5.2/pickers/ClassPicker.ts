@@ -9,6 +9,7 @@ import type {
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd5.2/levelUp/CharacterProjection.ts";
+import LevelUpBase from "@/engine/rulesets/dnd5.2/levelUp/LevelUpBase.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd5.2/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
 import Dnd52CharacterBuilder from "@/engine/rulesets/dnd5.2/model/Dnd52CharacterBuilder.ts";
@@ -98,7 +99,7 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     const levels = levelIds.map((entryId) => ({ entryId }));
     const position = LevelRules.findNextClassLevel(this.dnd52.classLevelsById, levels, klass.id);
     const next = this.dnd52.classLevelByClassAndLevel.get(`${klass.id}:${position}`);
-    const held = position === 1 ? this.heldFirstLevelIds(levelIds) : [];
+    const held = position === 1 ? LevelUpBase.findFirstLevelIds(this.dnd52, levelIds) : [];
     return [klass.id, ...(first || !next ? [] : [next.id]), ...held]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
@@ -135,13 +136,6 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   /** The view's D&D 5th Edition lists and indices. */
   private get dnd52(): Dnd52View {
     return Dnd52View.of(this.rulesetData);
-  }
-
-  /** The first levels of the classes the character's levels (`levelIds`, its class levels) are of, each once. */
-  private heldFirstLevelIds(levelIds: string[]): string[] {
-    const { classLevelByClassAndLevel, classLevelsById } = this.dnd52;
-    const classIds = new Set(levelIds.flatMap((id) => classLevelsById.get(id)?.ownerId ?? []));
-    return [...classIds].flatMap((classId) => classLevelByClassAndLevel.get(`${classId}:1`)?.id ?? []);
   }
 
   /** The class levels of the character's levels: those it saved, then those the wizard plans. */

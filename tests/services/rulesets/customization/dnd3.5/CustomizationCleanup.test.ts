@@ -151,14 +151,18 @@ async function customizeOwner(type: string, id: string) {
   return await customize(type, id, type in VALUES ? { values: VALUES[type] } : {});
 }
 
-/** The customizations whose owner is gone, or of a type no table above holds. */
+/**
+ * The customizations whose owner is gone, or of a type no table above holds: an entity of any kind, another base
+ * rules' among them (D&D 5th Edition's species), or a row of the other tables.
+ */
 async function orphans() {
   const owners = sql.join(
-    Object.entries(OWNERS).map(([type, table]) =>
-      table === entitiesInRules
-        ? sql`SELECT type, id FROM ${table} WHERE type = ${type}`
-        : sql`SELECT ${type}::text AS type, id FROM ${table}`,
-    ),
+    [
+      sql`SELECT type, id FROM ${entitiesInRules}`,
+      ...Object.entries(OWNERS)
+        .filter(([, table]) => table !== entitiesInRules)
+        .map(([type, table]) => sql`SELECT ${type}::text AS type, id FROM ${table}`),
+    ],
     sql` UNION ALL `,
   );
   const { rows } = await db.execute(sql`

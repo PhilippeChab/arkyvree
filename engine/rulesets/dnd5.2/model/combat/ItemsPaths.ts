@@ -1,5 +1,5 @@
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
-import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { GetterOf, PathCategory, PathContext } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, {
   type Component,
   type Components,
@@ -36,16 +36,16 @@ const ARMOR_LABELS: Record<string, string> = {
 
 const NAVIGATABLE_ARMOR_PATHS = [
   { path: "ac.base", description: "The armor's own Armor Class", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to the armor's AC (a +1 armor's)", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the armor's AC", type: "number" as const },
   { path: "ac.total", description: "Total AC from this armor", type: "number" as const, requirementOnly: true },
-  { path: "maxdex", description: "The most Dexterity modifier its wearer adds", type: "number" as const },
-  { path: "strength", description: "The Strength its wearer needs, or its speed is lower", type: "number" as const },
+  { path: "maxdex", description: "Maximum Dexterity bonus", type: "number" as const },
+  { path: "strength", description: "Strength its wearer needs", type: "number" as const },
   { path: "stealthdisadvantage", description: "Whether it hinders Stealth", type: "boolean" as const },
 ];
 
 const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.bonus", description: "The Shield's own bonus to AC", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to the Shield's AC (a +1 Shield's)", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the Shield's AC", type: "number" as const },
   { path: "ac.total", description: "Total AC from this Shield", type: "number" as const, requirementOnly: true },
 ];
 
@@ -118,6 +118,11 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
     return groupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind));
   }
 
+  /** Whether a target is a group of weapons' (`items.weapons.<group>.…`), which a set's scope narrows to its weapons. */
+  static isWeaponGroupTarget(target: string): boolean {
+    return target.startsWith("items.weapons.");
+  }
+
   readonly description = "Equipped weapon, armor, and shield stats";
 
   readonly groupDescriptionTemplates = {
@@ -181,12 +186,16 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
     return { names: deriveNameLabels([UNARMED_STRIKE.name, "Shield", ...values]) };
   }
 
-  /** A grouping's equipped items. Null for another sub-category, or a path that names none. */
+  /**
+   * A grouping's equipped items, a weapon group's in a set's scope those the set holds (`Builds.scopesOf`: a modifier
+   * gated on the set, a monk's Martial Arts). Null for another sub-category, or a path that names none.
+   */
   resolve(
     target: string,
     rest: string[],
     components: Components,
     traverser: PathTraverser,
+    context?: PathContext,
   ): TraversePathResult[] | null {
     if (rest.length === 0) return null;
     const [subcategory, grouping, ...subPath] = rest;
@@ -201,11 +210,13 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
       if (!armor) return [];
       return traverser.traverse(component, subPath, armor, grouping, 0, pathParts);
     }
-    // Each weapon or shield of the group, by its key
+    // Each weapon or shield of the group, by its key ("0_mainhand": its set's, then its hand), a set's alone in its
+    // scope
     const group = ItemsPaths.heldGroup(component, subcategory, grouping);
     if (!isRecord(group)) return [];
-    return Object.entries(group).flatMap(([key, held]) =>
-      traverser.traverse(component, subPath, held, key, 0, pathParts),
-    );
+    const scope = subcategory === "weapons" ? context?.scope : undefined;
+    return Object.entries(group)
+      .filter(([key]) => scope === undefined || key.startsWith(`${scope}_`))
+      .flatMap(([key, held]) => traverser.traverse(component, subPath, held, key, 0, pathParts));
   }
 }

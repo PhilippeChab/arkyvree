@@ -25,11 +25,13 @@ export default class FeatPicker extends LevelPicker {
     super(view, input, query);
     const heldIds = new Set(this.holder.getHeldFeats().map(({ entity }) => entity.id));
     const rules = FeatRules.of(this.rulesetData);
+    const ids = Dnd52View.of(this.rulesetData).listFeatIds(query.aptitudeId);
     const offered = {
       // A feat a character picks is a selectable one
       fields: { [FEAT_SELECTABLE]: true },
-      ids: Dnd52View.of(this.rulesetData).listFeatIds(query.aptitudeId),
-      excludeIds: [...heldIds].filter((featId) => !rules.canTake(featId, heldIds)),
+      ids,
+      // Those it can't take again: one that doesn't stack it holds, another version of a feat taken once it holds
+      excludeIds: [...new Set([...heldIds, ...ids])].filter((featId) => !rules.canTake(featId, heldIds)),
     };
     const groups = this.feats.groupByFamily(offered.ids);
     // A family's feats are those its row groups, so the row counts what it opens to

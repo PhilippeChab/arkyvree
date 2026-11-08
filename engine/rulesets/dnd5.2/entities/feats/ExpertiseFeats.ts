@@ -1,15 +1,14 @@
-import FeatsPaths from "@/engine/rulesets/dnd5.2/model/feats/FeatsPaths.ts";
 import SkillsPaths from "@/engine/rulesets/dnd5.2/model/skills/SkillsPaths.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { EXPERTISE_POOL } from "@/vocabulary/dnd5.2/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
 import GeneratedFeats from "./GeneratedFeats.ts";
-import SkillProficiencyFeats from "./SkillProficiencyFeats.ts";
 
 /**
  * The feat a skill makes in the Expertise pool (`EXPERTISE_POOL`): its Expertise, twice the Proficiency Bonus on its
- * checks, which requires its Skill Proficiency, and which a delete or a rename removes.
+ * checks, which requires proficiency in it however the character has it (its Skill Proficiency feat, or a homebrew
+ * feat's modifier), and which a delete or a rename removes.
  */
 export default class ExpertiseFeats extends GeneratedFeats {
   /** A skill's Expertise's name ("Expertise: Stealth"). */
@@ -19,12 +18,12 @@ export default class ExpertiseFeats extends GeneratedFeats {
 
   protected override readonly poolSlug = stripSeparators(EXPERTISE_POOL);
 
-  /** The skill's Expertise, of its family, requiring the character's proficiency in it. */
+  /** The skill's Expertise, of its family, requiring the character's proficiency in it (`skills.<skill>.proficient`). */
   protected override featsOf(skillName: string) {
     return [
       {
         name: ExpertiseFeats.nameOf(skillName),
-        description: `You have Expertise in the ${skillName} skill: your Proficiency Bonus is doubled for its checks.`,
+        description: `You add twice your Proficiency Bonus to ${skillName} checks.`,
         fields: FEAT_FIELDS.write({ ...FEAT_FIELDS.defaults, families: ["Expertise"] }),
         modifiers: [
           { target: SkillsPaths.expertise(skillName), operator: "set", value: "true", valueType: "boolean" } as const,
@@ -32,7 +31,7 @@ export default class ExpertiseFeats extends GeneratedFeats {
         requirements: [
           {
             level: "1",
-            target: FeatsPaths.possessed(stripSeparators(SkillProficiencyFeats.nameOf(skillName))),
+            target: SkillsPaths.proficient(skillName),
             operator: "equal",
             value: "true",
             valueType: "boolean",

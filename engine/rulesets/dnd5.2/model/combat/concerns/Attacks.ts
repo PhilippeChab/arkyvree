@@ -9,6 +9,17 @@ interface HeldFrom {
   itemId: string | null;
 }
 
+/** What dice roll on average ("2d6": 7, a flat "1": 1). */
+function averageOf(dice: string): number {
+  const match = /^(\d+)d(\d+)$/.exec(dice);
+  return match ? (Number(match[1]) * (Number(match[2]) + 1)) / 2 : Number(dice) || 0;
+}
+
+/** The dice a weapon rolls: its own, or the die it can roll in place of them (`die`, its sides) when that's better. */
+function diceOf(dice: string, die: number): string {
+  return die > 0 && averageOf(`1d${die}`) > averageOf(dice) ? `1d${die}` : dice;
+}
+
 /** A damage roll as a sheet writes it: its dice and its bonus ("1d8+3", "1d8-1", "1d8"), or a flat damage's sum ("4"). */
 function formatDamage(dice: string, bonus: number): string {
   if (/^\d+$/.test(dice)) return String(Math.max(0, Number(dice) + bonus));
@@ -20,19 +31,20 @@ function formatDamage(dice: string, bonus: number): string {
  * A character's attacks, a weapon's in each hand of each set, as the SRD 5.2.1 counts them: its attack roll adds its
  * ability's modifier (Strength in melee, Dexterity with a ranged weapon, the better one with a Finesse weapon), its
  * Proficiency Bonus when the character is proficient with it, and its magic and misc; its damage, its dice (a
- * Versatile weapon's two-handed ones in two hands), its ability's modifier (an off-hand attack's only when negative,
- * but with the Two-Weapon Fighting style), and its magic and misc. A weapon's mastery property is the character's to
- * use once it has mastered the weapon's kind.
+ * Versatile weapon's two-handed ones in two hands, or a die it can roll instead when better: a monk's Martial Arts
+ * die), its ability's modifier (an off-hand attack's only when negative, but with the Two-Weapon Fighting style), and
+ * its magic and misc. A weapon's mastery property is the character's to use once it has mastered the weapon's kind; a
+ * weapon a modifier makes `finesse` (a monk's Unarmed Strike) uses Dexterity as a Finesse weapon does.
  */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
     /**
      * The ability a weapon's attack and damage add, as the sheet stands when read (an increase the modifiers applied
-     * counts): the better of Strength and Dexterity with a Finesse weapon, Dexterity with any other ranged weapon,
-     * Strength with any other melee weapon, a thrown one's too.
+     * counts): the better of Strength and Dexterity with a Finesse weapon or one a modifier makes `finesse` (Martial
+     * Arts), Dexterity with any other ranged weapon, Strength with any other melee weapon, a thrown one's too.
      */
-    private abilityOf(fields: WeaponFields): "Dexterity" | "Strength" {
-      if (fields.properties.includes("Finesse")) {
+    private abilityOf(fields: WeaponFields, finesse: boolean): "Dexterity" | "Strength" {
+      if (finesse || fields.properties.includes("Finesse")) {
         const dexterity = this.abilities.getAbilityModifier("Dexterity");
         return dexterity > this.abilities.getAbilityModifier("Strength") ? "Dexterity" : "Strength";
       }
@@ -54,7 +66,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     ): WeaponSlot | undefined {
       const wielded = SLOT_MAP[location];
       if (!wielded) return undefined;
-      const abilityOf = () => this.abilityOf(fields);
+      const abilityOf = () => this.abilityOf(fields, weapon.finesse);
       const modifier = () => this.abilities.getAbilityModifier(abilityOf());
       const { combat } = this;
       const dice = wielded === "twohanded" && fields.versatileDamage ? fields.versatileDamage : (fields.damage ?? "1");
@@ -65,6 +77,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         name,
         ...held,
         properties: [...fields.properties],
+        finesse: false,
         proficient,
         mastered: false,
         get mastery() {
@@ -77,7 +90,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
             return modifier();
           },
           get proficiency() {
-            return weapon.proficient ? combat.proficiency : 0;
+            return weapon.proficient ? combat.proficiency.total : 0;
           },
           magic: 0,
           misc: 0,
@@ -90,10 +103,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
             return wielded === "offhand" && !combat.twoweapon.ability ? Math.min(modifier(), 0) : modifier();
           },
           dice,
+          die: 0,
           magic: 0,
           misc: 0,
           get total() {
-            return formatDamage(this.dice, this.ability + this.magic + this.misc);
+            return formatDamage(diceOf(this.dice, this.die), this.ability + this.magic + this.misc);
           },
           type: fields.damageType ?? "",
         },

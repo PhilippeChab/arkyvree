@@ -6,7 +6,7 @@ import { CLASS_FIELDS } from "@/engine/rulesets/dnd5.2/entities/classes/fields.t
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
+import type { MulticlassSlots } from "@/vocabulary/dnd5.2/classes.ts";
 
 /** What a character's load reads of its ruleset's view: its rows, their fields and their 5th Edition meaning. */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
@@ -28,19 +28,22 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       };
     }
 
-    /** Each class's fields: its spellcasting ability, by the ability's name, and its caster type. */
+    /**
+     * Each class's fields: its spellcasting ability, by the ability's name, and how its levels count toward a
+     * multiclass's spell slots.
+     */
     protected readClassFields(classIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
       const classSpellcastingAbilityMap = new Map<string, string>();
-      const classCasterTypeMap = new Map<string, CasterType>();
+      const classMulticlassSlotsMap = new Map<string, MulticlassSlots>();
       for (const classId of classIds) {
-        const { spellcastingAbility, casterType } = CLASS_FIELDS.read(
+        const { spellcastingAbility, multiclassSlots } = CLASS_FIELDS.read(
           rulesetData.find("classes", classId) ?? OwnerValues.NONE,
         );
         const abilityName = spellcastingAbility ? abilityLookup.get(spellcastingAbility) : undefined;
         if (abilityName) classSpellcastingAbilityMap.set(classId, abilityName);
-        if (casterType) classCasterTypeMap.set(classId, casterType);
+        if (multiclassSlots) classMulticlassSlotsMap.set(classId, multiclassSlots);
       }
-      return { classSpellcastingAbilityMap, classCasterTypeMap };
+      return { classSpellcastingAbilityMap, classMulticlassSlotsMap };
     }
   }
 

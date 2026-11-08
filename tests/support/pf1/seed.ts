@@ -5,7 +5,7 @@ import { Pf1ContentSeeder, type Pf1SeedContext } from "@/database/seeders/pf1/Pf
 import { entitiesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { PF1_BASE_RULES } from "@/vocabulary/pf1/baseRules.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 /** The seeded Pathfinder core rules' ids by name: its seed context, and its races, classes and languages. */
 export type Pf1SeedCtx = Pf1SeedContext & {
@@ -15,6 +15,9 @@ export type Pf1SeedCtx = Pf1SeedContext & {
   /** Race id by kind, then name: `raceMap.pc["Human"]`, `raceMap.familiar["Cat"]`. */
   raceMap: Record<string, Record<string, string>>;
 };
+
+/** The base rules Pathfinder's were made from, 3.5's, by name. */
+const DND35_BASE_RULES: BaseRules = "Dungeons & Dragons: 3.5";
 
 let seedContext: Promise<Pf1SeedCtx> | undefined;
 
@@ -56,14 +59,14 @@ export function getPf1SeedCtx() {
 }
 
 /**
- * The other base rules' seeded core rules (3.5's), which a Pathfinder test reads without naming their folders: the one
- * system base ruleset of another base rules, and its entities' ids of a kind by name.
+ * 3.5's seeded core rules, which a Pathfinder test reads without naming their folders: the one system base ruleset of
+ * the base rules Pathfinder's were made from, and its entities' ids of a kind by name.
  */
 export async function findOtherCoreRules() {
   const others = (await Rulesets.findMany(db, { system: true })).filter(
-    ({ baseRules, kind, rulesetId }) => kind === "ruleset" && rulesetId === null && baseRules !== PF1_BASE_RULES,
+    ({ baseRules, kind, rulesetId }) => kind === "ruleset" && rulesetId === null && baseRules === DND35_BASE_RULES,
   );
-  if (others.length !== 1) throw new Error(`${others.length} other base rulesets are seeded, not one`);
+  if (others.length !== 1) throw new Error(`${others.length} 3.5 base rulesets are seeded, not one`);
   const [ruleset] = others;
   const idOf = async (type: string, name: string) => {
     const [row] = await db

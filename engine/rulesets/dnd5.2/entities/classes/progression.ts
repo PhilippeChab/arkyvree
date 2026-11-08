@@ -10,17 +10,21 @@ const POSITION_ALIASES = ["level", "lvl"];
 
 /**
  * How a class progresses in the 2024 rules: its features and feat pools under "Class Features" (its subclass's pick, its
- * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), and its cantrips and prepared
- * spells, a column a spell level: what it prepares by then, a level's new spells counted at the highest level it casts
- * then, which a lower level's spells fill too. Its spell slots are no column of its own: the Multiclass Spellcaster
- * table's, by the levels its caster type counts. A class's spell list is the aptitude named for it ("Wizard Spells"),
- * which its Spell List tab's first add makes where the ruleset has none. Its levels follow no track: the Proficiency
- * Bonus is the character's, by its level, and its hit points its hit die's.
+ * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), its spell slots, a column a spell
+ * level: what its levels give on its list by then, as its table in the SRD gives them, which a character casting from
+ * this class alone has; and its cantrips and spells known, a column a spell level: what its levels pick by then, a
+ * level's new spells counted at the highest level it casts then, which a lower level's spells fill too; and its Pact
+ * Magic, its slots and their level by then (a warlock's), shown for a class whose levels give it, in place of its
+ * Spell Slots when they give no other (`hiddenTables`). A class's
+ * spell list is the aptitude named for it ("Wizard Spells"), which its Spell List tab's first add makes where the
+ * ruleset has none. Its levels follow no track: the Proficiency Bonus is the character's, by its level, and its hit
+ * points its hit die's.
  */
 export const PROGRESSION: ProgressionDeclaration = {
   counts: {
     body: "spells",
     create: "Create {name}",
+    hidden: "hiddenTables",
     list: "spellList",
     lists: "spell-lists",
     listTab: "spell-list",
@@ -48,7 +52,7 @@ export const PROGRESSION: ProgressionDeclaration = {
       addPool: "Add Feat Pool",
       create: "Create {name}",
       feature: "Class feature",
-      help: "A filled level grants the feature there. A feature that isn't Stackable is granted at one level: clicking another moves it there. A feat pool's filled level gives picks in it: click it again to change how many.",
+      help: "Click a level to grant a feature there. A feature that isn't Stackable is granted once: clicking another level moves it. For a feat pool, click again to change how many picks.",
       pool: "Feat pool",
       pools: "Feat pools",
       repeat: "No effect: a character takes {name} once, at {position}. It isn't Stackable.",
@@ -59,17 +63,47 @@ export const PROGRESSION: ProgressionDeclaration = {
   },
   grantsLabel: "Class Features",
   lastPosition: MAX_CLASS_LEVEL,
-  // Its Levels and Feat Pools tabs are its Progression's; its prepared spells', the Spells tab
+  // Its Levels and Feat Pools tabs are its Progression's; its spell slots' and its spells known', the Spells tab
   tabAliases: {
     "feat-pools": "progression",
     levels: "progression",
-    "spells-known": "spells",
+    "spells-known": "spells?table=known",
+    "spells-per-day": "spells",
   },
   tables: [
     {
+      columns: SPELL_LEVELS.slice(1).map((level) => ({
+        aliases: ProgressionLabels.listSpellLevelAliases(level),
+        key: String(level),
+        label: SPELL_LEVEL_LABELS[level],
+      })),
+      help: "How many spell slots of each level the class has by then.",
+      key: "perDay",
+      label: "Spell Slots",
+      max: RULESET_LIMITS.tableCount,
+      positionAliases: POSITION_ALIASES,
+      table: "spells",
+      totals: "spellsPerDay",
+    },
+    // Its slots' table, a warlock's in place of its Spell Slots: each class's tab opens on its slots
+    {
+      columns: [
+        { aliases: ["slots", "spell slots"], key: "slots", label: "Slots" },
+        { aliases: ["slot level"], key: "level", label: "Slot Level" },
+      ],
+      help: "How many Pact Magic slots the class has by then, and their level: every slot is of that level.",
+      key: "pact",
+      label: "Pact Magic",
+      max: RULESET_LIMITS.tableCount,
+      positionAliases: POSITION_ALIASES,
+      table: "pact-magic",
+      totals: "pactMagic",
+    },
+    {
       all: {
-        hint: "All Prepared From an Earlier Level",
-        lockedPaste: "That cell prepares every spell from an earlier level: paste into an open cell, or Paste a Table",
+        hint: "All Known From an Earlier Level",
+        lockedPaste:
+          "That cell already has every spell from an earlier level. Paste into another cell, or use Paste a Table.",
         word: "All",
       },
       columns: SPELL_LEVELS.map((level) => ({
@@ -77,9 +111,9 @@ export const PROGRESSION: ProgressionDeclaration = {
         key: String(level),
         label: SPELL_LEVEL_LABELS[level],
       })),
-      help: "How many cantrips and spells the class prepares by then: its cantrips at their own level, a level's new spells at the highest level it casts then, where a lower level's spell fits too. \"All\" is every spell of its list.",
+      help: 'How many cantrips and spells the class knows by then, which its levels pick. "All" is every spell of its list.',
       key: "known",
-      label: "Cantrips and Prepared Spells",
+      label: "Cantrips and Spells Known",
       max: RULESET_LIMITS.tableCount,
       positionAliases: POSITION_ALIASES,
       table: "spells-known",

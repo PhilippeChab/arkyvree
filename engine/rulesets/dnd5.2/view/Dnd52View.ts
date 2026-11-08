@@ -25,8 +25,11 @@ interface Indices {
   aptitudeIdsWithSpells: Set<string>;
   classLevelByClassAndLevel: Map<string, KlassLevel>;
   classLevelsByClass: Map<string, KlassLevel[]>;
+  drawingPoolIds: Set<string>;
+  drawingPoolsByList: Map<string, { poolId: string; tier: number }[]>;
   featIdBySlug: Map<string, string>;
   languageIdBySlug: Map<string, string>;
+  listLinksById: Map<string, readonly ViewLink[]>;
   spellIdsBySlug: Map<string, string[]>;
 }
 
@@ -42,9 +45,8 @@ function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string
 
 /**
  * D&D 5th Edition's view of a ruleset (`Dnd52View.of`): its kinds' rows as it declares them (`Dnd52Kinds`, read through
- * `DeclaredRows`), its entities' links by their roles (a class level's `grants`, a feat's or a spell's `listedIn`), and
- * the indices its
- * rules read them by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time
+ * `DeclaredRows`), its entities' links by their roles (a class level's `grants`, a feat's or a spell's `listedIn`, a
+ * pool's `drawsFrom`), and the indices its rules read them by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time
  * it's read; every id-keyed index takes a stored (pre-COW) id too, as the view's do.
  */
 export default class Dnd52View {
@@ -160,6 +162,29 @@ export default class Dnd52View {
     return this.declared.byId("class-levels");
   }
 
+  /** The pools that draw their spells from a list (`drawingPoolsByList`), by id: a Mystic Arcanum's. */
+  get drawingPoolIds(): Set<string> {
+    return (this.built.drawingPoolIds ??= new Set(
+      [...this.drawingPoolsByList.values()].flatMap((pools) => pools.map(({ poolId }) => poolId)),
+    ));
+  }
+
+  /**
+   * The pools that draw their spells from a list, by the list's id (their `drawsFrom` links): each pool's id and the
+   * spell level it draws, a Mystic Arcanum's from the warlock's list.
+   */
+  get drawingPoolsByList(): Map<string, { poolId: string; tier: number }[]> {
+    if (this.built.drawingPoolsByList) return this.built.drawingPoolsByList;
+    const drawingPoolsByList = new Map<string, { poolId: string; tier: number }[]>();
+    for (const pool of this.aptitudes) {
+      for (const { tier, toId } of this.rulesetData.linksOf(pool.id, "drawsFrom")) {
+        if (tier != null)
+          drawingPoolsByList.set(toId, [...(drawingPoolsByList.get(toId) ?? []), { poolId: pool.id, tier }]);
+      }
+    }
+    return (this.built.drawingPoolsByList = drawingPoolsByList);
+  }
+
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
   get featIdBySlug(): Map<string, string> {
     return (this.built.featIdBySlug ??= buildIdBySlug(this.feats));
@@ -231,11 +256,25 @@ export default class Dnd52View {
   }
 
   /**
-   * The lists a feat or a spell is on (`entityId`): its `listedIn` links, each its list (an aptitude, `toId`) and, a
-   * spell's, its level on it (`tier`).
+   * The lists a feat or a spell is on (`entityId`), each its list (an aptitude, `toId`) and, a spell's, its level on it
+   * (`tier`): its own (`ownListLinksOf`), and the pools that draw from one of them at its level (`drawsFrom`), each a
+   * link of its own to the pool (once, a pool it's on already left out): a level 6 warlock spell is on "Mystic Arcanum (Level 6)" too, as the warlock's list
+   * has it, with nothing to copy.
    */
   listLinksOf(entityId: string): readonly ViewLink[] {
-    return this.rulesetData.linksOf(entityId, "listedIn");
+    const listLinksById = (this.built.listLinksById ??= new Map());
+    let links = listLinksById.get(entityId);
+    if (!links) {
+      const own = this.ownListLinksOf(entityId);
+      const drawn = own.flatMap((link) =>
+        (this.drawingPoolsByList.get(link.toId) ?? [])
+          .filter(({ poolId, tier }) => tier === link.tier && !own.some((each) => each.toId === poolId))
+          .map(({ poolId }) => ({ ...link, id: `${link.id}:${poolId}`, toId: poolId })),
+      );
+      links = drawn.length === 0 ? own : [...own, ...drawn];
+      listLinksById.set(entityId, links);
+    }
+    return links;
   }
 
   /**
@@ -255,6 +294,14 @@ export default class Dnd52View {
 
   get mechanics(): Mechanic[] {
     return this.declared.rows("mechanics");
+  }
+
+  /**
+   * The lists a feat or a spell is on as its own `listedIn` links name them, those a pool draws from them left out:
+   * what an edit of its lists writes back.
+   */
+  ownListLinksOf(entityId: string): readonly ViewLink[] {
+    return this.rulesetData.linksOf(entityId, "listedIn");
   }
 
   get saves(): RulesetSave[] {

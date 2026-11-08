@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
 import Field from "@/engine/core/fields/Field.ts";
@@ -36,7 +36,8 @@ describe("An item's fields", () => {
     const itemIds = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(eq(entitiesInRules.type, "items"));
+      // 3.5's own: another base rules' items hold their own fields
+      .where(and(eq(entitiesInRules.type, "items"), eq(entitiesInRules.baseRules, DND35_BASE_RULES)));
     const items = new Map(
       (await Entities.findMany<Item>(db, { entityType: "items", ids: itemIds.map(({ id }) => id) })).map((item) => [
         item.id,

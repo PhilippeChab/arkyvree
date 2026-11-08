@@ -167,12 +167,15 @@ export interface ListDescription {
  * `spell-list`), the key a progression's answer gives the class's own list by (`ownList`: `ownSpellList`, its id and
  * its name, its id none while its ruleset has none, which its list tab's first add makes), what its tables' tab
  * says of a class with no list (`none`), to an editor (how a class gets one) and to a viewer, the class's name at
- * `{ownerName}` and its tables' labels at `{tables}`, and its button that makes the class's own list there (`create`,
- * its name at `{name}`: "Create Barbarian Spells").
+ * `{ownerName}` and its tables' labels at `{tables}`, its button that makes the class's own list there (`create`,
+ * its name at `{name}`: "Create Barbarian Spells"), and the key a progression's answer lists the keys of the tables
+ * the class doesn't show by (`hidden`: D&D 5e's `hiddenTables`, a warlock's Spell Slots and any other class's Pact
+ * Magic; none where every class shows every table).
  */
 export interface ProgressionCounts {
   body: string;
   create: string;
+  hidden?: string;
   list: string;
   lists: string;
   listTab: string;

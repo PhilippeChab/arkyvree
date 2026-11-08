@@ -10,6 +10,85 @@
     },
     "type": "class"
   },
+  "overrides": {
+    "Fighter": {
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Persuasion, Perception, or Survival",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-acrobatics",
+                  "name": "Skill: Acrobatics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-animal-handling",
+                  "name": "Skill: Animal Handling"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-history",
+                  "name": "Skill: History"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-intimidation",
+                  "name": "Skill: Intimidation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-persuasion",
+                  "name": "Skill: Persuasion"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-perception",
+                  "name": "Skill: Perception"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-survival",
+                  "name": "Skill: Survival"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ]
+    }
+  },
   "raw": {
     "class": {
       "hit_die": 10,

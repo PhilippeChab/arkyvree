@@ -22,7 +22,7 @@ export interface MagicItemEntry {
 /** The book's magic items. */
 export interface MagicItemReference {
   _meta: ScrapedFrom<"magicItem">;
-  /** Corrections made by hand, by item: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /** Corrections made by hand, by entry's name: its fields the SRD gives otherwise than the database, each in place of the database's. */
+  overrides?: Overrides<Partial<MagicItemEntry>>;
   raw: MagicItemEntry[];
 }

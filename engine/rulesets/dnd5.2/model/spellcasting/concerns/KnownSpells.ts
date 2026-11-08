@@ -146,6 +146,49 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
+     * The character's spells picked on a list at the level its spellcasting ability was picked at (`aptitudes.<list>.
+     * ability`, set by a feat: Magic Initiate's pick of Intelligence, Wisdom or Charisma, made with the feat), cast with
+     * it when the class of that level doesn't cast from the list (a fighter's Magic Initiate (Wizard) spells, a wizard's
+     * Magic Initiate (Cleric) ones): their DCs registered again with it. A spell picked at another level keeps its
+     * class's (a paladin's Blessed Warrior cantrips, its Charisma, beside an Acolyte's Magic Initiate (Cleric)), as do a
+     * spell a modifier grants and a class's own list.
+     */
+    protected applyListAbilities(
+      rulesetData: RulesetData,
+      spells: HeldSpell[],
+      feats: HeldFeat[],
+      appliedModifiers: Modifier[],
+    ) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const keyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
+      const classNames = this.classNameByClassLevelId();
+      const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
+      // The levels each list's ability was picked at, by the list: those holding a feat that sets it
+      const pickedAt = new Map<string, Set<string>>();
+      for (const modifier of appliedModifiers) {
+        const list = /^aptitudes\.([a-z0-9]+)\.ability$/.exec(modifier.target)?.[1];
+        if (list === undefined || modifier.sourceType !== "feats") continue;
+        const levels = pickedAt.get(list) ?? new Set<string>();
+        for (const { classLevelId, entity } of feats)
+          if (entity.id === modifier.sourceId && classLevelId !== undefined) levels.add(classLevelId);
+        pickedAt.set(list, levels);
+      }
+      let changed = false;
+      for (const spell of spells) {
+        const list = keyById.get(spell.viaId);
+        const ability = list === undefined ? undefined : aptitudes[list].ability;
+        if (list === undefined || !ability || spell.classLevelId === undefined) continue;
+        if (!pickedAt.get(list)?.has(spell.classLevelId)) continue;
+        const className = classNames.get(spell.classLevelId);
+        if (className !== undefined && this.spellListsOf(className).includes(list)) continue;
+        spell.abilityDcName = ability;
+        this.spellGroupings.registerSpell(spell, spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId);
+        changed = true;
+      }
+      if (changed) this.spells.readGroupings();
+    }
+
+    /**
      * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
      * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
      * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.

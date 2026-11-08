@@ -10,17 +10,20 @@ import {
 } from "@/shared/customization/target.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 
-/** What a character's spellcasting counts, each for requirements only: what its classes' levels give it. */
+/**
+ * What a character's spellcasting counts: what its classes' levels give it, for requirements only (its caster level,
+ * its slots), and its Pact Magic, which its modifiers add to (a warlock's levels').
+ */
 const SPELLCASTING_PATHS = [
   {
     path: "casterlevel",
-    description: "The levels counting toward spell slots: a full caster's all, a half caster's half, rounded up",
+    description: "Levels that count toward spell slots",
     type: "number" as const,
     requirementOnly: true,
   },
   {
     path: "highestslot",
-    description: "The highest level of spell slots, by the Multiclass Spellcaster table",
+    description: "Highest spell slot level",
     type: "number" as const,
     requirementOnly: true,
   },
@@ -30,11 +33,11 @@ const SPELLCASTING_PATHS = [
     type: "number" as const,
     requirementOnly: true,
   })),
-  { path: "pact.slots", description: "Pact Magic slots", type: "number" as const, requirementOnly: true },
-  { path: "pact.level", description: "Pact Magic slots' level", type: "number" as const, requirementOnly: true },
+  { path: "pact.slots", description: "Pact Magic slots", type: "number" as const },
+  { path: "pact.level", description: "Pact Magic slot level", type: "number" as const },
 ];
 
-/** The spellcasting target paths: the levels counting toward spell slots, the slots, and the Pact Magic slots. */
+/** The spellcasting target paths: the levels counting toward spell slots, the slots, and the Pact Magic slots and level. */
 export default class SpellcastingPaths implements PathCategory<Dnd52Components> {
   /** The spellcasting paths of `kind`, which every character has. */
   static generateSpellcastingPaths(kind: OperatorKind): TargetPath[] {

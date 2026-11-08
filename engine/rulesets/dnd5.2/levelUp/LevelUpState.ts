@@ -5,11 +5,27 @@ import FeatRules from "@/engine/rulesets/dnd5.2/rules/FeatRules.ts";
 import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
 import type { LevelPicks } from "./requests.ts";
 
+/** A feat or a spell a level gives through a modifier, by name. */
+interface GivenEntity {
+  description: string | null;
+  id: string;
+  name: string;
+}
+
 /** The pools a character picks feats and spells in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
 
 /** A pool overfilled by a level-up's picks, as the character holding them says (`getOverfullPools`). */
 type OverfullPool = ReturnType<DetailedCharacter["components"]["aptitudes"]["getOverfullPools"]>[number];
+
+/**
+ * What a level gives the character through its modifiers, past its class level's grants (`givenWith`): the feats and
+ * the spells it then holds without a pick.
+ */
+export interface Given {
+  feats: GivenEntity[];
+  spells: GivenEntity[];
+}
 
 /** A planned level whose grants a step lists: its class level, and whether it's the character's first. */
 export interface GrantingLevel {
@@ -98,12 +114,17 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
   /**
    * A feats step, the wizard's and the preview's alike: how many feats the character picks with what's planned
    * (`pools`), in which pools, and the feats the planned levels (`levels`) grant, a class's first level its starting
-   * proficiencies too.
+   * proficiencies too, then those they give it through a modifier (`given`: a subclass's feature at its class level,
+   * the saving throws a class's starting proficiencies give), each once.
    */
-  protected featStep(pools: LevelUpPools, levels: GrantingLevel[]) {
+  protected featStep(pools: LevelUpPools, levels: GrantingLevel[], given: GivenEntity[] = []) {
+    const granted: GivenEntity[] = levels.flatMap(({ classLevelId, first }) =>
+      this.grantedFeatsAt(classLevelId, first),
+    );
+    const listed = new Set(granted.map(({ id }) => id));
     return {
       featsToSelect: pools.featsToSelect,
-      autoGrantedFeats: levels.flatMap(({ classLevelId, first }) => this.grantedFeatsAt(classLevelId, first)),
+      autoGrantedFeats: [...granted, ...given.filter(({ id }) => !listed.has(id))],
       aptitudePools: pools.featPools,
     };
   }
@@ -132,19 +153,42 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
   }
 
   /**
-   * A spells step, the wizard's and the preview's alike: how many spells the character picks with what's planned
-   * (`pools`), in which pools, and the spells the class levels (`classLevelIds`) grant, each saying whether it's free.
+   * What the character holds with a level or a level-up (`after`) that a modifier gave it and it didn't hold before
+   * (`before`): the feats and the spells it holds without a pick, which the wizard lists with the levels' own grants.
+   * A modifier gives one behind its requirements as the build applies it (a Champion's Additional Fighting Style at
+   * Fighter 7), so a class level's grants alone don't name it.
    */
-  protected spellStep(pools: LevelUpPools, classLevelIds: string[]) {
+  protected givenWith(before: DetailedCharacter, after: DetailedCharacter): Given {
+    const held = new Set(before.getVirtualFeats().map(({ id }) => id));
+    const known = new Set(before.getVirtualSpells().map(({ aptitudeId, id }) => `${id}:${aptitudeId}`));
+    return {
+      feats: after.getVirtualFeats().filter(({ id }) => !held.has(id)),
+      spells: after.getVirtualSpells().filter(({ aptitudeId, id }) => !known.has(`${id}:${aptitudeId}`)),
+    };
+  }
+
+  /**
+   * A spells step, the wizard's and the preview's alike: how many spells the character picks with what's planned
+   * (`pools`), in which pools, and the spells the class levels (`classLevelIds`) grant, each saying whether it's free,
+   * then those the levels make it know through a modifier (`given`), free, each once.
+   */
+  protected spellStep(pools: LevelUpPools, classLevelIds: string[], given: GivenEntity[] = []) {
     const { dnd52 } = this;
+    const granted = classLevelIds.flatMap((id) =>
+      dnd52.grantedSpellsOf(id).flatMap((grant) => {
+        const spell = dnd52.spellsById.get(grant.toId);
+        return spell ? [{ description: spell.description, free: grant.free, id: spell.id, name: spell.name }] : [];
+      }),
+    );
+    // Each spell once, however many lists a modifier makes it known on: the step names a spell, not its list
+    const unlisted = [...new Map(given.map((spell) => [spell.id, spell])).values()];
+    const listed = new Set(granted.map(({ id }) => id));
     return {
       spellsToSelect: pools.spellsToSelect,
-      autoGrantedSpells: classLevelIds.flatMap((id) =>
-        dnd52.grantedSpellsOf(id).flatMap((grant) => {
-          const spell = dnd52.spellsById.get(grant.toId);
-          return spell ? [{ ...spell, free: grant.free }] : [];
-        }),
-      ),
+      autoGrantedSpells: [
+        ...granted,
+        ...unlisted.filter(({ id }) => !listed.has(id)).map((spell) => ({ ...spell, free: true })),
+      ],
       aptitudePools: pools.spellPools,
     };
   }
