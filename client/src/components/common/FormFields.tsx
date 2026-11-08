@@ -83,6 +83,8 @@ type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
   Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
     /** Whether its value is a number: NaN when it's empty, as the form's rules read it. */
     number?: boolean;
+    /** A number field that holds 0 when it's left empty, and shows 0 empty, with its placeholder ("Never"). */
+    zeroWhenEmpty?: boolean;
   };
 
 type SelectOption = string | { disabled?: boolean; label: ReactNode; value: SelectValue };
@@ -140,6 +142,7 @@ export function FormTextField<T extends FieldValues>({
   name,
   rules,
   number = false,
+  zeroWhenEmpty = false,
   helperText,
   slotProps,
   ...props
@@ -162,16 +165,20 @@ export function FormTextField<T extends FieldValues>({
             }
           : slotProps
       }
-      placeholder={readOnly ? EMPTY_VALUE_TEXT : props.placeholder}
+      placeholder={readOnly && !zeroWhenEmpty ? EMPTY_VALUE_TEXT : props.placeholder}
       minRows={readOnly ? undefined : props.minRows}
       // A number field is one: a select of numbers keeps its own
       type={number && !props.select ? "number" : props.type}
       // On the input, so a failed submit focuses it
       inputRef={ref}
-      value={value === undefined || value === null || (number && Number.isNaN(value)) ? "" : value}
+      value={
+        value === undefined || value === null || (number && Number.isNaN(value)) || (zeroWhenEmpty && value === 0)
+          ? ""
+          : value
+      }
       onChange={(event) => {
         const text = event.target.value;
-        onChange(number ? (text === "" ? Number.NaN : Number(text)) : text);
+        onChange(number ? (text === "" ? (zeroWhenEmpty ? 0 : Number.NaN) : Number(text)) : text);
       }}
       error={!!fieldState.error}
       helperText={fieldState.error?.message ?? helperText}
