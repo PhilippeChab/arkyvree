@@ -5,12 +5,12 @@ import { DND35_COMPLETE_DIVINE_PACKAGE } from "@/content/dnd3.5/packages/extensi
 import { DND35_COMPLETE_SCOUNDREL_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-scoundrel.ts";
 import { DND35_COMPLETE_WARRIOR_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-warrior.ts";
 import { DND35_DMG_PACKAGE } from "@/content/dnd3.5/packages/extensions/dmg.ts";
-import { DND52_CORE_PACKAGE } from "@/content/dnd5.2/packages/core.ts";
+import { DND5_CORE_PACKAGE } from "@/content/dnd5/packages/core.ts";
 import { PF1_CORE_PACKAGE } from "@/content/pf1/packages/core.ts";
 import { seedTestCharacters as seedDnd35TestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd35RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
-import { seedTestCharacters as seedDnd52TestCharacters } from "@/database/seeders/dnd5.2/characters/seedTestCharacters.ts";
-import { RulesetSeeder as Dnd52RulesetSeeder } from "@/database/seeders/dnd5.2/RulesetSeeder.ts";
+import { seedTestCharacters as seedDnd5TestCharacters } from "@/database/seeders/dnd5/characters/seedTestCharacters.ts";
+import { RulesetSeeder as Dnd5RulesetSeeder } from "@/database/seeders/dnd5/RulesetSeeder.ts";
 import { seedTestCharacters as seedPf1TestCharacters } from "@/database/seeders/pf1/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Pf1RulesetSeeder } from "@/database/seeders/pf1/RulesetSeeder.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -44,11 +44,11 @@ export const RULESET_CONTENT = {
     seedTestCharacters: seedPf1TestCharacters,
     seeder: Pf1RulesetSeeder,
   },
-  "Dungeons & Dragons: 5.2": {
-    core: DND52_CORE_PACKAGE,
+  "Dungeons & Dragons: 5": {
+    core: DND5_CORE_PACKAGE,
     extensions: [],
-    seedTestCharacters: seedDnd52TestCharacters,
-    seeder: Dnd52RulesetSeeder,
+    seedTestCharacters: seedDnd5TestCharacters,
+    seeder: Dnd5RulesetSeeder,
   },
 } satisfies Record<BaseRules, RulesetContent>;
 
