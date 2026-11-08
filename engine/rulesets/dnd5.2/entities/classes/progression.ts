@@ -85,6 +85,20 @@ export const PROGRESSION: ProgressionDeclaration = {
       table: "spells",
       totals: "spellsPerDay",
     },
+    // Its slots' table, a warlock's in place of its Spell Slots: each class's tab opens on its slots
+    {
+      columns: [
+        { aliases: ["slots", "spell slots"], key: "slots", label: "Slots" },
+        { aliases: ["slot level"], key: "level", label: "Slot Level" },
+      ],
+      help: "How many Pact Magic slots the class has by then, and their level: every slot is of that level.",
+      key: "pact",
+      label: "Pact Magic",
+      max: RULESET_LIMITS.tableCount,
+      positionAliases: POSITION_ALIASES,
+      table: "pact-magic",
+      totals: "pactMagic",
+    },
     {
       all: {
         hint: "All Prepared From an Earlier Level",
@@ -104,19 +118,6 @@ export const PROGRESSION: ProgressionDeclaration = {
       positionAliases: POSITION_ALIASES,
       table: "spells-known",
       totals: "spellsKnown",
-    },
-    {
-      columns: [
-        { aliases: ["slots", "spell slots"], key: "slots", label: "Slots" },
-        { aliases: ["slot level"], key: "level", label: "Slot Level" },
-      ],
-      help: "How many Pact Magic slots the class has by then, and their level: every slot is of that level.",
-      key: "pact",
-      label: "Pact Magic",
-      max: RULESET_LIMITS.tableCount,
-      positionAliases: POSITION_ALIASES,
-      table: "pact-magic",
-      totals: "pactMagic",
     },
   ],
   tracks: [],
