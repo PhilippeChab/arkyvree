@@ -2,9 +2,14 @@
 
 import { repoPath } from "./paths.mjs";
 
-/** What a JSX attribute holds: its expression, or its string. */
+/** The attribute `name` of a JSX element, when it has one. */
+export function attribute(element, name) {
+  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
+}
+
+/** What a JSX attribute holds, if there is one: its expression, or its string. */
 export function attributeExpression(node) {
-  return node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+  return node?.value?.type === "JSXExpressionContainer" ? node.value.expression : node?.value;
 }
 
 /** The name a call goes by: `navigate(…)`'s `navigate`, `form.reset(…)`'s `reset`, else null. */
@@ -47,6 +52,11 @@ export function hasAttribute(node, name) {
 /** Whether the linted file is the client's. */
 export function inClient(context) {
   return repoPath(context.filename).startsWith("client/src/");
+}
+
+/** Whether the linted file is `file`: the one module a rule leaves a raw pattern to. */
+export function inFile(context, file) {
+  return repoPath(context.filename) === file;
 }
 
 /** The nearest JSX element around `node`. */

@@ -821,8 +821,8 @@ describe("frontend rules", () => {
           "client/src/pages/a/Written.tsx": "export const w = () => queryClient.setQueryData(k, v);\n",
           "client/src/pages/a/Mutated.tsx":
             "export const m = () => useMutation({ mutationFn: f, onSuccess: (v) => queryClient.setQueryData(k, v) });\n",
-          "client/src/pages/a/Saved.tsx":
-            "export const s = () => useEntitySave({ saveFn: f, storeSaved: (v) => queryClient.setQueryData(k, v) });\n",
+          // The query's own module seeds what it caches
+          "client/src/pages/a/seedQueries.ts": "export const s = () => queryClient.setQueryData(k, v);\n",
           "client/src/pages/a/Paged.tsx": "export const n = (data: Data) => data.pages.flatMap((p) => p.items);\n",
         },
         ["queries"],

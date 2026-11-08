@@ -7,6 +7,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
+import { isConcern } from "./conventions.mjs";
 import { repoPath } from "./paths.mjs";
 
 const FUNCTIONS = ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"];
@@ -62,13 +63,6 @@ function createFunctionLength(context) {
       [type, enter],
       [`${type}:exit`, exit],
     ]),
-  );
-}
-
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
   );
 }
 

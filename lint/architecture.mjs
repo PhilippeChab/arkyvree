@@ -288,8 +288,9 @@ const ROOT_FOLDERS = {
 /** The trees whose ruleset folders take their ruleset's rows' types from its module's entry: its seeders, its codegen. */
 const RULESET_DOORS = ["database/seeders/", "codegen/"];
 
-/** The rulesets of each repo root, once read. */
+/** drizzle's set operators, which build a query: imported only where one is built (`QUERY_HOMES`). */
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
+
 /** What every ruleset runs on, which names none of them: the core's folders, the registry's readers, the server and what it shares. */
 const SHARED_HOMES = [
   "engine/core/",
