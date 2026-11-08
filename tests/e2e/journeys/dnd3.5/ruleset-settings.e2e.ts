@@ -32,7 +32,9 @@ test.describe("A fork's Settings", () => {
     const feats = page.getByRole("group", { name: "Feat Advancement" });
     const levels = feats.getByRole("spinbutton", { name: "Level", exact: true });
     // The core rules': a feat every 3 levels, and one more at the first
-    await expect(feats.getByRole("spinbutton", { name: "Every How Many Levels" })).toHaveValue("3", { timeout: 10_000 });
+    await expect(feats.getByRole("spinbutton", { name: "Every How Many Levels" })).toHaveValue("3", {
+      timeout: 10_000,
+    });
     await expect(levels).toHaveCount(1);
     await expect(levels.first()).toHaveValue("1");
     // A level added takes the first free one, which its input changes
