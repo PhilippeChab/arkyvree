@@ -13,6 +13,8 @@ interface ScoreBoxProps {
   label: string;
   /** The full form's least height, which lines up a row of boxes. */
   minHeight?: number;
+  /** Whether its label stays on one line, its box as wide as it needs: a row's box (`SCORE_SLOT_SX`). */
+  oneLine?: boolean;
   /** Its place in a row: a row of score boxes gives each its width (`SCORE_SLOT_SX`). */
   sx?: SxProps<Theme>;
   value: ReactNode;
@@ -22,7 +24,17 @@ interface ScoreBoxProps {
  * A score in its box, as the sheet shows ability scores, saving throws and armor classes: its label over its value, and
  * under it what goes with it. The full form gives each its breakdown; the compact one, a caption over a smaller value.
  */
-export function ScoreBox({ badge, breakdown, compact = false, editor, label, minHeight, sx, value }: ScoreBoxProps) {
+export function ScoreBox({
+  badge,
+  breakdown,
+  compact = false,
+  editor,
+  label,
+  minHeight,
+  oneLine = false,
+  sx,
+  value,
+}: ScoreBoxProps) {
   return (
     <Stack
       component={Paper}
@@ -41,9 +53,10 @@ export function ScoreBox({ badge, breakdown, compact = false, editor, label, min
         component="p"
         sx={[
           { fontWeight: 600, textTransform: "uppercase" },
-          // The compact form's label on one line: "Flat-footed" fits a phone's third of the row. The full form's wraps, a
-          // word too long for its box broken inside it
-          compact ? { lineHeight: 1, whiteSpace: "nowrap" } : { fontSize: "0.9rem", overflowWrap: "anywhere" },
+          // The compact form's label on one line: "Flat-footed" fits a phone's third of the row. The full form's too in a
+          // row, whose box grows to fit it; elsewhere it wraps, a word too long for its box broken inside it
+          compact ? { lineHeight: 1, whiteSpace: "nowrap" } : { fontSize: "0.9rem" },
+          !compact && (oneLine ? { whiteSpace: "nowrap" } : { overflowWrap: "anywhere" }),
         ]}
       >
         {label}

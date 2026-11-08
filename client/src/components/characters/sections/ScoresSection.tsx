@@ -115,7 +115,7 @@ function ScoreRow({ scores, onBaseChange }: ScoreRowProps) {
   return (
     <Stack direction="row" spacing={SCORE_ROW_GAP} sx={badged ? SCORE_ROW_SX : [SCORE_ROW_SX, { pb: 2 }]}>
       {scores.map((score) => (
-        <ScoreTile key={score.key} sx={SCORE_SLOT_SX} score={score} onBaseChange={onBaseChange} />
+        <ScoreTile key={score.key} sx={SCORE_SLOT_SX} oneLine score={score} onBaseChange={onBaseChange} />
       ))}
     </Stack>
   );

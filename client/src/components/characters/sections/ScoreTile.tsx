@@ -10,6 +10,8 @@ interface ScoreTileProps {
   compact?: boolean;
   /** Its base set to `base`, by its owner's edit, within its bounds (none in the compact form, or read only). */
   onBaseChange?: (score: SheetScore, base: number) => void;
+  /** Whether its label stays on one line, its box as wide as it needs: a row's (`ScoreBox`'s). */
+  oneLine?: boolean;
   score: SheetScore;
   /** Its place in a row of boxes (`ScoreBox`'s). */
   sx?: SxProps<Theme>;
@@ -20,13 +22,14 @@ interface ScoreTileProps {
  * and lowers within its bounds, and its other parts; compact, its short label over its value and badge. A box with a
  * badge stands taller, its row's height.
  */
-export function ScoreTile({ score, onBaseChange, compact, sx }: ScoreTileProps) {
+export function ScoreTile({ score, onBaseChange, compact, oneLine, sx }: ScoreTileProps) {
   const { badge, base, label, parts, short, signed, value } = score;
   const edit = !compact && base ? onBaseChange : undefined;
 
   return (
     <ScoreBox
       sx={sx}
+      oneLine={oneLine}
       label={compact ? short : label}
       value={signed ? formatSigned(value) : value}
       compact={compact}
