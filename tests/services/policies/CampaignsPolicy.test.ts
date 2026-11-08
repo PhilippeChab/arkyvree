@@ -4,6 +4,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Players, Users, Visibility } from "@/server/repositories/index.ts";
 import { CampaignsPolicy, CharactersPolicy, readRefusal } from "@/server/services/policies/index.ts";
+import type { DocumentAudience } from "@/shared/campaignDocuments.ts";
 import { CHARACTER_VISIBILITY_OPTIONS } from "@/shared/campaigns.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import { measure } from "@/tests/support/database.ts";
@@ -400,6 +401,43 @@ describe("CampaignsPolicy", () => {
     for (const check of [() => demo.canManagePlayers(), () => demo.canExportCharacter(character)])
       expect(thrownBy(check)).toEqual(new ForbiddenError("Sign up to use this feature"));
     expect(demo.canEdit()).toBe(true);
+  });
+
+  test("canManageDocuments: its Game Masters', but a demo's, while the campaign isn't archived", async () => {
+    const { campaign, session, policy } = await policyFor("Game Master");
+    expect(policy.canManageDocuments()).toBe(true);
+    const demo = await CampaignsPolicy.for(db, { ...session, isDemo: true }, campaign);
+    expect(thrownBy(() => demo.canManageDocuments())).toEqual(new ForbiddenError("Sign up to use this feature"));
+    const { policy: player } = await policyFor("Player Character");
+    expect(thrownBy(() => player.canManageDocuments())).toEqual(
+      new ForbiddenError("Only the Game Master can edit this campaign"),
+    );
+
+    const [archived] = await Campaigns.archive(db, { id: campaign.id });
+    const archivedGm = await CampaignsPolicy.for(db, session, archived);
+    expect(thrownBy(() => archivedGm.canManageDocuments())).toEqual(new ConflictError("This campaign is archived"));
+  });
+
+  test("canSeeDocument / isDocumentReader: a Game Master every item, a player those that admit their seat", async () => {
+    const { policy: gameMaster } = await policyFor("Game Master");
+    const { campaign, session, policy: player } = await policyFor("Player Character");
+    const seat = (await Players.findOne(db, { campaignId: campaign.id, userId: session.userId }))!;
+    const { policy: outsider } = await policyFor(null);
+    const audiences: DocumentAudience[] = [
+      { everyone: true },
+      { everyone: false, playerIds: [seat.id] },
+      { everyone: false, playerIds: [NIL_UUID] },
+      { everyone: false, playerIds: [] },
+    ];
+
+    expect(audiences.map((audience) => gameMaster.isDocumentReader(audience))).toEqual([true, true, true, true]);
+    expect(audiences.map((audience) => player.isDocumentReader(audience))).toEqual([true, true, false, false]);
+    expect(player.canSeeDocument(audiences[1])).toBe(true);
+    expect(thrownBy(() => player.canSeeDocument(audiences[2]))).toEqual(
+      new NotFoundError("Document not found in this campaign"),
+    );
+    // Whoever doesn't sit in the campaign is refused it before any document
+    expect(thrownBy(() => outsider.canSeeDocument(audiences[0]))).toEqual(new NotFoundError("Campaign not found"));
   });
 
   test("forMany: a page's policies, its seats read at once", async () => {

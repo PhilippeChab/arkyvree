@@ -6,6 +6,7 @@ import { campaignName, idParam, limit, orderDirDesc, page } from "@/server/route
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 
 import playerCharacters from "./characters/index.ts";
+import documents from "./documents/index.ts";
 import invites from "./invites/index.ts";
 import players from "./players/index.ts";
 
@@ -14,6 +15,7 @@ export default new Hono()
   .route("/", players)
   .route("/", invites)
   .route("/", playerCharacters)
+  .route("/", documents)
   .get(
     "/",
     validate(

@@ -9,6 +9,7 @@ import { isProduction, readEnv } from "@/server/environment.ts";
 import { toErrorResponse } from "@/server/errors/index.ts";
 import { checkCsrf, requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
+import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
@@ -88,13 +89,15 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
       await next();
     }),
   )
-  // Records whom an API write notified, and tells them over the websocket once it succeeds.
+  // Records whom an API write notified, or changed a campaign's documents for, and tells them over the websocket once it
+  // succeeds.
   .use("/api/*", async (c, next) => {
-    const notified = await collectNotified(next);
+    const noted = await collectNotified(next);
     if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
-      const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
+      const publish = (userId: string, type: Exclude<WsEvent["type"], "app:version">) =>
         publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));
-      for (const userId of notified) publish(userId, "notifications:updated");
+      for (const userId of noted.notified) publish(userId, "notifications:updated");
+      for (const userId of noted.campaignDocuments) publish(userId, "campaign-documents:updated");
       const session = c.get("requestSession");
       if (session) publish(session.userId, "activities:updated");
     }

@@ -388,7 +388,7 @@ describe("activity notifications", () => {
 describe("the users a request notified", () => {
   test("are collected while it runs, through its transaction", async () => {
     const { invitee, invite } = await setup();
-    const notified = await collectNotified(async () => {
+    const { notified } = await collectNotified(async () => {
       await invite();
     });
     expect([...notified]).toEqual([invitee.user.id]);
@@ -397,6 +397,6 @@ describe("the users a request notified", () => {
   test("aren't collected outside a request: another request's are its own", async () => {
     const { invite } = await setup();
     await invite();
-    expect([...(await collectNotified(async () => {}))]).toEqual([]);
+    expect([...(await collectNotified(async () => {})).notified]).toEqual([]);
   });
 });

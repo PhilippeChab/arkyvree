@@ -15,6 +15,8 @@ export {
   CharacterLinks,
   Characters,
   Contributors,
+  DocumentReaders,
+  Documents,
   EmailVerifications,
   Entities,
   EntityLinks,

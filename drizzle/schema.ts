@@ -744,6 +744,117 @@ export const contributorsInRules = rules.table(
 
 export const customization = pgSchema("customization");
 
+export const documentsInCampaign = campaign.table(
+  "documents",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    campaignId: uuid("campaign_id").notNull(),
+    parentId: uuid("parent_id"),
+    kind: text().notNull(),
+    name: text().notNull(),
+    body: text(),
+    visibility: text().default("Private").notNull(),
+    authorId: uuid("author_id"),
+  },
+  (table) => [
+    // A campaign's tree, read whole, and a folder's contents, which its delete cascades to
+    index("documents_campaign_id_parent_id_idx").using(
+      "btree",
+      table.campaignId.asc().nullsLast(),
+      table.parentId.asc().nullsLast(),
+    ),
+    index("documents_author_id_idx").using("btree", table.authorId.asc().nullsLast()),
+    // What a document's parent names: a folder of its own campaign
+    unique("documents_campaign_id_id_key").on(table.campaignId, table.id),
+    foreignKey({
+      columns: [table.campaignId],
+      foreignColumns: [campaignsInCampaign.id],
+      name: "documents_campaign_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.campaignId, table.parentId],
+      foreignColumns: [table.campaignId, table.id],
+      name: "documents_parent_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.authorId],
+      foreignColumns: [usersInAccount.id],
+      name: "documents_author_id_fkey",
+    }).onDelete("set null"),
+    check("documents_kind_check", sql`kind = ANY (ARRAY['Folder'::text, 'Document'::text])`),
+    check(
+      "documents_visibility_check",
+      sql`visibility = ANY (ARRAY['Private'::text, 'Public'::text, 'Selected'::text])`,
+    ),
+    check("documents_folder_body_check", sql`(kind = 'Document'::text) OR (body IS NULL)`),
+  ],
+);
+
+export const role = pgEnum("role", ["Game Master", "Player Character"]);
+
+export const playersInCampaign = campaign.table(
+  "players",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    userId: uuid("user_id"),
+    campaignId: uuid("campaign_id").notNull(),
+    role: role().notNull(),
+  },
+  (table) => [
+    // By its keys, archived seats too: the archived lists and the deletes that cascade through them read them
+    index("players_campaign_id_idx").using("btree", table.campaignId.asc().nullsLast()),
+    index("players_user_id_campaign_id_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.campaignId.asc().nullsLast(),
+    ),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "players_user_id_fkey",
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [table.campaignId],
+      foreignColumns: [campaignsInCampaign.id],
+      name: "players_campaign_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const documentReadersInCampaign = campaign.table(
+  "document_readers",
+  {
+    documentId: uuid("document_id").notNull(),
+    playerId: uuid("player_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.documentId, table.playerId], name: "document_readers_pkey" }),
+    // A seat's rows, which its delete cascades to
+    index("document_readers_player_id_idx").using("btree", table.playerId.asc().nullsLast()),
+    foreignKey({
+      columns: [table.documentId],
+      foreignColumns: [documentsInCampaign.id],
+      name: "document_readers_document_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.playerId],
+      foreignColumns: [playersInCampaign.id],
+      name: "document_readers_player_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
 export const emailVerificationsInAccount = account.table(
   "email_verifications",
   {
@@ -1238,43 +1349,6 @@ export const inventoryInCharacter = character.table(
       "inventory_check1",
       sql`(remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL))`,
     ),
-  ],
-);
-
-export const role = pgEnum("role", ["Game Master", "Player Character"]);
-
-export const playersInCampaign = campaign.table(
-  "players",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    userId: uuid("user_id"),
-    campaignId: uuid("campaign_id").notNull(),
-    role: role().notNull(),
-  },
-  (table) => [
-    // By its keys, archived seats too: the archived lists and the deletes that cascade through them read them
-    index("players_campaign_id_idx").using("btree", table.campaignId.asc().nullsLast()),
-    index("players_user_id_campaign_id_idx").using(
-      "btree",
-      table.userId.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [usersInAccount.id],
-      name: "players_user_id_fkey",
-    }).onDelete("set null"),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "players_campaign_id_fkey",
-    }).onDelete("cascade"),
   ],
 );
 

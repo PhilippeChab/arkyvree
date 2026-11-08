@@ -4,6 +4,7 @@
  * takes, its words joined by hyphens (`player-characters`), never a table's name.
  */
 export const TARGET_TYPES = {
+  campaignDocuments: "campaign-documents",
   campaigns: "campaigns",
   characterContributors: "character-contributors",
   characters: "characters",

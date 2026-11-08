@@ -10,6 +10,7 @@ import {
   type Pagination,
   Players,
 } from "@/server/repositories/index.ts";
+import { findVisibleCampaignDocument } from "@/server/services/campaigns/documents/index.ts";
 import { findReadableCampaign, findVisibleCampaignCharacter } from "@/server/services/campaigns/index.ts";
 import { findReadableCharacter } from "@/server/services/characters/index.ts";
 import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
@@ -52,6 +53,15 @@ class ActivitiesService {
   private async campaignCharacterUrl(session: Session, characterId: string) {
     const found = await findVisibleCampaignCharacter(db, session, characterId);
     return found ? `/campaigns/${found.campaign.id}/characters/${characterId}` : null;
+  }
+
+  /**
+   * A campaign's folder or document, or null when it's gone or the session may not see it
+   * (`findVisibleCampaignDocument`): a hidden one isn't revealed to the campaign's players.
+   */
+  private async campaignDocumentUrl(session: Session, documentId: string) {
+    const found = await findVisibleCampaignDocument(db, session, documentId);
+    return found ? `/campaigns/${found.campaign.id}/documents/${documentId}` : null;
   }
 
   /**
@@ -215,6 +225,8 @@ class ActivitiesService {
       // targetId is the characterId
       case TARGET_TYPES.playerCharacters:
         return await this.campaignCharacterUrl(session, targetId);
+      case TARGET_TYPES.campaignDocuments:
+        return await this.campaignDocumentUrl(session, targetId);
       case TARGET_TYPES.invites: {
         const invite = await Invites.findOne(db, { id: targetId });
         return invite ? await this.inviteUrl(session, invite) : null;

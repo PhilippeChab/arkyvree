@@ -29,6 +29,13 @@
       "when": 1793928839850,
       "tag": "0003_registries_by_base_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794175402203,
+      "tag": "0004_campaign_documents",
+      "breakpoints": true
     }
   ]
 }

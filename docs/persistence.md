@@ -40,6 +40,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors`, a ruleset's and a character's (Pending/Active/Rejected/Revoked enum: a revoked one stays, by its status) |
 | Account credentials | `ApiKeys` (a revoked key: nothing names it, and its token must stop working at once; an expired one, which the sign-in refuses, once `runCleanup.ts` reaps it) |
+| A campaign's documents | `Documents` (a folder's delete takes what it holds, by cascade, never moving it up to its folder, where a Private folder's contents would show), `DocumentReaders` (the seats a Selected item names: a link, rewritten with its item's setting) |
 
 A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 
@@ -70,7 +71,7 @@ Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
   - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
-  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Its seats (`players`) reference it `ON DELETE CASCADE`, and their `invites` and `player_characters` reference the seats the same way, so the row delete wipes its membership rows in one shot.
+  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Its seats (`players`) reference it `ON DELETE CASCADE`, and their `invites` and `player_characters` reference the seats the same way, so the row delete wipes its membership rows in one shot, and its folders and documents (`documents`, with their `document_readers`) too.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - An account's deletion is the other way a character goes for good, archived or not: it hard-deletes whatever it doesn't hand on to a campaign's Game Master (see *What an account's deletion hands on*, under *Campaign-membership rows*). It archives a campaign it leaves with nobody seated, which stays, as nobody's left to delete it.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
@@ -155,7 +156,7 @@ A stackable feat taken twice is two picks, not a count: the picks may be in two 
 
 A character's seat in a campaign (`PlayerCharacters`) has no archive: it's hard-deleted with its player's removal or its character's, and an account's deletion moves it to the seat of its character's new owner, so no archived seat holds one. `Players` and `Invites` take both primitives, picked by entry point:
 
-- **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removePlayer`). Intentional removal, no preservation needed.
+- **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removePlayer`). Intentional removal, no preservation needed. The seats its campaign's Selected folders and documents name go with it (`document_readers`, by cascade): one that named no one else then admits no player.
 - **User account deletion** → archive (`AccountService.deleteAccount`, each repository's `archive({ userId })`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along, once what they hold is handed on (below). An archived seat stays listed in its campaign, as "Deleted Account": `CampaignPlayersService.getPlayers` answers no username or address for it, and a search doesn't find it. What was sent to this person mustn't pass to the address's next owner, so all of it ends before `Users.archive`, which frees the address: a seat's invites are archived with its own, those no sign-in claimed for its address too, and every contribution to a ruleset or a character is revoked, pending or active, with the pending ones its address has that no sign-in claimed. None of these rows keeps the address: they take the account's placeholder, and every other row of the user does too, whatever its status. A row keeps its `user_id`, which is no one else's. Notifications the account caused lose its name (`Notifications.updateWithoutActorName`). What stays on purpose: `activities.data.email`, the inviter's own record of what they typed, the account's own received notifications, which nobody can read, both until the retention sweep; its `oauth_accounts` rows, archived, an opaque id; its sessions and codes.
 
 **What an account's deletion hands on.** While its seats are live, before `Players.archive`, as a campaign hides what sits on an archived seat (`handOnCampaigns`):

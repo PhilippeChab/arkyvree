@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Players } from "@/server/repositories/index.ts";
+import { type DocumentAudience, isInDocumentAudience } from "@/shared/campaignDocuments.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
@@ -128,6 +129,16 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
+   * Adding, editing, moving and removing the campaign's folders and documents, and choosing whom each admits: its Game
+   * Master's, but a demo's (`canUseSignedUpFeatures`), in a campaign that isn't archived.
+   */
+  canManageDocuments() {
+    this.canUpdate();
+    this.canUseSignedUpFeatures();
+    return this.canModify();
+  }
+
+  /**
    * Adding, editing and removing the campaign's players: its Game Master's, but a demo's (`canUseSignedUpFeatures`), in
    * a campaign that isn't archived.
    */
@@ -204,6 +215,18 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
+   * Seeing one of the campaign's folders or documents (`audience`: the players it and every folder above it admit): a
+   * member, but a player only one its audience takes in, refused to the others as not found (a 404), so a hidden
+   * folder's or document's existence isn't revealed.
+   */
+  canSeeDocument(audience: DocumentAudience) {
+    this.canRead();
+    if (!this.isDocumentReader(audience)) throw new NotFoundError("Document not found in this campaign");
+
+    return true;
+  }
+
+  /**
    * Setting the visibility of a character linked to the campaign (`link`, none for one that isn't): the seat that linked
    * it, whose link it is, in a campaign that isn't archived, as `canLinkCharacter` takes a link. One the session doesn't
    * see (`canSeeCharacter`: another seat's Private one), or none, is refused as not linked (a 404), as the campaign's
@@ -260,6 +283,16 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
    */
   isAddressReader() {
     return this.isGameMaster();
+  }
+
+  /**
+   * Whether the session reads a folder or a document of the campaign (`audience`: the players it and every folder above
+   * it admit): its Game Master reads every one, a player one its audience takes their seat in.
+   */
+  isDocumentReader(audience: DocumentAudience) {
+    if (this.isGameMaster()) return true;
+
+    return !!this.player && isInDocumentAudience(audience, this.player.id);
   }
 
   /** Whether the session's player row is the campaign's Game Master's. */

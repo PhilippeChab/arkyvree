@@ -15,6 +15,8 @@ import ActivitiesRepository from "./activities/ActivitiesRepository.ts";
 import AttachmentsRepository from "./attachments/AttachmentsRepository.ts";
 import BlobsRepository from "./attachments/BlobsRepository.ts";
 import CampaignsRepository from "./campaigns/CampaignsRepository.ts";
+import DocumentReadersRepository from "./campaigns/DocumentReadersRepository.ts";
+import DocumentsRepository from "./campaigns/DocumentsRepository.ts";
 import InvitesRepository from "./campaigns/InvitesRepository.ts";
 import PlayerCharactersRepository from "./campaigns/PlayerCharactersRepository.ts";
 import PlayersRepository from "./campaigns/PlayersRepository.ts";
@@ -51,6 +53,8 @@ export const CharacterInventory = withRequestCache("CharacterInventory", new Cha
 export const CharacterLinks = withRequestCache("CharacterLinks", new StoredCharacterLinks());
 export const Characters = withRequestCache("Characters", new CharactersRepository());
 export const Contributors = withRequestCache("Contributors", new ContributorsRepository());
+export const DocumentReaders = withRequestCache("DocumentReaders", new DocumentReadersRepository());
+export const Documents = withRequestCache("Documents", new DocumentsRepository());
 export const EmailVerifications = withRequestCache(
   "EmailVerifications",
   new AccountCodesRepository(emailVerificationsInAccount),

@@ -13,7 +13,8 @@ class CampaignsService {
   /**
    * What the session may do in a campaign, as its policy decides it, the campaign's state with it: edit it and archive
    * it while it's live, unarchive it and delete it for good once it's archived, its Game Master's (`canEdit`,
-   * `canArchive`, `canUnarchive`, `canHardDelete`), add, edit and remove its players (`canManagePlayers`), revoke a
+   * `canArchive`, `canUnarchive`, `canHardDelete`), add, edit, move and remove its folders and documents
+   * (`canManageDocuments`), add, edit and remove its players (`canManagePlayers`), revoke a
    * pending invite, an archived campaign's too (`canRevokeInvites`), link the session's characters to it and set their
    * visibility (`canLinkCharacters`), and leave it (`canLeave`): its own seat's removal (`seat`), as its leave asks it,
    * never the last Game Master's (`isLastGameMaster`). The client offers what it answers.
@@ -25,6 +26,7 @@ class CampaignsService {
       canHardDelete: isAllowed(() => policy.canHardDelete()),
       canLeave: isAllowed(() => policy.canRemovePlayer(seat, { isLastGameMaster })),
       canLinkCharacters: isAllowed(() => policy.canLinkCharacter()),
+      canManageDocuments: isAllowed(() => policy.canManageDocuments()),
       canManagePlayers: isAllowed(() => policy.canManagePlayers()),
       canRevokeInvites: isAllowed(() => policy.canRevokeInvite()),
       canUnarchive: isAllowed(() => policy.canUnarchive()),
