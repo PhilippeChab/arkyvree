@@ -18,7 +18,7 @@ export interface DomainEntry {
 /** A book's domains and subdomains. */
 export interface DomainReference {
   _meta: ScrapedMeta<"domain">;
-  /** Corrections made by hand, by domain: read by the detection to come. */
+  /** Corrections made by hand, by domain, which nothing reads yet. */
   overrides?: Overrides<unknown>;
   raw: DomainEntry[];
 }

@@ -22,7 +22,7 @@ export interface ItemEntry {
 /** A book's weapons, armor and goods. */
 export interface ItemReference {
   _meta: ScrapedMeta<"item">;
-  /** Corrections made by hand, by item: read by the detection to come. */
+  /** Corrections made by hand, by item, which nothing reads yet. */
   overrides?: Overrides<unknown>;
   raw: ItemEntry[];
 }

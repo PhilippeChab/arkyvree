@@ -106,7 +106,7 @@ server/
     authentication/     # Auth routes: signedOut/, then signedIn/ behind the session
     v1/                 # The public API (/v1), behind an API key: its routes, translators and schemas
     mcp/                # The MCP server (/mcp): its tools over v1's routes
-    oauth/              # The MCP server's OAuth sign-in (wellKnown.ts, its discovery documents)
+    oauth/              # The MCP server's OAuth sign-in; wellKnown.ts, beside it, its discovery documents
     static.ts           # Static file serving + SEO (the shell: PageTemplates.ts)
     ws.ts               # The websocket; health.ts, the health probe
   services/             # One folder per service, laid out like routers/api

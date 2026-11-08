@@ -724,7 +724,7 @@ function createPageGaps(context) {
         return;
       }
       if (name === "Container") {
-        // An invite's card stands alone in its `sm` column, centred, deeper than a page's content
+        // An `sm` card (an invite's, an app's consent) stands alone in its column, centred, deeper than a page's content
         const maxWidth = attributeExpression(attribute(node, "maxWidth"));
         if (maxWidth?.type === "Literal" && maxWidth.value === "sm") return;
         // The app's page width is a Container's own (`lg`, which `AppMain` caps every page at): narrower for reading

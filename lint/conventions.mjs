@@ -149,6 +149,7 @@ const TEST_MIRRORS = [
   ["tests/jobs/", "server/jobs/"],
   ["tests/cache/", "server/cache/"],
   ["tests/cow/", "server/cow/"],
+  ["tests/database/", "server/database/"],
   ["tests/repositories/", "server/repositories/"],
   ["tests/engine/", "engine/"],
   ["tests/middlewares/", "server/middlewares/"],

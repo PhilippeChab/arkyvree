@@ -13,9 +13,9 @@ The dialog has four sections:
 3. **Physical Details.** Age, height, weight, all optional: they start empty.
 4. **Optional Details.** Deity, description, notes, [private notes](#what-is-character-visibility).
 
-Click **Create**: the character's page opens on the [level-up wizard](#what-is-the-level-up-wizard) for level 1. Pick a class, set HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
+Click **Create**: the character's page opens on the [level-up wizard](#what-is-the-level-up-wizard) for level 1. Pick a class, set HP, allocate skill points within the rank cap (D&D 3.5 and Pathfinder), pick feats from the available pools, pick spells if your class has them, review and confirm.
 
-The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
+The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out and skill ranks above the level-1 cap are blocked (D&D 3.5 and Pathfinder), feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
