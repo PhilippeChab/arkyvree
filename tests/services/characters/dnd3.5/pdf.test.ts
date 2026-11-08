@@ -19,7 +19,7 @@ describe("findExportableCharacter", () => {
     for (const { id } of [rowan, wolf!])
       expect(await findExportableCharacter(owner, id)).toMatchObject({ character: { id }, notes: "show" });
 
-    // A campaign's Game Master, who doesn't edit the character, and its player, from the campaign
+    // A campaign's Game Master and its player, from the campaign
     const { user: gm } = await createTestUser();
     const { user: player } = await createTestUser();
     const { campaign } = await createTestCampaign(gm.id);
@@ -32,7 +32,10 @@ describe("findExportableCharacter", () => {
         notes: "show",
       });
     }
-    // Anyone else exports none of it
-    expect(await findExportableCharacter(makeSession(gm.id), character.id)).toBeNull();
+    // Its Game Master edits it, so exports it from its own sheet too; anyone else exports none of it
+    expect(await findExportableCharacter(makeSession(gm.id), character.id)).toMatchObject({ notes: "show" });
+    const { user: stranger } = await createTestUser();
+    expect(await findExportableCharacter(makeSession(stranger.id), character.id)).toBeNull();
+    expect(await findExportableCharacter(makeSession(stranger.id), character.id, campaign.id)).toBeNull();
   });
 });
