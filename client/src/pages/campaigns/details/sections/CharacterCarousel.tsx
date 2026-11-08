@@ -33,14 +33,34 @@ const TRACK_SX = {
   [PREFERS_REDUCED_MOTION]: { scrollBehavior: "auto" },
 } as const;
 
-/** How long a wheel turned on keeps to the slide it moved: a notch slides one card, however many events it fires. */
-const WHEEL_SLIDE_GAP = DURATION.slow;
+/**
+ * The pause that ends a turn of the wheel: a turn slides one card, however many events it fires (a notch's, a trackpad
+ * flick's and its momentum), each closer to the one before than this.
+ */
+const WHEEL_TURN_GAP = DURATION.normal;
 
-/** The track's edges as it's scrolled now, `previous` kept when they didn't change, so its state doesn't render again. */
+/** The track's edges as it's scrolled now, `previous` kept when they didn't change: its state renders nothing again. */
 function edgesOf(track: HTMLElement, previous: TrackEdges) {
   const atStart = track.scrollLeft <= 1;
   const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
   return atStart === previous.atStart && atEnd === previous.atEnd ? previous : { atStart, atEnd };
+}
+
+/**
+ * Whether the track shows whole in what scrolls the page (its nearest ancestor that scrolls, else the window): cards
+ * taller than the screen leave the wheel to the page, which scrolls to read them.
+ */
+function inFullView(track: HTMLElement) {
+  let view = { top: 0, bottom: window.innerHeight };
+  for (let parent = track.parentElement; parent; parent = parent.parentElement) {
+    const { overflowY } = getComputedStyle(parent);
+    if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+      view = parent.getBoundingClientRect();
+      break;
+    }
+  }
+  const { top, bottom } = track.getBoundingClientRect();
+  return top >= view.top - 1 && bottom <= view.bottom + 1;
 }
 
 /** Slides the track a card back (`-1`) or on (`1`): its first card's width and the gap after it. */
@@ -53,9 +73,9 @@ function slide(track: HTMLElement, direction: number) {
 
 /**
  * Cards in a row that slides sideways, a card at a time: swiped, scrolled sideways, its previous and next buttons above
- * it (with two cards or more, each disabled at its end), or the mouse wheel over it, which slides it on as it turns
- * down and back as it turns up, and scrolls the page once the row can't slide further that way. A campaign's
- * characters in its Party View.
+ * it (with two cards or more, each disabled at its end), or, while the row shows whole, the mouse wheel over it, which
+ * slides it on a card a turn down and back a card a turn up, and scrolls the page once the row can't slide further that
+ * way. A campaign's characters in its Party View.
  */
 export function CharacterCarousel({ children }: CharacterCarouselProps) {
   const trackId = useId();
@@ -71,17 +91,19 @@ export function CharacterCarousel({ children }: CharacterCarouselProps) {
     resizes.observe(track);
     const cards = new MutationObserver(update);
     cards.observe(track, { childList: true });
-    let lastSlide = Number.NEGATIVE_INFINITY;
+    let lastWheel = Number.NEGATIVE_INFINITY;
     const handleWheel = (event: WheelEvent) => {
-      // A sideways scroll moves the track itself, and a wheel past its end the page
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      // The browser's own: a zoom or a pinch (Ctrl or Command held), and a wheel it already scrolls the page with
+      if (!event.cancelable || event.ctrlKey || event.metaKey) return;
+      // A sideways scroll moves the track itself; the page scrolls past its end, or to read cards it doesn't show whole
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !inFullView(track)) return;
       const direction = Math.sign(event.deltaY);
       const { atStart, atEnd } = edgesOf(track, { atStart: true, atEnd: true });
       if (direction < 0 ? atStart : atEnd) return;
       event.preventDefault();
-      if (event.timeStamp - lastSlide < WHEEL_SLIDE_GAP) return;
-      lastSlide = event.timeStamp;
-      slide(track, direction);
+      const turns = event.timeStamp - lastWheel >= WHEEL_TURN_GAP;
+      lastWheel = event.timeStamp;
+      if (turns) slide(track, direction);
     };
     // Not passive: a wheel that slides the track doesn't scroll the page
     track.addEventListener("wheel", handleWheel, { passive: false });

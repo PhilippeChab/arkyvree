@@ -21,10 +21,11 @@ interface CompactSheetProps {
 }
 
 /**
- * A compact box in its row: at least a phone's third of a card, as wide as its label on one line ("Flat-footed"), and
- * growing with the others to fill its row.
+ * A compact box in its row: as wide as its label on one line ("Flat-footed") and its value, and at least a third of a
+ * phone's card (abilities three to a row) or, from a tablet's width, a sixth of a wider one's (six to a row); never
+ * stretched across what its row leaves.
  */
-const BOX_SX = { flex: "1 0 auto", minWidth: 64 } as const;
+const BOX_SX = { flex: "0 0 auto", minWidth: { xs: 72, sm: 56 } } as const;
 
 /** A row of compact boxes, wrapping onto the next line where the card's width holds no more. */
 function BoxRow({ children }: BoxRowProps) {

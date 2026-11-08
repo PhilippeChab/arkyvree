@@ -178,6 +178,8 @@ test.describe("A campaign character", () => {
       const otherParty = other.getByRole("region", { name: "Party" });
       await expect(otherParty.getByText(characters.Public.name, { exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(otherParty.getByText(characters.Partial.name, { exact: true })).toBeVisible();
+      // Both sheets in: each card's identity names its race
+      await expect(otherParty.getByText("Race", { exact: true })).toHaveCount(2);
       await expect(otherParty.getByRole("heading", { name: "Ability Scores" })).toHaveCount(1);
       await expect(otherParty.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(1);
       await expect(otherParty.getByText(characters.Private.name, { exact: true })).toHaveCount(0);

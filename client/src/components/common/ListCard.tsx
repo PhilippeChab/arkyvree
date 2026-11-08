@@ -36,7 +36,7 @@ interface ListCardProps extends Omit<CardProps, "children" | "title"> {
   title: string;
 }
 
-/** Card of the ruleset, character and campaign grids. */
+/** Card of the ruleset, character and campaign grids, and of a campaign's Party View. */
 export function ListCard({
   action,
   avatar,
@@ -99,7 +99,7 @@ export function ListCard({
       ]}
       {...props}
     >
-      {/* The card's content is a column, its description filling what's left */}
+      {/* The card's content is a column, its description and what's under it filling what's left */}
       <Stack sx={{ height: "100%" }}>
         {/* The header's inner space, down to the description: deeper under the chips */}
         <Stack

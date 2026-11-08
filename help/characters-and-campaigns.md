@@ -82,10 +82,9 @@ Each character has two notes fields, under its description:
 
 Independent of campaign visibility, a character's owner can share it with a public link: **⋮** → **Share**, then **Generate Link**. Anyone with the link sees the full sheet in a browser, without its private notes, and can download its PDF, no account required. **Revoke Link**, in the same dialog, turns it off.
 
-
 ## What is the Party View?
 
-The campaign's **Characters** tab lists its characters as cards. Turn on **Party View**, beside its search, to see them side by side in a row that slides, a card at a time: swipe it, scroll it sideways, use its previous and next arrows, or turn the mouse wheel over it, which slides to the next character as it turns down and back as it turns up, then scrolls the page once you reach either end.
+The campaign's **Characters** tab lists its characters as cards. Turn on **Party View**, beside its search (on a phone, under its filter button), to see them side by side in a row that slides, a card at a time: swipe it, scroll it sideways, or use its previous and next arrows. While the whole row fits on your screen, the mouse wheel over it slides it too: a turn down slides to the next character, a turn up back, and the page scrolls on once you reach either end; when the cards are taller than your screen, the wheel scrolls the page, to read them.
 
 Each card is a character's sheet in brief: its race and classes, its description, its identity (alignment, experience points, age…), its ability scores and saving throws, its combat figures (hit points, initiative, speed, attack bonus, armor class) and its feats. Click a card to open the full sheet. Party View shows each character as its [visibility](#what-is-character-visibility) lets you see it: a Game Master sees every character whole; another player sees a Public character whole, a Partial one's physical traits alone, and no Private one. The page's address keeps Party View on, so a link to it opens on it.
 

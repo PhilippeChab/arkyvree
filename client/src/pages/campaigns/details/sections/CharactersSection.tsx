@@ -12,7 +12,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
 import {
@@ -81,7 +81,7 @@ type UnlinkedCharacter = InferResponseType<
   200
 >["items"][number];
 
-/** How the Characters tab shows its characters: a grid of cards, or the Party View's carousel of their sheets in brief. */
+/** How the Characters tab shows its characters: a grid of cards, or the Party View's row of their sheets in brief. */
 const CHARACTER_VIEWS = ["grid", "party"] as const;
 
 const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
@@ -246,7 +246,9 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
   const { value: viewParam, setValue: setViewParam } = useSearchParam("characterView", "grid");
-  const party = oneOf(viewParam, CHARACTER_VIEWS, "grid") === "party";
+  // The tabs share the URL's params and stay mounted: hidden behind the Players tab, it loads no sheet
+  const { section } = useParams<{ section?: string }>();
+  const party = section === "characters" && oneOf(viewParam, CHARACTER_VIEWS, "grid") === "party";
 
   const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
@@ -297,7 +299,12 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
             />
           }
         >
-          {party ? <CharacterCarousel>{cards}</CharacterCarousel> : <ListCardGrid>{cards}</ListCardGrid>}
+          {party ? (
+            // A new search starts at its first card
+            <CharacterCarousel key={searchQuery}>{cards}</CharacterCarousel>
+          ) : (
+            <ListCardGrid>{cards}</ListCardGrid>
+          )}
         </ListPageResults>
       </Stack>
 
