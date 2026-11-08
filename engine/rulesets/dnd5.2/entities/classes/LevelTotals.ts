@@ -1,6 +1,6 @@
 /**
  * What a class's levels' modifiers add up to by each level, by the key each counts toward: its table's feat pools, its
- * spell slots, and its cantrips and prepared spells, as its page shows them and its progression's save plans them.
+ * spell slots, and its cantrips and known spells, as its page shows them and its progression's save plans them.
  */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -25,7 +25,7 @@ export const PACT_KEYS = ["slots", "level"] as const;
 
 /**
  * What a class's levels' modifiers add up to by each level (`computeRunning`), and the steps its spell tables take of
- * them: its cantrips' and prepared spells', and its spell slots'.
+ * them: its cantrips' and known spells', and its spell slots'.
  */
 export default class LevelTotals {
   /**

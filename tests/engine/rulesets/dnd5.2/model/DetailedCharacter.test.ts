@@ -155,6 +155,9 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // The cleric's three levels count, the fighter's none: a 3rd-level caster's slots
     expect(slotsOf(built)).toEqual(["1: 4", "2: 2"]);
     expect(built.components.spellGroupings.getDcs().bless.cleric).toMatchObject({ total: 8 + 2 + 3 });
+    // A cleric knows every spell of its list of a level it casts, unpicked: level 2's Spiritual Weapon, not level 3's
+    expect(built.components.spellGroupings.getDcs().spiritualweapon?.cleric).toBeDefined();
+    expect(built.components.spellGroupings.getDcs().spiritguardians).toBeUndefined();
   });
 
   test("of a Rogue 3: Expertise doubles the Proficiency Bonus of a skill it's proficient in", async () => {

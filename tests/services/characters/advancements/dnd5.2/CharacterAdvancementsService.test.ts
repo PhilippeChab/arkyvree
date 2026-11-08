@@ -420,8 +420,26 @@ describe("A D&D 5th Edition character's levels", () => {
     });
   });
 
+  describe("a cleric's whole list", () => {
+    test("picks its cantrips alone, and knows every spell of a level its slots reach", async () => {
+      const character = await createHuman({ ...FIGHTER_SCORES, Wisdom: 15, Strength: 12 });
+      // Its first level's room: its three cantrips; every level 1 spell known already, none to pick
+      const pool = poolOf(await levelAnswer(character.id, "Cleric", 1), "spells", "Cleric Spells");
+      expect(pool?.tiers?.["0"]).toMatchObject({ allowed: 3, available: 3 });
+      expect(pool?.tiers?.["1"]?.available ?? 0).toBe(0);
+      const knows = async (spell: string) =>
+        (await buildCharacter(character.id)).components.spellGroupings.getDcs()[spell]?.cleric !== undefined;
+      // Forced: its cantrips and its Divine Order don't matter here
+      await addLevel(session, character.id, "Cleric", 1, { hp: 8 }, true);
+      expect([await knows("bless"), await knows("spiritualweapon")]).toEqual([true, false]);
+      // Its 3rd level's slots reach level 2, not level 3
+      for (const level of [2, 3]) await addLevel(session, character.id, "Cleric", level, { hp: 5 }, true);
+      expect([await knows("spiritualweapon"), await knows("spiritguardians")]).toEqual([true, false]);
+    });
+  });
+
   describe("a warlock's Mystic Arcanum", () => {
-    test("gives a Warlock 11 one level 6 spell, apart from its prepared spells, whose Pact slots cap them", async () => {
+    test("gives a Warlock 11 one level 6 spell, apart from its known spells, whose Pact slots cap them", async () => {
       const character = await createDnd52Character(session, { abilities: { Charisma: 15 } });
       // Forced: the levels' picks don't matter here, the first's hit points its die's highest
       for (let level = 1; level <= 10; level++)
@@ -432,7 +450,7 @@ describe("A D&D 5th Edition character's levels", () => {
       expect(await eleventh({ "Mystic Arcanum (Level 6)": ["Circle of Death", "Eyebite"] })).toMatch(
         /Mystic Arcanum \(Level 6\)/,
       );
-      // A level 6 spell among the prepared ones: above the Pact slots' 5th level
+      // A level 6 spell among the known ones: above the Pact slots' 5th level
       expect(await eleventh({ "Warlock Spells": ["Circle of Death"] })).toMatch(/Warlock Spells/);
       expect(await eleventh({ "Mystic Arcanum (Level 6)": ["Circle of Death"] })).toBe("saved");
     });

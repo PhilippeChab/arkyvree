@@ -181,7 +181,7 @@ export const FEATURE_POOLS: { feature: string; owner?: string; pool: string }[] 
 ];
 
 /**
- * The features that give a spell room past a class's prepared spells, one at each level they're gained at, from a
+ * The features that give a spell room past a class's known spells, one at each level they're gained at, from a
  * spell level up, each in a pool of its own (`pool`, by spell level) that lists its class's (`owner`) spells of that
  * level alone: a warlock's Mystic Arcanum, a level 6 spell at 11, a level 7 one at 13, and so on.
  */

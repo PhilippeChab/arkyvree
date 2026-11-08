@@ -56,7 +56,8 @@ the SRD, its reference's overrides say what the SRD gives:
   the Boon of Spell Recall (Intelligence, Wisdom or Charisma) increase, where the database has the 2014 rules' "one
   ability score of your choice";
 - classes: a druid's cantrips at levels 7 and 16 (3 and 4: the database counts one more), a wizard's prepared spells at
-  levels 14 to 20 (18, 19, 21, 22, 23, 24 and 25: the database copies the other full casters' column), a rogue's
+  levels 14 to 20 (18, 19, 21, 22, 23, 24 and 25: the database copies the other full casters' column; its levels pick
+  its spellbook, which the generator counts itself, so the corrected column isn't read), a rogue's
   weapons (the 2014 rules' Longswords left out: the SRD's are its Martial weapons with the Finesse or Light property),
   the skills a class picks among (a fighter's Persuasion and a wizard's Nature, which the database lacks, and a rogue's
   Performance, which it adds, its multiclass's pick too), and a monk's tools (the Disguise Kit and the Forgery Kit left
@@ -159,10 +160,13 @@ of has its modifiers (`terms/`); any other is its text alone.
   Mastery's kinds, by its levels' counts or its text, its Expertise's skills, by its text, a monk's Unarmored Movement,
   and its spell slots: each level's new ones on its list, by its table, or a warlock's Pact Magic, its slots and their
   level), its multiclass's requirements (13 in its primary
-  abilities, one of a fighter's two), and its spells (its list, "Wizard Spells", and the cantrips and prepared spells
-  it has by each level, a level's new ones at the highest spell level its slots reach then; a warlock's Mystic
-  Arcanum a room at each of its spell levels in a pool of its own, "Mystic Arcanum (Level 6)", which lists the
-  warlock's spells of that level alone, its prepared spells capped at its Pact Magic's 5th level).
+  abilities, one of a fighter's two), and its spells (its list, "Wizard Spells", and the cantrips and spells it knows
+  by each level, a level's new ones at the highest spell level its slots reach then, as its Spellcasting learns them:
+  a bard's, a sorcerer's and a warlock's prepared spells, which change only at a level; a wizard's spellbook, six
+  level 1 spells, then two a level; a cleric's, a druid's, a paladin's and a ranger's whole list, every spell of a
+  level known from the first level its slots reach it; a warlock's Mystic Arcanum a room at each of its spell levels
+  in a pool of its own, "Mystic Arcanum (Level 6)", which lists the warlock's spells of that level alone, its known
+  spells capped at its Pact Magic's 5th level).
 - **Class feats** (`feats/classes/<class>.ts`): each feature's feat, named after its class ("Rage (Barbarian)"),
   granted at each level that lists it (stackable when it's several); each subclass a feat of its class's subclass pool
   ("Fighter Subclass", family Subclass), whose modifiers grant its features' feats ("Improved Critical (Champion)"),

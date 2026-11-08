@@ -58,7 +58,7 @@ function readLearning(className: string, text: string): SpellLearning {
  * modifiers (the rooms its features give in its pools: its subclass at its pick, its Ability Score Improvements' feats,
  * its Epic Boon, its Fighting Style, its Weapon Mastery's kinds and its Expertise's skills; its spell slots, or a
  * warlock's Pact Magic; and the counts its levels hold that add to a target as they grow, `CLASS_COUNTS`), and its
- * spells (its list, and the cantrips and prepared spells it has by each level).
+ * spells (its list, and the cantrips and spells it knows by each level).
  */
 export class ClassProgression {
   constructor(private readonly entries: ClassEntries) {}

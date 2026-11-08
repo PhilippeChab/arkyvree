@@ -68,7 +68,7 @@ export function classSubclass(className: string): string {
 
 /**
  * A warlock's Mystic Arcanum at a spell level ("Mystic Arcanum (Level 6)"): its one spell of that level, the warlock's
- * list's spells of that level its options, apart from its prepared spells, which its Pact Magic's slots cap.
+ * list's spells of that level its options, apart from its known spells, which its Pact Magic's slots cap.
  */
 export function mysticArcanum(level: number): string {
   return `Mystic Arcanum (Level ${level})`;

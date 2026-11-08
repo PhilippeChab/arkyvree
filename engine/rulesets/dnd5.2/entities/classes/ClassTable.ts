@@ -1,5 +1,5 @@
 /**
- * A class's table, as its page shows it: each level's feat pools, its spell slots, and its cantrips and prepared
+ * A class's table, as its page shows it: each level's feat pools, its spell slots, and its cantrips and known
  * spells, and its spell lists.
  */
 
@@ -35,7 +35,7 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
 }
 
 /**
- * A class's table (`klass`, as the view has it): its levels' feat pools, its spell slots and its cantrips and prepared
+ * A class's table (`klass`, as the view has it): its levels' feat pools, its spell slots and its cantrips and known
  * spells by then, and its spell lists.
  */
 export default class ClassTable {

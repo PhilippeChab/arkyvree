@@ -169,7 +169,9 @@ holds names the code that holds it.
   Burning Hands at DC 12. A spell picked at another level keeps its class's ability: an Acolyte paladin's Blessed
   Warrior cantrips, at its second level, take its Charisma whatever its Magic Initiate (Cleric) picked. A class's own
   list keeps its ability too, so a cleric's Magic Initiate (Cleric) spells take its Wisdom whatever it picks, as does a
-  spell a modifier grants.
+  spell a modifier grants. A cleric's Magic Initiate (Cleric), or a druid's Magic Initiate (Druid), adds no level 1
+  spell: its room is on a list the class knows every level 1 spell of already, so its level-up picks only the feat's
+  two cantrips (an Acolyte cleric's), and the spell's free cast a day isn't modelled.
 
 ## Not modelled
 

@@ -6,7 +6,7 @@ import { PROGRESSION } from "@/engine/rulesets/dnd5.2/entities/classes/progressi
 /** Levels 1 to 3 of a class, their ids `l1`… */
 const LEVELS = [1, 2, 3].map((level) => ({ id: `l${level}` }));
 
-/** D&D 5th Edition's spell tables: spell slots, from spell level 1, and cantrips and prepared spells, from 0. */
+/** D&D 5th Edition's spell tables: spell slots, from spell level 1, and cantrips and known spells, from 0. */
 const { tables: TABLES } = PROGRESSION;
 
 /** A wizard's first three levels' spell slots as saved, by spell level: 2, 3, then 4 level 1 slots and 2 level 2. */

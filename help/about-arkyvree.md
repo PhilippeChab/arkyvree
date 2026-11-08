@@ -8,7 +8,7 @@ Arkyvree is a character builder for tabletop RPGs.
 
 The difference from other builders: the rules aren't locked in. You can take any of the base rulesets we publish, make a copy, and change anything in it — feats, classes, BAB progression, save tables, item lists — and characters built on your copy follow your rules. House rules, homebrew content, and balance tweaks live alongside the system instead of in a separate document.
 
-Arkyvree is pronounced **archive-ry** — a play on *archive*, a place where rulesets are crafted, stored, and built upon.
+Arkyvree is pronounced **archive-ry** — a play on _archive_, a place where rulesets are crafted, stored, and built upon.
 
 ## Which game systems are supported?
 
@@ -27,7 +27,7 @@ Included content for Core PSD 1, from the Pathfinder Core Rulebook:
 Included content for Core SRD 5.2, from the System Reference Document 5.2.1:
 
 - **Base content** — the 12 classes, each with its subclass, the 9 species and their lineages, the 4 backgrounds, the SRD's feats, its spells, weapons with their masteries, armor, gear, tools and magic items.
-- 5th Edition's own rules: the Proficiency Bonus by your level, a saving throw for each ability, skills you're proficient in (and Expertise) rather than ranks, a background's Origin feat and ability score increases, a subclass at 3rd level, an Ability Score Improvement or another feat at 4th, spell slots combined across your classes, and prepared spells of any level you have slots for.
+- 5th Edition's own rules: the Proficiency Bonus by your level, a saving throw for each ability, skills you're proficient in (and Expertise) rather than ranks, a background's Origin feat and ability score increases, a subclass at 3rd level, an Ability Score Improvement or another feat at 4th, spell slots combined across your classes, and the spells each class knows as its rules say (a Bard's picked at its levels, a Wizard's spellbook, a Cleric's whole list), of any level you have slots for.
 
 Excluded:
 

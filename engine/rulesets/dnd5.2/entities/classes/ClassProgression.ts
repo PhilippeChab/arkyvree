@@ -1,6 +1,6 @@
 /**
  * A class's progression as its Progression and Spells tabs edit it at once: its levels' own fields and granted feats,
- * its feat pools' picks, and its spell slots and its cantrips and prepared spells as totals, which its levels keep as
+ * its feat pools' picks, and its spell slots and its cantrips and known spells as totals, which its levels keep as
  * increments.
  */
 
@@ -91,7 +91,7 @@ const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected a
  * A progression's save, as its form sends it: its class levels' forms (`owned`, each its fields, and its links: the
  * feats it grants, by role), its pools' picks by level (each pool by its `id`), and its
  * spell tables' totals, a level's one a column of its table (`null` for none): a spell level, from 0 for its cantrips
- * and prepared spells, from 1 for its spell slots; its Pact Magic's slots and their level. Each part refuses a key it doesn't take,
+ * and known spells, from 1 for its spell slots; its Pact Magic's slots and their level. Each part refuses a key it doesn't take,
  * as an entity's form does.
  */
 const PROGRESSION_BODY = z.strictObject({
@@ -232,7 +232,7 @@ function replaceOwn(
 
 /**
  * A spell table's spell levels, its columns' keys in their order, by the field its totals count (`uses`: its spell
- * slots', from spell level 1; `allowed`: its cantrips' and prepared spells', from 0): a save's row gives a count a
+ * slots', from spell level 1; `allowed`: its cantrips' and known spells', from 0): a save's row gives a count a
  * column, which these name.
  */
 function spellLevelsOf(field: "allowed" | "uses"): number[] {
@@ -313,7 +313,7 @@ export default class ClassProgression {
       this.modifiersOf(level.id).some((modifier) => modifier.target.startsWith("spellcasting.pact.")),
     );
     if (!pact) return ["pact"];
-    // Its levels' slots on a list, as its Spell Slots table counts them: a warlock's prepared spells' list gives none
+    // Its levels' slots on a list, as its Spell Slots table counts them: a warlock's known spells' list gives none
     const slots = this.table.describeSpells().some(({ spellsPerDay }) => Object.keys(spellsPerDay).length > 0);
     return slots ? [] : ["perDay"];
   }
@@ -425,7 +425,7 @@ export default class ClassProgression {
   }
 
   /**
-   * A spell table's totals (`field`: `allowed` for its cantrips and prepared spells, `uses` for its spell slots), each
+   * A spell table's totals (`field`: `allowed` for its cantrips and known spells, `uses` for its spell slots), each
    * level's given (`rows`) over the ones it had before the save (`totals`), as each spell level's own modifiers on the
    * class's list (`aptitudes.<list>.<level>.<field>`): refused where its spell tables take no save (`spellTables`).
    */
@@ -527,7 +527,7 @@ export default class ClassProgression {
 
   /**
    * A spell table's totals by each level (`field`'s: `uses` for its spell slots, `allowed` for its cantrips and
-   * prepared spells), of the levels' modifiers as a save plans them (`keep`: those).
+   * known spells), of the levels' modifiers as a save plans them (`keep`: those).
    */
   private spellTotals(
     field: "allowed" | "uses",

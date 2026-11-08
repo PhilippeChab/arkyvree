@@ -10,7 +10,7 @@ import type { ENTITY_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
  * its features granted at their levels (`features`, each through the class's feature pool, `featurePool`), its levels'
  * modifiers (the pools they give room in: its subclass, its Ability Score Improvements, its Epic Boon, its Fighting
  * Style, Weapon Mastery and Expertise picks; its spell slots, or a warlock's Pact Magic), the requirements a multiclass meets (`requirements`, on its first level:
- * 13 in its primary abilities), and its spells (`spells`: its list, and the cantrips and prepared spells it has by each
+ * 13 in its primary abilities), and its spells (`spells`: its list, and the cantrips and spells it knows by each
  * of its levels, a count per spell level from the cantrips' 0, a level's new ones at the highest level it casts then).
  */
 export interface ClassSeed {
