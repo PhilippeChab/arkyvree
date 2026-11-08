@@ -229,7 +229,10 @@ export const v1Character = z
     rulesetId: v1Id,
     rulesetName: z.string(),
     sections: z.array(v1SheetSection).meta({ description: "Its sheet's sections, in the order the app shows them" }),
-    shareToken: z.string().nullable().meta({ description: "Its share link's token, none while it isn't shared" }),
+    shareToken: z.string().nullable().meta({
+      description:
+        "Its share link's token, for its owner and contributors: none while it isn't shared, or for anyone else",
+    }),
     updatedAt: z.string(),
     validation: z
       .strictObject({ issues: z.array(v1RulesIssue), valid: z.boolean() })

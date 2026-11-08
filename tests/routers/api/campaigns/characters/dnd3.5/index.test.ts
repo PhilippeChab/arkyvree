@@ -349,8 +349,8 @@ describe("campaigns characters", () => {
     const { shareToken } = await expectOk(api.api.characters[":id"].share.$post({ param }));
     expect(shareToken).toEqual(expect.any(String));
 
-    // Its own sheet offers them its edit, and leaves its owner's and its contributors' rights to them: its contributors,
-    // and its share token, which would outlast their seat
+    // Its own sheet offers them its edit, and leaves its owner's and its contributors' rights to them: its
+    // contributors, and its share token, which would outlast their seat
     expect(await expectOk(theirs.$get({ param }))).toMatchObject({
       permissions: {
         canArchive: false,

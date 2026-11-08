@@ -56,9 +56,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
-   * a Game Master's from their seat in the live campaign it's linked to while it isn't archived, and a child's (3.5's bonded creature) from the
-   * session's on its parent, a player character, archived or not (an archived parent's child is read-only, as the
-   * parent is).
+   * a Game Master's from their seat in the live campaign it's linked to while it isn't archived, and a child's (3.5's
+   * bonded creature) from the session's on its parent, a player character, archived or not (an archived parent's child
+   * is read-only, as the parent is).
    */
   static async for(db: Db, session: Session, character: Character): Promise<CharactersPolicy> {
     if (!isPlayerCharacter(character)) {
@@ -124,15 +124,15 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * The session is a Game Master of the campaign the player character is linked to, a live one, from a live seat: looked
-   * up only for a live one it doesn't own nor contributes to.
+   * The session is a Game Master of the campaign the player character is linked to, a live one, from a live seat:
+   * looked up only for a live one it doesn't own (`for` skips it for a contributor, whose rights hold it already).
    */
   private readonly isCampaignGameMaster: boolean;
 
   /** The child's parent is archived: looked up only for a child. */
   private readonly isParentArchived: boolean;
 
-  /** Edits the child's parent (owns it, or actively contributes to it): looked up only for a child. */
+  /** Edits the child's parent (`isEditor`: owns it, contributes to it or runs its campaign): looked up for a child. */
   private readonly isParentEditor: boolean;
 
   /** The session actively contributes to the player character: looked up only for one it doesn't own. */
@@ -262,11 +262,12 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Leaving its contributors: one who reads them (`canReadContributors`, the 404 an unknown character gets for anyone
-   * else), and contributes to it actively; its owner contributes as no one, answered as not found.
+   * Leaving its contributors: one who reads its own rows (`canReadRows`, the 404 an unknown character gets for anyone
+   * else), and contributes to it actively; its owner and its campaign's Game Master contribute as no one, answered as
+   * not found.
    */
   canLeave() {
-    this.canReadContributors();
+    this.canReadRows();
 
     if (!this.isActiveContributor) throw new NotFoundError("You are not a contributor of this character");
 
@@ -297,11 +298,12 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Managing its contributors, what inviting and revoking one start with: its owner's, among those who read them, but a
-   * demo's (`canUseSignedUpFeatures`).
+   * Managing its contributors, what inviting and revoking one start with: its owner's, among those who read its own
+   * rows (`canReadRows`; its contributors and its campaign's Game Master a 403), but a demo's
+   * (`canUseSignedUpFeatures`).
    */
   canManageContributors() {
-    this.canReadContributors();
+    this.canReadRows();
 
     if (!this.isOwner) throw new ForbiddenError("Only the owner can manage contributors");
 
@@ -309,9 +311,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Reading its contributors, and leaving them: who reads its own rows (`canReadRows`, the 404 an unknown character gets
-   * for anyone else), but its campaign's Game Master, who edits it without being one of them (a 403): its owner and
-   * active contributors, as a child has none.
+   * Reading its contributors: who reads its own rows (`canReadRows`, the 404 an unknown character gets for anyone
+   * else), but its campaign's Game Master, who edits it without being one of them (a 403): its owner and active
+   * contributors, as a child has none.
    */
   canReadContributors() {
     this.canReadRows();

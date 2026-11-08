@@ -110,8 +110,8 @@ class PlayerCharactersRepository extends include(
   }
 
   /**
-   * Characters in a campaign that isn't archived: those a seat (`playerId`) holds, which an account's deletion hands on;
-   * or, of some (`characterIds`), those a user (`gameMasterId`) runs the campaign of, as a live Game Master's seat.
+   * Characters in a campaign that isn't archived: those a seat (`playerId`) holds, which an account's deletion hands
+   * on; or, of some (`characterIds`), those a user (`gameMasterId`) runs the campaign of, as a live Game Master's seat.
    */
   async findCharacterIds(
     db: Db,

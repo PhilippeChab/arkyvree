@@ -169,7 +169,8 @@ class CharactersService extends include(Object, Archives, Imports) {
    * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
    * child's, which its parent's editors read. Its editors alone read it (`findReadableCharacter`), archived or not, so it
    * carries its share token to those its policy gives it (`isShareTokenReader`), its private notes as its policy says
-   * who reads them (`isPrivateNotesReader`), and what they may do with it (`permissions`). Anyone else gets the 404 an unknown character gets.
+   * who reads them (`isPrivateNotesReader`), and what they may do with it (`permissions`). Anyone else gets the 404 an
+   * unknown character gets.
    */
   async getCharacter(session: Session, characterId: string) {
     const readable = await findReadableCharacter(db, session, characterId);

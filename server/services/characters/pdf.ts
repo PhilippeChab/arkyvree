@@ -20,7 +20,7 @@ async function findLinkedCampaign(session: Session, characterId: string, campaig
 /**
  * Where a PDF export's activity and failure notification link to: the
  * character page, or for an export requested from a campaign the campaign
- * character page (a Game Master can't open the character page itself).
+ * character page (which its Game Master reads whatever becomes of the campaign).
  */
 export function getCharacterPdfTargetType(campaignId?: string) {
   return campaignId ? TARGET_TYPES.playerCharacters : TARGET_TYPES.characters;

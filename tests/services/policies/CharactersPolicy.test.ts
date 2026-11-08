@@ -30,7 +30,7 @@ async function setup() {
   return { character: await createTestCharacter(user.id), owner, other, user, stranger };
 }
 
-/** Whether the session edits, reads and may edit each of a page's characters, by `forMany`, which `for` answers alike. */
+/** Whether the session edits, reads and may edit each of a page's characters, by `forMany`, as `for` answers it. */
 async function standingsOf(session: Pick<Session, "userId">, page: Character[]) {
   const policies = await CharactersPolicy.forMany(db, session, page);
   const many = page.map((entity) => {
@@ -145,9 +145,15 @@ describe("CharactersPolicy", () => {
     expect(thrownBy(() => gameMaster.canEditPortrait())).toEqual(
       new ForbiddenError("Only the owner can change the portrait"),
     );
-    const notAContributor = new ForbiddenError("Only the owner and contributors can see the contributors");
-    for (const check of ["canReadContributors", "canManageContributors", "canLeave"] as const)
-      expect(thrownBy(() => gameMaster[check]())).toEqual(notAContributor);
+    expect(thrownBy(() => gameMaster.canReadContributors())).toEqual(
+      new ForbiddenError("Only the owner and contributors can see the contributors"),
+    );
+    expect(thrownBy(() => gameMaster.canManageContributors())).toEqual(
+      new ForbiddenError("Only the owner can manage contributors"),
+    );
+    expect(thrownBy(() => gameMaster.canLeave())).toEqual(
+      new NotFoundError("You are not a contributor of this character"),
+    );
     expect(gameMaster.isShareTokenReader()).toBe(false);
 
     // An archived campaign is read-only: its Game Master edits nothing through it

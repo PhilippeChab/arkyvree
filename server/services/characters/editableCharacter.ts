@@ -32,9 +32,9 @@ export async function findReadableCharacter(db: Db, session: Session, characterI
 
 /**
  * The character `characterId`, archived or not, once the session may edit it (`CharactersPolicy.canEdit`): a player
- * character they own or actively contribute to, or a child (3.5's bonded creature) of one. Anyone else gets the 404 an
- * unknown character gets, and an archived one, or a child of one, the policy's refusal on its state (a 409). A player
- * character is edited by its own editors alone, never through a parent.
+ * character they own, actively contribute to or run the live campaign of, or a child (3.5's bonded creature) of one.
+ * Anyone else gets the 404 an unknown character gets, and an archived one, or a child of one, the policy's refusal on
+ * its state (a 409). A player character is edited by its own editors alone, never through a parent.
  */
 export async function getEditableCharacter(db: Db, session: Session, characterId: string) {
   const { character, policy } = await getCharacterPolicy(db, session, characterId);
@@ -55,9 +55,9 @@ export async function getPortraitEditableCharacter(db: Db, session: Session, cha
 
 /**
  * The player character `characterId`, archived or not, once the session may edit its own rows
- * (`CharactersPolicy.canEditRows`: they own it or contribute to it, while it isn't archived): anyone else gets the 404
- * an unknown character gets (a child's are its parent's), and an archived one's editors the policy's refusal on its
- * state (a 409).
+ * (`CharactersPolicy.canEditRows`: they own it, contribute to it or run its live campaign, while it isn't archived):
+ * anyone else gets the 404 an unknown character gets (a child's are its parent's), and an archived one's editors the
+ * policy's refusal on its state (a 409).
  */
 export async function getRowEditableCharacter(db: Db, session: Session, characterId: string) {
   const { character, policy } = await getCharacterPolicy(db, session, characterId);
