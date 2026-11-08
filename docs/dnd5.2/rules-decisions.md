@@ -108,8 +108,8 @@ holds names the code that holds it.
   feat or an item adds to a class's list count for a character casting from that class alone: the shared table
   replaces them, as the SRD gives no other slots to a multiclass.
 - **A warlock's Pact Magic is apart.** Its levels add its slots and raise their level (`spellcasting.pact.slots`,
-  `spellcasting.pact.level`), by its table (`PACT_MAGIC_SLOTS`), and count toward no other slots: Pact Magic isn't the
-  Spellcasting feature. A Warlock 3 / Wizard 2 has two level 2 Pact Magic slots and the wizard's own three level 1
+  `spellcasting.pact.level`), by the Warlock table's Pact Magic columns, which the codegen reads
+  (`ClassProgression.pactModifiers`), and count toward no other slots: Pact Magic isn't the Spellcasting feature. A Warlock 3 / Wizard 2 has two level 2 Pact Magic slots and the wizard's own three level 1
   slots. The SRD has no third caster. A class's page shows them in a Pact Magic table, its slots and their level by
   each level, as the SRD's Warlock table prints them, which a save writes back as each level's increases
   (`ClassTable.describePactMagic`, `ClassProgression.planPact`); the table shows for a class whose levels give Pact

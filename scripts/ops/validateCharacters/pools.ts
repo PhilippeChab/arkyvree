@@ -6,8 +6,10 @@ import { CHAIN, query } from "./queries.ts";
  * Phase 2: every entity a level picked through a pool (a feat through its aptitude, a spell through its list) is one
  * the pool lists, as the character's ruleset reads them: a link of the role from the step's entity type to its pool's
  * (`rules.link_roles`: 3.5's `listedIn`), from the entity or a copy of it in the character's ruleset chain to the pool
- * or a copy of it there (a copy of a copy too); or, a pool that draws its spells from a list (D&D 5e's `drawsFrom`: a
- * Mystic Arcanum's), the entity's `listedIn` link to that list at the level the pool draws. Returns the issues found.
+ * or a copy of it there (a copy of a copy too); or, a pool linked to another of its type at a level (a role from the
+ * pool's type to its own: D&D 5e's Mystic Arcanum drawing from the warlock's list), the entity's link of the first
+ * role to that one at that level. The roles are each base rules' (`rules.link_roles`): it names none. Returns the issues
+ * found.
  */
 export async function checkPools() {
   console.log("\n═══ Phase 2: Pool Listings ═══\n");
@@ -48,12 +50,14 @@ export async function checkPools() {
          WHERE r.base_rules = e.base_rules AND r.from_type = pk.entity_type AND r.to_type = pk.via_type)
         AND NOT EXISTS (
         SELECT 1
-          FROM standing se
+          FROM rules.link_roles r
+          JOIN rules.link_roles dr
+            ON dr.base_rules = r.base_rules AND dr.from_type = pk.via_type AND dr.to_type = pk.via_type
+          JOIN standing se ON se.character_id = pk.character_id AND se.named_id = pk.entity_id
           JOIN standing sp ON sp.character_id = pk.character_id AND sp.named_id = pk.via_id
-          JOIN rules.entity_links l ON l.from_id = se.id AND l.role = 'listedIn'
-          JOIN rules.entity_links d
-            ON d.from_id = sp.id AND d.to_id = l.to_id AND d.role = 'drawsFrom' AND d.tier = l.tier
-         WHERE se.character_id = pk.character_id AND se.named_id = pk.entity_id)`,
+          JOIN rules.entity_links l ON l.from_id = se.id AND l.role = r.role
+          JOIN rules.entity_links d ON d.from_id = sp.id AND d.role = dr.role AND d.to_id = l.to_id AND d.tier = l.tier
+         WHERE r.base_rules = e.base_rules AND r.from_type = pk.entity_type AND r.to_type = pk.via_type)`,
   );
   if (unlisted.length === 0) {
     console.log("✓ picks through pools");

@@ -1,7 +1,6 @@
 import { readCost } from "@/codegen/dnd5.2/tools/detect/costs.ts";
 import { readAbility } from "@/codegen/dnd5.2/tools/detect/proficiencies.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
-import { ARMOR_DESCRIPTIONS, readDescription, WEAPON_DESCRIPTIONS } from "@/codegen/dnd5.2/tools/terms/descriptions.ts";
 import { TOOL_CATEGORIES } from "@/codegen/dnd5.2/tools/terms/items.ts";
 import type { ItemEntry, ItemReference } from "@/codegen/dnd5.2/tools/types/items.ts";
 import { TOOL_PROFICIENCIES_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
@@ -23,6 +22,7 @@ import { WEAPON_DEFINITIONS, WEAPON_NAMES } from "@/vocabulary/dnd5.2/weapons.ts
 
 import type { ToolPicks } from "./classes/ClassProficiencies.ts";
 import { Memos } from "./Memos.ts";
+import { readOverrideDescription } from "./overrideDescription.ts";
 
 /** A book's mundane items, by the kind each of its item files holds. */
 export interface ItemSeedsByKind {
@@ -61,12 +61,12 @@ function describe(entry: ItemEntry): string {
 }
 
 /**
- * An armor's description, the Shield's too: ours (`ARMOR_DESCRIPTIONS`), and how long it takes to put on and take off,
+ * An armor's description, the Shield's too: ours (its overrides'), and how long it takes to put on and take off,
  * as the Armor table gives it. Its Armor Class, Strength and Stealth are its fields.
  */
-function describeArmor(name: string, entry: ItemEntry): string {
+function describeArmor(entry: ItemEntry): string {
   return [
-    readDescription(ARMOR_DESCRIPTIONS, name, "armor"),
+    readOverrideDescription(entry, "armor"),
     ...(entry.don_time && entry.doff_time
       ? [`Takes ${entry.don_time} to put on, ${entry.doff_time} to take off.`]
       : []),
@@ -88,13 +88,11 @@ function describeTool(entry: ItemEntry): string[] {
 }
 
 /**
- * A weapon's description: ours (`WEAPON_DESCRIPTIONS`), and the Weapons table's notes (a Lance's "Two-handed unless
+ * A weapon's description: ours (its overrides'), and the Weapons table's notes (a Lance's "Two-handed unless
  * mounted"). Its damage, properties and mastery are its fields.
  */
-function describeWeapon(name: string, entry: ItemEntry): string {
-  return [readDescription(WEAPON_DESCRIPTIONS, name, "weapon"), ...(entry.notes ?? []).map((note) => `${note}.`)].join(
-    " ",
-  );
+function describeWeapon(entry: ItemEntry): string {
+  return [readOverrideDescription(entry, "weapon"), ...(entry.notes ?? []).map((note) => `${note}.`)].join(" ");
 }
 
 /** Whether an item is of the equipment category `category`. */
@@ -155,17 +153,17 @@ export class ItemSeeds {
       if (!WEAPON_DEFINITIONS[name]) throw new Error(`${name}: a weapon the Weapons table doesn't have`);
       return {
         name,
-        description: describeWeapon(name, entry),
+        description: describeWeapon(entry),
         fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields(name) },
       };
     }
     if (isOf(entry, "Shields"))
-      return { name, description: describeArmor(name, entry), fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() } };
+      return { name, description: describeArmor(entry), fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() } };
 
     if (!ARMOR_DEFINITIONS[name]) throw new Error(`${name}: an armor the Armor table doesn't have`);
     return {
       name,
-      description: describeArmor(name, entry),
+      description: describeArmor(entry),
       fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields(name) },
     };
   }

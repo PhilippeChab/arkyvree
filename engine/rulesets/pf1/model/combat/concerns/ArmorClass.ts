@@ -106,12 +106,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       for (const key of BEST_OF_SOURCES_PARTS) BestOfSources.define(ac, key, 0, { parent: { key, object: shared } });
       BestOfSources.define(ac, "shield", 0, { bases: () => acByItem(shields()) });
       // An enhancement bonus to a shield counts while the set holds one
-      BestOfSources.define(ac, "shieldenhancement", 0);
-      const enhancement = Object.getOwnPropertyDescriptor(ac, "shieldenhancement")!;
-      Object.defineProperty(ac, "shieldenhancement", {
-        ...enhancement,
-        get: () => (shields().length > 0 ? (enhancement.get!() as number) : 0),
-      });
+      BestOfSources.define(ac, "shieldenhancement", 0, { when: () => shields().length > 0 });
       return {
         ac,
         shield: {

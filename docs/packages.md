@@ -171,7 +171,7 @@ export const DND35_DMG_PACKAGE: ExtensionPackage = {
 
 ## Versioning & updates
 
-A package's seeds install it at its definition's `seedsVersion` (`content/<ruleset>/packages/`). A change after that goes in `updates`, keyed by the version it brings the package to (`seedsVersion + 1`, `+ 2`…), and the package's version becomes its last update's. An update writes, so it's the database's: its base rules' row of the registry gives it, by package name (`updates`):
+A package's seeds install it at its definition's `seedsVersion` (`content/<ruleset>/packages/`). A change after that reaches an existing database by the SQL its pull request carries, run just before its deploy (see the Rules: never fix deployed data by changing the seeds alone), or, when that SQL would be too large or risky to run by hand, by an update in `updates`, keyed by the version it brings the package to (`seedsVersion + 1`, `+ 2`…), and the package's version becomes its last update's. An update writes, so it's the database's: its base rules' row of the registry gives it, by package name (`updates`):
 
 - A new database runs the seeds, then every update.
 - An existing database runs the updates past its version.

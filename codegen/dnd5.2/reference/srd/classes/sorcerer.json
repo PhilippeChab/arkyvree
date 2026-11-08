@@ -1200,5 +1200,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Sorcerer": {
+      "description": "A spellcaster born with magic in their blood."
+    }
   }
 }

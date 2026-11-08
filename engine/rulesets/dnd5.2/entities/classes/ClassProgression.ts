@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 
+import { type ColumnTotal, type LevelModifier, ProgressionColumns } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityLinkValues } from "@/engine/core/fields/index.ts";
 import type { FeatureCreatePlan, MadeEntity } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -25,18 +26,8 @@ import { MAX_SPELL_LEVEL, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
 import type ClassTable from "./ClassTable.ts";
-import LevelTotals, { PACT_KEYS, type TableModifier } from "./LevelTotals.ts";
+import LevelTotals, { PACT_KEYS } from "./LevelTotals.ts";
 import { PROGRESSION } from "./progression.ts";
-
-/** A modifier a class level keeps or a progression's save writes on it: a stored one's id, and whether it's gated. */
-interface LevelModifier {
-  /** Requirements gate it: a progression's save leaves it as it is */
-  gated: boolean;
-  id?: string;
-  operator: string;
-  target: string;
-  value: string;
-}
 
 /** A pool's picks a progression's save gives (`id`, the pool's): how many each level adds, by the level's id. */
 interface PoolPicks {
@@ -56,9 +47,6 @@ interface SpellRow<V> {
   counts: (V | null)[];
   ownedId: string;
 }
-
-/** A spell table's total at a spell level by a class level: none (`undefined`), a count, or every spell of its list. */
-type SpellTotal = number | "All" | undefined;
 
 /** What a class's progression's save sends, as its client writes it (`PROGRESSION_BODY`'s). */
 export type ProgressionForm = z.input<typeof PROGRESSION_BODY>;
@@ -126,60 +114,9 @@ const PROGRESSION_BODY = z.strictObject({
     .optional(),
 });
 
-/** Whether a modifier adds a number, ungated: what a progression's save writes, and rewrites, of a level's own. */
-function isPlainAdd(modifier: LevelModifier) {
-  return (
-    !modifier.gated && modifier.operator === "add" && typeof LiteralValue.parse(modifier.value, "number") === "number"
-  );
-}
-
 /** Whether a modifier sets its spell level's spells known to every spell of its list, ungated. */
 function isPlainAll(modifier: LevelModifier) {
   return !modifier.gated && AptitudeTargets.setsAllKnown(modifier);
-}
-
-/** A spell table's column as its totals read: none until its first count, then 0 for none, and "All" once it's all. */
-function normalizedColumn(column: SpellTotal[]): SpellTotal[] {
-  let counted = false;
-  let all = false;
-  return column.map((total) => {
-    all ||= total === "All";
-    counted ||= total !== undefined;
-    if (all) return "All";
-    return total ?? (counted ? 0 : undefined);
-  });
-}
-
-/**
- * The modifiers a spell table's column (`target`, a spell level's) gives each level, for the totals it's asked
- * (`wanted`, normalized) over what the levels' other modifiers give (`kept`): each level adds what its total gains on
- * the level before; a column counted from a level the others give nothing at opens there with 0; "All" sets it once.
- * A level the others already give "All" at (a gated one's, perhaps) keeps its own as they are (`undefined`).
- */
-function planColumn(target: string, wanted: SpellTotal[], kept: SpellTotal[]): (LevelModifier[] | undefined)[] {
-  let given = 0;
-  let open = false;
-  let all = false;
-  return wanted.map((total, index) => {
-    const other = kept[index];
-    if (other === "All") return all ? [] : undefined;
-    if (all || total === undefined) return [];
-    if (total === "All") {
-      all = true;
-      return [planned(target, "set", ALLOWED_ALL)];
-    }
-    const need = total - (other ?? 0);
-    const gain = need - given;
-    given = need;
-    const opens = !open && other === undefined;
-    open = true;
-    return gain !== 0 || opens ? [planned(target, "add", gain)] : [];
-  });
-}
-
-/** A modifier a progression's save writes. */
-function planned(target: string, operator: "add" | "set", value: number): LevelModifier {
-  return { gated: false, operator, target, value: String(value) };
 }
 
 /**
@@ -196,38 +133,6 @@ function readSentGrants(owned: readonly { links?: Record<string, unknown>; owned
       ];
     }),
   );
-}
-
-/**
- * The levels' modifiers as a save plans them (`working`, by the level each is on), as a class's table reads them: those
- * it keeps (`keep`: all of them), each with its level (`sourceId`).
- */
-function readTableModifiers(
-  working: Map<string, LevelModifier[]>,
-  keep: (modifier: LevelModifier) => boolean = () => true,
-): TableModifier[] {
-  return [...working].flatMap(([sourceId, levelModifiers]) =>
-    levelModifiers.filter(keep).map((modifier) => ({ ...modifier, sourceId })),
-  );
-}
-
-/**
- * Swaps the modifiers of a level that a save rewrites (`isOwn`) for the ones it plans (`next`), unless they already say
- * the same: a level whose own modifiers stand keeps them, and writes nothing. Answers whether it swapped them.
- */
-function replaceOwn(
-  working: Map<string, LevelModifier[]>,
-  levelId: string,
-  isOwn: (modifier: LevelModifier) => boolean,
-  next: LevelModifier[],
-) {
-  const modifiers = working.get(levelId) ?? [];
-  const own = modifiers.filter(isOwn);
-  const same = (a: LevelModifier, b: LevelModifier) =>
-    a.target === b.target && a.operator === b.operator && Number(a.value) === Number(b.value);
-  if (own.length === next.length && own.every((modifier, index) => same(modifier, next[index]))) return false;
-  working.set(levelId, [...modifiers.filter((modifier) => !isOwn(modifier)), ...next]);
-  return true;
 }
 
 /**
@@ -345,7 +250,42 @@ export default class ClassProgression {
     working: Map<string, LevelModifier[]>,
     keep: (modifier: LevelModifier) => boolean = () => true,
   ): Map<string, Record<string | number, number>> {
-    return LevelTotals.computeRunning(this.classLevels, readTableModifiers(working, keep), LevelTotals.readPactStep);
+    return ProgressionColumns.computeRunning(
+      this.classLevels,
+      ProgressionColumns.readTableModifiers(working, keep),
+      LevelTotals.readPactStep,
+    );
+  }
+
+  /**
+   * One column of a table a save writes (`target`, what it counts), at the totals it's asked (`wanted`, normalized),
+   * over what the levels' other modifiers give (`kept`): each level's own modifiers on it (`isOwn`) swapped for the ones
+   * it plans. A column with a modifier the table can't read as a count (`unread`: one requirements gate, which it counts
+   * for every character; one that isn't an add of a number) takes no change from what it totals now (`current`):
+   * refused (`refusal`), that's its levels' own to make.
+   */
+  private planColumn(
+    working: Map<string, LevelModifier[]>,
+    column: {
+      current: ColumnTotal[];
+      isOwn: (modifier: LevelModifier) => boolean;
+      kept: ColumnTotal[];
+      refusal: string;
+      target: string;
+      unread: (modifier: LevelModifier) => boolean;
+      wanted: ColumnTotal[];
+    },
+  ) {
+    const levels = this.classLevels;
+    const current = ProgressionColumns.normalizedColumn(column.current);
+    const changes = column.wanted.some((total, index) => total !== current[index]);
+    if (changes && levels.some(({ id }) => working.get(id)?.some(column.unread)))
+      throw new RulesError("invalid", column.refusal);
+    const planned = ProgressionColumns.planColumn(column.target, column.wanted, column.kept, ALLOWED_ALL);
+    for (const [index, { id }] of levels.entries()) {
+      const next = planned[index];
+      if (next) ProgressionColumns.replaceOwn(working, id, column.isOwn, next);
+    }
   }
 
   /**
@@ -381,30 +321,25 @@ export default class ClassProgression {
     const given = new Map(rows.map(({ counts, ownedId }) => [this.levels.find(ownedId).id, counts]));
     for (const [column, key] of PACT_KEYS.entries()) {
       const target = `spellcasting.pact.${key}`;
-      const isOwn = (modifier: LevelModifier) => modifier.target === target && isPlainAdd(modifier);
+      const isOwn = (modifier: LevelModifier) => modifier.target === target && ProgressionColumns.isPlainAdd(modifier);
       const kept = this.pactTotals(working, (modifier) => !isOwn(modifier));
-      const asked = levels.map(({ id }): SpellTotal => {
+      const asked = levels.map(({ id }): ColumnTotal => {
         const counts = given.get(id);
         if (counts === undefined || counts[column] === undefined) return totals.get(id)?.[key];
         return counts[column] ?? undefined;
       });
-      const wanted = normalizedColumn(asked);
+      const wanted = ProgressionColumns.normalizedColumn(asked);
       if (key === "level" && wanted.some((total) => typeof total === "number" && total > MAX_SPELL_LEVEL))
         throw new RulesError("invalid", `Pact Magic's slot level is ${MAX_SPELL_LEVEL} at most`);
-      const unread = (modifier: LevelModifier) => modifier.target === target && !isPlainAdd(modifier);
-      const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[key]));
-      const changes = wanted.some((total, index) => total !== current[index]);
-      if (changes && levels.some(({ id }) => working.get(id)?.some(unread)))
-        throw new RulesError("invalid", "Pact Magic has modifiers this table can't edit: edit its levels'");
-      const columnModifiers = planColumn(
+      this.planColumn(working, {
+        current: levels.map(({ id }) => totals.get(id)?.[key]),
+        isOwn,
+        kept: levels.map(({ id }) => kept.get(id)?.[key]),
+        refusal: "Pact Magic has modifiers this table can't edit: edit its levels'",
         target,
+        unread: (modifier) => modifier.target === target && !ProgressionColumns.isPlainAdd(modifier),
         wanted,
-        levels.map(({ id }) => kept.get(id)?.[key]),
-      );
-      for (const [index, { id }] of levels.entries()) {
-        const next = columnModifiers[index];
-        if (next) replaceOwn(working, id, isOwn, next);
-      }
+      });
     }
   }
 
@@ -419,8 +354,13 @@ export default class ClassProgression {
     if (lists.has(pool.id) || pool.id === this.spellList?.id) throw new RulesError("invalid", notPool);
     const target = `aptitudes.${stripSeparators(pool.name)}.allowed`;
     for (const { count, ownedId } of picks) {
-      const isOwn = (modifier: LevelModifier) => modifier.target === target && isPlainAdd(modifier);
-      replaceOwn(working, this.levels.find(ownedId).id, isOwn, count > 0 ? [planned(target, "add", count)] : []);
+      const isOwn = (modifier: LevelModifier) => modifier.target === target && ProgressionColumns.isPlainAdd(modifier);
+      ProgressionColumns.replaceOwn(
+        working,
+        this.levels.find(ownedId).id,
+        isOwn,
+        count > 0 ? [ProgressionColumns.planned(target, "add", count)] : [],
+      );
     }
   }
 
@@ -433,7 +373,7 @@ export default class ClassProgression {
     working: Map<string, LevelModifier[]>,
     rows: SpellRow<number | "all">[],
     field: "allowed" | "uses",
-    totals: Map<string, Record<string | number, SpellTotal>>,
+    totals: Map<string, Record<string | number, ColumnTotal>>,
   ) {
     const { list, refusal } = this.spellTables;
     if (!list) throw new RulesError("invalid", refusal);
@@ -448,36 +388,27 @@ export default class ClassProgression {
     for (const spellLevel of SPELL_LEVELS) {
       const target = `aptitudes.${list.slug}.${spellLevel}.${field}`;
       const isOwn = (modifier: LevelModifier) =>
-        modifier.target === target && (isPlainAdd(modifier) || (field === "allowed" && isPlainAll(modifier)));
+        modifier.target === target &&
+        (ProgressionColumns.isPlainAdd(modifier) || (field === "allowed" && isPlainAll(modifier)));
       const kept = this.spellTotals(field, working, (modifier) => !isOwn(modifier));
-      const asked = levels.map(({ id }): SpellTotal => {
+      const asked = levels.map(({ id }): ColumnTotal => {
         const count = given.get(id)?.[spellLevel];
         if (count === undefined) return totals.get(id)?.[spellLevel];
         return count === "all" ? "All" : (count ?? undefined);
       });
-      // Every spell of a spell level, once known, stays known: a count after it is all of them too
-      const wanted = normalizedColumn(asked);
-      const columnModifiers = planColumn(
+      this.planColumn(working, {
+        current: levels.map(({ id }) => totals.get(id)?.[spellLevel]),
+        isOwn,
+        kept: levels.map(({ id }) => kept.get(id)?.[spellLevel]),
+        refusal: `Spell level ${spellLevel} has modifiers this table can't edit: edit its levels'`,
         target,
-        wanted,
-        levels.map(({ id }) => kept.get(id)?.[spellLevel]),
-      );
-      // A column with a modifier the table can't read as a count (one requirements gate, which it counts for every
-      // character; one that isn't an add of a number) takes no change: that's its levels' own to make
-      const unread = (modifier: LevelModifier) =>
-        modifier.target === target && !isPlainAdd(modifier) && !(field === "allowed" && isPlainAll(modifier));
-      const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[spellLevel]));
-      const changes = wanted.some((total, index) => total !== current[index]);
-      if (changes && levels.some(({ id }) => working.get(id)?.some(unread))) {
-        throw new RulesError(
-          "invalid",
-          `Spell level ${spellLevel} has modifiers this table can't edit: edit its levels'`,
-        );
-      }
-      for (const [index, { id }] of levels.entries()) {
-        const next = columnModifiers[index];
-        if (next) replaceOwn(working, id, isOwn, next);
-      }
+        unread: (modifier) =>
+          modifier.target === target &&
+          !ProgressionColumns.isPlainAdd(modifier) &&
+          !(field === "allowed" && isPlainAll(modifier)),
+        // Every spell of a spell level, once known, stays known: a count after it is all of them too
+        wanted: ProgressionColumns.normalizedColumn(asked),
+      });
     }
   }
 
@@ -533,11 +464,11 @@ export default class ClassProgression {
     field: "allowed" | "uses",
     working: Map<string, LevelModifier[]>,
     keep: (modifier: LevelModifier) => boolean = () => true,
-  ): Map<string, Record<string | number, SpellTotal>> {
-    const modifiers = readTableModifiers(working, keep);
+  ): Map<string, Record<string | number, ColumnTotal>> {
+    const modifiers = ProgressionColumns.readTableModifiers(working, keep);
     return field === "uses"
-      ? LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readSlotStep)
-      : LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
+      ? ProgressionColumns.computeRunning(this.classLevels, modifiers, LevelTotals.readSlotStep)
+      : ProgressionColumns.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
   }
 
   /**
@@ -565,7 +496,7 @@ export default class ClassProgression {
         if (slug === undefined) continue;
         const picks = picksBySlug.get(slug) ?? {};
         picksBySlug.set(slug, picks);
-        if (isPlainAdd(modifier)) picks[level.id] = (picks[level.id] ?? 0) + Number(modifier.value);
+        if (ProgressionColumns.isPlainAdd(modifier)) picks[level.id] = (picks[level.id] ?? 0) + Number(modifier.value);
       }
     }
     const pools = [...picksBySlug].flatMap(([slug, picks]) => {
@@ -609,7 +540,7 @@ export default class ClassProgression {
    */
   describePlan(sent: ProgressionForm) {
     const { body, working } = this.planModifiers(sent);
-    const modifiers = readTableModifiers(working);
+    const modifiers = ProgressionColumns.readTableModifiers(working);
     return {
       tables: Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)])),
       // What its levels' grants give once saved, as its card shows them before the save

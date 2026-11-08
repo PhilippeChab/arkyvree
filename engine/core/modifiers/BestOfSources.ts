@@ -21,6 +21,8 @@ interface Stack {
   /** What it was set to last, a source of its own in place of its parent, its bases and what was added before */
   set?: number;
   sums: Sources;
+  /** Whether it counts at all, read live: 0 while it doesn't (a weapon set's shield enhancement, without a shield) */
+  when?: () => boolean;
 }
 
 /** A value's sources, as they stand: by source, what each adds up to. */
@@ -74,6 +76,7 @@ function stackOf(object: unknown, key: string): Stack | undefined {
 
 /** A value (`stack`), as it stands: what isn't any source's, and its sources' best bonus and worst penalty. */
 function valueOf(stack: Stack): number {
+  if (stack.when && !stack.when()) return 0;
   return restOf(stack) + bestAndWorst(sourcesOf(stack).values());
 }
 
@@ -89,10 +92,16 @@ export default class BestOfSources {
 
   /**
    * Defines `object`'s value at `key` as keeping the best of its sources, from `value` (what isn't any source's), with
-   * its bases (`bases`) and its parent (`parent`, its value read on another object), if any. Setting it (a set, a
-   * multiply, an assignment) makes what it's set to its one source, which later adds compete with.
+   * its bases (`bases`), its parent (`parent`, its value read on another object) and when it counts (`when`, 0 while it
+   * doesn't), if any. Setting it (a set, a multiply, an assignment) makes what it's set to its one source, which later
+   * adds compete with.
    */
-  static define(object: object, key: string, value: number, options: Pick<Stack, "bases" | "parent"> = {}): void {
+  static define(
+    object: object,
+    key: string,
+    value: number,
+    options: Pick<Stack, "bases" | "parent" | "when"> = {},
+  ): void {
     const holder = object as { [STACKS]?: Map<string, Stack> };
     if (!holder[STACKS]) Object.defineProperty(object, STACKS, { value: new Map(), enumerable: false });
     const stack: Stack = { ...options, rest: value, sums: new Map() };

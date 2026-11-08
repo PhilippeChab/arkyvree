@@ -8,6 +8,8 @@ import type { ScrapedFrom } from "./reference.ts";
  * in place of the database's references to them: its creature type, size (or its sizes to choose from), speed.
  */
 export interface SpeciesEntry {
+  /** Ours, in the reference's overrides: the SRD gives none */
+  description?: string;
   index: string;
   name: string;
   size?: string;

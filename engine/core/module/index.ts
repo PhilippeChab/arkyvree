@@ -122,7 +122,7 @@ export {
   type Subsheet,
   type TableBlock,
 } from "./parts/characters/index.ts";
-export { ContentPart } from "./parts/content/index.ts";
+export { type BroughtEntity, ContentPart } from "./parts/content/index.ts";
 export {
   EntitiesPart,
   type EntityCopies,

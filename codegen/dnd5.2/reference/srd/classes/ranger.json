@@ -1465,5 +1465,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Ranger": {
+      "description": "A wilderness hunter who mixes weapons and nature magic."
+    }
   }
 }

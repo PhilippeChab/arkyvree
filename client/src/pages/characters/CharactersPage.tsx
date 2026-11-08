@@ -29,6 +29,7 @@ import {
   useListParams,
   usePageTitle,
 } from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
   CHARACTER_LIST_DEFAULTS,
@@ -36,10 +37,9 @@ import {
   characterDetailQuery,
   type CharacterListFilters,
   characterListQuery,
-  characterRulesetsQuery,
 } from "@/client/src/lib/queries.ts";
 
-import type { CharacterImport } from "./characterQueries.ts";
+import { type CharacterImport, characterRulesetsQuery } from "./characterQueries.ts";
 import { CreateCharacterDialog, ImportCharacterDialog, ImportReportDialog } from "./components/index.ts";
 
 type CharacterView = CharacterListFilters["view"];
@@ -73,7 +73,10 @@ export default function CharactersPage() {
   const view = oneOf(searchParams.get("view"), CHARACTER_VIEWS, CHARACTER_LIST_DEFAULTS.view);
   // The ruleset the list shows characters of, any without one: one its view holds no character of shows none
   const rulesetId = searchParams.get("ruleset") ?? undefined;
-  const rulesets = useQuery(characterRulesetsQuery(view)).data ?? [];
+  const rulesetsQuery = useQuery(characterRulesetsQuery(view));
+  const rulesets = rulesetsQuery.data ?? [];
+  // A failed load shows under the filter while there's no list to keep
+  const rulesetsError = rulesetsQuery.data ? null : rulesetsQuery.error;
 
   const characters = useListPageQuery(characterListQuery({ view, search, orderBy, orderDir, rulesetId }));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
@@ -118,13 +121,15 @@ export default function CharactersPage() {
               sortOptions={CHARACTER_SORT_OPTIONS}
               filtered={rulesetId !== undefined}
               filters={
-                rulesets.length > 1 || rulesetId !== undefined ? (
+                rulesets.length > 1 || rulesetId !== undefined || rulesetsError ? (
                   <Box sx={{ width: { xs: "100%", md: 220 } }}>
                     <TextField
                       select
                       fullWidth
                       size="small"
                       label="Ruleset"
+                      error={!!rulesetsError}
+                      helperText={rulesetsError ? loadFailureMessage("Rulesets", rulesetsError) : undefined}
                       value={rulesetId ?? ""}
                       onChange={(event) => updateSearchParams({ ruleset: event.target.value || null })}
                     >

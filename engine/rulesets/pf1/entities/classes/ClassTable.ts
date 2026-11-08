@@ -1,5 +1,6 @@
 /** A class's table, as its page shows it: each level's feat pools, spells per day and spells known, and its spell lists. */
 
+import { ProgressionColumns, type TableModifier } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
@@ -10,7 +11,7 @@ import type { Klass } from "@/engine/rulesets/pf1/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import LevelTotals, { type TableModifier } from "./LevelTotals.ts";
+import LevelTotals from "./LevelTotals.ts";
 
 /** The modifiers a class's levels set, each level's. */
 function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
@@ -78,7 +79,7 @@ export default class ClassTable {
         ),
     );
     const nameBySlug = new Map(pf1.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]));
-    const totals = LevelTotals.computeRunning<number>(
+    const totals = ProgressionColumns.computeRunning<number>(
       levels,
       [...getLevelModifiers(rulesetData, levels), ...featModifiers],
       (modifier) => {
@@ -139,7 +140,7 @@ export default class ClassTable {
    */
   describeSpells(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {
     const { levels } = this;
-    const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readPerDayStep);
+    const totals = ProgressionColumns.computeRunning(levels, modifiers, LevelTotals.readPerDayStep);
     return levels.map((level) => ({ ...level, spellsPerDay: totals.get(level.id) ?? {} }));
   }
 
@@ -150,7 +151,7 @@ export default class ClassTable {
    */
   describeSpellsKnown(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {
     const { levels } = this;
-    const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readKnownStep);
+    const totals = ProgressionColumns.computeRunning(levels, modifiers, LevelTotals.readKnownStep);
     return levels.map((level) => ({ ...level, spellsKnown: totals.get(level.id) ?? {} }));
   }
 

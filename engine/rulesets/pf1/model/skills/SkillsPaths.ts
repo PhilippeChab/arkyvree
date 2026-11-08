@@ -105,6 +105,11 @@ export default class SkillsPaths implements PathCategory<Pf1Components> {
     return `skills.${stripSeparators(skillName)}.misc`;
   }
 
+  /** A skill's ranks (`skills.<slug>.rank`), by the skill's name. */
+  static rank(skillName: string): string {
+    return `skills.${stripSeparators(skillName)}.rank`;
+  }
+
   readonly component = { key: "skills", getter: "getSkills" } as const;
 
   readonly description = "Skill ranks and modifiers";

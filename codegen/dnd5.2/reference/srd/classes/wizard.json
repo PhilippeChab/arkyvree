@@ -72,7 +72,8 @@
           },
           "type": "proficiencies"
         }
-      ]
+      ],
+      "description": "A scholar who learns spells from a spellbook."
     },
     "Wizard 14": {
       "spellcasting": {

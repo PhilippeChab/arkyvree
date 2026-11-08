@@ -1569,5 +1569,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Bard": {
+      "description": "A performer whose music and words carry magic."
+    }
   }
 }

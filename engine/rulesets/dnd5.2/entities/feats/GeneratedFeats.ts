@@ -1,5 +1,5 @@
 import type { FieldsWrite } from "@/engine/core/fields/index.ts";
-import type { EntityRemoval, MadeEntity } from "@/engine/core/module/index.ts";
+import type { BroughtEntity, EntityRemoval, MadeEntity } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import { FEAT_GENERATED } from "@/vocabulary/dnd5.2/fields/index.ts";
@@ -18,6 +18,19 @@ export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "requirements"> & {
  */
 export default abstract class GeneratedFeats {
   constructor(protected readonly view: RulesetView) {}
+
+  /** A generated feat as the seeders write it (`BroughtEntity`), in its pool (`pool`, by name), generated. */
+  static toBrought({ description, fields, modifiers, name, requirements }: GeneratedFeat, pool: string): BroughtEntity {
+    return {
+      description,
+      fields: { ...fields.fields, [FEAT_GENERATED]: true },
+      modifiers,
+      name,
+      pools: [pool],
+      requirements,
+      type: "feats",
+    };
+  }
 
   /** The pool the set's feats go in, by its slug. */
   protected abstract readonly poolSlug: string;

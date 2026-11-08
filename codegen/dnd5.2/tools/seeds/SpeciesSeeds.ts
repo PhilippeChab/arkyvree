@@ -1,6 +1,5 @@
 import { readChoiceOptions, readSkill } from "@/codegen/dnd5.2/tools/detect/proficiencies.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
-import { readDescription, SPECIES_DESCRIPTIONS } from "@/codegen/dnd5.2/tools/terms/descriptions.ts";
 import { TRAIT_MODIFIERS } from "@/codegen/dnd5.2/tools/terms/species.ts";
 import type {
   SpeciesEntry,
@@ -24,6 +23,7 @@ import { SIZE_OPTIONS, type SizeType } from "@/vocabulary/dnd5.2/sizes.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd5.2/skills.ts";
 
 import { Memos } from "./Memos.ts";
+import { readOverrideDescription } from "./overrideDescription.ts";
 
 /** A trait's text, as a lineage's feat lists it: under its name, unless it's the lineage's own ("Giant Ancestry: …"). */
 function traitText({ description, name }: TraitEntry, lineage: string): string {
@@ -140,7 +140,7 @@ export class SpeciesSeeds {
       const traits = entry.traits.map(({ name }) => name);
       return {
         name: entry.name,
-        description: `${readDescription(SPECIES_DESCRIPTIONS, entry.name, "species")}${chosen}`,
+        description: `${readOverrideDescription(entry, "species")}${chosen}`,
         fields: { [SPECIES_SIZE]: size, [SPECIES_SPEED]: entry.speed },
         modifiers: [
           ...traits.map((trait) => grantFeat(trait)),

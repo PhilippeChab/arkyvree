@@ -295,6 +295,17 @@ describe("The seeded D&D 5th Edition core rules", () => {
       ]);
     });
 
+    test("give each skill its Skill Proficiency and Expertise, in the words the engine gives a new skill's", async () => {
+      const rows = await seededRows();
+      const descriptions = ["Skill Proficiency: Athletics", "Expertise: Athletics"].map(
+        (name) => rows.feats.find((feat) => feat.name === name)?.description,
+      );
+      expect(descriptions).toEqual([
+        "You add your Proficiency Bonus to Athletics checks.",
+        "You add twice your Proficiency Bonus to Athletics checks.",
+      ]);
+    });
+
     test("give a class feature's pick its pool: a cleric's Divine Order, a druid's Primal Order, a barbarian's skill", async () => {
       const rows = await seededRows();
       const listedIn = (pool: string) =>

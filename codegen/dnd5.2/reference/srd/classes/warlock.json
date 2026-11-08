@@ -1221,5 +1221,10 @@
         }
       }
     ]
+  },
+  "overrides": {
+    "Warlock": {
+      "description": "A spellcaster whose magic comes from a pact with a patron."
+    }
   }
 }

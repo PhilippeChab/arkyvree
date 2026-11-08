@@ -28,7 +28,32 @@
           ]
         },
         "type": "size_categories"
-      }
+      },
+      "description": "Adaptable folk found in every land."
+    },
+    "Dragonborn": {
+      "description": "Proud folk with draconic ancestry and a breath weapon."
+    },
+    "Dwarf": {
+      "description": "Sturdy, hardy folk who see well in the dark."
+    },
+    "Elf": {
+      "description": "Graceful folk of fey descent with keen senses."
+    },
+    "Gnome": {
+      "description": "Small, clever folk with a gift for magic."
+    },
+    "Goliath": {
+      "description": "Towering folk descended from giants."
+    },
+    "Halfling": {
+      "description": "Small, lucky folk who slip past danger."
+    },
+    "Orc": {
+      "description": "Strong, tireless folk who keep fighting when hurt."
+    },
+    "Tiefling": {
+      "description": "Folk with fiendish ancestry and a touch of infernal magic."
     }
   },
   "raw": [

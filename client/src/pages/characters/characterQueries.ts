@@ -1,6 +1,6 @@
 /**
- * Queries of the character pages: the options a new character's creation picks offer, and how it sets its scores; and
- * what a file picked to import is, and what its import answers.
+ * Queries of the character pages: the options a new character's creation picks offer, and how it sets its scores;
+ * what a file picked to import is, and what its import answers; and the rulesets the characters list filters by.
  */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { type InferResponseType, parseResponse } from "hono/client";
 
 import { FOREVER } from "@/client/src/lib/durations.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
+import type { CharacterListFilters } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -41,6 +42,22 @@ export function characterCreationQuery(rulesetId: string, role: string) {
       ? () => parseResponse(rpc.api.characters.creation.$get({ query: { role, rulesetId } }))
       : skipToken,
     staleTime: FOREVER,
+  });
+}
+
+/** The rulesets a characters list's view (`view`) holds characters of: its ruleset filter's options, by name. */
+export function characterRulesetsQuery(view: CharacterListFilters["view"]) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.characters.rulesets(view),
+    queryFn: () =>
+      parseResponse(
+        rpc.api.characters.rulesets.$get({
+          query: {
+            visibility: view === "archived" ? "archived" : "active",
+            accessRole: view === "shared" ? "contributor" : undefined,
+          },
+        }),
+      ),
   });
 }
 
