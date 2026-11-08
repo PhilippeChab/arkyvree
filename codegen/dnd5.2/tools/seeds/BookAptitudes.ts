@@ -64,7 +64,7 @@ export class BookAptitudes {
       ...classes.flatMap(({ classSkills: skills, featurePool, name, spells: list }) => [
         featurePool,
         ...(skills.length > 0 ? [classSkills(name)] : []),
-        ...(list ? [list.list] : []),
+        ...(list ? [list.list, ...(list.drawnBy ?? []).map(({ pool }) => pool)] : []),
       ]),
     ]);
   }

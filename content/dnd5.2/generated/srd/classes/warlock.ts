@@ -90,5 +90,11 @@ export const WARLOCK: ClassSeed = {
       [4, 3, 2, 2, 2, 6, 0, 0, 0, 0],
       [4, 3, 2, 2, 2, 6, 0, 0, 0, 0],
     ],
+    drawnBy: [
+      { pool: "Mystic Arcanum (Level 6)", level: 6 },
+      { pool: "Mystic Arcanum (Level 7)", level: 7 },
+      { pool: "Mystic Arcanum (Level 8)", level: 8 },
+      { pool: "Mystic Arcanum (Level 9)", level: 9 },
+    ],
   },
 };

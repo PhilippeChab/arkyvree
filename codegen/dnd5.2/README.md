@@ -165,8 +165,8 @@ of has its modifiers (`terms/`); any other is its text alone.
   a bard's, a sorcerer's and a warlock's prepared spells, which change only at a level; a wizard's spellbook, six
   level 1 spells, then two a level; a cleric's, a druid's, a paladin's and a ranger's whole list, every spell of a
   level known from the first level its slots reach it; a warlock's Mystic Arcanum a room at each of its spell levels
-  in a pool of its own, "Mystic Arcanum (Level 6)", which lists the warlock's spells of that level alone, its known
-  spells capped at its Pact Magic's 5th level).
+  in a pool of its own, "Mystic Arcanum (Level 6)", which draws the warlock's list's spells of that level (its
+  `drawnBy`, a `drawsFrom` link the seeder writes), its known spells capped at its Pact Magic's 5th level).
 - **Class feats** (`feats/classes/<class>.ts`): each feature's feat, named after its class ("Rage (Barbarian)"),
   granted at each level that lists it (stackable when it's several); each subclass a feat of its class's subclass pool
   ("Fighter Subclass", family Subclass), whose modifiers grant its features' feats ("Improved Critical (Champion)"),

@@ -65,7 +65,7 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     name: "Befuddlement",
     description:
       "You blast the mind of a creature that you can see within range. The target makes an Intelligence saving throw.\nOn a failed save, the target takes 10d12 Psychic damage and can't cast spells or take the Magic action. At the end of every 30 days, the target repeats the save, ending the effect on a success. The effect can also be ended by the Greater Restoration, Heal, or Wish spell.\nOn a successful save, the target takes half as much damage only.",
-    aptitudes: ["Bard Spells", "Druid Spells", "Mystic Arcanum (Level 8)", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Druid Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
       [SPELL_CASTING_TIME]: "Action",
@@ -115,7 +115,7 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     name: "Demiplane",
     description:
       "You create a shadowy Medium door on a flat solid surface that you can see within range. This door can be opened and closed, and it leads to a demiplane that is an empty room 30 feet in each dimension, made of wood or stone (your choice).\nWhen the spell ends, the door vanishes, and any objects inside the demiplane remain there. Any creatures inside also remain unless they opt to be shunted through the door as it vanishes, landing with the Prone condition in the unoccupied spaces closest to the door's former space.\nEach time you cast this spell, you can create a new demiplane or connect the shadowy door to a demiplane you created with a previous casting of this spell. Additionally, if you know the nature and contents of a demiplane created by a casting of this spell by another creature, you can connect the shadowy door to that demiplane instead.",
-    aptitudes: ["Mystic Arcanum (Level 8)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
       [SPELL_CASTING_TIME]: "Action",
@@ -130,7 +130,7 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     name: "Dominate Monster",
     description:
       'One creature you can see within range must succeed on a Wisdom saving throw or have the Charmed condition for the duration. The target has Advantage on the save if you or your allies are fighting it. Whenever the target takes damage, it repeats the save, ending the spell on itself on a success.\nYou have a telepathic link with the Charmed target while the two of you are on the same plane of existence. On your turn, you can use this link to issue commands to the target (no action required), such as "Attack that creature," "Move over there," or "Fetch that object." The target does its best to obey on its turn. If it completes an order and doesn\'t receive further direction from you, it acts and moves as it likes, focusing on protecting itself.\nYou can command the target to take a Reaction but must take your own Reaction to do so.\nUsing a Higher-Level Spell Slot. Your Concentration can last longer with a level 9 spell slot (up to 8 hours).',
-    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 8)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
       [SPELL_CASTING_TIME]: "Action",
@@ -163,7 +163,7 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     name: "Glibness",
     description:
       "Until the spell ends, when you make a Charisma check, you can replace the number you roll with a 15. Additionally, no matter what you say, magic that would determine if you are telling the truth indicates that you are being truthful.",
-    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 8)", "Warlock Spells"],
+    aptitudes: ["Bard Spells", "Warlock Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
       [SPELL_CASTING_TIME]: "Action",
@@ -241,7 +241,7 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     name: "Power Word Stun",
     description:
       "You overwhelm the mind of one creature you can see within range. If the target has 150 Hit Points or fewer, it has the Stunned condition. Otherwise, its Speed is 0 until the start of your next turn.\nThe Stunned target makes a Constitution saving throw at the end of each of its turns, ending the condition on itself on a success.",
-    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 8)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
       [SPELL_CASTING_TIME]: "Action",

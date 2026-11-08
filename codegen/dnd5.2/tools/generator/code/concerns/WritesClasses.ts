@@ -32,7 +32,10 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.lines.push(`  ],`);
     }
 
-    /** The class's spells: its list, and the spells it has at each spell level by each of its levels. */
+    /**
+     * The class's spells: its list, the spells it has at each spell level by each of its levels, and the pools that draw
+     * from its list (a warlock's Mystic Arcanum's).
+     */
     private writeSpells({ spells }: ClassSeed) {
       if (!spells) return;
       this.lines.push(`  spells: {`);
@@ -40,6 +43,12 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.lines.push(`    known: [`);
       for (const row of spells.known) this.lines.push(`      [${row.join(", ")}],`);
       this.lines.push(`    ],`);
+      if (spells.drawnBy) {
+        this.lines.push(`    drawnBy: [`);
+        for (const { level, pool } of spells.drawnBy)
+          this.lines.push(`      { pool: ${this.quote(pool)}, level: ${level} },`);
+        this.lines.push(`    ],`);
+      }
       this.lines.push(`  },`);
     }
 

@@ -11,7 +11,8 @@ import type { ENTITY_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
  * modifiers (the pools they give room in: its subclass, its Ability Score Improvements, its Epic Boon, its Fighting
  * Style, Weapon Mastery and Expertise picks; its spell slots, or a warlock's Pact Magic), the requirements a multiclass meets (`requirements`, on its first level:
  * 13 in its primary abilities), and its spells (`spells`: its list, and the cantrips and spells it knows by each
- * of its levels, a count per spell level from the cantrips' 0, a level's new ones at the highest level it casts then).
+ * of its levels, a count per spell level from the cantrips' 0, a level's new ones at the highest level it casts then;
+ * the pools that draw its list's spells of a level, `drawnBy`, a warlock's "Mystic Arcanum (Level 6)").
  */
 export interface ClassSeed {
   classSkills: string[];
@@ -24,7 +25,7 @@ export interface ClassSeed {
   name: string;
   partition?: string;
   requirements?: RequirementEntry[];
-  spells?: { known: number[][]; list: string };
+  spells?: { drawnBy?: { level: number; pool: string }[]; known: number[][]; list: string };
 }
 
 export type ClassFields = StoredFieldValues<typeof ENTITY_FIELDS.classes>;

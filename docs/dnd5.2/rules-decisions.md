@@ -128,6 +128,11 @@ holds names the code that holds it.
   to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination; a Wizard 3's two new
   spellbook spells, of level 1 or 2). A spell above it is overspent; cantrips stay apart
   (`AptitudesComponent.highestRoomOf`, `PicksDistribution`, `SpellPicker`).
+- **A warlock's Mystic Arcanum draws from the warlock's list.** Its spell of a level past its Pact Magic's is one room
+  of its own, apart from the spells it knows, which a level 6 spell would join and mix with: a pool per spell level
+  ("Mystic Arcanum (Level 6)", a room at Warlock 11) that lists no spell of its own and draws the warlock's list's of
+  its level (its `drawsFrom` link, at that level; `Dnd52View.listLinksOf`). A fork's new level 6 warlock spell is on
+  the list alone, and the arcanum offers it.
 - **A spell save DC is 8, the Proficiency Bonus and the casting class's spellcasting ability** (`SpellGroupingsComponent`),
   whatever the spell's level.
 
@@ -188,8 +193,6 @@ holds names the code that holds it.
   Wizard's. Blessed and Druidic Warrior's cantrips aren't swapped at a later level.
 - A weapon's own critical range: the range is the character's (`combat.critical.range`, a Champion's), so a homebrew
   keen weapon's modifier widens every weapon's.
-- A warlock's Mystic Arcanum offers the spells its pools list ("Mystic Arcanum (Level 6)"): a fork's new level 6 warlock
-  spell joins the pool as well as the list. Two classes with Pact Magic add their slot levels together (the SRD has
-  one).
+- Two classes with Pact Magic add their slot levels together (the SRD has one).
 - Spells a feature or a trait always has prepared: a Life Domain's Aid at Cleric 3, a drow's Faerie Fire at 3rd level.
   Its description lists them; no modifier makes them known.

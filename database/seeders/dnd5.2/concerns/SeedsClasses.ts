@@ -48,6 +48,26 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /**
+     * The pools that draw its list's spells of a level (`spells.drawnBy`): each one's `drawsFrom` link to its list, at
+     * that level (a warlock's "Mystic Arcanum (Level 6)", its list's level 6 spells).
+     */
+    private async insertDrawingPools(def: ClassSeed) {
+      const { drawnBy = [], list } = def.spells ?? {};
+      if (!list || drawnBy.length === 0) return;
+      const toId = this.idOf(this.ctx.aptMap, list, `${def.name}'s spell list`);
+      await this.insertLinks(
+        drawnBy.map(({ level, pool }) => ({
+          role: "drawsFrom",
+          fromId: this.idOf(this.ctx.aptMap, pool, `${def.name}'s pool drawing from its list`),
+          fromType: "aptitudes",
+          toId,
+          toType: "aptitudes",
+          tier: level,
+        })),
+      );
+    }
+
+    /**
      * Its first level's requirements: a multiclass's, 13 in its primary abilities, which the engine checks past a
      * character's first class. A later level requires none of the one before, which the levels are taken in.
      */
@@ -103,8 +123,8 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
 
     /**
      * Seeds a class, in its partition (its kind's default without one), and its 20 levels: the rooms they give, its
-     * features they grant, and what a multiclass takes to reach its first; and its skill picks. Its feats, its skills'
-     * and its pools must be seeded.
+     * features they grant, and what a multiclass takes to reach its first; the pools that draw from its list; and its
+     * skill picks. Its feats, its skills' and its pools must be seeded.
      */
     async seedClass(def: ClassSeed) {
       const [classId] = await this.insertRows("classes", [
@@ -128,6 +148,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertLevelModifiers(def, levels);
       await this.insertFirstLevelRequirements(def, levelIds);
       await this.insertGrantedFeats(def, levelIds);
+      await this.insertDrawingPools(def);
       await this.insertSkillPicks(def);
       return { classId, levelIds };
     }

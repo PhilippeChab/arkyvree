@@ -1,6 +1,5 @@
 import { readComponents, readSpellSave } from "@/codegen/dnd5.2/tools/detect/spells.ts";
 import { normalizeText } from "@/codegen/dnd5.2/tools/detect/text.ts";
-import { SPELL_ROOM_FEATURES } from "@/codegen/dnd5.2/tools/terms/classFeatures.ts";
 import type { SpellEntry, SpellReference } from "@/codegen/dnd5.2/tools/types/spells.ts";
 import { classSpells } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import type { LeveledSpellSeed } from "@/content/dnd5.2/builders/spells/types.ts";
@@ -20,8 +19,8 @@ import { Memos } from "./Memos.ts";
 
 /**
  * A spell reference's seeds (`seeds`), sorted by level, then name: each read off its entry as its override corrects
- * it, listed in the spell list of each class its entry names, at its level (and in a spell room feature's pool of its
- * level, a warlock's Mystic Arcanum's); its fields its stat block's (its school,
+ * it, listed in the spell list of each class its entry names, at its level (a pool that draws from a list, a
+ * warlock's Mystic Arcanum, lists none: `ClassSeed.spells.drawnBy`); its fields its stat block's (its school,
  * casting time, range, components and material, duration, whether it's a ritual or takes concentration), and the
  * saving throw its text calls for first its `resistedBy` link. Its description is its text, then what a higher slot or
  * a higher character level adds ("Using a Higher-Level Spell Slot.", a cantrip's "Cantrip Upgrade.").
@@ -39,7 +38,7 @@ export class SpellSeeds {
     return normalizeText(`${description}\n${heading} ${higher_level}`);
   }
 
-  /** A spell's seed: its lists (a spell room feature's pools among them), its fields, the save it calls for, its level. */
+  /** A spell's seed: its lists, its fields, the save it calls for, its level. */
   private seed(entry: SpellEntry): LeveledSpellSeed {
     const school = SPELL_SCHOOLS.find((name) => name === entry.school.name);
     if (!school) throw new Error(`${entry.name}: no school is "${entry.school.name}"`);
@@ -47,7 +46,7 @@ export class SpellSeeds {
     return {
       name: entry.name,
       description: this.description(entry),
-      aptitudes: [...entry.classes.map(({ name }) => classSpells(name)), ...this.spellRoomPools(entry)].sort(),
+      aptitudes: entry.classes.map(({ name }) => classSpells(name)).sort(),
       fields: {
         [SPELL_SCHOOL]: school,
         [SPELL_CASTING_TIME]: entry.casting_time,
@@ -61,16 +60,6 @@ export class SpellSeeds {
       ...(save ? { links: { resistedBy: save } } : {}),
       level: entry.level,
     };
-  }
-
-  /**
-   * The pools of the spell room features that offer a spell (`SPELL_ROOM_FEATURES`): its level's of each one its class
-   * owns, from the feature's first spell level (a level 6 warlock spell's "Mystic Arcanum (Level 6)").
-   */
-  private spellRoomPools({ classes, level }: SpellEntry): string[] {
-    return SPELL_ROOM_FEATURES.filter(
-      ({ firstLevel, owner }) => level >= firstLevel && classes.some(({ name }) => name === owner),
-    ).map(({ pool }) => pool(level));
   }
 
   /** The classes whose spell lists its spells name, each once, sorted. */

@@ -272,7 +272,7 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(rooms.reduce((total, { value }) => total + Number(value), 0)).toBe(6 + 2 * 19);
     });
 
-    test("give a warlock's Mystic Arcanum a pool of its own per spell level, its known spells the Pact's levels", async () => {
+    test("give a warlock's Mystic Arcanum a pool per spell level, drawing from its list, its known spells the Pact's", async () => {
       const rows = await seededRows();
       const warlock = rows.classLevels.filter(({ ownerId }) => ownerId === rows.klass("Warlock").id);
       const targets = warlock.flatMap(({ id }) => rows.modifiersOf(id).map(({ target }) => target));
@@ -284,14 +284,15 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(rows.modifiersOf(rows.classLevel("Warlock", 17).id).map(describeModifier)).toContain(
         "aptitudes.mysticarcanumlevel9.9.allowed add 1",
       );
-      // An arcanum's pool lists the warlock's spells of its level alone
+      // An arcanum's pool lists no spell of its own: it draws the warlock's list's of its level
       const arcanum = rows.aptitude("Mystic Arcanum (Level 6)");
-      const listed = rows.spells.flatMap(({ id, name }) =>
-        rows.linksOf(id, "listedIn").flatMap(({ tier, toId }) => (toId === arcanum.id ? [`${name} ${tier}`] : [])),
+      const listed = rows.spells.filter(({ id }) =>
+        rows.linksOf(id, "listedIn").some(({ toId }) => toId === arcanum.id),
       );
-      expect(listed.length).toBeGreaterThan(0);
-      expect(listed.filter((spell) => !spell.endsWith(" 6"))).toEqual([]);
-      expect(listed).toContain("Circle of Death 6");
+      expect(listed).toEqual([]);
+      expect(rows.linksOf(arcanum.id, "drawsFrom").map(({ tier, toId }) => ({ tier, toId }))).toEqual([
+        { tier: 6, toId: rows.aptitude("Warlock Spells").id },
+      ]);
     });
 
     test("give a class feature's pick its pool: a cleric's Divine Order, a druid's Primal Order, a barbarian's skill", async () => {

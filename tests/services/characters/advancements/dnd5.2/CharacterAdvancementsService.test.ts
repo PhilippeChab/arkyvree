@@ -454,6 +454,70 @@ describe("A D&D 5th Edition character's levels", () => {
       expect(await eleventh({ "Warlock Spells": ["Circle of Death"] })).toMatch(/Warlock Spells/);
       expect(await eleventh({ "Mystic Arcanum (Level 6)": ["Circle of Death"] })).toBe("saved");
     });
+
+    test("offers a level 6 spell a fork adds to the warlock's list alone, which its pool draws from", async () => {
+      const ctx = await getDnd52SeedCtx();
+      const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+        name: `Fork ${uniqueId()}`,
+        private: true,
+      });
+      const vortex = await EntitiesService.createEntity(session, fork.id, "spells", {
+        name: "Shadow Vortex",
+        links: { listedIn: [{ toId: ctx.aptMap["Warlock Spells"], tier: 6 }] },
+      });
+      const character = await createDnd52Character(session, { abilities: { Charisma: 15 }, rulesetId: fork.id });
+      for (let level = 1; level <= 10; level++)
+        await addLevel(session, character.id, "Warlock", level, { hp: level === 1 ? 8 : 5 }, true);
+      const plan = levelUpPlan([{ classId: ctx.classMap["Warlock"], level: 11, hp: 5 }]);
+      const at = { pool: ctx.aptMap["Mystic Arcanum (Level 6)"], tier: "6" };
+      const offered = await getStepOptions(session, character.id, "spells", plan, at, { search: "Shadow Vortex" });
+      expect(offered.items.map(({ name }) => name)).toEqual(["Shadow Vortex"]);
+      // Saved as its level 11's one level 6 spell: forced past the levels' other picks, not past a spell its pool lacks
+      const eleventh = { hp: 5, spells: { "Mystic Arcanum (Level 6)": [vortex.id] } };
+      await addLevel(session, character.id, "Warlock", 11, eleventh, true);
+      expect((await buildCharacter(character.id)).components.spellGroupings.getDcs().shadowvortex).toBeDefined();
+    });
+
+    test("isn't written on a spell a class's page adds to another list: its pool draws it, the spell doesn't list it", async () => {
+      const ctx = await getDnd52SeedCtx();
+      const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+        name: `Fork ${uniqueId()}`,
+        private: true,
+      });
+      const circle = ctx.spellMap["Circle of Death"];
+      const clericList = ctx.aptMap["Cleric Spells"];
+      await EntitiesService.addListedEntities(
+        session,
+        fork.id,
+        "classes",
+        ctx.classMap["Cleric"],
+        clericList,
+        [circle],
+        6,
+      );
+      const { links } = await EntitiesService.getEntity(session, fork.id, "spells", circle);
+      const lists = links.map(({ toId }) => toId);
+      expect(lists).toContain(clericList);
+      expect(lists).not.toContain(ctx.aptMap["Mystic Arcanum (Level 6)"]);
+    });
+
+    test("isn't a list of the warlock's page: its spells are the warlock list's, which the page edits", async () => {
+      const ctx = await getDnd52SeedCtx();
+      const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+        name: `Fork ${uniqueId()}`,
+        private: true,
+      });
+      const warlock = ctx.classMap["Warlock"];
+      const lists = await EntitiesService.getEntityTable(session, fork.id, "classes", warlock, "spell-lists");
+      expect((lists as { name: string }[]).map(({ name }) => name)).toEqual(["Warlock Spells"]);
+      const arcanum = ctx.aptMap["Mystic Arcanum (Level 6)"];
+      const circle = ctx.spellMap["Circle of Death"];
+      expect(
+        await outcomeOf(() =>
+          EntitiesService.addListedEntities(session, fork.id, "classes", warlock, arcanum, [circle], 6),
+        ),
+      ).toMatch(/Spell list not found for Warlock/);
+    });
   });
 
   describe("editing a saved level", () => {

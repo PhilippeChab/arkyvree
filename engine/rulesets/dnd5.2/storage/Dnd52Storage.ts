@@ -24,10 +24,11 @@ const KINDS: StorageDeclaration["kinds"] = {
 };
 
 /**
- * The D&D 5th Edition link roles, each with how its sibling copies merge it: a feat's or a spell's lists hold every
- * copy's (`union`), and every single link (with the fields it's read by: an item's template, a spell's save, a class's
- * spellcasting ability and starting proficiencies) and a link of a role the winning copy holds many of (a class
- * level's grants, a background's abilities) is the winning copy's alone (`winner`). A link through a pool goes with its
+ * The D&D 5th Edition link roles, each with how its sibling copies merge it: a feat's or a spell's lists, and the lists
+ * a pool draws its spells from at a level (a Mystic Arcanum's, the warlock's), hold every copy's (`union`), and every
+ * single link (with the fields it's read by: an item's template, a spell's save, a class's spellcasting ability and
+ * starting proficiencies) and a link of a role the winning copy holds many of (a class level's grants, a background's
+ * abilities) is the winning copy's alone (`winner`). A link through a pool goes with its
  * pool (`viaOnDelete`). Its single roles type the view's entities' (`SingleRolesOf`).
  */
 // oxfmt-ignore
@@ -36,6 +37,7 @@ export const LINK_ROLES = [
   { role: "madeFrom", fromType: "items", toType: "items", viaType: null, single: true, onDelete: "refuse", viaOnDelete: "refuse", merge: "winner" },
   { role: "listedIn", fromType: "feats", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink", viaOnDelete: "refuse", merge: "union" },
   { role: "listedIn", fromType: "spells", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink", viaOnDelete: "refuse", merge: "union" },
+  { role: "drawsFrom", fromType: "aptitudes", toType: "aptitudes", viaType: null, single: false, onDelete: "unlink", viaOnDelete: "refuse", merge: "union" },
   { role: "grants", fromType: "class-levels", toType: "feats", viaType: "aptitudes", single: false, onDelete: "unlink", viaOnDelete: "unlink", merge: "winner" },
   { role: "grants", fromType: "class-levels", toType: "spells", viaType: "aptitudes", single: false, onDelete: "unlink", viaOnDelete: "unlink", merge: "winner" },
   { role: "keyAbility", fromType: "saves", toType: "abilities", viaType: null, single: true, onDelete: "delete", viaOnDelete: "refuse", merge: "winner" },

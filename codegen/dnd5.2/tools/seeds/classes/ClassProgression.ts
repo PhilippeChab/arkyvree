@@ -7,6 +7,7 @@ import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells, classSubclass, WEAPON_MASTERY_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { poolRoom, spellRoom, spellsAllKnown, spellSlots } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import type { ClassSeed } from "@/content/dnd5.2/builders/classes/types.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import type { MulticlassSlots } from "@/vocabulary/dnd5.2/classes.ts";
@@ -76,6 +77,19 @@ export class ClassProgression {
           : [];
       });
     });
+  }
+
+  /**
+   * The pools its spell room features give rooms in (`SPELL_ROOM_FEATURES`, `spellRoomModifiers`), each drawing its
+   * list's spells of its spell level: a warlock's "Mystic Arcanum (Level 6)", its list's level 6 spells.
+   */
+  private drawingPools(): { level: number; pool: string }[] {
+    return SPELL_ROOM_FEATURES.flatMap(({ feature, firstLevel, pool }) =>
+      this.entries
+        .levels()
+        .filter(({ features }) => features.some(({ name }) => name === feature))
+        .map((_, index) => ({ level: firstLevel + index, pool: pool(firstLevel + index) })),
+    );
   }
 
   /**
@@ -247,9 +261,10 @@ export class ClassProgression {
    * its slots reach then (a warlock's pact slots'). What it knows past its cantrips is as it learns them
    * (`SpellLearning`): a bard's, a sorcerer's, a warlock's prepared spells, which change at a level; a wizard's
    * spellbook, six at its first level and two at each after; none for a class that knows its whole list
-   * (`listModifiers`). Its spell room features' rooms are in pools of their own (`modifiers`).
+   * (`listModifiers`). Its spell room features' rooms are in pools of their own (`modifiers`), which draw its list's
+   * spells of their level (`drawnBy`, `drawingPools`).
    */
-  spells(): { known: number[][]; list: string } | undefined {
+  spells(): NonNullable<ClassSeed["spells"]> | undefined {
     const levels = this.entries.levels();
     if (!levels.some(({ spellcasting }) => spellcasting)) return undefined;
     const learning = this.learning();
@@ -267,6 +282,7 @@ export class ClassProgression {
       Object.assign(previous, { cantrips, spells });
       return [...known];
     });
-    return { list: classSpells(this.entries.name()), known: table };
+    const drawnBy = this.drawingPools();
+    return { list: classSpells(this.entries.name()), known: table, ...(drawnBy.length > 0 ? { drawnBy } : {}) };
   }
 }

@@ -54,14 +54,14 @@ export default class ClassSpellLists {
   }
 
   /**
-   * A spell's lists, as the view composes them (its siblings' among them), each its list and its level there: those the
-   * view holds alone, each by the id it knows it by (a list the ruleset deleted dropped, one a remade list stands for
-   * resolved to it), each once.
+   * A spell's lists, as the view composes them (its siblings' among them), each its list and its level there: its own,
+   * a pool's that draws from one left out (a Mystic Arcanum's), those the view holds alone, each by the id it knows it
+   * by (a list the ruleset deleted dropped, one a remade list stands for resolved to it), each once.
    */
   private listingsOf(spell: Spell): Listing[] {
     const { rulesetData } = this.view;
     const listings = new Map<string, Listing>();
-    for (const { tier, toId } of this.dnd52.listLinksOf(spell.id)) {
+    for (const { tier, toId } of this.dnd52.ownListLinksOf(spell.id)) {
       const list = rulesetData.find("aptitudes", toId);
       if (list && !listings.has(list.id)) listings.set(list.id, { tier: tier ?? null, toId: list.id });
     }

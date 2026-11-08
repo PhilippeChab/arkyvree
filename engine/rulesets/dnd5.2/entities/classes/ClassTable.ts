@@ -135,11 +135,13 @@ export default class ClassTable {
   /**
    * What the class's spell list page offers: the lists its levels give slots in, its own first (`describeSlotLists`),
    * else its own list before they give slots in it (`describeOwnList`: "Witch Spells", where the ruleset has it and it
-   * holds no feats, a feat pool being no list of spells; none else, the list a first add makes). Its characters read
-   * the lists its levels give slots in alone.
+   * holds no feats, a feat pool being no list of spells; none else, the list a first add makes). A pool that draws its
+   * spells from a list is left out (a warlock's Mystic Arcanum: its spells are its list's, which the page edits). Its
+   * characters read the lists its levels give slots in alone.
    */
   describeSpellLists(): { id: string; name: string }[] {
-    const lists = this.describeSlotLists();
+    const { drawingPoolIds } = Dnd52View.of(this.view.rulesetData);
+    const lists = this.describeSlotLists().filter((list) => !drawingPoolIds.has(list.id));
     if (lists.length > 0) return lists;
     const own = this.describeOwnList();
     if (own.id === null || this.holdsFeats(own.id)) return [];

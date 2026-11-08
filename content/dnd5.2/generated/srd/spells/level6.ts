@@ -50,7 +50,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     name: "Circle of Death",
     description:
       "Negative energy ripples out in a 60-foot-radius Sphere from a point you choose within range. Each creature in that area makes a Constitution saving throw, taking 8d8 Necrotic damage on a failed save or half as much damage on a successful one.\nUsing a Higher-Level Spell Slot. The damage increases by 2d8 for each spell slot level above 6.",
-    aptitudes: ["Mystic Arcanum (Level 6)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Necromancy",
       [SPELL_CASTING_TIME]: "Action",
@@ -98,7 +98,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     name: "Create Undead",
     description:
       'You can cast this spell only at night. Choose up to three corpses of Medium or Small Humanoids within range. Each one becomes a Ghoul under your control (see "Monsters" for its stat block).\nAs a Bonus Action on each of your turns, you can mentally command any creature you animated with this spell if the creature is within 120 feet of you (if you control multiple creatures, you can command any of them at the same time, issuing the same command to them). You decide what action the creature will take and where it will move on its next turn, or you can issue a general command, such as to guard a particular place. If you issue no commands, the creature takes the Dodge action and moves only to avoid harm. Once given an order, the creature continues to follow the order until its task is complete.\nThe creature is under your control for 24 hours, after which it stops obeying any command you\'ve given it. To maintain control of the creature for another 24 hours, you must cast this spell on the creature before the current 24-hour period ends. This use of the spell reasserts your control over up to three creatures you have animated with this spell rather than animating new ones.\nUsing a Higher-Level Spell Slot. If you use a level 7 spell slot, you can animate or reassert control over four Ghouls. If you use a level 8 spell slot, you can animate or reassert control over five Ghouls or two Ghasts or Wights. If you use a level 9 spell slot, you can animate or reassert control over six Ghouls, three Ghasts or Wights, or two Mummies. See "Monsters" for these stat blocks.',
-    aptitudes: ["Cleric Spells", "Mystic Arcanum (Level 6)", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Necromancy",
       [SPELL_CASTING_TIME]: "1 minute",
@@ -131,7 +131,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     name: "Eyebite",
     description:
       "For the duration, your eyes become an inky void. One creature of your choice within 60 feet of you that you can see must succeed on a Wisdom saving throw or be affected by one of the following effects of your choice for the duration.\nOn each of your turns until the spell ends, you can take a Magic action to target another creature but can't target a creature again if it has succeeded on a save against this casting of the spell.\nAsleep. The target has the Unconscious condition. It wakes up if it takes any damage or if another creature takes an action to shake it awake.\nPanicked. The target has the Frightened condition. On each of its turns, the Frightened target must take the Dash action and move away from you by the safest and shortest route available. If the target moves to a space at least 60 feet away from you where it can't see you, this effect ends. Sickened. The target has the Poisoned condition.",
-    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 6)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Necromancy",
       [SPELL_CASTING_TIME]: "Action",
@@ -436,14 +436,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
   {
     name: "True Seeing",
     description: "For the duration, the willing creature you touch has Truesight with a range of 120 feet.",
-    aptitudes: [
-      "Bard Spells",
-      "Cleric Spells",
-      "Mystic Arcanum (Level 6)",
-      "Sorcerer Spells",
-      "Warlock Spells",
-      "Wizard Spells",
-    ],
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Divination",
       [SPELL_CASTING_TIME]: "Action",
