@@ -22,6 +22,17 @@ interface TrackEdges {
 }
 
 /**
+ * The carousel, its buttons and its track: past the page's column, across the whole of the app's area (`AppMain`'s, a
+ * size container its width is read in, `cqw`, the `%` the column's), within the page's own gutter.
+ */
+const CAROUSEL_SX = {
+  position: "relative",
+  left: "calc(50% - 50cqw)",
+  width: "100cqw",
+  px: { xs: 2, sm: 3 },
+} as const;
+
+/**
  * The row's own height around its columns, which the screen's height less the app bar leaves them: its buttons and
  * their gap (48px), the track's paddings (24px), and 24px to spare.
  */
@@ -55,24 +66,10 @@ const PAIRING_HEIGHT = 620;
 const SLOT_SX = { flex: "0 0 auto", minHeight: 0, "&:last-child": { flexShrink: 1 } } as const;
 
 /**
- * The track's own padding at each side, from the app's area's edge (`AppMain`'s, a size container: `cqw`) to the page's
- * column's, so its first and last columns line up with the page: half the area less half the page's width (1200px,
- * `AppMain`'s), plus its `Container`'s gutter (16px on a phone, 24px past it), never less than that gutter. Written in
- * the area's units alone: a scroll padding's `%` would read the track's own width.
- */
-const TRACK_INSET = { xs: "max(16px, calc(50cqw - 584px))", sm: "max(24px, calc(50cqw - 576px))" } as const;
-
-/**
- * Its track: the columns in a row that scrolls sideways, smoothly but for a viewer who asked for less motion, past the
- * page's column across the whole of the app's area, its columns stopping in line with the page's; room above them for a
- * card's lift on hover, and below for the scrollbar.
+ * Its track: the columns in a row that scrolls sideways, smoothly but for a viewer who asked for less motion; room
+ * above them for a card's lift on hover, and below for the scrollbar.
  */
 const TRACK_SX = {
-  position: "relative",
-  left: "calc(50% - 50cqw)",
-  width: "100cqw",
-  px: TRACK_INSET,
-  scrollPaddingInline: TRACK_INSET,
   overflowX: "auto",
   overflowY: "hidden",
   overscrollBehaviorX: "contain",
@@ -146,7 +143,7 @@ export function CharacterCarousel({ characters }: CharacterCarouselProps) {
   };
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1} sx={CAROUSEL_SX}>
       {columns.length > 1 && (
         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
           <IconButton
