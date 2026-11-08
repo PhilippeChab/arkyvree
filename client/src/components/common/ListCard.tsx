@@ -22,6 +22,8 @@ interface ListCardProps extends Omit<CardProps, "children" | "title"> {
   avatarSrc?: string;
   /** Brand colour of the avatar's gradient. */
   avatarTone?: "primary" | "secondary";
+  /** What it shows under its description: a campaign character's sheet in brief, in its Party View. */
+  children?: ReactNode;
   /** Its facts, under its title: chips of the family, as its page's header shows them. */
   chips?: ReactNode;
   /** Corner control, e.g. a star toggle. */
@@ -43,6 +45,7 @@ export function ListCard({
   title,
   corner,
   chips,
+  children,
   description,
   isArchived = false,
   animationIndex,
@@ -141,7 +144,7 @@ export function ListCard({
             </Stack>
           )}
         </Stack>
-        <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
+        <Stack spacing={3} sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
           <Typography
             variant="body2"
             sx={{
@@ -153,7 +156,8 @@ export function ListCard({
           >
             {description || NO_DESCRIPTION}
           </Typography>
-        </Box>
+          {children}
+        </Stack>
       </Stack>
     </Card>
   );

@@ -1,7 +1,17 @@
-import { Autocomplete, Box, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  Stack,
+  TextField,
+  ToggleButton,
+  Typography,
+} from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
@@ -16,9 +26,8 @@ import {
   ScrollSafeListbox,
   SearchBar,
   SectionContent,
-  StatusChip,
 } from "@/client/src/components/common/index.ts";
-import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
+import { CharacterIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   useCharacterPortraits,
@@ -26,6 +35,7 @@ import {
   useDialogState,
   useListboxQuery,
   useListPageQuery,
+  useSearchParam,
   useSearchText,
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
@@ -33,6 +43,7 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharacterQuery, type CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import {
+  type CampaignCharacter,
   campaignCharactersQuery,
   unlinkedCharactersQuery,
 } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
@@ -40,11 +51,17 @@ import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index
 import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
+import { CharacterCarousel } from "./CharacterCarousel.tsx";
+import { PartySheet } from "./PartySheet.tsx";
+import { VisibilityControl } from "./VisibilityControl.tsx";
+
 interface CharacterCardProps {
   animationIndex: number;
   animationOffset: number;
   campaignId: string;
   character: CampaignCharacter;
+  /** What it shows under its description: its sheet in brief, in the Party View. */
+  children?: ReactNode;
   portraitUrl: string | null;
 }
 
@@ -59,13 +76,13 @@ interface LinkCharacterDialogProps {
   onExited: () => void;
   open: boolean;
 }
-type CampaignCharacter = CampaignCharactersPaginated["items"][number];
-type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
-
 type UnlinkedCharacter = InferResponseType<
   (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],
   200
 >["items"][number];
+
+/** How the Characters tab shows its characters: a grid of cards, or the Party View's carousel of their sheets in brief. */
+const CHARACTER_VIEWS = ["grid", "party"] as const;
 
 const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
   Private: "Hidden from the other players: the Game Masters alone see it",
@@ -73,37 +90,23 @@ const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
   Partial: "The other players see its physical traits only",
 };
 
-function CharacterCard({ character, campaignId, animationIndex, animationOffset, portraitUrl }: CharacterCardProps) {
+function CharacterCard({
+  character,
+  campaignId,
+  animationIndex,
+  animationOffset,
+  portraitUrl,
+  children,
+}: CharacterCardProps) {
   const navigate = useNavigate();
-  const snackbar = useSnackbar();
   const queryClient = useQueryClient();
 
   // Warm the sheet while the pointer is on the card.
   const prefetchSheet = () => void queryClient.prefetchQuery(campaignCharacterQuery(campaignId, character.id));
 
-  const visibilityMutation = useMutation({
-    mutationFn: async (visibility: CharacterVisibility) =>
-      parseResponse(
-        rpc.api.campaigns[":id"].characters[":characterId"].$put({
-          param: { id: campaignId, characterId: character.id },
-          json: { visibility },
-        }),
-      ),
-    onSuccess: () => {
-      snackbar.success("Visibility updated");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters") });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.characterDetail(campaignId, character.id) });
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to update visibility");
-    },
-  });
-
   const handleViewSheet = () => {
     navigate(`/campaigns/${campaignId}/characters/${character.id}`);
   };
-
-  const canEditVisibility = character.canSetVisibility;
 
   return (
     <ListCard
@@ -116,32 +119,11 @@ function CharacterCard({ character, campaignId, animationIndex, animationOffset,
       title={character.name}
       // A Partial character's description is hidden, not missing
       description={character.isPartial ? PARTIAL_IDENTITY_NOTE : character.description}
-      action={
-        // Its owner picks it in a select, a chip being a value and never an action; the others read it
-        canEditVisibility ? (
-          <TextField
-            select
-            size="small"
-            label="Visibility"
-            value={character.visibility}
-            onChange={(event) =>
-              visibilityMutation.mutate(oneOf(event.target.value, CHARACTER_VISIBILITY_OPTIONS, "Private"))
-            }
-            disabled={visibilityMutation.isPending}
-            sx={{ minWidth: 120 }}
-          >
-            {CHARACTER_VISIBILITY_OPTIONS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
-        ) : (
-          <StatusChip icon={<VisibilityIcon />} label={character.visibility} />
-        )
-      }
+      action={<VisibilityControl campaignId={campaignId} character={character} />}
       chips={<CharacterBuildChips chips={character.chips} />}
-    />
+    >
+      {children}
+    </ListCard>
   );
 }
 
@@ -263,9 +245,24 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
+  const { value: viewParam, setValue: setViewParam } = useSearchParam("characterView", "grid");
+  const party = oneOf(viewParam, CHARACTER_VIEWS, "grid") === "party";
 
   const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
+
+  const cards = characters.items.map((character, index) => (
+    <CharacterCard
+      key={character.id}
+      character={character}
+      campaignId={campaign.id}
+      animationIndex={index}
+      animationOffset={characters.offset}
+      portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
+    >
+      {party && <PartySheet campaignId={campaign.id} characterId={character.id} />}
+    </CharacterCard>
+  ));
 
   return (
     <SectionContent>
@@ -273,6 +270,16 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search characters…"
+          actions={
+            <ToggleButton
+              value="party"
+              selected={party}
+              onChange={() => setViewParam(party ? "grid" : "party")}
+              sx={{ textTransform: "none" }}
+            >
+              Party View
+            </ToggleButton>
+          }
           addLabel="Link Character"
           onAdd={canLinkCharacters ? () => linkDialog.openWith(true) : undefined}
         />
@@ -290,18 +297,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
             />
           }
         >
-          <ListCardGrid>
-            {characters.items.map((character, index) => (
-              <CharacterCard
-                key={character.id}
-                character={character}
-                campaignId={campaign.id}
-                animationIndex={index}
-                animationOffset={characters.offset}
-                portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
-              />
-            ))}
-          </ListCardGrid>
+          {party ? <CharacterCarousel>{cards}</CharacterCarousel> : <ListCardGrid>{cards}</ListCardGrid>}
         </ListPageResults>
       </Stack>
 

@@ -142,6 +142,50 @@ test.describe("A campaign character", () => {
     }
   });
 
+  test("shows in the Party View its sheet in brief, as its visibility lets the reader see it", async ({
+    page,
+    browser,
+    ownerUser,
+    inviteeUser,
+    user,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const { id, characters } = await setUpCampaign(page, browser, inviteeUser, user);
+
+    // The Game Master turns it on: every character's build, side by side, a card at a time
+    await page.goto(`/campaigns/${id}/characters`);
+    const partyView = page.getByRole("button", { name: "Party View" });
+    await partyView.click();
+    await expect(partyView).toHaveAttribute("aria-pressed", "true");
+    await expect(page).toHaveURL(/characterView=party/);
+    const party = page.getByRole("region", { name: "Party" });
+    await expect(party.getByRole("heading", { name: "Ability Scores" })).toHaveCount(3, { timeout: 15_000 });
+    await expect(party.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(0);
+    const previous = page.getByRole("button", { name: "Previous Character" });
+    await expect(previous).toBeDisabled();
+    await page.getByRole("button", { name: "Next Character" }).click();
+    await expect(previous).toBeEnabled();
+
+    // A card opens the character's sheet
+    await party.getByText(characters.Public.name, { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/campaigns/${id}/characters/${characters.Public.id}$`));
+    await expect(page.getByRole("heading", { level: 1, name: characters.Public.name })).toBeVisible();
+
+    // Another player: a public character's build, a partial one's identity alone, and no private one
+    const other = await signedInPage(browser, user);
+    try {
+      await other.goto(`/campaigns/${id}/characters?characterView=party`);
+      const otherParty = other.getByRole("region", { name: "Party" });
+      await expect(otherParty.getByText(characters.Public.name, { exact: true })).toBeVisible({ timeout: 15_000 });
+      await expect(otherParty.getByText(characters.Partial.name, { exact: true })).toBeVisible();
+      await expect(otherParty.getByRole("heading", { name: "Ability Scores" })).toHaveCount(1);
+      await expect(otherParty.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(1);
+      await expect(otherParty.getByText(characters.Private.name, { exact: true })).toHaveCount(0);
+    } finally {
+      await other.context().close();
+    }
+  });
+
   test("offers a demo player its editing, but not its PDF, which a demo doesn't export", async ({
     page,
     browser,
