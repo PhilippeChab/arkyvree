@@ -1,6 +1,6 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
-import { Dnd52Module } from "@/engine/rulesets/dnd5.2/index.ts";
+import { Dnd5Module } from "@/engine/rulesets/dnd5/index.ts";
 import { Pf1Module } from "@/engine/rulesets/pf1/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -60,7 +60,7 @@ export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...i
 const MODULES = {
   "Dungeons & Dragons: 3.5": Dnd35Module.create(),
   "Pathfinder: 1": Pf1Module.create(),
-  "Dungeons & Dragons: 5.2": Dnd52Module.create(),
+  "Dungeons & Dragons: 5": Dnd5Module.create(),
 };
 
 /** The base rules' modules, which the engine's handles ask what their rules answer. */
