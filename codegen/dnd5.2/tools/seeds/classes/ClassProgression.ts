@@ -6,17 +6,31 @@ import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells, classSubclass, WEAPON_MASTERY_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
-import { poolRoom, spellRoom, spellSlots } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import { poolRoom, spellRoom, spellsAllKnown, spellSlots } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import type { MulticlassSlots } from "@/vocabulary/dnd5.2/classes.ts";
 import { EXPERTISE_POOL } from "@/vocabulary/dnd5.2/feats.ts";
-import { MAX_SPELL_LEVEL, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
+import {
+  MAX_SPELL_LEVEL,
+  SPELL_LEVELS,
+  SPELLBOOK_FIRST_SPELLS,
+  SPELLBOOK_SPELLS_A_LEVEL,
+} from "@/vocabulary/dnd5.2/spells.ts";
 
 import type { ClassEntries } from "./ClassEntries.ts";
 
 /** A class level's modifier: what it gives, at its level. */
 type LevelModifier = ModifierSeed & { level: number };
+
+/**
+ * How a class learns its spells past its cantrips, as its Spellcasting's (a warlock's Pact Magic's) text says when its
+ * prepared spells change: at a level, so its level-up picks them (a bard, a sorcerer, a warlock: they're the spells it
+ * knows); from its spellbook after a Long Rest, so its level-up picks its spellbook's (a wizard); from its whole list
+ * after a Long Rest, which it knows all of (a cleric, a druid, a paladin, a ranger). As Pathfinder's spontaneous casters,
+ * its wizard and its prepared divine casters (`knowAll`) learn theirs.
+ */
+type SpellLearning = "level" | "list" | "spellbook";
 
 /** A count a level's `class_specific` holds, by its key: none for a level without it. */
 function readCount(level: ClassLevel, key: string): number | undefined {
@@ -28,6 +42,14 @@ function readCount(level: ClassLevel, key: string): number | undefined {
 function readHighestSlot(spellcasting: Record<string, number>): number | undefined {
   const levels = Array.from({ length: MAX_SPELL_LEVEL }, (_, index) => index + 1);
   return levels.findLast((level) => (spellcasting[`spell_slots_level_${level}`] ?? 0) > 0);
+}
+
+/** A spellcasting feature's text's learning (`SpellLearning`): refused for a text that says none of them. */
+function readLearning(className: string, text: string): SpellLearning {
+  const change = /Changing Your Prepared Spells\. Whenever you (gain a .+? level|finish a Long Rest)/.exec(text)?.[1];
+  if (change === undefined) throw new Error(`${className}: its spellcasting says not when its prepared spells change`);
+  if (change.startsWith("gain")) return "level";
+  return /spellbook/.test(text) ? "spellbook" : "list";
 }
 
 /**
@@ -94,6 +116,34 @@ export class ClassProgression {
     return this.entries.levels().some(({ features }) => features.some(({ name }) => name === "Pact Magic"));
   }
 
+  /** How the class learns its spells past its cantrips (`SpellLearning`), as its spellcasting feature's text says. */
+  private learning(): SpellLearning {
+    const name = this.entries.name();
+    const feature = this.entries.levels().some(({ features }) => features.some((entry) => entry.name === "Pact Magic"))
+      ? "Pact Magic"
+      : "Spellcasting";
+    return readLearning(name, this.entries.feature(feature).description);
+  }
+
+  /**
+   * Every spell of each spell level known on its list from the first level its slots reach it, for a class that knows
+   * its whole list (`SpellLearning`'s `list`: a cleric's, a paladin's), as a Pathfinder cleric knows every spell of a
+   * level it can cast.
+   */
+  private listModifiers(): LevelModifier[] {
+    if (!this.entries.levels().some(({ spellcasting }) => spellcasting) || this.learning() !== "list") return [];
+    const list = classSpells(this.entries.name());
+    const opened = new Set<number>();
+    return this.entries.levels().flatMap(({ level, spellcasting = {} }) => {
+      const highest = readHighestSlot(spellcasting) ?? 0;
+      return SPELL_LEVELS.slice(1, highest + 1).flatMap((spellLevel) => {
+        if (opened.has(spellLevel)) return [];
+        opened.add(spellLevel);
+        return [{ ...spellsAllKnown(list, spellLevel), level }];
+      });
+    });
+  }
+
   /**
    * A warlock's Pact Magic as its levels give it: each level's new slots and the spell level they rise to, by its table
    * (`spellcasting.pact.slots`, `spellcasting.pact.level`). Refused for a table whose slots or level go down.
@@ -149,13 +199,14 @@ export class ClassProgression {
 
   /**
    * Its levels' modifiers, in level order: its features' rooms (its spell room features' too), its spell slots (a
-   * warlock's Pact Magic), and its counts' increases.
+   * warlock's Pact Magic), its whole list known (a cleric's), and its counts' increases.
    */
   modifiers(): LevelModifier[] {
     return [
       ...this.featureModifiers(),
       ...this.spellRoomModifiers(),
       ...this.slotModifiers(),
+      ...this.listModifiers(),
       ...this.countModifiers(),
     ].sort((a, b) => a.level - b.level);
   }
@@ -191,24 +242,29 @@ export class ClassProgression {
   }
 
   /**
-   * Its spells, when it casts any: its list, and the cantrips and prepared spells it has by each level (cumulative), a
-   * count per spell level from the cantrips' 0. A level's new prepared spells are at the highest spell level its slots
-   * reach then (a warlock's pact slots'): its spell room features' rooms are in pools of their own (`modifiers`).
+   * Its spells, when it casts any: its list, and the cantrips and spells it knows by each level (cumulative), a count
+   * per spell level from the cantrips' 0, which its level-up picks. A level's new spells are at the highest spell level
+   * its slots reach then (a warlock's pact slots'). What it knows past its cantrips is as it learns them
+   * (`SpellLearning`): a bard's, a sorcerer's, a warlock's prepared spells, which change at a level; a wizard's
+   * spellbook, six at its first level and two at each after; none for a class that knows its whole list
+   * (`listModifiers`). Its spell room features' rooms are in pools of their own (`modifiers`).
    */
   spells(): { known: number[][]; list: string } | undefined {
     const levels = this.entries.levels();
     if (!levels.some(({ spellcasting }) => spellcasting)) return undefined;
+    const learning = this.learning();
     const known = Array.from({ length: MAX_SPELL_LEVEL + 1 }, () => 0);
-    const previous = { cantrips: 0, prepared: 0 };
-    const table = levels.map(({ name, spellcasting = {} }) => {
+    const previous = { cantrips: 0, spells: 0 };
+    const table = levels.map(({ name, spellcasting = {} }, index) => {
       const cantrips = spellcasting.cantrips_known ?? 0;
-      const prepared = spellcasting.prepared_spells ?? 0;
+      const spellbook = SPELLBOOK_FIRST_SPELLS + SPELLBOOK_SPELLS_A_LEVEL * index;
+      const spells = { level: spellcasting.prepared_spells ?? 0, list: 0, spellbook }[learning];
       const highest = readHighestSlot(spellcasting);
-      if (cantrips < previous.cantrips || prepared < previous.prepared) throw new Error(`${name}: it has fewer spells`);
-      if (prepared > previous.prepared && highest === undefined) throw new Error(`${name}: new spells, but no slots`);
+      if (cantrips < previous.cantrips || spells < previous.spells) throw new Error(`${name}: it has fewer spells`);
+      if (spells > previous.spells && highest === undefined) throw new Error(`${name}: new spells, but no slots`);
       known[0] += cantrips - previous.cantrips;
-      if (highest !== undefined) known[highest] += prepared - previous.prepared;
-      Object.assign(previous, { cantrips, prepared });
+      if (highest !== undefined) known[highest] += spells - previous.spells;
+      Object.assign(previous, { cantrips, spells });
       return [...known];
     });
     return { list: classSpells(this.entries.name()), known: table };

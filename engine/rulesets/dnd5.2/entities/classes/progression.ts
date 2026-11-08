@@ -12,7 +12,7 @@ const POSITION_ALIASES = ["level", "lvl"];
  * How a class progresses in the 2024 rules: its features and feat pools under "Class Features" (its subclass's pick, its
  * Ability Score Improvement, its Fighting Style and Weapon Mastery picks are pools), its spell slots, a column a spell
  * level: what its levels give on its list by then, as its table in the SRD gives them, which a character casting from
- * this class alone has; and its cantrips and prepared spells, a column a spell level: what it prepares by then, a
+ * this class alone has; and its cantrips and spells known, a column a spell level: what its levels pick by then, a
  * level's new spells counted at the highest level it casts then, which a lower level's spells fill too; and its Pact
  * Magic, its slots and their level by then (a warlock's), shown for a class whose levels give it, in place of its
  * Spell Slots when they give no other (`hiddenTables`). A class's
@@ -63,7 +63,7 @@ export const PROGRESSION: ProgressionDeclaration = {
   },
   grantsLabel: "Class Features",
   lastPosition: MAX_CLASS_LEVEL,
-  // Its Levels and Feat Pools tabs are its Progression's; its spell slots' and its prepared spells', the Spells tab
+  // Its Levels and Feat Pools tabs are its Progression's; its spell slots' and its spells known', the Spells tab
   tabAliases: {
     "feat-pools": "progression",
     levels: "progression",
@@ -101,7 +101,7 @@ export const PROGRESSION: ProgressionDeclaration = {
     },
     {
       all: {
-        hint: "All Prepared From an Earlier Level",
+        hint: "All Known From an Earlier Level",
         lockedPaste:
           "That cell already has every spell from an earlier level. Paste into another cell, or use Paste a Table.",
         word: "All",
@@ -111,9 +111,9 @@ export const PROGRESSION: ProgressionDeclaration = {
         key: String(level),
         label: SPELL_LEVEL_LABELS[level],
       })),
-      help: 'How many cantrips and spells the class prepares by then. "All" is every spell of its list.',
+      help: 'How many cantrips and spells the class knows by then, which its levels pick. "All" is every spell of its list.',
       key: "known",
-      label: "Cantrips and Prepared Spells",
+      label: "Cantrips and Spells Known",
       max: RULESET_LIMITS.tableCount,
       positionAliases: POSITION_ALIASES,
       table: "spells-known",

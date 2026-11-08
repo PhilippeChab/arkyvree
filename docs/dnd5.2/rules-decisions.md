@@ -115,10 +115,19 @@ holds names the code that holds it.
   (`ClassTable.describePactMagic`, `ClassProgression.planPact`); the table shows for a class whose levels give Pact
   Magic, in place of its Spell Slots when they give no other slot (a warlock's: `hiddenTables`, the progression
   answer's tables a class doesn't show, which the client leaves out).
-- **Prepared spells mix levels freely.** A class's table gives its cantrips and its prepared spells by level, a level's
-  new spells counted at the highest level it casts then; the room past cantrips is one count, which any spell of level 1
-  up to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination). A spell above it
-  is overspent; cantrips stay apart (`AptitudesComponent.highestRoomOf`, `PicksDistribution`, `SpellPicker`).
+- **A level picks the spells its class knows, as Pathfinder's levels do; what it prepares each day isn't picked.**
+  Each class learns its spells past its cantrips as its Spellcasting says its prepared spells change
+  (`ClassProgression.spells`, codegen): a bard, a sorcerer and a warlock change theirs only when they gain a level, so
+  their prepared spells are the spells they know, which their levels pick (as Pathfinder's spontaneous casters); a
+  wizard knows its spellbook, six level 1 spells at its first level and two more at each level after, which its levels
+  pick, and prepares among them (as Pathfinder's wizard); a cleric, a druid, a paladin and a ranger prepare from their
+  whole list, so they know every spell of it of a level they can cast, from the first level their slots reach it
+  (`aptitudes.<list>.<level>.allowed` set to all, as Pathfinder's cleric), and their levels pick their cantrips alone.
+- **Known spells mix levels freely.** A class's table gives its cantrips and the spells it knows by level, a level's new
+  spells counted at the highest level it casts then; the room past cantrips is one count, which any spell of level 1 up
+  to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination; a Wizard 3's two new
+  spellbook spells, of level 1 or 2). A spell above it is overspent; cantrips stay apart
+  (`AptitudesComponent.highestRoomOf`, `PicksDistribution`, `SpellPicker`).
 - **A spell save DC is 8, the Proficiency Bonus and the casting class's spellcasting ability** (`SpellGroupingsComponent`),
   whatever the spell's level.
 
@@ -164,6 +173,8 @@ holds names the code that holds it.
 
 ## Not modelled
 
+- A class's daily preparation: which of the spells it knows a wizard, a cleric, a druid, a paladin or a ranger has
+  prepared, and its Prepared Spells number, which its table in the SRD prints. Its levels pick what it knows.
 - Weapon Mastery's choices changing at a Long Rest: a mastered weapon is picked at a level, as a feat. A barbarian's
   mastery isn't limited to melee weapons, and a mastery's pick doesn't require proficiency with its weapon.
 - Attunement's limit of three items, and a Small character's gear.

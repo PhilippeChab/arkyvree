@@ -12,8 +12,8 @@ import {
  * Wood Elf Sage Wizard 5 (Evoker). Standard array: Str 8, Dex 14, Con 13, Int 15, Wis 12, Cha 10; her background's +2
  * Intelligence and +1 Constitution, and her 4th level's Ability Score Improvement's +1 Dexterity and +1 Intelligence
  * (Dex 15, Con 14, Int 18). Her background's Magic Initiate gives two more cantrips and a level 1 spell on the wizard's
- * list. Her prepared spells mix their levels: her 3rd level's new spell, counted at level 2, is a level 1 spell, and so
- * is one of her 5th level's two, counted at level 3.
+ * list. Her spellbook holds six level 1 spells from her 1st level and two more at each level after, of a level she can
+ * cast: her 3rd level's two, counted at level 2, are a level 2 spell and a level 1 one.
  */
 export default {
   name: "Ilyra Moonwhisper",
@@ -55,17 +55,20 @@ export default {
       spellName,
       aptitude: "Wizard Spells",
     })),
-    ...["Detect Magic", "Mage Armor", "Magic Missile", "Shield", "Sleep"].map((spellName) => ({
-      levelIndex: 0,
-      spellName,
-      aptitude: "Wizard Spells",
-    })),
+    // Her spellbook's six level 1 spells, and her Magic Initiate's
+    ...["Detect Magic", "Feather Fall", "Mage Armor", "Magic Missile", "Shield", "Sleep", "Thunderwave"].map(
+      (spellName) => ({ levelIndex: 0, spellName, aptitude: "Wizard Spells" }),
+    ),
+    // Two more at each level after, of a level she can cast
     { levelIndex: 1, spellName: "Burning Hands", aptitude: "Wizard Spells" },
-    { levelIndex: 2, spellName: "Thunderwave", aptitude: "Wizard Spells" },
+    { levelIndex: 1, spellName: "Chromatic Orb", aptitude: "Wizard Spells" },
+    { levelIndex: 2, spellName: "Misty Step", aptitude: "Wizard Spells" },
+    { levelIndex: 2, spellName: "Silent Image", aptitude: "Wizard Spells" },
     { levelIndex: 3, spellName: "Minor Illusion", aptitude: "Wizard Spells" },
-    { levelIndex: 3, spellName: "Misty Step", aptitude: "Wizard Spells" },
+    { levelIndex: 3, spellName: "Hold Person", aptitude: "Wizard Spells" },
+    { levelIndex: 3, spellName: "Invisibility", aptitude: "Wizard Spells" },
     { levelIndex: 4, spellName: "Fireball", aptitude: "Wizard Spells" },
-    { levelIndex: 4, spellName: "Feather Fall", aptitude: "Wizard Spells" },
+    { levelIndex: 4, spellName: "Counterspell", aptitude: "Wizard Spells" },
   ],
   inventory: [
     { name: "Quarterstaff", quantity: 1, location: "Two Handed", groups: [0] },

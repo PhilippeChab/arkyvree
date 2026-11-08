@@ -50,7 +50,7 @@ const session = makeSession();
 
 /**
  * A Human Soldier wizard's first level: its background's and a human's picks, its two class skills, its three cantrips
- * and its four level 1 spells.
+ * and its spellbook's six level 1 spells.
  */
 const WIZARD_1: LevelPlan = {
   hp: 6,
@@ -62,7 +62,10 @@ const WIZARD_1: LevelPlan = {
     "Wizard Skills": ["Skill Proficiency: Arcana", "Skill Proficiency: History"],
   },
   spells: {
-    "Wizard Spells": ["Fire Bolt", "Light", "Mage Hand", "Magic Missile", "Shield", "Sleep", "Detect Magic"],
+    "Wizard Spells": [
+      ...["Fire Bolt", "Light", "Mage Hand"],
+      ...["Detect Magic", "Feather Fall", "Mage Armor", "Magic Missile", "Shield", "Sleep"],
+    ],
   },
 };
 
@@ -389,17 +392,21 @@ describe("A D&D 5th Edition character's levels", () => {
     });
   });
 
-  describe("a wizard's prepared spells", () => {
-    test("mix their levels: a new spell counted at the 2nd level may be a 1st-level one", async () => {
+  describe("a wizard's spellbook", () => {
+    test("mixes its levels: a new spell counted at the 2nd level may be a 1st-level one", async () => {
       const ctx = await getDnd52SeedCtx();
       const { character } = await createWizard();
-      await addLevel(session, character.id, "Wizard", 2, { hp: 4, spells: { "Wizard Spells": ["Burning Hands"] } });
-      const third = { hp: 4, feats: { "Wizard Subclass": ["Evoker"] }, spells: { "Wizard Spells": ["Thunderwave"] } };
+      const second = { hp: 4, spells: { "Wizard Spells": ["Burning Hands", "Chromatic Orb"] } };
+      await addLevel(session, character.id, "Wizard", 2, second);
+      const thirdSpells = ["Thunderwave", "Silent Image"];
+      const third = { hp: 4, feats: { "Wizard Subclass": ["Evoker"] }, spells: { "Wizard Spells": thirdSpells } };
       const answer = await levelAnswer(character.id, "Wizard", 3, third);
       expect(stepAnswerOf(answer, "spells", "pick")).toBeDefined();
       const level = await addLevel(session, character.id, "Wizard", 3, third);
-      expect(await pickedIds("spells", level.id)).toEqual([ctx.spellMap["Thunderwave"]]);
-      // Six prepared spells, of the 1st level all; the 2nd level's slots all the same
+      expect((await pickedIds("spells", level.id)).toSorted()).toEqual(
+        thirdSpells.map((name) => ctx.spellMap[name]).toSorted(),
+      );
+      // Ten spells in its spellbook (six, then two at each level), of the 1st level all; the 2nd level's slots the same
       const built = await buildCharacter(character.id);
       expect(built.validate()).toEqual({ valid: true, issues: [] });
       expect(built.components.spellcasting.getSpellcasting().slots).toMatchObject({ 1: 4, 2: 2 });

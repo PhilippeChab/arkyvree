@@ -156,7 +156,7 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(modifiers(19)).toEqual(["aptitudes.epicboon.allowed add 1"]);
     });
 
-    test("give a wizard's levels its cantrips and its prepared spells, a level's new ones at its highest level", async () => {
+    test("give a wizard's levels its cantrips and its spellbook, a level's new spells at its highest level", async () => {
       const rows = await seededRows();
       const modifiers = (level: number) =>
         rows
@@ -164,16 +164,37 @@ describe("The seeded D&D 5th Edition core rules", () => {
           .map(describeModifier)
           .filter((modifier) => !modifier.includes(".uses "))
           .sort();
+      // Its spellbook's six level 1 spells, then two at each level, of the highest level it casts
       expect(modifiers(1)).toEqual([
         "aptitudes.wizardspells.0.allowed add 3",
-        "aptitudes.wizardspells.1.allowed add 4",
+        "aptitudes.wizardspells.1.allowed add 6",
       ]);
-      expect(modifiers(2)).toEqual(["aptitudes.wizardspells.1.allowed add 1"]);
+      expect(modifiers(2)).toEqual(["aptitudes.wizardspells.1.allowed add 2"]);
       expect(modifiers(3)).toEqual([
-        "aptitudes.wizardspells.2.allowed add 1",
+        "aptitudes.wizardspells.2.allowed add 2",
         "aptitudes.wizardsubclass.allowed add 1",
       ]);
       expect(modifiers(5)).toEqual(["aptitudes.wizardspells.3.allowed add 2"]);
+    });
+
+    test("give a cleric every spell of its list known from the first level its slots reach, its cantrips its picks", async () => {
+      const rows = await seededRows();
+      const modifiers = (level: number) =>
+        rows
+          .modifiersOf(rows.classLevel("Cleric", level).id)
+          .map(describeModifier)
+          .filter((modifier) => modifier.includes(".allowed "))
+          .sort();
+      expect(modifiers(1)).toEqual([
+        "aptitudes.clericspells.0.allowed add 3",
+        "aptitudes.clericspells.1.allowed set -1",
+        "aptitudes.divineorder.allowed add 1",
+      ]);
+      expect(modifiers(2)).toEqual([]);
+      expect(modifiers(3)).toEqual([
+        "aptitudes.clericspells.2.allowed set -1",
+        "aptitudes.clericsubclass.allowed add 1",
+      ]);
     });
 
     test("give each casting class's levels its spell slots on its list, the SRD's at every level", async () => {
@@ -242,20 +263,20 @@ describe("The seeded D&D 5th Edition core rules", () => {
       });
     });
 
-    test("give a wizard 25 prepared spells at its 20th level, the SRD's", async () => {
+    test("give a wizard 44 spells in its spellbook at its 20th level: six, and two at each of 19 levels", async () => {
       const rows = await seededRows();
       const rooms = rows.classLevels
         .filter(({ ownerId }) => ownerId === rows.klass("Wizard").id)
         .flatMap(({ id }) => rows.modifiersOf(id))
         .filter(({ target }) => /^aptitudes\.wizardspells\.[1-9]\.allowed$/.test(target));
-      expect(rooms.reduce((total, { value }) => total + Number(value), 0)).toBe(25);
+      expect(rooms.reduce((total, { value }) => total + Number(value), 0)).toBe(6 + 2 * 19);
     });
 
-    test("give a warlock's Mystic Arcanum a pool of its own per spell level, its prepared spells the Pact's levels", async () => {
+    test("give a warlock's Mystic Arcanum a pool of its own per spell level, its known spells the Pact's levels", async () => {
       const rows = await seededRows();
       const warlock = rows.classLevels.filter(({ ownerId }) => ownerId === rows.klass("Warlock").id);
       const targets = warlock.flatMap(({ id }) => rows.modifiersOf(id).map(({ target }) => target));
-      // The warlock's list's rooms stop at the 5th level, its Pact Magic's
+      // The warlock's list's rooms, the spells it knows, stop at the 5th level, its Pact Magic's
       expect(targets.filter((target) => /^aptitudes\.warlockspells\.[6-9]\./.test(target))).toEqual([]);
       expect(rows.modifiersOf(rows.classLevel("Warlock", 11).id).map(describeModifier)).toContain(
         "aptitudes.mysticarcanumlevel6.6.allowed add 1",

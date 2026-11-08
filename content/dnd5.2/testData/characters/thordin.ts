@@ -13,8 +13,9 @@ import {
  * Dwarf Acolyte Cleric 3 (Life Domain) / Fighter 1. Standard array: Str 14, Dex 10, Con 13, Int 8, Wis 15, Cha 12; his
  * background's +2 Wisdom and +1 Charisma (Wis 17, Cha 13). A fighter's multiclass takes 13 Strength or Dexterity, and
  * his cleric's 13 Wisdom: he has both. His fighter level's proficiencies are a multiclass's (no saving throws, no heavy
- * armor, no skill). His background's Magic Initiate gives two more cantrips and a level 1 spell on the cleric's list,
- * and his Divine Order, a Thaumaturge's, one more cantrip and his Wisdom to his Religion checks.
+ * armor, no skill). A cleric knows every spell of its list of a level it can cast, so his levels pick cantrips alone:
+ * his class's three, his background's Magic Initiate's two (its level 1 spell he knows already), and his Divine
+ * Order's, a Thaumaturge's, one more, with his Wisdom to his Religion checks.
  */
 export default {
   name: "Thordin Ashbeard",
@@ -58,13 +59,6 @@ export default {
       spellName,
       aptitude: "Cleric Spells",
     })),
-    ...["Bless", "Cure Wounds", "Guiding Bolt", "Healing Word", "Shield of Faith"].map((spellName) => ({
-      levelIndex: 0,
-      spellName,
-      aptitude: "Cleric Spells",
-    })),
-    { levelIndex: 1, spellName: "Sanctuary", aptitude: "Cleric Spells" },
-    { levelIndex: 2, spellName: "Aid", aptitude: "Cleric Spells" },
   ],
   inventory: [
     { name: "Warhammer", quantity: 1, location: "Main Hand", groups: [0] },

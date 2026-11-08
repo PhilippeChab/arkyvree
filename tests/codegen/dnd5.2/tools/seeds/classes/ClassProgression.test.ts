@@ -11,14 +11,27 @@ interface LevelFixture {
   spellcasting?: Record<string, number>;
 }
 
+/** A spellcasting's text whose prepared spells change at a level, a bard's: its level-up picks them. */
+const AT_A_LEVEL =
+  "Changing Your Prepared Spells. Whenever you gain a Tester level, you can replace one spell on your list with another Tester spell.";
+
 /** Each feature's text, by its name. */
 const TEXTS: Record<string, string> = {
   Expertise: "You gain Expertise in two of your skill proficiencies of your choice.",
+  "Pact Magic": AT_A_LEVEL,
+  Spellcasting: AT_A_LEVEL,
   "Weapon Mastery": "You can use the mastery properties of two kinds of weapons of your choice.",
 };
 
-/** A class reference of `levels`, in order from level 1, each feature's text its `TEXTS`' or its name. */
-function classOf(levels: LevelFixture[], overrides?: ClassReference["overrides"]): ClassReference {
+/**
+ * A class reference of `levels`, in order from level 1, each feature's text its `texts`', else its `TEXTS`', else its
+ * name.
+ */
+function classOf(
+  levels: LevelFixture[],
+  overrides?: ClassReference["overrides"],
+  texts: Record<string, string> = {},
+): ClassReference {
   const ref = (name: string) => ({ index: name.toLowerCase(), name });
   const names = [...new Set(levels.flatMap(({ features }) => features))];
   const classLevels: ClassLevel[] = levels.map(({ counts, features, spellcasting }, index) => ({
@@ -61,7 +74,7 @@ function classOf(levels: LevelFixture[], overrides?: ClassReference["overrides"]
       },
       features: names.map((name) => ({
         class: ref("Tester"),
-        description: TEXTS[name] ?? name,
+        description: texts[name] ?? TEXTS[name] ?? name,
         index: name.toLowerCase(),
         level: ref("Tester 1"),
         name,
@@ -138,6 +151,47 @@ describe("A class's progression", () => {
       [2, 3, 0],
       [3, 3, 2],
     ]);
+  });
+
+  test("files a wizard's spellbook: six at its first level, two at each after, at the highest level it casts", () => {
+    const spellbook =
+      "Spellbook. It starts with six level 1 Wizard spells. Changing Your Prepared Spells. Whenever you finish a Long Rest, you can change your list of prepared spells, replacing any of the spells there with spells from your spellbook.";
+    const levels = [
+      { features: ["Spellcasting"], spellcasting: spellcastingOf(2, 4, [2]) },
+      { features: [], spellcasting: spellcastingOf(2, 5, [3]) },
+      { features: [], spellcasting: spellcastingOf(3, 6, [4, 2]) },
+    ];
+    const spells = progressionOf(classOf(levels, undefined, { Spellcasting: spellbook })).spells();
+    expect(spells?.known.map((row) => row.slice(0, 3))).toEqual([
+      [2, 6, 0],
+      [2, 8, 0],
+      [3, 8, 2],
+    ]);
+  });
+
+  test("knows its whole list as a cleric does: its cantrips its picks, every spell of a level its slots reach", () => {
+    const wholeList =
+      "Changing Your Prepared Spells. Whenever you finish a Long Rest, you can change your list of prepared spells, replacing any of the spells there with other Tester spells.";
+    const levels = [
+      { features: ["Spellcasting"], spellcasting: spellcastingOf(3, 4, [2]) },
+      { features: [], spellcasting: spellcastingOf(3, 5, [3]) },
+      { features: [], spellcasting: spellcastingOf(3, 6, [4, 2]) },
+    ];
+    const progression = progressionOf(classOf(levels, undefined, { Spellcasting: wholeList }));
+    expect(progression.spells()?.known.map((row) => row.slice(0, 3))).toEqual([
+      [3, 0, 0],
+      [3, 0, 0],
+      [3, 0, 0],
+    ]);
+    const known = progression.modifiers().filter(({ operator }) => operator === "set");
+    expect(known.map(({ level, target, value }) => [level, target, value])).toEqual([
+      [1, "aptitudes.testerspells.1.allowed", "-1"],
+      [3, "aptitudes.testerspells.2.allowed", "-1"],
+    ]);
+    // A spellcasting that says not when its spells change is refused
+    expect(() => progressionOf(classOf(levels, undefined, { Spellcasting: "You cast spells." })).spells()).toThrow(
+      "Tester: its spellcasting says not when its prepared spells change",
+    );
   });
 
   test("reads a level as its override corrects it", () => {

@@ -80,3 +80,9 @@ export const SPELL_SCHOOLS = [
   "Necromancy",
   "Transmutation",
 ] as const;
+
+/** The level 1 spells a wizard's spellbook starts with, at its first level: six. */
+export const SPELLBOOK_FIRST_SPELLS = 6;
+
+/** The spells a wizard adds to its spellbook at each level past its first: two. */
+export const SPELLBOOK_SPELLS_A_LEVEL = 2;
