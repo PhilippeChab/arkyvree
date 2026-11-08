@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
@@ -52,7 +52,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
 import { CharacterCarousel } from "./CharacterCarousel.tsx";
-import { groupPartyColumns } from "./partyColumns.ts";
 import { PartySheet } from "./PartySheet.tsx";
 import { VisibilityControl } from "./VisibilityControl.tsx";
 
@@ -266,12 +265,14 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       brief={party ? <PartySheet campaignId={campaign.id} characterId={character.id} /> : undefined}
     />
   );
-  // Each column keyed by its first character, its cards in the list's order
-  const placed = characters.items.map((character, index) => ({ character, index, isPartial: character.isPartial }));
-  const columns = groupPartyColumns(placed).map((column) => ({
-    key: column[0].character.id,
-    cards: column.map(({ character, index }) => renderCard(character, index)),
-  }));
+  // Turned on, its row comes into view whole, where the wheel over a card scrolls the card, and the page past its end
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const handleViewToggle = () => {
+    setViewParam(party ? "grid" : "party");
+    if (party) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resultsRef.current?.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+  };
 
   return (
     <SectionContent>
@@ -280,12 +281,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           {...searchTextProps}
           searchPlaceholder="Search characters…"
           actions={
-            <ToggleButton
-              value="party"
-              selected={party}
-              onChange={() => setViewParam(party ? "grid" : "party")}
-              sx={{ textTransform: "none" }}
-            >
+            <ToggleButton value="party" selected={party} onChange={handleViewToggle} sx={{ textTransform: "none" }}>
               Party View
             </ToggleButton>
           }
@@ -293,26 +289,35 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           onAdd={canLinkCharacters ? () => linkDialog.openWith(true) : undefined}
         />
 
-        <ListPageResults
-          variant="section"
-          list={characters}
-          search={searchQuery}
-          what="Characters"
-          empty={
-            <BlankState
-              icon={CharacterIcon}
-              title="No characters in this campaign"
-              description="Link your existing characters to this campaign to get started"
-            />
-          }
-        >
-          {party ? (
-            // A new search starts at its first card
-            <CharacterCarousel key={searchQuery} columns={columns} />
-          ) : (
-            <ListCardGrid>{characters.items.map(renderCard)}</ListCardGrid>
-          )}
-        </ListPageResults>
+        <Box ref={resultsRef}>
+          <ListPageResults
+            variant="section"
+            list={characters}
+            search={searchQuery}
+            what="Characters"
+            empty={
+              <BlankState
+                icon={CharacterIcon}
+                title="No characters in this campaign"
+                description="Link your existing characters to this campaign to get started"
+              />
+            }
+          >
+            {party ? (
+              // A new search starts at its first card
+              <CharacterCarousel
+                key={searchQuery}
+                characters={characters.items.map((character, index) => ({
+                  key: character.id,
+                  isPartial: character.isPartial,
+                  card: renderCard(character, index),
+                }))}
+              />
+            ) : (
+              <ListCardGrid>{characters.items.map(renderCard)}</ListCardGrid>
+            )}
+          </ListPageResults>
+        </Box>
       </Stack>
 
       {linkDialog.target && (

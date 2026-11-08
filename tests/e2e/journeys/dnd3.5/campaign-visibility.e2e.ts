@@ -158,12 +158,12 @@ test.describe("A campaign character", () => {
     await partyView.click();
     await expect(partyView).toHaveAttribute("aria-pressed", "true");
     await expect(page).toHaveURL(/characterView=party/);
-    const party = page.getByRole("region", { name: "Party" });
+    const party = page.getByRole("region", { name: "Party", exact: true });
     await expect(party.getByRole("heading", { name: "Ability Scores" })).toHaveCount(3, { timeout: 15_000 });
     await expect(party.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(0);
-    const previous = page.getByRole("button", { name: "Previous Character" });
+    const previous = page.getByRole("button", { name: "Previous Characters" });
     await expect(previous).toBeDisabled();
-    await page.getByRole("button", { name: "Next Character" }).click();
+    await page.getByRole("button", { name: "Next Characters" }).click();
     await expect(previous).toBeEnabled();
 
     // A card opens the character's sheet
@@ -174,8 +174,10 @@ test.describe("A campaign character", () => {
     // Another player: a public character's build, a partial one's identity alone, and no private one
     const other = await signedInPage(browser, user);
     try {
+      // A screen tall enough for a column to show a short card and the next under it
+      await other.setViewportSize({ width: 1366, height: 1000 });
       await other.goto(`/campaigns/${id}/characters?characterView=party`);
-      const otherParty = other.getByRole("region", { name: "Party" });
+      const otherParty = other.getByRole("region", { name: "Party", exact: true });
       await expect(otherParty.getByText(characters.Public.name, { exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(otherParty.getByText(characters.Partial.name, { exact: true })).toBeVisible();
       // Both sheets in: each card's identity names its race
@@ -189,7 +191,7 @@ test.describe("A campaign character", () => {
       const publicName = await otherParty.getByText(characters.Public.name, { exact: true }).boundingBox();
       expect(publicName?.x).toBeCloseTo(partialName?.x ?? Number.NaN, 0);
       expect(publicName?.y).toBeGreaterThan(partialName?.y ?? Number.POSITIVE_INFINITY);
-      const publicDetails = otherParty.getByRole("region", { name: `${characters.Public.name} Details` });
+      const publicDetails = otherParty.getByRole("group", { name: `${characters.Public.name} Details` });
       expect(await publicDetails.evaluate((details) => details.scrollHeight > details.clientHeight)).toBe(true);
     } finally {
       await other.context().close();

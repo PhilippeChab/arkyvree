@@ -14,7 +14,7 @@ function namesOf(columns: { name: string }[][]) {
 
 describe("the Party View's columns", () => {
   test("give each whole character a column of its own, in their order", () => {
-    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo"), character("Cy")]))).toEqual([
+    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo"), character("Cy")], true))).toEqual([
       ["Ada"],
       ["Bo"],
       ["Cy"],
@@ -23,7 +23,7 @@ describe("the Party View's columns", () => {
 
   test("put the next character under a partly seen one, whatever it is", () => {
     const characters = [character("Ada", true), character("Bo"), character("Cy", true), character("Di", true)];
-    expect(namesOf(groupPartyColumns(characters))).toEqual([
+    expect(namesOf(groupPartyColumns(characters, true))).toEqual([
       ["Ada", "Bo"],
       ["Cy", "Di"],
     ]);
@@ -31,18 +31,23 @@ describe("the Party View's columns", () => {
 
   test("hold two characters at most, and none under a whole one", () => {
     const characters = [character("Ada", true), character("Bo", true), character("Cy", true), character("Di")];
-    expect(namesOf(groupPartyColumns(characters))).toEqual([
+    expect(namesOf(groupPartyColumns(characters, true))).toEqual([
       ["Ada", "Bo"],
       ["Cy", "Di"],
     ]);
-    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo", true), character("Cy")]))).toEqual([
+    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo", true), character("Cy")], true))).toEqual([
       ["Ada"],
       ["Bo", "Cy"],
     ]);
   });
 
   test("leave a partly seen character last alone in its column", () => {
-    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo", true)]))).toEqual([["Ada"], ["Bo"]]);
-    expect(groupPartyColumns([])).toEqual([]);
+    expect(namesOf(groupPartyColumns([character("Ada"), character("Bo", true)], true))).toEqual([["Ada"], ["Bo"]]);
+    expect(groupPartyColumns([], true)).toEqual([]);
+  });
+
+  test("give each character a column of its own where a column can't show two", () => {
+    const characters = [character("Ada", true), character("Bo"), character("Cy", true), character("Di", true)];
+    expect(namesOf(groupPartyColumns(characters, false))).toEqual([["Ada"], ["Bo"], ["Cy"], ["Di"]]);
   });
 });
