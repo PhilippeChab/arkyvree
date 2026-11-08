@@ -111,7 +111,7 @@ describe("v1 campaign characters", () => {
     expect(partial.sheet.sections.map(({ kind }) => kind)).toEqual(["fields"]);
   });
 
-  test("answers what the key's user may do with a linked character: its owner what its own sheet does, the Game Master export it", async () => {
+  test("answers what the key's user may do with a linked character: its owner what its own sheet does, the Game Master edit and export it", async () => {
     const { character, gm, other, param, player } = await setupLinked();
     const permissionsOf = async (client: typeof gm) =>
       (await expectOk(client.v1.campaigns[":id"].characters[":characterId"].$get({ param }))).sheet.permissions;
@@ -119,9 +119,9 @@ describe("v1 campaign characters", () => {
     expect(own).toMatchObject({ canArchive: true, canEdit: true, canExport: true, canShare: true });
     expect(await permissionsOf(player.api)).toEqual(own);
 
-    // The Game Master exports it, as the campaign's PDF export lets them, and does nothing else with it
+    // The Game Master edits it and exports it; what's its owner's and its contributors' stays theirs
     const none = Object.fromEntries(Object.keys(own).map((key) => [key, false])) as typeof own;
-    expect(await permissionsOf(gm)).toEqual({ ...none, canExport: true });
+    expect(await permissionsOf(gm)).toEqual({ ...none, canEdit: true, canEditRows: true, canExport: true });
     expect(await permissionsOf(other.api)).toEqual(none);
   });
 

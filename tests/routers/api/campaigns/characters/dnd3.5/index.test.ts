@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
-import { Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
+import { Campaigns, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
@@ -301,15 +301,58 @@ describe("campaigns characters", () => {
     }
   });
 
+  test("lets the Game Master edit a player's character, its own rows too, while the campaign isn't archived", async () => {
+    const { abilityMap } = await getSeedCtx();
+    const { campaignId, characterId, member } = await setupExport("Game Master");
+    const theirs = member.api.api.characters[":id"];
+    const param = { id: characterId };
+
+    // Its owner shares it
+    const { shareToken } = await expectOk(api.api.characters[":id"].share.$post({ param }));
+    expect(shareToken).toEqual(expect.any(String));
+
+    // Its own sheet offers them its edit, and leaves its owner's and its contributors' rights to them: its
+    // contributors, and its share token, which would outlast their seat
+    expect(await expectOk(theirs.$get({ param }))).toMatchObject({
+      permissions: {
+        canArchive: false,
+        canEdit: true,
+        canEditRows: true,
+        canLeave: false,
+        canManageContributors: false,
+        canReadContributors: false,
+        canShare: false,
+      },
+      shareToken: null,
+    });
+    expect(await memberSheetOf(member.api, campaignId, characterId)).toMatchObject({ shareToken: null });
+    await expectStatus(theirs.contributors.$get({ param, query: {} }), 403);
+    const name = "Renamed by the Game Master";
+    const edited = await expectOk(theirs.$put({ param, json: { name } }));
+    expect(edited).toMatchObject({ name });
+    expect(edited).not.toHaveProperty("shareToken");
+    await expectOk(
+      theirs.scores[":role"].$put({ param: { ...param, role: "score" }, json: { [abilityMap["Strength"]]: 18 } }),
+    );
+
+    // An archived campaign is read-only: its Game Master edits nothing of it, and reads it from the campaign alone
+    await Campaigns.archive(db, { id: campaignId });
+    await expectStatus(theirs.$put({ param, json: { name: "Renamed again" } }), 404);
+    expect(await memberSheetOf(member.api, campaignId, characterId)).toMatchObject({
+      name,
+      permissions: { canEdit: false },
+    });
+  });
+
   describe("PDF export", () => {
     test("lets the Game Master export a player's character", async () => {
       const { campaignId, characterId, member } = await setupExport("Game Master");
       const theirs = member.api.api.campaigns[":id"].characters[":characterId"];
       const param = { id: campaignId, characterId };
 
-      // Its permissions say it: the export is the campaign's, which edits nothing of the character
+      // Its permissions say it: its Game Master edits it, and exports it from the campaign
       expect(await expectOk(theirs.$get({ param }))).toMatchObject({
-        permissions: { canEdit: false, canExport: true },
+        permissions: { canEdit: true, canExport: true },
       });
       expect((await theirs.pdf.$post({ param })).status).toBe(202);
       expect(await queuedPdfPayload(characterId)).toMatchObject({ userId: member.user.id, characterId, campaignId });
