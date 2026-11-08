@@ -38,7 +38,7 @@ human and automated contributors. In particular:
 
 For game data, follow [Content Packages](./docs/packages.md) and the ruleset's
 parser guide ([D&D 3.5](./codegen/dnd3.5/README.md), [Pathfinder 1](./codegen/pf1/README.md),
-[D&D 5th Edition](./codegen/dnd5.2/README.md)). Do not manually
+[D&D 5th Edition](./codegen/dnd5/README.md)). Do not manually
 edit generated files or rewrite old migrations to fix deployed data. Use the
 documented mapping and package-update workflow.
 

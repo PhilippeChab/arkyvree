@@ -1,0 +1,57 @@
+import { relative, resolve } from "node:path";
+
+import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
+import type { ReferenceFilters } from "@/codegen/core/references/types.ts";
+import References from "@/codegen/dnd5/tools/references/References.ts";
+
+import { BookGenerator } from "./BookGenerator.ts";
+
+/**
+ * Generates the content's books from the references, into a folder (`dir`: generated/'s copy, or a test's), a book at
+ * a time, whole (`BookGenerator`): a book that fails doesn't stop the others.
+ */
+export class Generator {
+  constructor(dir: string, quiet: boolean) {
+    this.folder = new GeneratedFolder(dir, quiet, Generator.COMMAND);
+  }
+
+  /** The `package.json` script that runs it (`cli/generate.ts`), which each file it generates names. */
+  static readonly COMMAND = "parser:dnd5:generate";
+
+  /** The folder it writes to, and what it wrote there. */
+  private readonly folder: GeneratedFolder;
+
+  /** Regenerates each of `books` (`BookGenerator`): one that fails doesn't stop the others, its failure is returned. */
+  private generateBooks(books: string[]): string[] {
+    const failures: string[] = [];
+    for (const book of books) {
+      try {
+        new BookGenerator(this.folder, book).generate();
+        this.folder.log(`\nDone! Review the generated files in content/dnd5/generated/${book}/.`);
+      } catch (error) {
+        failures.push(`${book}: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+    return failures;
+  }
+
+  /**
+   * Regenerates the books the references a filter picks are of (a book, a type of reference or a name, when given):
+   * every book when none is. The books that failed are returned.
+   */
+  generateAll(filters: ReferenceFilters): string[] {
+    const refs = References.files(filters);
+    return this.generateBooks([...new Set(refs.map((ref) => ref.book))].sort());
+  }
+
+  /**
+   * Regenerates a reference file's book, from its references: a file outside them (an edited copy) would be ignored, so
+   * it's refused. The book's failure is returned.
+   */
+  generateReference(jsonPath: string): string[] {
+    const ref = References.files().find(({ path }) => path === resolve(jsonPath));
+    const dir = relative(process.cwd(), References.dir);
+    if (!ref) throw new Error(`${jsonPath} isn't a reference file of ${dir}/: a book is generated from its own`);
+    return this.generateBooks([ref.book]);
+  }
+}
