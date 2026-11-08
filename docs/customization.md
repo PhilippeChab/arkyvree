@@ -55,26 +55,7 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed data is written with nested `or()` / `and()` builders from `content/core/builders/customization/requirements.ts`, any ruleset's, with the paths its own (3.5's `feat`, `content/dnd3.5/builders/feats/possession.ts`):
-
-```ts
-import { and, eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
-import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
-
-// Simple AND (all root-level entries are AND'd together):
-requirements: [gte("combat.bab", 1), eq(feat("Power Attack"))];
-
-// OR group:
-requirements: [
-  or(eq(feat("Martial Weapon Proficiency")), eq(feat("Martial Weapon Proficiency: Longsword"))),
-  gte("combat.bab", 1),
-];
-
-// Nested AND-inside-OR (e.g. monk prerequisite bypass):
-requirements: [
-  or(and(gte("abilities.dexterity.total", 13), eq(feat("Improved Unarmed Strike"))), gte("classes.monk.level", 1)),
-];
-```
+Seed data is written with nested `or()` / `and()` builders from `content/core/builders/customization/requirements.ts`, any ruleset's, with the paths its own (3.5's `feat`, `content/dnd3.5/builders/feats/possession.ts`).
 
 `requirementRows()` in `database/seeders/core/SeederState.ts` walks the tree and assigns hierarchical levels:
 
@@ -100,16 +81,7 @@ A field is never edited on its own: its entity's own form shows it beside its na
 
 Feats with a `FEAT_FAMILY` field are grouped by the character engine. Requirements can check "any feat in the family" using the `feats.<family>.*.possessed` wildcard. The group holds every feat of the family in the character's ruleset, had or not: the `*` expands to all of them, and the requirement is met when the character has any. `feats.<family>.*.count` reads each one's count, and `feats.<family>.count` all of them together: "any two luck feats" is `feats.luck.count >= 2`, and "Sneak attack +2d6" `feats.sneakattack.count >= 2`, every class's dice together. A family's name alone (`feats.weaponfocus.possessed`) names no feat, and a modifier on it gives none: it's skipped. A feat named like its family shares its key: `feats.martialweaponproficiency.possessed` is the feat Martial Weapon Proficiency (every martial weapon), and `feats.martialweaponproficiency.*.possessed` any feat of its family (Martial Weapon Proficiency: Rapier…), which doesn't include that feat; its `count` is the feat's, the family's isn't reachable. A family's paths are a requirement's only: a modifier grants one feat (`feats.<name>.possessed` set true), never a family, whose feats it would mark possessed without giving any. So the path picker doesn't offer `feats.<family>.*.possessed` to a modifier, the save refuses it, and the build skips one stored, saying why (see [How a sheet is built](#how-a-sheet-is-built)).
 
-```ts
-// "Any Weapon Focus feat"
-requirements: [eq("feats.weaponfocus.*.possessed")];
-
-// "Any metamagic feat" AND "any item creation feat"
-requirements: [eq("feats.metamagic.*.possessed"), eq("feats.itemcreation.*.possessed")];
-
-// "Any two luck feats"
-requirements: [gte("feats.luck.count", 2)];
-```
+The SRD's Improved Turning requires a family's feat (`content/dnd3.5/generated/srd/feats/feats.ts`), written with `eq` (`content/core/builders/customization/requirements.ts`).
 
 Available families: `FEAT_FAMILIES` in `vocabulary/dnd3.5/feats.ts`, the `FEAT_FAMILY` values the customization offers and the seeded rules use (`tests/seeds/dnd3.5/feats.test.ts` keeps the two the same):
 
@@ -121,15 +93,7 @@ Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPat
 
 ### Skill sub-type wildcards (`skills.<prefix>*.rank`)
 
-Skills with sub-types (Craft, Knowledge, Perform) share a common slug prefix. Requirements can use prefix matching to check "any skill in the group":
-
-```ts
-// "Any Knowledge skill 5 ranks"
-requirements: [gte("skills.knowledge*.rank", 5)];
-
-// "Any Craft skill 10 ranks"
-requirements: [gte("skills.craft*.rank", 10)];
-```
+Skills with sub-types (Craft, Knowledge, Perform) share a common slug prefix. Requirements can use prefix matching to check "any skill in the group".
 
 The `*` suffix matches any key starting with the prefix. This is handled by the engine's path walk (`PathTraverser`, `engine/core/paths/`).
 
@@ -151,14 +115,7 @@ The seeds write these with the content's builders (`content/dnd3.5/builders/lang
 
 ## Normalization
 
-All entity names in paths use `stripSeparators()` from `shared/text.ts`:
-
-```ts
-export const stripSeparators = (s: string) =>
-  String(s)
-    .replaceAll(/[^a-z0-9]/gi, "")
-    .toLowerCase();
-```
+All entity names in paths use `stripSeparators()` from `shared/text.ts`.
 
 Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficiencybattleaxe"`
 
@@ -366,12 +323,7 @@ A template is checked when it's saved, as the sheet will evaluate it (`findTempl
 
 A template never grants: it applies after the rounds that give what a grant names, so one on what a grant sets (`feats.<name>.possessed`, `spells.<spell>.<aptitude>.known`, `languages.<name>.known`) is refused when saved and skipped when stored, saying why (see [How a sheet is built](#how-a-sheet-is-built)). The modifier catalog marks those paths `literalOnly`, from the category's `grants` the refusal reads, so the editor's Template switch is off there, as on a pool's slots. A grant on a condition sets `true` and takes the condition as its requirement: Great Fortitude, requiring `languages.common.known`. A requirement on those paths takes a template as any requirement does. The seeds' modifiers are held to it by a test too (`tests/seeds/dnd3.5/targets.test.ts`).
 
-```ts
-// Divine Grace: add CHA modifier to all saves
-modifiers: [
-  { target: "saves.*.misc", operator: "add", value: "{{ abilities.charisma.modifier }}", valueType: "number" },
-];
-```
+The paladin's Divine Grace is a template modifier on every save (`Divine Grace (Paladin)`, in `content/dnd3.5/generated/srd/feats/classes/paladin.ts`).
 
 The `*` wildcard expands to all entries (e.g., `saves.*.misc` applies to fortitude, reflex, and will).
 

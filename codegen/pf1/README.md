@@ -54,7 +54,7 @@ publication order): a later book's scrape leaves it out, logging it as a reprint
 
 ## Architecture
 
-```
+```text
 aonprd.com pages → Scraper → JSON reference file (raw + overrides)
 JSON reference file → seeds (detection, as read) → code writers → content/pf1/generated/<book>/
 ```

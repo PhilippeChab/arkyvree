@@ -71,7 +71,7 @@ After the Fly side is up:
 
 ## Configuration
 
-```
+```text
 fly.web.toml        # web app config, build_target = "web"
 fly.worker.toml     # worker app config, build_target = "worker"
 Dockerfile          # shared; two final stages: web and worker

@@ -74,7 +74,7 @@ species it names.
 
 ## Architecture
 
-```
+```text
 5e-bits files → Scraper → JSON reference file (raw + overrides)
 JSON reference file → seeds (read, its overrides applied) → code writers → content/dnd5.2/generated/srd/
 ```

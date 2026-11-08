@@ -6,27 +6,6 @@ How the client routes between unauthenticated, public, and authenticated surface
 
 `client/src/App.tsx` declares a static route tree (`router`, `createBrowserRouter`) with three sibling layout-routes. No `isAuthenticated` ternary inside the routing config — each layout owns its own guard.
 
-```
-router
-├── AuthLayoutRoute    ── unauth-only; kicks authed users away
-│   ├── /sign-in
-│   ├── /sign-up
-│   ├── /verify-email
-│   ├── /forgot-password
-│   ├── /reset-password
-│   └── /demo-expired
-│
-├── PublicLayout       ── anyone
-│   ├── /share/:shareToken
-│   └── /legal
-│
-└── PrivateRoute       ── auth-required; redirects unauth
-    └── <Layout>
-        ├── /  (index → /dashboard)
-        ├── /dashboard, /rulesets, /campaigns, /characters, …
-        └── *  (catch-all → /dashboard)
-```
-
 | Wrapper | File | Renders for | Guard behavior |
 |---|---|---|---|
 | `AuthLayoutRoute` | `client/src/components/auth/AuthLayoutRoute.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
@@ -49,7 +28,7 @@ Password recovery revokes every existing session in the same transaction as the 
 
 The demo and the auth flow are mutually exclusive states. A demo user landing on any `AuthLayoutRoute` page is signed out before the page renders.
 
-```
+```text
 Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-password, /demo-expired)
    AuthLayoutRoute mounts
    useEffect: a demo at mount (isClearingDemo) ⇒ the sign-out mutation (useAuthRequests)
@@ -78,7 +57,7 @@ Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-pas
 
 A separate flow from auth-route entry:
 
-```
+```text
 Demo user uses app, demo TTL hits server-side (1 hour)
    Next API call returns 401
    handleGlobalError (client/src/lib/queryClient.ts):

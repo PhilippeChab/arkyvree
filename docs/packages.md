@@ -4,7 +4,7 @@ Content packages deliver seed data (base rulesets, extensions) with version trac
 
 ## Pipeline overview
 
-```
+```text
 dndtools.net HTML → Scraper → reference JSON (raw + overrides) → Generator → generated TypeScript → package seeds
                                                    ↑
                                          Human corrections
@@ -35,17 +35,9 @@ The codegen reads `builders/` (the code it writes is the content's), the vocabul
 
 ## How seeds work
 
-A package is data (`content/dnd3.5/packages/`): the core rules' creates the core ruleset and seeds it with `CORE` (`packages/core.ts`), the SRD's book joined to the hand-written core content:
+A package is data (`content/dnd3.5/packages/`): the core rules' creates the core ruleset and seeds it with `CORE` (`packages/core.ts`), the SRD's book joined to the hand-written core content.
 
-```ts
-export const DND35_CORE_PACKAGE: CorePackage = {
-  name: "dnd35",
-  type: "base_ruleset",
-  seedsVersion: 1,
-  ruleset: { name: DND35_RULESET_NAME, description: "…" },
-  content: CORE,
-};
-```
+The core rules' package is `DND35_CORE_PACKAGE`, in `content/dnd3.5/packages/core.ts`.
 
 The registry (`database/packages/registry.ts`) has a row for each base rules (`RULESET_CONTENT`, which `satisfies Record<BaseRules, RulesetContent>`: a base rules `BaseRules` gains (`BASE_RULES_OPTIONS`, `shared/enums.ts`, a row of `rules.modules`) doesn't compile until it has its row): its core rules' package, its extensions', in the order they're applied, the seeder that writes them, and its test characters. The runner applies the packages in that order (`CONTENT_PACKAGES`, by `listContentPackages`), each base rules' core rules first:
 
@@ -58,17 +50,9 @@ The dev seeds (`scripts/db/seeds/`, which seed each base rules' test characters 
 
 A seed says what it stores. Its fields are the entity's fields as stored (`fields`, `StoredFieldValues` of `ENTITY_FIELDS.<kind>`, `shared/customization/fields.ts`): some of them, each by the stored field that keeps it, written by its vocabulary's constant (`{ [ITEM_COST_GP]: 15, [ITEM_WEIGHT]: 4, [WEAPON_MIGHTY]: 2 }`), each value of its kind (a number, a flag, a text, a list's values). Its single links are by role, each the name of the entity it names (an item's template, `links: { madeFrom: "Longsword" }`; a skill's or a save's ability, a class's bonus spell ability, a spell's save, a test character's race), and its partition, where its kind has one, is its own (`partition: "familiar"`: a bonded creature's races and class must say theirs, `BondContent`). The seeders write them as they are, with the entity's row, through the one write path the server writes a form's save by (`Entities.createIds`), which stores the same values as the same rows whoever writes them (`Engine.forRules(baseRules).storage().writtenFields`: a set's values once, no false flag, default number or empty text, none whose condition doesn't hold, none of a spell's stat block without its school), a field a new entity always holds its default where the seed gives none (a feat's `FEAT_SELECTABLE`, an item's `ITEM_SLOT`), each checked against its declaration (`toFieldRows`); the ruleset's own fields, its Settings, go through `RulesetSettings` (`SeederState.writeSettings`). A name a seed gives is refused unless the seed's ruleset has it: a link's (an item's template, an ability, a save, a class's ability, a character's race), an aptitude, a class's skill or granted feat, a character's class, feats, skills, spells, abilities, languages and items, each refusal naming the seed and what it names. An item's fields and links are its ruleset's: the core's `ItemSeed` is generic in them, and its step (`SeedsItems.seedItems`) draws every item's id before it writes any, so a link names an item of the same seed wherever it stands among them. As an item's form's save does, it refuses a link to an item that isn't a template (its kind's template flag), a template's link to any, and one its ruleset's rules refuse (`checkMadeFrom`: 3.5's, a template of another type, or of a type no template is of).
 
-An extension is a package file that seeds its book:
+An extension is a package file that seeds its book.
 
-```ts
-export const DND35_DMG_PACKAGE: ExtensionPackage = {
-  name: "dnd35-dmg",
-  type: "extension",
-  seedsVersion: 1,
-  ruleset: { name: DND35_DMG_NAME, description: "…" },
-  content: BOOK,
-};
-```
+The DMG SRD's is `DND35_DMG_PACKAGE`, in `content/dnd3.5/packages/extensions/dmg.ts`.
 
 `BOOK` (`content/dnd3.5/generated/<book>/index.ts`) is the book's content as the generator wrote it. The runner creates the extension ruleset with the core's context (`createExtension`); `seedExtension` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's, of the core rules' content it's given) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are joined to its `BOOK` in its package file (Complete Divine's `content` adds `DEITYS_WEAPON_FEATS`), as the core rules' are to the SRD's `BOOK` in `packages/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
 
@@ -86,14 +70,7 @@ A package's seeds install it at its definition's `seedsVersion` (`content/<rules
 - An existing database runs the updates past its version.
 - A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `bun run prod:diff` (`scripts/ops/diff/diff-prod.ts`) shows whether production's versions would be refused before a deploy. With `REFERENCE_DATABASE_URL` set to a freshly seeded database, it also compares every row the seeds write (`scripts/ops/diff/content.ts`); `tests/scripts/ops/diff/dnd3.5/content.test.ts` fails when a table or a column isn't compared.
 
-```ts
-export const RULESET_CONTENT = {
-  "Dungeons & Dragons: 3.5": {
-    // …
-    updates: { "dnd35-dmg": { 2: addTheMissingFeat } },
-  },
-} satisfies Record<BaseRules, RulesetContent>;
-```
+A base rules' updates are its `RULESET_CONTENT` row's `updates`, in `database/packages/registry.ts`.
 
 Once every database has an update (production, staging and any other shared database: the runner refuses one below the new `seedsVersion`), fold it: change the content so a new database gets the same rows, drop the update, and raise the definition's `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
 

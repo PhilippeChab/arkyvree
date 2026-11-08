@@ -13,24 +13,9 @@ Both are in-memory; nothing is persisted. On process restart, everything is cold
 
 ## How services interact with this
 
-Services never call the cache's plumbing directly. The single entry point is one of two helpers of copy-on-write's views (`server/cow/views/`, exported by `server/cow/index.ts`):
+Services never call the cache's plumbing directly. The single entry point is one of two helpers of copy-on-write's views (`server/cow/views/`, exported by `server/cow/index.ts`).
 
-```ts
-// Single-ruleset read (a write reads its view through its helper instead: `withRulesetWrite`, `withCharacterWrite`):
-return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-  // ... read rows as stored; the engine reads them in the view (Engine.for(scope)).
-});
-
-// A ruleset's write: its transaction opened through its helper, its locks taken first, its view fresh under them
-return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
-  // ... the copy-on-write writes (`new EntityEdit(scope)`, `EntityCopy.create(tx, type, id, scope)`) take this scope alone.
-});
-
-// Multi-ruleset list enrichment (CharactersService.getCharacters / CampaignCharactersService.getCharacters):
-return await withRulesetScopes(db, rulesetIds, async (views) => {
-  // ... stitch results from several rulesets: the engine reads each character in its own ruleset's view from the map.
-});
-```
+They are `withRulesetScope` and `withRulesetScopes`, in `server/cow/views/scope.ts`, and a write's own, `withRulesetWrite` and `withCharacterWrite`, in `server/services/writes/`.
 
 Inside the scope:
 
@@ -64,10 +49,7 @@ Without intervention, every lookup site had to remember to do `rulesetData.byId(
 
 Every id-keyed Map of the view (`byId(type)`, `*BySource`, `*ByEntity`, a module's derived ones) is wrapped in a Proxy (`RulesetData`'s `resolvingIds`). `.get(key)` and `.has(key)` run the key through `CowData.resolve` first, then hit the underlying Map. `.size`, `.values()`, `.entries()`, iteration — all behave normally (no alias dup).
 
-```ts
-// storedFeatId may be pre-COW or post-COW; both land on the post-COW entity.
-const feat = rulesetData.find("feats", storedFeatId);
-```
+The Proxy is `RulesetData.resolvingIds`, in `engine/core/view/RulesetData.ts`, which `RulesetData.find` reads through.
 
 When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
@@ -77,11 +59,7 @@ Also at compose time: an entity's links (`linksOf`, a feat's or a spell's `liste
 
 The server hands the engine rows as stored: a character's (`readCharacterInput`, and its children's, `readChildInputs`: 3.5's bonded creatures), a page of a ruleset's entities (their records: `EntityRecord`), a picker's options, a saved advancement and its picks, inventory entries. The engine resolves them where they enter, with the view's `CowData`: the character handle resolves a character's input once (`CharacterInputs`, `engine/core/module/`: its single links' entities, its links' entities by role, its advancements' entries, its picks' entities and pools by step and its inventory's items, each by name), a picker its options' single links (`resolveLinks`, which maps every link of a record's `links` naming a stale id; its own fields name none), and a list's or an entity's description answers its links as the view composes them (`linksOf`, each with its target's name, `nameLinks`), its single links among them, and its fields' references resolved (`describeRows`). Every kind's page goes through its entity's list (`Engine.for(scope).entities(type).openList(where).describe(rows)`), and so does every entity it describes (`describe(id)`). So an inherited save names the ability its fork copied by the copy's id (`tests/cache/dnd3.5/idReads.test.ts`). A request is read the same way: every id it names is resolved as it enters the rules (`RequestIds`, `engine/core/view/`), an advancement flow's by the advancement handle (`AdvancementRequests`), a new character's race and ability scores, an ability edit's, a languages edit's and an added inventory item by the characters part, an entity's form by its kind's codec, every field and list of links naming an entity (`FieldCodec.parse`, `RequestIds.resolve` and `resolveAll`). So an entity sent by a source's id is checked, previewed and saved as the copy, and a save writes the copy's id, the one the client sends. An id the view has none of (unknown, of an unrelated ruleset, or deleted) is refused as invalid, naming it, and so is an entity named twice (by its source's id and its copy's) where it can be given once. Rows stored before a copy keep their source's id, which reads resolve. A row carries the entities it names by their ids, never joined under their stored ids: an inventory entry names its item (`RulesetData.entriesWithItems` gives it the view's), a pick its feat, a spell its save; a feat's or a spell's list links are the view's, the ruleset's own rows' too (a list's `describe`), and the view composes the links' lists it reads.
 
-```ts
-// The rows as stored; the character handle resolves them.
-const character = await readCharacterInput(db, record);
-return Engine.for(scope).character(character).describe(await readChildInputs(db, character));
-```
+A character's sheet is read so in `CharactersService.getCharacter` (`server/services/characters/CharactersService.ts`), with `readCharacterInput` and `readChildInputs` (`server/services/characters/characterInputs.ts`).
 
 ### Layer 3 — a query on stored rows asks for equivalent ids
 
@@ -147,18 +125,7 @@ Used by the copy flows, `RulesetExtensionsService`, `RulesetChangesService` (rev
 
 One tier: per-ruleset **raw** entities, keyed by `rulesetId`. The composed view (what services actually consume) is built fresh on each call from these raw entries.
 
-```ts
-interface RulesetRawData {
-  // Entities owned by this ruleset only — no ancestor merging.
-  entities: Record<string, ViewEntity[]>; // each kind's entities as stored (its record), by its type (3.5's "feats", "class-levels"…)
-  links: ReadonlyMap<string, { links: readonly ViewLink[]; type: string }>; // each entity's links of the roles it holds many of, and its kind, by its id
-  tierListIds: Set<string>; // the entities a link with a tier points at (3.5's spell lists at a level)
-  kindValues: ReadonlyMap<string, readonly KindValue[]>; // each kind's values kind-wide: each with the entities holding it
-  modifiers: Modifier[];
-  requirements: Requirement[];
-  settings?: { rulesetId: string; values: StoredValues }; // its own Settings (its fields and its links), none for a ruleset that holds none
-}
-```
+Its type is `RulesetRawData`, in `engine/core/view/RulesetComposition.ts`.
 
 The fork and each ancestor in its source chain gets its own entry. Bases + published extensions (`system: true`) are shared across every fork that descends from them.
 
@@ -316,11 +283,9 @@ flowchart TD
     Proxy -->|write verb<br/>create/update/upsert/<br/>delete/archive/unarchive/<br/>mark/backfill/orphan/publish| Clear[clearRequestCache before + after]
 ```
 
-The store is an `AsyncLocalStorage<Map<string, Promise<unknown>>>` installed by a Hono middleware:
+The store is an `AsyncLocalStorage<Map<string, Promise<unknown>>>` installed by a Hono middleware.
 
-```ts
-.use("*", async (_, next) => runWithRequestCache(async () => { await next(); }))
-```
+It's `runWithRequestCache` (`server/database/requestCache.ts`), which the application's router (`server/routers/application.ts`) runs every request in.
 
 Every request gets a fresh `Map`; the store dies with the request. Zero cross-request leakage.
 
@@ -377,7 +342,7 @@ Failed promises self-evict so a retry doesn't return the cached rejection.
 
 The request log line gets a `dedup: N/M` segment whenever dedup activity happened:
 
-```
+```text
 [api] 2026-04-16T... --> POST /api/characters/advancements/:id/options/spells 200 220ms (db: 180ms cpu: 40ms q: 8 cache: 4/4 dedup: 6/12)
 ```
 
