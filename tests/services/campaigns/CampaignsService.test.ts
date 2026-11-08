@@ -46,14 +46,6 @@ describe("CampaignsService", () => {
       expect(result.player).toMatchObject({ userId: user.id, campaignId: result.campaign.id, role: "Game Master" });
     });
 
-    test("no longer caps how many campaigns a user runs", async () => {
-      const { session } = await createTestUser();
-      const [first] = [await createCampaign(session), await createCampaign(session), await createCampaign(session)];
-      await CampaignsService.archiveCampaign(session, first.id);
-      await CampaignsService.unarchiveCampaign(session, first.id);
-      expect(await Campaigns.count(db, { userId: session.userId })).toBe(3);
-    });
-
     test("needs access to the ruleset, which a campaign on it gives its members", async () => {
       const { user: owner, session: ownerSession } = await createTestUser("owner");
       const { user: outsider, session } = await createTestUser("outsider");

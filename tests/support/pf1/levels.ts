@@ -25,6 +25,18 @@ export interface LevelPlan {
   spells?: Record<string, string[]>;
 }
 
+/**
+ * Checks the levels a save wrote (`saved`, in plan order) took the class levels the test expects (`levels`): a plan
+ * names each level's class alone, and the engine numbers it, its class's next.
+ */
+async function expectSavedLevels(saved: { entryId: string }[], levels: number[]) {
+  const positions = [];
+  for (const { entryId } of saved)
+    positions.push((await Entities.findOne<KlassLevel>(db, { entityType: "class-levels", id: entryId }))?.position);
+  if (positions.join() !== levels.join())
+    throw new Error(`The save took class levels ${positions.join(", ")}, not ${levels.join(", ")}`);
+}
+
 /** A plan's picks by name read into the seeded core rules' ids: each skill's, each pool's and each pick's. */
 export function picksOf(ctx: Pf1SeedCtx, { skills = {}, feats = {}, spells = {} }: Omit<LevelPlan, "hp">): PlanPicks {
   const byPool = (named: Record<string, string[]>, ids: Record<string, string>) =>
@@ -61,18 +73,6 @@ export async function addLevel(
   );
   await expectSavedLevels(saved, [level]);
   return saved[0];
-}
-
-/**
- * Checks the levels a save wrote (`saved`, in plan order) took the class levels the test expects (`levels`): a plan
- * names each level's class alone, and the engine numbers it, its class's next.
- */
-export async function expectSavedLevels(saved: { entryId: string }[], levels: number[]) {
-  const positions = [];
-  for (const { entryId } of saved)
-    positions.push((await Entities.findOne<KlassLevel>(db, { entityType: "class-levels", id: entryId }))?.position);
-  if (positions.join() !== levels.join())
-    throw new Error(`The save took class levels ${positions.join(", ")}, not ${levels.join(", ")}`);
 }
 
 /** The picks of a step (`hp`, `abilities`, `skills`, `feats`, `spells`) these levels took, as stored. */

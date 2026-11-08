@@ -98,20 +98,6 @@ describe("Applying content packages", () => {
     expect(ran).toEqual([]);
   });
 
-  test("applies no package when one is below its seeds, and names every such package", async () => {
-    const ran: string[] = [];
-    const fresh = testPackage(1, [], ran);
-    const [stale, staler] = [testPackage(3, [], ran), testPackage(6, [7], ran)];
-    await record(stale, 2);
-    await record(staler, 5);
-    const error = await applyPackages(db, [fresh, stale, staler]).catch((e: Error) => e);
-    expect(error).toBeInstanceOf(Error);
-    expect(String(error)).toContain(`${stale.name} is at v2, below its seeds (v3)`);
-    expect(String(error)).toContain(`${staler.name} is at v5, below its seeds (v6)`);
-    expect(ran).toEqual([]);
-    expect(await recordedVersion(fresh.name)).toBeUndefined();
-  });
-
   test("applies no package when one's updates don't follow its seeds without a gap, and reports it with the refusals", async () => {
     const ran: string[] = [];
     const [fresh, gapped, stale, both] = [

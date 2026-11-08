@@ -41,7 +41,7 @@ available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the 
 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
 Its text is read from the 5e-bits database's JSON transcription of it (https://github.com/5e-bits/5e-srd-api), stored
-under `codegen/dnd5.2/reference/` with the database's own links left out; nothing else of its text is changed. The
+under `codegen/dnd5/reference/` with the database's own links left out; nothing else of its text is changed. The
 Open Game License below doesn't apply to it. The 5e-bits database's license:
 
 > MIT License

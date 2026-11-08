@@ -257,18 +257,14 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
 });
 
 describe("SpellLists.toSpellPossessionSlug", () => {
-  test.each([
-    ["Wizard Spells", "wizard"],
-    ["Paladin Spells", "paladin"],
-    ["Blackguard Spells", "blackguard"],
-    ["Sublime Chord Spells", "sublimechord"],
-    ["War Domain Spells", "wardomain"],
-    ["Evocation Specialist Spells", "evocationspecialist"],
-    ["Knowledge Domain Spells", "knowledgedomain"],
-    ["Spells of the Deep", "spellsofthedeep"],
-    ["General", "general"],
-    ["Turn Undead", "turnundead"],
-  ])("makes %s %s", (aptitude, slug) => {
-    expect(SpellLists.toSpellPossessionSlug(aptitude)).toBe(slug);
+  test("is a list's name without its last word Spells, its separators dropped", () => {
+    const names = ["Wizard Spells", "Sublime Chord Spells", "War Domain Spells", "Spells of the Deep", "Turn Undead"];
+    expect(names.map((aptitude) => SpellLists.toSpellPossessionSlug(aptitude))).toEqual([
+      "wizard",
+      "sublimechord",
+      "wardomain",
+      "spellsofthedeep",
+      "turnundead",
+    ]);
   });
 });

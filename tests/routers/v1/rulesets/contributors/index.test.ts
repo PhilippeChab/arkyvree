@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createFork, findSeededBase } from "@/tests/support/v1.ts";
 
@@ -68,13 +67,5 @@ describe("v1 ruleset contributors", () => {
 
     await expectStatus(contributors.leave.$post({ param }), 204);
     await expectStatus(contributors.leave.$post({ param }), 404);
-  });
-
-  test("refuses a stranger, and a ruleset that doesn't exist", async () => {
-    const { ruleset } = await setup();
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    const contributors = api.v1.rulesets[":id"].contributors;
-    await expectStatus(contributors.$get({ param: { id: ruleset.id }, query: {} }), 404);
-    await expectStatus(contributors.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });
 });

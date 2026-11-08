@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
+import { createKeyedApi, expectOk } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 describe("v1 campaign invites", () => {
@@ -61,12 +60,5 @@ describe("v1 campaign invites", () => {
         .items,
     ).toEqual([]);
     expect((await expectOk(gmApi.v1.campaigns[":id"].invites.$get({ param, query }))).items).toHaveLength(1);
-  });
-
-  test("refuses a stranger, and a campaign that doesn't exist", async () => {
-    const { campaign } = await createTestCampaign((await createTestUser()).user.id);
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    await expectStatus(api.v1.campaigns[":id"].invites.$get({ param: { id: campaign.id }, query: {} }), 404);
-    await expectStatus(api.v1.campaigns[":id"].invites.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });
 });

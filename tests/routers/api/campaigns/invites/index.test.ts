@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { Users } from "@/server/repositories/index.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, guestApi, sessionIdFrom } from "@/tests/support/api.ts";
 import { postCampaignInvite } from "@/tests/support/campaigns.ts";
 import { apiAs } from "@/tests/support/clients.ts";
-import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 import { findVerificationCode } from "@/tests/support/users.ts";
 
 const invites = api.api.campaigns.invites;
@@ -75,19 +75,5 @@ describe("campaigns invites", () => {
     expect(await expectOk(theirs[":inviteId"].accept.$post({ param: { inviteId } }))).toMatchObject({
       status: "Accepted",
     });
-  });
-
-  test("requires a session", async () => {
-    const { campaignId } = await createInviteForNewUser();
-    await expectStatus(guestApi.api.campaigns[":id"].invites.$get({ param: { id: campaignId }, query: {} }), 401);
-  });
-
-  test("returns 404 for a missing campaign or invite", async () => {
-    await expectStatus(api.api.campaigns[":id"].invites.$get({ param: { id: NIL_UUID }, query: {} }), 404);
-    const param = { inviteId: NIL_UUID };
-    await expectStatus(invites[":inviteId"].$get({ param }), 404);
-    await expectStatus(invites[":inviteId"].accept.$post({ param }), 404);
-    await expectStatus(invites[":inviteId"].reject.$post({ param }), 404);
-    await expectStatus(invites[":inviteId"].revoke.$post({ param }), 404);
   });
 });

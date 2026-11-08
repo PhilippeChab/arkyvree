@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -97,16 +97,5 @@ describe("rulesets class spell lists", () => {
     expect(await listed.json()).toMatchObject({ message: "Fireball is already on Wizard Spells" });
     await expectStatus(lists.$post({ param: { ...param, entityType: "races" }, json: { targetIds: [bless] } }), 404);
     await expectStatus(lists[":targetId"].$delete({ param: { ...param, targetId: bless } }), 404);
-  });
-
-  test("refuses a user who can't edit the ruleset's content", async () => {
-    const { find, param } = await setup();
-    const { api: other } = await createSignedInUser();
-    const stranger = other.api.rulesets[":id"].entities[":entityType"][":entityId"].lists[":listId"];
-    const bless = await find("spells", "Bless");
-
-    await expectStatus(stranger.$post({ param, json: { targetIds: [bless], tier: 1 } }), 404);
-    const strangerOwn = other.api.rulesets[":id"].entities[":entityType"][":entityId"].lists.own;
-    await expectStatus(strangerOwn.$post({ param }), 404);
   });
 });

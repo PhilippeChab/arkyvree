@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
+import { createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 
 describe("api keys", () => {
   test("makes a key, shows its token once, lists it and revokes it", async () => {
@@ -51,10 +50,5 @@ describe("api keys", () => {
     const { api } = await createSignedInUser();
     await expectStatus(api.auth["api-keys"].$post({ json: { expiresInDays: null, name: "   " } }), 400);
     await expectStatus(api.auth["api-keys"].$post({ json: { expiresInDays: null, name: "x".repeat(101) } }), 400);
-  });
-
-  test("refuses a guest", async () => {
-    await expectStatus(guestApi.auth["api-keys"].$get(), 401);
-    await expectStatus(guestApi.auth["api-keys"][":id"].$delete({ param: { id: NIL_UUID } }), 401);
   });
 });

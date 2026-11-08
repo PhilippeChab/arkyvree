@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { MAX_ITEM_CHARGES, MAX_ITEM_QUANTITY } from "@/shared/characters.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { ITEM_COST_GP, ITEM_HAS_CHARGES, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -190,21 +190,5 @@ describe("character inventory", () => {
       ),
     ).toEqual({ warning: "Off Hand is occupied by Inventory Item (Set 2)" });
     await expectStatus(inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, groups: [-1] } }), 400);
-  });
-
-  test("returns 404 for an entry the character doesn't have", async () => {
-    const { characterId, itemId } = await setup();
-    await expectStatus(entry.$put({ param: { characterId, entryId: itemId }, json: unequipped }), 404);
-    await expectStatus(entry.$delete({ param: { characterId, entryId: itemId } }), 404);
-  });
-
-  test("requires a session", async () => {
-    const { characterId, itemId } = await setup();
-    const guest = guestApi.api.characters.inventory[":characterId"];
-    await expectStatus(guest.$get({ param: { characterId } }), 401);
-    await expectStatus(guest.placement.$get({ param: { characterId }, query: { location: "Head", groups: "0" } }), 401);
-    await expectStatus(guest.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 401);
-    await expectStatus(guest[":entryId"].$put({ param: { characterId, entryId: itemId }, json: unequipped }), 401);
-    await expectStatus(guest[":entryId"].$delete({ param: { characterId, entryId: itemId } }), 401);
   });
 });

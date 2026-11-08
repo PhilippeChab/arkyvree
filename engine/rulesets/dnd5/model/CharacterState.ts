@@ -1,0 +1,54 @@
+import { CharacterBase } from "@/engine/core/character/index.ts";
+import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd5/view/rows.ts";
+import type { Modifier } from "@/shared/relations.ts";
+
+import { type Dnd5Components } from "./CharacterComponents.ts";
+import FeatsPaths from "./feats/FeatsPaths.ts";
+import LanguagesPaths from "./languages/LanguagesPaths.ts";
+import type { LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
+import type { CustomizedClassLevel } from "./loading/loadedEntities.ts";
+import SpellsPaths from "./spells/SpellsPaths.ts";
+
+/**
+ * A D&D 5th Edition character's state, on core's (`CharacterBase`): its components, and what its build loads. Its concerns add the
+ * build's steps (`Builds`), its own issues and the names its issues give (`Diagnoses`), the spells and feats it has
+ * without a pick (`PossessesVirtually`) and core's validation (`Validates`); `DetailedCharacter` wires them.
+ */
+export default abstract class CharacterState extends CharacterBase<Dnd5Components, LoadedCharacterData> {
+  // Diagnostic helpers (nameEntity / resolveModifierSourceName) run
+  // per unmet-requirement when formatting validation errors. Build lookup
+  // maps once on first use and reuse across subsequent resolve calls.
+  // The index is cached for the lifetime of the DetailedCharacter instance;
+  // it relies on the loaded feats, spells, inventory, class levels, species and background
+  // being immutable after `build()` returns. If any
+  // future code mutates those post-build, invalidate this field first.
+  protected diagnosticsIndex?: {
+    classLevelsById: Map<string, CustomizedClassLevel>;
+    featsById: Map<string, Feat>;
+    modifierOwner: Map<string, { name: string; type: string }>;
+    rulesetClassesById: Map<string, Klass>;
+    spellsById: Map<string, Spell>;
+  };
+
+  /**
+   * Whether a modifier grants what its target names: it sets true a feat's possession (`feats.<slug>.possessed`), a
+   * spell's knowledge on a list (`spells.<spell>.<list>.known`) or a language's (`languages.<slug>.known`), which the
+   * character then has (`PossessesVirtually`).
+   */
+  protected isGrant({ operator, target, value, valueType }: Modifier): boolean {
+    if (operator !== "set" || valueType !== "boolean" || value !== "true") return false;
+    return [FeatsPaths.parsePossessed(target), SpellsPaths.parseKnown(target), LanguagesPaths.parseKnown(target)].some(
+      (named) => named !== undefined,
+    );
+  }
+
+  /** The feats the character holds, with their customizations: picked, granted, planned or from its modifiers. */
+  getHeldFeats() {
+    return this.data.feats;
+  }
+
+  /** The spells the character knows, each in its pool: picked, granted, planned or from its modifiers (`virtual`). */
+  getHeldSpells() {
+    return this.data.spells;
+  }
+}

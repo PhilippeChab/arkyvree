@@ -6,7 +6,7 @@
 
 A **ruleset** is the complete set of rules for a game system. Every character belongs to exactly one ruleset and is bound by its rules.
 
-A ruleset holds:
+A ruleset holds what its game system has. A D&D 3.5 one holds:
 
 - **Abilities** — Strength, Dexterity, etc.
 - **Races** — size, speed, racial modifiers.
@@ -20,7 +20,7 @@ A ruleset holds:
 - **Settings** — the ruleset's own rules, such as the ability a character's skill points come from, and the levels that give every character a feat or an ability score increase.
 - **Customization** — the layer that wires it all together (an entity's fields, the rules data of its own form; requirements; modifiers).
 
-The base rulesets, **Core SRD 3.5** with its sourcebook extensions, **Core PSD 1** and **Core SRD 5.2**, are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
+The base rulesets, **Core SRD 3.5** with its sourcebook extensions, **Core PSD 1** and **Core SRD 5**, are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
 
 ## What is the Ruleset lifecycle?
 

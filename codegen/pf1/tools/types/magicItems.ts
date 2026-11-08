@@ -24,7 +24,7 @@ export interface MagicItemEntry {
 /** A book's magic items. */
 export interface MagicItemReference {
   _meta: ScrapedMeta<"magicItem">;
-  /** Corrections made by hand, by item: read by the detection to come. */
+  /** Corrections made by hand, by item, which nothing reads yet. */
   overrides?: Overrides<unknown>;
   raw: MagicItemEntry[];
 }

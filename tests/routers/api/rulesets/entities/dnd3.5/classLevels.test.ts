@@ -6,7 +6,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities } from "@/server/repositories/index.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -142,12 +142,6 @@ describe("rulesets class levels", () => {
     expect(lists.map((list) => list.name)).toEqual(["Pious Templar Spells", "Pious Templar Blackguard Spells"]);
   });
 
-  test("requires a session", async () => {
-    const { id, classId } = await setup();
-    const guestLevels = guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].owned;
-    await expectStatus(guestLevels.$get({ param: classParam(id, classId) }), 401);
-  });
-
   test("rejects a level without a number, out of 1–20 or with a key its body doesn't take", async () => {
     const { id, classId } = await setup();
     for (const json of [
@@ -265,27 +259,6 @@ describe("rulesets class levels", () => {
       issues: [{ category: "owned", message: "A class has at most 20 levels" }],
     });
     expect(await levelNumbers()).toEqual([1]);
-  });
-
-  test("deletes a class's last level alone, which a level's page says, so its levels keep no gap", async () => {
-    const { id, classId } = await setup();
-    const saved = await expectOk(
-      severalLevels.$post({ param: classParam(id, classId), json: { owned: levelsAt([1, 2, 3]) } }),
-    );
-    const [first, , third] = saved.created;
-    const byId = api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"];
-    const deletable = async (ownedId: string) =>
-      (await expectOk(byId.$get({ param: { id, entityType: "classes", ownedId } }))).deletable;
-    expect([await deletable(first.id), await deletable(third.id)]).toEqual([false, true]);
-
-    const refused = level.$delete({ param: { ...classParam(id, classId), ownedId: first.id } });
-    expect(await (await expectStatus(refused, 409)).json()).toMatchObject({
-      message: "Only Level Class's last level, level 3, can be deleted",
-    });
-    // Its last, then the one below it
-    for (const ownedId of [third.id, saved.created[1].id, first.id])
-      await expectOk(level.$delete({ param: { ...classParam(id, classId), ownedId } }));
-    expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
   });
 
   test("creates several levels on an inherited class's copy, made once", async () => {

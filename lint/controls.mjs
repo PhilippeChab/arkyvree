@@ -24,7 +24,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
+import { attribute, attributeExpression, elementName, hasAttribute, inClient, inFile, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** The module that draws MUI's chip: the family, each of its roles setting its look. */
@@ -48,23 +48,13 @@ const SUBMIT_OWNERS = new Set([
   "client/src/pages/auth/components/AuthSubmitButton.tsx",
 ]);
 
-/** The attribute `name` of a JSX element, when it has one. */
-function attribute(element, name) {
-  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
-/** What a JSX attribute holds: its expression, or its string. */
-function attributeValue(found) {
-  return found?.value?.type === "JSXExpressionContainer" ? found.value.expression : found?.value;
-}
-
 function createButtonIntents(context) {
   if (!inClient(context)) return {};
   return {
     JSXElement(node) {
       if (INTENT_ACTIONS.has(elementName(node))) {
-        if (!removes(attributeValue(attribute(node, "label")))) return;
-        const intent = attributeValue(attribute(node, "intent"));
+        if (!removes(attributeExpression(attribute(node, "label")))) return;
+        const intent = attributeExpression(attribute(node, "intent"));
         if (intent?.type === "Literal" && intent.value === "destructive") return;
         context.report({
           node: node.openingElement,
@@ -73,9 +63,9 @@ function createButtonIntents(context) {
         return;
       }
       if (elementName(node) !== "Button") return;
-      const color = attributeValue(attribute(node, "color"));
+      const color = attributeExpression(attribute(node, "color"));
       if (color?.type !== "Literal" || !INTENT_COLORS.has(color.value)) return;
-      const variant = attributeValue(attribute(node, "variant"));
+      const variant = attributeExpression(attribute(node, "variant"));
       if (variant?.type === "Literal" && variant.value === "contained") return;
       context.report({
         node: node.openingElement,
@@ -93,7 +83,7 @@ function createChips(context) {
   return {
     JSXAttribute(node) {
       if (node.name.name !== "label" || !CHIP_ROLES.has(elementName(node.parent.parent))) return;
-      if (!holdsLink(attributeValue(node))) return;
+      if (!holdsLink(attributeExpression(node))) return;
       context.report({
         node,
         message: "A chip that names a record links through its `to` (`ValueChip`), never a link in its label.",
@@ -110,10 +100,10 @@ function createChips(context) {
     },
     JSXElement(node) {
       if (!CHIP_ROLES.has(elementName(node)) || !hasAttribute(node, "onClick")) return;
-      const label = attributeValue(attribute(node, "label"));
+      const label = attributeExpression(attribute(node, "label"));
       // A click that opens something (a menu, a popover, a dialog: `menu.openMenu`, `setOpen(true)`) is an action's,
       // but a count's, which opens the list of what it counts
-      const click = context.sourceCode.getText(attributeValue(attribute(node, "onClick")));
+      const click = context.sourceCode.getText(attributeExpression(attribute(node, "onClick")));
       const opens = /\bopen|set\w*Open\(/.test(click);
       if (label?.type !== "Literal" && (!opens || elementName(node) === "CountChip")) return;
       context.report({
@@ -177,7 +167,7 @@ function createPageActions(context) {
   return {
     JSXAttribute(node) {
       if (node.name.name !== "action" || elementName(node.parent.parent) !== "PageHeader") return;
-      const value = attributeValue(node);
+      const value = attributeExpression(node);
       if (value?.type !== "JSXElement" || elementName(value) === "PageActionButton") return;
       context.report({
         node,
@@ -194,7 +184,7 @@ function createRollButtons(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "IconButton") return;
-      const label = attributeValue(attribute(node, "aria-label"));
+      const label = attributeExpression(attribute(node, "aria-label"));
       if (label?.type !== "Literal" || !/^Roll All\b/.test(String(label.value))) return;
       context.report({
         node: node.openingElement,
@@ -209,7 +199,7 @@ function createSaveButtons(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "Button") return;
-      const type = attributeValue(attribute(node, "type"));
+      const type = attributeExpression(attribute(node, "type"));
       if (type?.type !== "Literal" || type.value !== "submit") return;
       context.report({
         node: node.openingElement,
@@ -230,18 +220,13 @@ function holdsLink(node) {
   if (node.type === "JSXFragment") return node.children.some(holdsLink);
   if (node.type === "JSXExpressionContainer") return holdsLink(node.expression);
   if (node.type !== "JSXElement") return false;
-  const component = attributeValue(attribute(node, "component"));
+  const component = attributeExpression(attribute(node, "component"));
   if (
     ["Link", "MuiLink"].includes(elementName(node)) ||
     (component?.type === "Identifier" && component.name === "Link")
   )
     return true;
   return node.children.some(holdsLink);
-}
-
-/** Whether the linted file is `file`, the one module the rule leaves the raw pattern to. */
-function inFile(context, file) {
-  return repoPath(context.filename) === file;
 }
 
 /** Whether a call runs in a timer's callback: `setInterval(() => …)`, `setTimeout(function () { … })`. */

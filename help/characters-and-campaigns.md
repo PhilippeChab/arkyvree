@@ -8,20 +8,20 @@ Character creation is one dialog, **Create New Character**, then the level-up wi
 
 The dialog has four sections:
 
-1. **Basic Information.** Name, experience points, ruleset, race, alignment and gender. The ruleset list holds **Core SRD 3.5** and the other published public rulesets, your own and those you contribute to (drafts too), and your campaigns' rulesets. When you own one ruleset to play (a fork of yours), the dialog starts on it. The races are the ruleset's: pick it first. A race that doesn't allow the alignment or gender you picked is greyed out. Picking a race seeds size, base speed, racial modifiers and the languages the character speaks automatically.
-2. **Ability Scores.** Pick a **Method**: 4d6 Drop Lowest, 3d6 Straight, Standard Array or Point Buy. **Roll All** rolls the dice methods; each score has its own + and − buttons. What you enter is the *base* score — racial modifiers stack on top.
+1. **Basic Information.** Name, experience points, ruleset, race (a D&D 5th Edition character's species and background), alignment and gender. The ruleset list holds **Core SRD 3.5** and the other published public rulesets, your own and those you contribute to (drafts too), and your campaigns' rulesets. When you own one ruleset to play (a fork of yours), the dialog starts on it. The races are the ruleset's: pick it first. A race that doesn't allow the alignment or gender you picked is greyed out. Picking a race seeds size, base speed, racial modifiers and the languages the character speaks automatically.
+2. **Ability Scores.** Pick a **Method** of the ruleset's: Core SRD 3.5's are 4d6 Drop Lowest, 3d6 Straight, Standard Array and Point Buy. **Roll All** rolls the dice methods; each score has its own + and − buttons. What you enter is the *base* score — racial modifiers stack on top.
 3. **Physical Details.** Age, height, weight, all optional: they start empty.
 4. **Optional Details.** Deity, description, notes, [private notes](#what-is-character-visibility).
 
-Click **Create**: the character's page opens on the [level-up wizard](#what-is-the-level-up-wizard) for level 1. Pick a class, set HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
+Click **Create**: the character's page opens on the [level-up wizard](#what-is-the-level-up-wizard) for level 1. Pick a class, set HP, allocate skill points within the rank cap (D&D 3.5 and Pathfinder), pick feats from the available pools, pick spells if your class has them, review and confirm.
 
-The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out, skill ranks above the level-1 cap are blocked, feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
+The engine refuses illegal choices at every step: prestige classes you don't qualify for are greyed out and skill ranks above the level-1 cap are blocked (D&D 3.5 and Pathfinder), feats whose prerequisites you don't meet are greyed out, with a tooltip saying what's missing.
 
 A character can't be switched to a different ruleset later — build a new character on the new ruleset.
 
 ## Can I import a character from another program?
 
-Yes, from **PCGen**: on your characters list, the **import one from a file** link (beside **Create Character**, and under **Create Your First Character** on an empty list) takes a character file another program saved. Pick the file first: the app reads which program saved it, its version and the rules its character is of (a PCGen file of its 3.5 game mode), then offers the rulesets that import it. A D&D 3.5 ruleset, **Core SRD 3.5** or a fork of it, imports PCGen's 3.5 characters; a character of another game mode (Pathfinder) is refused with why, and a D&D 5th Edition ruleset imports none yet. Names are matched in the ruleset you pick, so a fork's own classes and items are found.
+Yes, from **PCGen**: on your characters list, the **import one from a file** link (beside **Create Character**, and under **Create Your First Character** on an empty list) takes a character file another program saved. Pick the file first: the app reads which program saved it, its version and the rules its character is of (a PCGen file of its 3.5 game mode), then offers the rulesets that import it. A D&D 3.5 ruleset, **Core SRD 3.5** or a fork of it, imports PCGen's 3.5 characters; a character of another game mode (Pathfinder) is refused with why, and a Pathfinder or D&D 5th Edition ruleset imports none yet. Names are matched in the ruleset you pick, so a fork's own classes and items are found.
 
 The character is built as if leveled up one level at a time, so it's checked like one you made yourself. PCGen saves your feats and each skill's ranks without the level you took them at: the import places each feat on the first level that could take it (Weapon Specialization not before Fighter 4) and spreads each skill's ranks over the levels of the class you bought them in. Your ability scores end where PCGen has them, each level taking the increases your ruleset gives it.
 

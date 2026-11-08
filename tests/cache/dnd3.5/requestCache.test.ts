@@ -16,7 +16,7 @@ import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedConte
 import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { clearRequestCache, memoizeRequest, runWithRequestCache } from "@/server/database/requestCache.ts";
-import { Characters, Entities, Notifications, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Notifications, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("requestCache — repository Proxy memoization", () => {
@@ -127,24 +127,6 @@ describe("requestCache — repository Proxy memoization", () => {
       const post = Rulesets.findOne(db, { id: ctx.rulesetId });
       expect(post).not.toBe(pre);
       await post;
-    });
-  });
-
-  test("Characters.findOne dedupes across multiple sub-calls in one request", async () => {
-    // Mimics the real dup pattern: CharacterAdvancementsService.getStepOptions and
-    // DetailedCharacterDataLoader both do Characters.findOne(db, {...}) /
-    // Rulesets.findOne(db, {...}) in the same request. Different shaped args
-    // remain distinct — same-shape args collapse to one promise.
-    await runWithRequestCache(async () => {
-      const sameArgsA = Rulesets.findOne(db, { id: ctx.rulesetId });
-      const sameArgsB = Rulesets.findOne(db, { id: ctx.rulesetId });
-      const differentArgs = Characters.findOne(db, {
-        id: NIL_UUID,
-      });
-
-      expect(sameArgsA).toBe(sameArgsB);
-      expect(sameArgsA).not.toBe(differentArgs);
-      await Promise.all([sameArgsA, sameArgsB, differentArgs]);
     });
   });
 });

@@ -1,7 +1,8 @@
 /**
- * The repo's own lint rules, as one oxlint plugin (`arkyvree/…`): member order, method names, the architecture, the
- * backend's conventions, a file's layout, the client's, its styles, its shared components, its controls, its wording
- * and its feedback, the tests', where a module keeps its state, and a class's overrides.
+ * The repo's own lint rules, as one oxlint plugin (`arkyvree/…`): member order, comments, method names, the
+ * architecture, the backend's conventions, a file's layout, the client's, its styles, its shared components, its
+ * controls, its wording and its feedback, the tests', a function's length, where a module keeps its state, the tables'
+ * names, and a class's overrides.
  */
 
 import architecture from "./architecture.mjs";

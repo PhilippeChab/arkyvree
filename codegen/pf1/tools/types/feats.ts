@@ -4,7 +4,7 @@ import type { LabeledText, Printing } from "./pages.ts";
 
 /**
  * A feat's page as read, its rules alone: its opening line isn't open game content, so a feat's description is its
- * Benefit, which the detection to come reads.
+ * Benefit, which its detection reads (`FeatDetector`).
  */
 export interface FeatEntry {
   name: string;
@@ -18,7 +18,7 @@ export interface FeatEntry {
 /** A book's feats. */
 export interface FeatReference {
   _meta: ScrapedMeta<"feat">;
-  /** Corrections made by hand, by feat: read by the detection to come. */
+  /** Corrections made by hand, by feat, which nothing reads yet. */
   overrides?: Overrides<unknown>;
   raw: FeatEntry[];
 }

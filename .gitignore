@@ -53,7 +53,7 @@ migrate-bin
 # Scraper cache
 codegen/dnd3.5/tools/scraper/.cache/
 codegen/pf1/tools/scraper/.cache/
-codegen/dnd5.2/tools/scraper/.cache/
+codegen/dnd5/tools/scraper/.cache/
 
 # The parser's generation in progress (generated/'s copy, swapped in when it succeeds, and its lock)
 content/dnd3.5/generated.next/
@@ -62,9 +62,9 @@ content/dnd3.5/generated.lock
 content/pf1/generated.next/
 content/pf1/generated.previous/
 content/pf1/generated.lock
-content/dnd5.2/generated.next/
-content/dnd5.2/generated.previous/
-content/dnd5.2/generated.lock
+content/dnd5/generated.next/
+content/dnd5/generated.previous/
+content/dnd5/generated.lock
 
 # Dumps
 *.pgdump

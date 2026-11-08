@@ -51,7 +51,7 @@ bun run parser:dnd3.5:overrides complete-warrior
 
 ## Architecture
 
-```
+```text
 HTML page → Scraper → JSON reference file (raw + overrides) → Generator → content/dnd3.5/generated/ TypeScript
                                           ↑
                                  Human corrections

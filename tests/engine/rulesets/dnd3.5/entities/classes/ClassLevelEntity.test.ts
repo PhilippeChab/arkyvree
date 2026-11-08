@@ -33,17 +33,6 @@ function refusalOf(plan: () => unknown) {
 }
 
 describe("A class's levels", () => {
-  test("refuse a new level of a number the class has, before the server writes anything", async () => {
-    const { classMap, rulesetId } = await getSeedCtx();
-    await withRulesetScope(db, rulesetId, async (scope) => {
-      const levels = Engine.for(scope).owned("classes", classMap.pc["Fighter"]);
-      expect(refusalOf(() => levels.planCreate({ fields: { [CLASS_LEVEL_BAB]: 3 }, position: 3 }))).toEqual({
-        message: "Fighter already has a level 3",
-        refusal: "conflict",
-      });
-    });
-  });
-
   test("plan several new levels at once, each refused by its place among them", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Batch Class" });

@@ -71,7 +71,7 @@ After the Fly side is up:
 
 ## Configuration
 
-```
+```text
 fly.web.toml        # web app config, build_target = "web"
 fly.worker.toml     # worker app config, build_target = "worker"
 Dockerfile          # shared; two final stages: web and worker
@@ -90,7 +90,7 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 | `RESEND_API_KEY` | both | Email via Resend |
 | `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
 | `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
-| `GOOGLE_CLIENT_ID` | web | OAuth |
+| `GOOGLE_CLIENT_ID` | web | Google sign-in |
 | `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
 | `WORKER_FLYCAST_URL` | web | `http://arkyvree-worker.flycast:8001/health` |
 | `SENTRY_DSN` | both | Server/worker error reporting via Better Stack's Sentry-compatible ingest (unset = disabled) |

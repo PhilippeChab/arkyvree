@@ -25,7 +25,10 @@ export interface ClassEntry {
   tables: PageTable[];
 }
 
-/** A class's corrections made by hand: its description, in the parser's own words, and those the detection will read. */
+/**
+ * A class's corrections made by hand: its description, in the parser's own words, and those its detection reads (its
+ * name).
+ */
 export interface ClassOverrides {
   [correction: string]: unknown;
   /** What the class is and does, written for the app from its rules: its page's own description isn't open content. */

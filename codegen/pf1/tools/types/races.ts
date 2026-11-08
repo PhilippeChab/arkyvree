@@ -14,7 +14,7 @@ export interface RaceEntry {
   traits: LabeledText[];
 }
 
-/** A race's corrections made by hand: its description, in the parser's own words, and those the detection will read. */
+/** A race's corrections made by hand: its description, in the parser's own words, which its seeds read. */
 export interface RaceOverrides {
   [correction: string]: unknown;
   /** What the race is and has, written for the app from its traits: its page's own description isn't open content. */

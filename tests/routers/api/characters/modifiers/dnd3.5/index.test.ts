@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 
 const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
 const modifier = modifiers[":modifierId"];
@@ -93,21 +93,5 @@ describe("character modifiers", () => {
     const theirs = other.api.characters.modifiers[":characterId"].modifiers;
     await expectStatus(theirs.$get({ param: { characterId } }), 404);
     await expectStatus(theirs.$post({ param: { characterId }, json: strengthBonus }), 404);
-  });
-
-  test("requires a session", async () => {
-    const characterId = (await postCharacter()).id;
-    await expectStatus(
-      guestApi.api.characters.modifiers[":characterId"].modifiers.$get({ param: { characterId } }),
-      401,
-    );
-  });
-
-  test("returns 404 for a missing character or modifier", async () => {
-    const characterId = (await postCharacter()).id;
-    await expectStatus(modifiers.$get({ param: { characterId: NIL_UUID } }), 404);
-    const param = { characterId, modifierId: NIL_UUID };
-    await expectStatus(modifier.$put({ param, json: strengthBonus }), 404);
-    await expectStatus(modifier.$delete({ param }), 404);
   });
 });

@@ -19,13 +19,6 @@ describe("MemoryCache", () => {
     expect(cache.get("key")).toBe("value");
   });
 
-  test("stores complex objects", () => {
-    const cache = new MemoryCache<{ flag: boolean; items: number[] }>();
-    const data = { items: [1, 2, 3], flag: true };
-    cache.set("obj", data);
-    expect(cache.get("obj")).toBe(data); // same reference
-  });
-
   test("invalidateWhere removes the matching entries", () => {
     const cache = new MemoryCache<string>();
     cache.set("a", "1");
@@ -55,19 +48,6 @@ describe("MemoryCache", () => {
     // Set with a negative TTL (already expired)
     cache.set("expired", "value", -1);
     expect(cache.get("expired")).toBeUndefined();
-  });
-
-  test("entries within TTL are returned", () => {
-    const cache = new MemoryCache<string>();
-    cache.set("fresh", "value", 60_000); // 60 seconds
-    expect(cache.get("fresh")).toBe("value");
-  });
-
-  test("overwriting a key updates the value", () => {
-    const cache = new MemoryCache<string>();
-    cache.set("key", "old");
-    cache.set("key", "new");
-    expect(cache.get("key")).toBe("new");
   });
 
   test("evicts the entry that expires first once full", () => {

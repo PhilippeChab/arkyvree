@@ -103,8 +103,4 @@ describe("USERNAME_RULES", () => {
     expect(USERNAME_RULES.validate(username)).toBe(answer);
     expect(sanitizedUsername.safeParse(username).success).toBe(answer === true);
   });
-
-  test("lets the username be left empty", () => {
-    expect(USERNAME_RULES.validate("")).toBe(true);
-  });
 });

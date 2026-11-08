@@ -12,7 +12,7 @@ import { createSignedInUser, expectOk, expectStatus, signedInApi } from "@/tests
 import { apiWithKey } from "@/tests/support/clients.ts";
 import { connectMcp } from "@/tests/support/mcp.ts";
 import { createOAuthClient, createPkce, postOAuthForm, startSignIn, TEST_REDIRECTS } from "@/tests/support/oauth.ts";
-import { createSignedInUser as createDemoUser } from "@/tests/support/users.ts";
+import { createUserWithSession } from "@/tests/support/users.ts";
 
 /** What the token endpoint answers a sign-in or a refresh. */
 interface Tokens {
@@ -275,7 +275,7 @@ describe("oauth", () => {
 
   test("refuses a demo account the consent page", async () => {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    const { user } = await createDemoUser({ expiresAt, prefix: "demo" });
+    const { user } = await createUserWithSession({ expiresAt, prefix: "demo" });
     const api = await signedInApi(user.id);
     const { id } = await startAppSignIn();
     await expectStatus(api.auth.oauth.authorizations[":id"].$get({ param: { id } }), 403);

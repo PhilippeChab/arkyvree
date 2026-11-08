@@ -14,7 +14,7 @@ export interface SpellEntry {
 /** A book's spells. */
 export interface SpellReference {
   _meta: ScrapedMeta<"spell">;
-  /** Corrections made by hand, by spell: read by the detection to come. */
+  /** Corrections made by hand, by spell, which its seeds read (`SpellSeeds`). */
   overrides?: Overrides<unknown>;
   raw: SpellEntry[];
 }

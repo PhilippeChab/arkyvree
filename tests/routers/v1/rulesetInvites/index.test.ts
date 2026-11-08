@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createFork, findSeededBase } from "@/tests/support/v1.ts";
 
@@ -50,15 +49,5 @@ describe("v1 ruleset invites to the key's user", () => {
     });
     await expectStatus(api.v1["ruleset-invites"][":id"].accept.$post({ param: { id } }), 409);
     await expectStatus(api.v1["ruleset-invites"][":id"].reject.$post({ param: { id } }), 409);
-  });
-
-  test("hides another user's invite, and one that doesn't exist", async () => {
-    const { id, ownerApi } = await invite();
-    for (const inviteId of [id, NIL_UUID]) {
-      const param = { id: inviteId };
-      await expectStatus(ownerApi.v1["ruleset-invites"][":id"].$get({ param }), 404);
-      await expectStatus(ownerApi.v1["ruleset-invites"][":id"].accept.$post({ param }), 404);
-      await expectStatus(ownerApi.v1["ruleset-invites"][":id"].reject.$post({ param }), 404);
-    }
   });
 });

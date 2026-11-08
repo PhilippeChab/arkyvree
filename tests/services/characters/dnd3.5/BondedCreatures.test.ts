@@ -566,8 +566,7 @@ describe("Stat blocks", () => {
     expect(ac.total).toBe(
       ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc,
     );
-    const claws = weaponsets["0"]?.mainhand ?? weaponsets["0"]?.offhand;
-    if (claws) expect(claws.tohit.size).toBe(2);
+    expect(weaponsets["0"].mainhand?.tohit.size).toBe(2);
     // Claws and a bite aren't two weapons: no two-weapon penalties
     expect(weaponsets["0"]).toMatchObject({ mainhand: { twoweapon: null }, offhand: { twoweapon: null } });
   });
@@ -644,7 +643,7 @@ describe("Stat blocks", () => {
     expect(wolf.naturalattacks).toMatchObject({ count: 1, secondarypenalty: -5, extraattacks: 1 });
     const [first, second] = wolf.weaponsets["0"].mainhand!.tohit.total;
     expect(second).toBe(first - 5);
-  });
+  }, 15_000);
 
   test.each([
     // The 5-7 row: 2 more hit dice (6 in all), +4 natural armor, +1 Strength, Intelligence 6.

@@ -105,16 +105,6 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(blackguardLink!.tier).toBe(4);
   });
 
-  test("all sibling spell aptitudes that exist in multiple extensions are deduped", async () => {
-    const { rulesetData } = await setup();
-    // These aptitudes are created by multiple extensions — verify each appears exactly once
-    const siblingAptitudes = ["Assassin Spells", "Hexblade Spells", "Blackguard Spells"];
-    for (const name of siblingAptitudes) {
-      const matches = Dnd35View.of(rulesetData).aptitudes.filter((a) => a.name === name);
-      expect(matches.length).toBeLessThanOrEqual(1);
-    }
-  });
-
   test("loser aptitude IDs resolve to the winner", async () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions

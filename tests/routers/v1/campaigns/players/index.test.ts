@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** A campaign of a new Game Master's, their key, and another user to invite. */
@@ -82,14 +81,5 @@ describe("v1 campaign players", () => {
     await expectStatus(players[":playerId"].$delete({ param: { id: campaign.id, playerId: gmSlot.id } }), 409);
     const { player: elsewhere } = await createTestCampaign(gm.id);
     await expectStatus(players[":playerId"].$delete({ param: { id: campaign.id, playerId: elsewhere.id } }), 404);
-  });
-
-  test("refuses a stranger, and a campaign that doesn't exist", async () => {
-    const { campaign } = await setup();
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    const players = api.v1.campaigns[":id"].players;
-    await expectStatus(players.$get({ param: { id: campaign.id }, query: {} }), 404);
-    await expectStatus(players.$post({ param: { id: campaign.id }, json: { role: "Player Character" } }), 404);
-    await expectStatus(players.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });
 });

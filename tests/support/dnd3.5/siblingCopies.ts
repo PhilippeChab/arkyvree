@@ -16,6 +16,15 @@ function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
   return (["feats", "spells", "aptitudes", "items"] as const).find((type) => data.byId(type).has(id));
 }
 
+/** An entity's fields, as the view shows them: each field's value and each single link, `<field or role>|<value>`. */
+function valuesOf(data: RulesetData, id: string) {
+  const { fields, links } = viewValuesOf(data, id);
+  return [
+    ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field}|${String(value)}`)),
+    ...Object.entries(links).map(([role, toId]) => `${role}|${toId}`),
+  ].sort();
+}
+
 /**
  * The aptitudes a copy's links store that its ruleset's view resolves to another (a losing copy of a list), read by
  * their stored ids: a feat's or a spell's lists, a class's levels' granted feats' and spells'. None, for a right copy.
@@ -91,15 +100,6 @@ export function customizationsOf(data: RulesetData, id: string) {
  */
 export function partOf(ids: string[], part: number, parts: number) {
   return ids.filter((_, index) => index % parts === part - 1);
-}
-
-/** An entity's fields, as the view shows them: each field's value and each single link, `<field or role>|<value>`. */
-export function valuesOf(data: RulesetData, id: string) {
-  const { fields, links } = viewValuesOf(data, id);
-  return [
-    ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field}|${String(value)}`)),
-    ...Object.entries(links).map(([role, toId]) => `${role}|${toId}`),
-  ].sort();
 }
 
 /**
