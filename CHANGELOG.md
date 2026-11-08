@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A campaign's Game Masters edit its characters
 - The characters list shows each character's ruleset, and filters by ruleset
 - Pathfinder 1: a new game system with the Core Rulebook's races, classes, feats, spells and items, as the ruleset "Core PSD 1"
 - D&D 5th Edition: a new game system with the 2024 rules' classes, species, backgrounds, feats, spells and items, as the ruleset "Core SRD 5.2"

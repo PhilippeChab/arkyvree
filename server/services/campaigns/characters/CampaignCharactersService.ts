@@ -71,8 +71,9 @@ class CampaignCharactersService {
       const children = isPartial ? [] : await readChildInputs(db, input, Visibility.All);
       const reading = isPartial ? "partial" : toNotesReading(readsPrivateNotes);
       const described = Engine.for(scope).character(input).describeForMember(children, reading);
-      // Its share token is its editors' alone: the engine answers none
-      return { ...viewer, ...described, shareToken: characterPolicy.isEditor() ? character.shareToken : null };
+      // Its share token is its policy's to give: the engine answers none
+      const shareToken = characterPolicy.isShareTokenReader() ? character.shareToken : null;
+      return { ...viewer, ...described, shareToken };
     });
   }
 

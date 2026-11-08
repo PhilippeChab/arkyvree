@@ -161,7 +161,7 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
 A character's PDF takes a render, which the worker makes: the app's user hears of it through a notification, and a
 caller asks for it by its export.
 
-1. `POST /v1/characters/{id}/pdf` (its owner or a contributor), or
+1. `POST /v1/characters/{id}/pdf` (its owner, a contributor or its live campaign's Game Master), or
    `POST /v1/campaigns/{id}/characters/{characterId}/pdf` (its editors or the campaign's Game Master), answers 202 and
    the export, `pending`.
 2. `GET /v1/exports/{id}` answers where it stands: `pending` while its job is still to run, `ready` once its file is

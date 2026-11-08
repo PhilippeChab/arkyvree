@@ -13,8 +13,8 @@ export default new Hono<ApiKeyContext>().post(
     response: v1Export,
     status: 202,
     summary:
-      "Queues a character's PDF, as its owner or a contributor: its export, pending, which `GET /v1/exports/{id}` " +
-      "answers until it's ready",
+      "Queues a character's PDF, as its owner, a contributor or its live campaign's Game Master: its export, " +
+      "pending, which `GET /v1/exports/{id}` answers until it's ready",
   }),
   apiExportRateLimit,
   validate("param", idParam),
