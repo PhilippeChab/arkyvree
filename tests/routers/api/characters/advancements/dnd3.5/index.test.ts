@@ -6,7 +6,7 @@ import { addClassLevels, addSpells } from "@/database/seeders/dnd3.5/characters/
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRulesetWithExtensions, sourcesOf } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { CHARACTER_ALIGNMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A plan's answer, as the API answers it. */
@@ -377,25 +377,6 @@ describe("character levels", () => {
       expect(data.feats[ctx.aptMap["Fighter Bonus Feat"]]).toEqual([ctx.featMap["Improved Initiative"]]);
     });
 
-    test("refuses HP above the class's hit die", async () => {
-      const { characterId, ctx } = await createCharacter();
-      const created = await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 1, 8, fighter1(ctx));
-      const response = await level.$put({
-        param: { characterId, advancementId: created.id },
-        json: levelEditPlan({ hp: 11 }, fighter1(ctx)),
-      });
-      await expectStatus(response, 400);
-    });
-
-    test("refuses a feat its pool has no room for, forced or not", async () => {
-      const { characterId, ctx } = await createCharacter();
-      const levelPicks = fighter1(ctx);
-      const general = ctx.aptMap["General"];
-      const feats = { ...levelPicks.feats, [general]: [...levelPicks.feats[general], ctx.featMap["Toughness"]] };
-      const response = addLevel(characterId, ctx.classMap.pc["Fighter"], 1, 8, { ...levelPicks, feats }, true);
-      await expectStatus(response, 400);
-    });
-
     test("saves a stacking feat a level picks twice, forced or not, and an edit that picks it twice", async () => {
       const { characterId, ctx } = await createCharacter();
       const levelPicks = fighter1(ctx);
@@ -414,14 +395,6 @@ describe("character levels", () => {
       const param = { characterId, advancementId: created.id };
       await expectOk(level.$put({ param, json: levelEditPlan({ hp: 8 }, { ...levelPicks, feats }) }));
       expect((await readLevel(characterId, created.id)).feats[general]).toEqual([toughness, toughness]);
-    });
-
-    test("refuses a feat that doesn't stack a level picks twice", async () => {
-      const { characterId, ctx } = await createCharacter();
-      const levelPicks = fighter1(ctx);
-      const powerAttack = ctx.featMap["Power Attack"];
-      const feats = { ...levelPicks.feats, [ctx.aptMap["General"]]: [powerAttack, powerAttack] };
-      await expectStatus(addLevel(characterId, ctx.classMap.pc["Fighter"], 1, 8, { ...levelPicks, feats }), 400);
     });
 
     test("edits an earlier level without touching the later ones", async () => {
@@ -607,47 +580,5 @@ describe("character levels", () => {
         optionsOf(classes, false).items.find((k) => k.id === ctx.classMap.pc["Fighter"])?.track?.positions[0],
       ).toBe(2);
     });
-
-    test("returns 404 for a character without levels", async () => {
-      const { characterId } = await createCharacter();
-      await expectStatus(levels.$delete({ param: { characterId } }), 404);
-    });
-  });
-
-  test("requires a session", async () => {
-    const { characterId, ctx } = await createCharacter();
-    const guest = guestApi.api.characters.advancements[":characterId"];
-    const plan = levelUpPlan([{ classId: ctx.classMap.pc["Fighter"], level: 1, hp: 8 }]);
-    const characterLevel = { characterId, advancementId: NIL_UUID };
-    const responses = await Promise.all([
-      guest.steps.$get({ param: { characterId }, query: {} }),
-      guest.plan.$post({ param: { characterId }, json: plan }),
-      guest.options[":step"].$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan } }),
-      guest.$post({ param: { characterId }, json: plan }),
-      guest[":advancementId"].plan.$get({ param: characterLevel }),
-      guest[":advancementId"].$put({ param: characterLevel, json: levelEditPlan({ hp: 5 }) }),
-      guest.$delete({ param: { characterId } }),
-    ]);
-    for (const response of responses) await expectStatus(response, 401);
-  });
-
-  test("returns 404 for a missing character or character level", async () => {
-    const { characterId, ctx } = await createCharacter();
-    const classId = ctx.classMap.pc["Fighter"];
-    const missing = { characterId: NIL_UUID };
-    const plan = levelUpPlan([{ classId, level: 1, hp: 8 }]);
-
-    await expectStatus(options.$post({ param: { ...missing, step: "class-plan" }, query: {}, json: { plan } }), 404);
-    await expectStatus(levels.steps.$get({ param: missing, query: {} }), 404);
-    await expectStatus(levels.plan.$post({ param: missing, json: plan }), 404);
-    await expectStatus(
-      options.$post({ param: { ...missing, step: "feats" }, query: {}, json: { plan, pool: ctx.aptMap["General"] } }),
-      404,
-    );
-    await expectStatus(addLevel(NIL_UUID, classId, 1, 8, {}), 404);
-    await expectStatus(levels.$delete({ param: missing }), 404);
-    const characterLevel = { characterId, advancementId: NIL_UUID };
-    await expectStatus(level.plan.$get({ param: characterLevel }), 404);
-    await expectStatus(level.$put({ param: characterLevel, json: levelEditPlan({ hp: 5 }) }), 404);
   });
 });

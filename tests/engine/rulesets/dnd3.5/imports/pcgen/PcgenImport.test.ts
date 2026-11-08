@@ -292,10 +292,11 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("its experience past the largest the app keeps, a name too long, a gender of its own", async () => {
-    const text = (await readPcgenFile("brannoc"))
-      .replace("EXPERIENCE:29500", "EXPERIENCE:99999999999999999")
-      .replace("CHARACTERNAME:Brannoc Vale", `CHARACTERNAME:${"B".repeat(300)}`)
-      .replace("GENDER:Male", "GENDER:Unknown");
+    const text = [
+      riderFile([]).replace("CHARACTERNAME:Rider", `CHARACTERNAME:${"B".repeat(300)}`),
+      "EXPERIENCE:99999999999999999",
+      "GENDER:Unknown",
+    ].join("\n");
     const { report, row } = await planImportOf(text);
     // A number field holds what it keeps exactly: the largest safe integer
     expect(row.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
@@ -308,11 +309,8 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("its name as the app stores one: as written, trimmed, cut past its bound by characters, an emoji one", async () => {
-    const brannoc = await readPcgenFile("brannoc");
     const nameOf = async (name: string) => {
-      const { report, row } = await planImportOf(
-        brannoc.replace("CHARACTERNAME:Brannoc Vale", `CHARACTERNAME:${name}`),
-      );
+      const { report, row } = await planImportOf(riderFile([]).replace("CHARACTERNAME:Rider", `CHARACTERNAME:${name}`));
       return { cut: report.issues.some((issue) => issue.startsWith("The name is past")), name: row.name };
     };
     const dragons = "🐉".repeat(MAX_CHARACTER_NAME_LENGTH);
@@ -338,8 +336,8 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("a height in inches with a fraction, in whole feet and inches", async () => {
-    const text = (await readPcgenFile("brannoc")).replace("HEIGHT:72", "HEIGHT:71.6");
-    expect((await planImportOf(text)).row.fields.CHARACTER_HEIGHT).toBe(`6' 0"`);
+    const { row } = await planImportOf(`${riderFile([])}\nHEIGHT:71.6`);
+    expect(row.fields.CHARACTER_HEIGHT).toBe(`6' 0"`);
   });
 
   test("a feat two lines name is picked once, the second listed", async () => {
@@ -525,8 +523,8 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("a gender in another case, or its initial", async () => {
-    const text = (await readPcgenFile("brannoc")).replace("GENDER:Male", "GENDER:f");
-    expect((await planImportOf(text)).row.fields.CHARACTER_GENDER).toBe("Female");
+    const { row } = await planImportOf(`${riderFile([])}\nGENDER:f`);
+    expect(row.fields.CHARACTER_GENDER).toBe("Female");
   });
 });
 

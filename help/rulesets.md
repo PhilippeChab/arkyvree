@@ -6,7 +6,7 @@
 
 A **ruleset** is the complete set of rules for a game system. Every character belongs to exactly one ruleset and is bound by its rules.
 
-A ruleset holds:
+A ruleset holds what its game system has. A D&D 3.5 one holds:
 
 - **Abilities** — Strength, Dexterity, etc.
 - **Races** — size, speed, racial modifiers.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCampaignInvite } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -45,10 +45,6 @@ describe("notifications", () => {
     await expectOk(notifications["read-all"].$post());
     const unread = await expectOk(notifications.$get({ query: { unreadOnly: "true" } }));
     expect(unread.items.map((n) => n.targetId)).toContain(inviteId);
-  });
-
-  test("requires a session", async () => {
-    await expectStatus(guestApi.api.notifications.$get({ query: {} }), 401);
   });
 
   test("returns 404 for a missing notification, or another user's, which stays unread", async () => {

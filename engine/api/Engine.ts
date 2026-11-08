@@ -13,7 +13,7 @@ import StorageEngine from "./StorageEngine.ts";
 /**
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
  * rules answer through a handle bound to its view (`Engine.for(scope)`), and through it to what they're about
- * (`.character(input)`, `.entities(type)`, `.skills()`); a base rules' before any view (`forRules`: its content, how it
+ * (`.character(input)`, `.entities(type)`); a base rules' before any view (`forRules`: its content, how it
  * stores its data, and copy-on-write, which builds the view); what every base rules' rulesets share (`rules`,
  * `storages`); and a list's card, its ruleset read or not (`describeCard`). Which ruleset answers is the engine's to
  * know.

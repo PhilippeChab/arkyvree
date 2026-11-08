@@ -1,6 +1,6 @@
 # Target Paths
 
-All available paths for modifiers and requirements. Dynamic segments are shown as `<name>`.
+All available paths for modifiers and requirements in 3.5's rules: each ruleset's module declares its own (Pathfinder's combat has `cmb` and `cmd` in place of `grapple`; D&D 5th Edition's skills are `proficient`, not ranked). Dynamic segments are shown as `<name>`.
 
 Paths marked "req only" are available as requirement targets but not modifier targets, and "mod only" ones as modifier targets but not requirement targets.
 

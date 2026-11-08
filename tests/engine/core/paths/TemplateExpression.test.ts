@@ -39,51 +39,30 @@ const traverser: TargetPathsTraverser = {
   },
 } as unknown as TargetPathsTraverser;
 
+/** What `expression` evaluates to on the stub tree, beside it: a failure names the expression. */
+function evaluated(expression: string) {
+  return { expression, value: TemplateExpression.evaluate(expression, components, traverser) };
+}
+
 describe("templateExpression", () => {
-  test("plain bare path", () => {
-    expect(TemplateExpression.evaluate("classes.druid.level", components, traverser)).toBe(5);
-  });
-
-  test("plain bracketed path", () => {
-    expect(TemplateExpression.evaluate("[classes.druid.level]", components, traverser)).toBe(5);
-  });
-
-  test("string path", () => {
-    expect(TemplateExpression.evaluate("identity.physiology.name", components, traverser)).toBe("Aldric");
-  });
-
-  test("number literal", () => {
-    expect(TemplateExpression.evaluate("42", components, traverser)).toBe(42);
-  });
-
-  test("simple division (Ranger half)", () => {
-    expect(TemplateExpression.evaluate("floor([classes.ranger.level] / 2)", components, traverser)).toBe(1);
-  });
-
-  test("addition with offset (Beastmaster +3)", () => {
-    expect(TemplateExpression.evaluate("max(0, [classes.beastmaster.level] + 3)", components, traverser)).toBe(4);
-  });
-
-  test("subtraction with clamp (Hexblade -3)", () => {
-    expect(TemplateExpression.evaluate("max(0, [classes.hexblade.level] - 3)", components, traverser)).toBe(0);
-  });
-
-  test("nested function calls", () => {
-    expect(TemplateExpression.evaluate("min(max(1, [classes.ranger.level]), 10)", components, traverser)).toBe(3);
-    expect(TemplateExpression.evaluate("min(max(1, [classes.beastmaster.level]), 10)", components, traverser)).toBe(1);
-  });
-
-  test("operator precedence: * before +", () => {
-    // 2 * 3 + 1 = 7, not 8
-    expect(TemplateExpression.evaluate("2 * 3 + 1", components, traverser)).toBe(7);
-  });
-
-  test("parens override precedence", () => {
-    expect(TemplateExpression.evaluate("2 * (3 + 1)", components, traverser)).toBe(8);
-  });
-
-  test("unary minus", () => {
-    expect(TemplateExpression.evaluate("-5 + [classes.druid.level]", components, traverser)).toBe(0);
+  test("evaluates a path, bare or bracketed, a number, and arithmetic over them, its functions and precedence", () => {
+    const cases: [string, number | string][] = [
+      ["classes.druid.level", 5],
+      ["[classes.druid.level]", 5],
+      ["identity.physiology.name", "Aldric"],
+      ["42", 42],
+      // A ranger's half, a beastmaster's +3, a hexblade's −3 clamped, nested calls
+      ["floor([classes.ranger.level] / 2)", 1],
+      ["max(0, [classes.beastmaster.level] + 3)", 4],
+      ["max(0, [classes.hexblade.level] - 3)", 0],
+      ["min(max(1, [classes.ranger.level]), 10)", 3],
+      ["min(max(1, [classes.beastmaster.level]), 10)", 1],
+      // * before +, parentheses over it, a unary minus
+      ["2 * 3 + 1", 7],
+      ["2 * (3 + 1)", 8],
+      ["-5 + [classes.druid.level]", 0],
+    ];
+    for (const [expression, value] of cases) expect(evaluated(expression)).toEqual({ expression, value });
   });
 
   test("division by zero returns null, and says so", () => {
@@ -96,45 +75,21 @@ describe("templateExpression", () => {
     expect(warnings).toEqual(['Template "[classes.druid.level] / 0" divides by zero']);
   });
 
-  test("unresolvable path returns null", () => {
-    expect(TemplateExpression.evaluate("[classes.bard.level]", components, traverser)).toBeNull();
-  });
-
-  test("unknown function returns null", () => {
-    expect(TemplateExpression.evaluate("sqrt([classes.druid.level])", components, traverser)).toBeNull();
-  });
-
-  test("string in arithmetic context returns null", () => {
-    expect(TemplateExpression.evaluate("[identity.physiology.name] + 1", components, traverser)).toBeNull();
+  test("returns null, never throwing, for what it can't evaluate: a path, a function, text in arithmetic, bad syntax", () => {
+    for (const expression of [
+      "[classes.bard.level]",
+      "sqrt([classes.druid.level])",
+      "[identity.physiology.name] + 1",
+      "[stats.presence); evil]",
+      "[unterminated",
+      "",
+    ])
+      expect(evaluated(expression)).toEqual({ expression, value: null });
   });
 
   // Injection / safety
-  test("constructor (inherited prototype method) is not callable", () => {
-    expect(TemplateExpression.evaluate("constructor(1)", components, traverser)).toBeNull();
-  });
-
-  test("__proto__ as a function name is not callable", () => {
-    expect(TemplateExpression.evaluate("__proto__(1)", components, traverser)).toBeNull();
-  });
-
-  test("valueOf / toString are not callable", () => {
-    expect(TemplateExpression.evaluate("valueOf()", components, traverser)).toBeNull();
-    expect(TemplateExpression.evaluate("toString()", components, traverser)).toBeNull();
-  });
-
-  test("hasOwnProperty is not callable", () => {
-    expect(TemplateExpression.evaluate("hasOwnProperty(1)", components, traverser)).toBeNull();
-  });
-
-  test("path with garbage chars inside brackets fails gracefully", () => {
-    expect(TemplateExpression.evaluate("[stats.presence); evil]", components, traverser)).toBeNull();
-  });
-
-  test("unterminated bracket fails to parse, no throw", () => {
-    expect(TemplateExpression.evaluate("[unterminated", components, traverser)).toBeNull();
-  });
-
-  test("empty expression returns null", () => {
-    expect(TemplateExpression.evaluate("", components, traverser)).toBeNull();
+  test("calls no method a plain object inherits", () => {
+    for (const expression of ["constructor(1)", "__proto__(1)", "valueOf()", "toString()", "hasOwnProperty(1)"])
+      expect(evaluated(expression)).toEqual({ expression, value: null });
   });
 });

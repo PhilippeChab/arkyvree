@@ -18,6 +18,9 @@ describe("ExportsService.getExport", () => {
     const { session: other } = await createTestUser();
     const { id } = await createExport(owner.userId);
     expect(ExportsService.getExport(other, id)).rejects.toThrow(NotFoundError);
+    // Where it stands too: its status is read by another query, which its owner alone passes
+    expect(ExportsService.getExportStatus(other, id)).rejects.toThrow(NotFoundError);
+    expect(await ExportsService.getExportStatus(owner, id)).toMatchObject({ id });
   });
 
   test("throws NotFoundError for a missing or expired export", async () => {

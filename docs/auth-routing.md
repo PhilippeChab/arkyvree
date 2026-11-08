@@ -4,28 +4,7 @@ How the client routes between unauthenticated, public, and authenticated surface
 
 ## Three-bucket routing
 
-`client/src/App.tsx` declares a static `<Routes>` tree with three sibling layout-routes. No `isAuthenticated` ternary inside the routing config — each layout owns its own guard.
-
-```
-AppRoutes
-├── AuthLayoutRoute    ── unauth-only; kicks authed users away
-│   ├── /sign-in
-│   ├── /sign-up
-│   ├── /verify-email
-│   ├── /forgot-password
-│   ├── /reset-password
-│   └── /demo-expired
-│
-├── PublicLayout       ── anyone
-│   ├── /share/:shareToken
-│   └── /legal
-│
-└── PrivateRoute       ── auth-required; redirects unauth
-    └── <Layout>
-        ├── /  (index → /dashboard)
-        ├── /dashboard, /rulesets, /campaigns, /characters, …
-        └── *  (catch-all → /dashboard)
-```
+`client/src/App.tsx` declares a static route tree (`router`, `createBrowserRouter`) with three sibling layout-routes. No `isAuthenticated` ternary inside the routing config — each layout owns its own guard.
 
 | Wrapper | File | Renders for | Guard behavior |
 |---|---|---|---|
@@ -43,11 +22,13 @@ AppRoutes
 - `path: "/"`, 7-day `maxAge`.
 - Opaque UUID session ID (not a JWT). Server-side `sessions` table — instantly revocable.
 
+Password recovery revokes every existing session in the same transaction as the password update. An authenticated password change revokes other sessions while preserving the current session. Invalid reset codes and failed password changes do not revoke sessions.
+
 ## Demo lifecycle
 
 The demo and the auth flow are mutually exclusive states. A demo user landing on any `AuthLayoutRoute` page is signed out before the page renders.
 
-```
+```text
 Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-password, /demo-expired)
    AuthLayoutRoute mounts
    useEffect: a demo at mount (isClearingDemo) ⇒ the sign-out mutation (useAuthRequests)
@@ -76,7 +57,7 @@ Demo user → /sign-in (or /sign-up, /verify-email, /forgot-password, /reset-pas
 
 A separate flow from auth-route entry:
 
-```
+```text
 Demo user uses app, demo TTL hits server-side (1 hour)
    Next API call returns 401
    handleGlobalError (client/src/lib/queryClient.ts):
@@ -110,27 +91,3 @@ The cookie is shared across tabs in the same origin. State is server-authoritati
 | Tab A (demo), Tab B opens `/share/:t` | Both safe — `/share` is public-no-auth, demo persists in both tabs. |
 
 There's no `BroadcastChannel`-based active sync today. Recovery happens lazily via the next 401 in the stale tab.
-
-## Key files
-
-| File | Purpose |
-|---|---|
-| `client/src/App.tsx` | `AppRoutes` static tree |
-| `client/src/lib/queryClient.ts` | `createQueryClient`: `handleGlobalError`, the 401 handler, and the cache cleared when the user changes. A 401 means the session is gone: a signed-in request refused for what its user typed (a wrong password, a mistyped code) answers 422 (`withSignedInRefusal`, `server/services/authentication/accounts.ts`) |
-| `client/src/components/auth/AuthLayoutRoute.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect (`useAuthRedirect`) |
-| `client/src/components/auth/PrivateRoute.tsx` | `PrivateRoute` guard: the session probe (`checkSession`, `sessionCheck.ts`: a `fetchQuery` of `/auth/me`), the redirect to sign in |
-| `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
-| `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
-| `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `startSession`, `clearSession`, `updateUser` |
-| `client/src/hooks/useAuthRequests.ts` | The auth requests as mutations the store follows (sign in / up / out, start a demo, verify, reset), and their shared `pending` |
-| `client/src/stores/demoExpiredStorage.ts` | The demo-expired flag: `markDemoExpired`, `isDemoExpired`, `clearDemoExpired` |
-| `client/src/pages/demo-expired/DemoExpiredPage.tsx` | Post-expiry messaging; clears flag on mount |
-| `server/middlewares/session.ts` | Cookie config, session validation middleware |
-| `server/middlewares/denyDemoUser.ts` | Server-side gate for the account's own features (profile, API keys, linked accounts, starting a campaign); its avatar is its attachment's owner check, and a record's are its policy's ([access.md](./access.md)) |
-| `server/services/authentication/AuthenticationService.ts` | `signIn`, `signInWithGoogle`, `signUp`, `verifyEmail`, `signOut`, `startDemo` |
-| `server/services/authentication/accounts.ts` | `purgeDemoSessionUser`, `signInAsGoogleAccount`, `openSession`, `toSafeUser` |
-| `server/routers/authentication/index.ts` | `/auth/*` routes: `signedOut/` (sign up, sign in, password reset), mounted before `signedIn/` (`/me`, sign out, the account and linked accounts behind the session middleware) |
-| `server/routers/api/demo/index.ts` | `/api/demo/start` route |
-| `server/routers/api/shared/index.ts` | `/api/shared/*` public routes (no auth middleware) |
-
-Password recovery revokes every existing session in the same transaction as the password update. An authenticated password change revokes other sessions while preserving the current session. Invalid reset codes and failed password changes do not revoke sessions.

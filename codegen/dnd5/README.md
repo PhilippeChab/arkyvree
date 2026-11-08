@@ -74,7 +74,7 @@ species it names.
 
 ## Architecture
 
-```
+```text
 5e-bits files → Scraper → JSON reference file (raw + overrides)
 JSON reference file → seeds (read, its overrides applied) → code writers → content/dnd5/generated/srd/
 ```
@@ -120,7 +120,8 @@ its hand-written data, the core rules' feats (`content/dnd5/data/feats/coreFeats
 trainings' and weapons' proficiencies, each weapon's mastery, and a cleric's and a druid's sacred roles, which no
 reference lists as feats): a target may name them, and their pools are the book's.
 
-The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/dnd5/`: the book it reads).
+The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/dnd5/`: the weapon and armor tables, the
+abilities', saves', skills' and classes' names, the book it reads).
 
 ## What a reference stores
 

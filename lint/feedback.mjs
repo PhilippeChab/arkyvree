@@ -21,7 +21,16 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { calleeName, childElements, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
+import {
+  attribute,
+  attributeExpression,
+  calleeName,
+  childElements,
+  elementName,
+  hasAttribute,
+  inClient,
+  parentElement,
+} from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** What a `Menu` holds: its items, and the dividers between them */
@@ -38,16 +47,6 @@ const PAGE_ERRORS = new Set(["EntityPageError", "PageError"]);
  * (`useAttachment`) isn't one: an avatar or a portrait shows its placeholder for none, and for one that didn't load.
  */
 const QUERY_HOOKS = new Set(["useInfiniteQuery", "useListboxQuery", "useQuery"]);
-
-/** The attribute `name` of a JSX element, when it has one. */
-function attribute(element, name) {
-  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
-/** What a JSX attribute holds: its expression, or its string. */
-function attributeValue(found) {
-  return found?.value?.type === "JSXExpressionContainer" ? found.value.expression : found?.value;
-}
 
 /** The props a JSX element's component destructures (`function X({ onProceed, pending })`): none outside one. */
 function componentProps(node) {
@@ -134,7 +133,7 @@ function createDialogMounts(context) {
       // One mounted with its record (`{dialog.target && …}`) takes its opening's key: reopened as it fades, it mounts
       // afresh rather than keeping what it held
       const owner = condition && readsTarget(condition) ? targetOwner(condition) : null;
-      const key = attributeValue(attribute(node, "key"));
+      const key = attributeExpression(attribute(node, "key"));
       const keyed = key?.type === "MemberExpression" && key.object.name === owner && key.property.name === "key";
       if (owner && !keyed) {
         context.report({
@@ -145,7 +144,7 @@ function createDialogMounts(context) {
         });
       }
       const open = attribute(node, "open");
-      const value = attributeValue(open);
+      const value = attributeExpression(open);
       const always = !open.value;
       const record =
         (value?.type === "UnaryExpression" && value.operator === "!") ||
@@ -163,7 +162,7 @@ function createDialogMounts(context) {
 }
 
 function createMenus(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/components/common/ActionMenuItem.tsx") return {};
+  if (!inClient(context)) return {};
   return {
     JSXElement(node) {
       const name = elementName(node);
@@ -179,7 +178,7 @@ function createMenus(context) {
           message: "A menu is sized by its items and opens where MUI puts it: no width, no anchor of its own.",
         });
       }
-      if (name === "ActionMenuItem" && deletesForGood(attributeValue(attribute(node, "label")))) {
+      if (name === "ActionMenuItem" && deletesForGood(attributeExpression(attribute(node, "label")))) {
         context.report({
           node: node.openingElement,
           message:
@@ -209,7 +208,7 @@ function createPageErrors(context) {
       const element = elementName(node.parent.parent);
       // Its way back names where it goes: "Back to Ruleset", never a bare "Back"
       if (node.name.name === "backLabel" && PAGE_ERRORS.has(element)) {
-        const label = attributeValue(node);
+        const label = attributeExpression(node);
         if (label?.type !== "Literal" || label.value.startsWith("Back to ")) return;
         context.report({
           node,
@@ -218,7 +217,7 @@ function createPageErrors(context) {
         return;
       }
       if (node.name.name !== "message" || element !== "PageError") return;
-      if (worded(attributeValue(node))) return;
+      if (worded(attributeExpression(node))) return;
       context.report({
         node,
         message:
@@ -251,13 +250,13 @@ function createPendingButtons(context) {
       if (!onClick || !disabled) return;
       // It sends the request (`.mutate(`), or it's the action its component's owner hands a request to: a contained
       // button whose click and whose pending flag are its component's props (Proceed Anyway's `onProceed`, `pending`)
-      const variant = attributeValue(attribute(node, "variant"));
+      const variant = attributeExpression(attribute(node, "variant"));
       const contained = variant?.type === "Literal" && variant.value === "contained";
       const props = componentProps(node);
       const handedOn =
         contained &&
-        props.has(attributeValue(onClick)?.name) &&
-        [...identifiersIn(attributeValue(disabled))].some((name) => props.has(name));
+        props.has(attributeExpression(onClick)?.name) &&
+        [...identifiersIn(attributeExpression(disabled))].some((name) => props.has(name));
       const mutates = context.sourceCode.getText(onClick).includes(".mutate(") || handedOn;
       const waits = /isPending|isLoading|pending/.test(context.sourceCode.getText(disabled));
       if (!mutates || !waits || holdsSpinner(node)) return;
@@ -286,7 +285,7 @@ function createPickers(context) {
       }
       if (name !== "Autocomplete") return;
       // Options a query loads: it says why there are none (`emptyOptionsText`), and that they're coming
-      const noOptions = attributeValue(attribute(node, "noOptionsText"));
+      const noOptions = attributeExpression(attribute(node, "noOptionsText"));
       const loads = noOptions?.type === "CallExpression" && calleeName(noOptions) === "emptyOptionsText";
       const spreads = node.openingElement.attributes.some((a) => a.type === "JSXSpreadAttribute");
       if (!loads || spreads || hasAttribute(node, "loading")) return;

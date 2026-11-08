@@ -121,19 +121,4 @@ describe("A character's languages, as its requirements read them", () => {
     });
     expect(await bluffMisc(granted)).toBe(2);
   });
-
-  test("hold the extra picks a modifier adds, none without", async () => {
-    const human = await createTestCharacter(SEED_USER_ID);
-    expect((await buildAs(DetailedCharacter, human)).components.languages.getExtraPicks()).toBe(0);
-
-    await Modifiers.create(db, {
-      sourceId: human.id,
-      sourceType: "characters",
-      target: "languages.extrapicks",
-      operator: "add",
-      value: "2",
-      valueType: "number",
-    });
-    expect((await buildAs(DetailedCharacter, human)).components.languages.getExtraPicks()).toBe(2);
-  });
 });

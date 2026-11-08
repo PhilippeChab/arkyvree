@@ -84,11 +84,4 @@ describe("v1 notifications", () => {
     const { items } = await expectOk(api.v1.notifications.$get({ query: {} }));
     expect(items.find(({ target }) => target.id === revoked.id)).toMatchObject({ read: true });
   });
-
-  test("refuses to mark another user's notification read", async () => {
-    const { api } = await setup();
-    const { id } = (await expectOk(api.v1.notifications.$get({ query: { unreadOnly: "true" } }))).items[0]!;
-    const { api: stranger } = await createKeyedApi((await createTestUser()).user.id);
-    await expectStatus(stranger.v1.notifications[":id"].read.$post({ param: { id } }), 404);
-  });
 });

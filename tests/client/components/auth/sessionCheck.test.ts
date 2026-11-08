@@ -8,11 +8,9 @@ import { createQueryClient } from "@/client/src/lib/queryClient.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
-import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+import { createUserWithSession } from "@/tests/support/users.ts";
 
 /** The app's query client, which the probe goes through as `PrivateRoute`'s does. */
 const queryClient = createQueryClient();
@@ -36,13 +34,6 @@ function fetchUserOf(sessionId: string | null) {
     });
 }
 
-/** A new user, and a session of theirs. */
-async function createUserWithSession() {
-  const { user } = await createTestUser("session-check");
-  const [session] = await Sessions.create(db, { userId: user.id });
-  return { user, sessionId: session.id };
-}
-
 afterEach(() => {
   useAuthStore.getState().clearSession();
 });
@@ -53,28 +44,28 @@ afterAll(async () => {
 
 describe("The session check, with a user the store remembers", () => {
   test("gives way to the session's user when the cookie is another's", async () => {
-    const earlier = await createUserWithSession();
-    const current = await createUserWithSession();
-    useAuthStore.getState().startSession(await fetchUserOf(earlier.sessionId)());
+    const earlier = await createUserWithSession({ prefix: "session-check" });
+    const current = await createUserWithSession({ prefix: "session-check" });
+    useAuthStore.getState().startSession(await fetchUserOf(earlier.session.id)());
 
-    await checkSession(fetchUserOf(current.sessionId));
+    await checkSession(fetchUserOf(current.session.id));
 
     expect(useAuthStore.getState()).toMatchObject({ isAuthenticated: true, user: { id: current.user.id } });
   });
 
   test("leaves them be when the cookie is theirs", async () => {
-    const { sessionId } = await createUserWithSession();
-    useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
+    const { session } = await createUserWithSession({ prefix: "session-check" });
+    useAuthStore.getState().startSession(await fetchUserOf(session.id)());
     const remembered = useAuthStore.getState().user;
 
-    await checkSession(fetchUserOf(sessionId));
+    await checkSession(fetchUserOf(session.id));
 
     expect(useAuthStore.getState().user).toBe(remembered);
   });
 
   test("signs them out when the server knows no session (a 401)", async () => {
-    const { sessionId } = await createUserWithSession();
-    useAuthStore.getState().startSession(await fetchUserOf(sessionId)());
+    const { session } = await createUserWithSession({ prefix: "session-check" });
+    useAuthStore.getState().startSession(await fetchUserOf(session.id)());
 
     await checkSession(fetchUserOf(null));
 

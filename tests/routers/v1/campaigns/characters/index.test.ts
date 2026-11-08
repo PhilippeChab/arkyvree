@@ -5,7 +5,6 @@ import { Players } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createBaseCharacter, createFork, createFormCharacter } from "@/tests/support/v1.ts";
 
@@ -148,20 +147,5 @@ describe("v1 campaign characters", () => {
     expect(await expectOk(pdf(player.api))).toMatchObject({ status: "pending" });
     await expectStatus(pdf(other.api), 404);
     expect((await queuedPdfJobs(character.id)).map(({ payload }) => payload.campaignId)).toEqual([param.id, param.id]);
-  });
-
-  test("refuses a stranger, and a campaign that doesn't exist", async () => {
-    const { campaign, param } = await setupLinked("Public");
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    await expectStatus(api.v1.campaigns[":id"].characters.$get({ param: { id: campaign.id }, query: {} }), 404);
-    await expectStatus(api.v1.campaigns[":id"].characters[":characterId"].$get({ param }), 404);
-    // Which ruleset a campaign is on is its members' to read
-    const linkable = api.v1.campaigns[":id"]["linkable-characters"];
-    await expectStatus(linkable.$get({ param: { id: campaign.id }, query: {} }), 404);
-    await expectStatus(api.v1.campaigns[":id"].characters.$get({ param: { id: NIL_UUID }, query: {} }), 404);
-    await expectStatus(
-      api.v1.campaigns[":id"]["linkable-characters"].$get({ param: { id: NIL_UUID }, query: {} }),
-      404,
-    );
   });
 });

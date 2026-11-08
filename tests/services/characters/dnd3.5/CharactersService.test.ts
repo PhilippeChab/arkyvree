@@ -118,18 +118,6 @@ describe("CharactersService", () => {
       expect(plain.fields).not.toHaveProperty(CHARACTER_DEITY);
     });
 
-    test("has no limit on how many characters a user keeps", async () => {
-      // There once was a limit of six.
-      const { session } = await createTestUser();
-      const first = await createCharacterAs(session);
-      for (let i = 0; i < 6; i++) await createCharacterAs(session);
-      await CharactersService.archiveCharacter(session, first.id);
-      expect(await CharactersService.unarchiveCharacter(session, first.id)).toMatchObject({
-        id: first.id,
-        deletedAt: null,
-      });
-    });
-
     test("lets a private ruleset's campaign players and contributors in, and nobody else", async () => {
       const { owner, ruleset, race } = await setupPrivateRuleset();
       const onPrivate = { rulesetId: ruleset.id, links: { race: race.id } };

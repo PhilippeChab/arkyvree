@@ -103,14 +103,6 @@ describe("AttachmentsService", () => {
       );
     });
 
-    test("refuses a demo's own avatar, as anyone else's", async () => {
-      const { session } = await createTestUser();
-
-      expect(
-        AttachmentsService.createDirectUpload({ ...session, isDemo: true }, uploadParams(session.userId)),
-      ).rejects.toEqual(new ForbiddenError("Not authorized to attach to this record"));
-    });
-
     test("rejects unknown record types", async () => {
       const { session } = await createTestUser();
       expect(

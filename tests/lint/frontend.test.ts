@@ -173,7 +173,6 @@ describe("frontend rules", () => {
           "client/src/a.ts": "export const a = { queryKey: [...QUERY_KEYS.feats(id), search] };\n",
           "client/src/b.ts": "export const b = { queryKey: QUERY_KEYS.feats(id) };\n",
           "client/src/c.ts": 'export const c = { queryKey: ["feats", id] };\n',
-          "client/src/lib/queryKeys.ts": 'export const k = { queryKey: ["feats"] };\n',
         },
         ["query-keys"],
       ),
@@ -252,17 +251,14 @@ describe("frontend rules", () => {
     ).toEqual(["query-keys client/src/sheet.ts"]);
   });
 
-  test("a mutation runs with mutate, and a loader is a DiceSpinner", async () => {
+  test("a mutation runs with mutate, and is held whole", async () => {
     expect(
       await lintRepo(
         {
           "client/src/a.ts": "export const a = () => save.mutate(values);\n",
           "client/src/b.ts": "export const b = () => save.mutateAsync(values);\n",
-          "client/src/c.tsx":
-            'import { Box, CircularProgress } from "@mui/material";\nexport const c = [Box, CircularProgress];\n',
           "client/src/d.ts":
             "export const d = () => {\n  const { mutateAsync } = useSave();\n  return mutateAsync;\n};\n",
-          "client/src/e.tsx": 'import * as Mui from "@mui/material";\nexport const e = <Mui.CircularProgress />;\n',
           "client/src/f.ts":
             "export const f = () => {\n  const { mutate: save } = useMutation({ mutationFn });\n  return save;\n};\n",
           "client/src/g.ts":
@@ -270,13 +266,7 @@ describe("frontend rules", () => {
         },
         ["client-apis"],
       ),
-    ).toEqual([
-      "client-apis client/src/b.ts",
-      "client-apis client/src/c.tsx",
-      "client-apis client/src/d.ts",
-      "client-apis client/src/e.tsx",
-      "client-apis client/src/f.ts",
-    ]);
+    ).toEqual(["client-apis client/src/b.ts", "client-apis client/src/d.ts", "client-apis client/src/f.ts"]);
   });
 
   test("a form's field is bound through useController: never register, never a watched value", async () => {
@@ -821,8 +811,8 @@ describe("frontend rules", () => {
           "client/src/pages/a/Written.tsx": "export const w = () => queryClient.setQueryData(k, v);\n",
           "client/src/pages/a/Mutated.tsx":
             "export const m = () => useMutation({ mutationFn: f, onSuccess: (v) => queryClient.setQueryData(k, v) });\n",
-          "client/src/pages/a/Saved.tsx":
-            "export const s = () => useEntitySave({ saveFn: f, storeSaved: (v) => queryClient.setQueryData(k, v) });\n",
+          // The query's own module seeds what it caches
+          "client/src/pages/a/seedQueries.ts": "export const s = () => queryClient.setQueryData(k, v);\n",
           "client/src/pages/a/Paged.tsx": "export const n = (data: Data) => data.pages.flatMap((p) => p.items);\n",
         },
         ["queries"],

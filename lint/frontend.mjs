@@ -14,8 +14,7 @@
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
  *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
- * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
- *   `DiceSpinner`, never MUI's `CircularProgress`.
+ * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and is held whole.
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
  *   shared fields, `FormTextField`, `Controller`), never `register` (uncontrolled), and never a value `watch` reads
  *   with a `setValue` for its change. A form starts every field with a value: it's made with `useFormWith` (a whole
@@ -57,8 +56,8 @@
  *   whatever it holds) is named in SCREAMING_CASE, and one a style's `sx` takes ends in `_SX`.
  * - `queries`: a query's options come from a `queryOptions` factory in a `…Queries.ts` module (or `lib/queries.ts`);
  *   one that can't run yet passes `skipToken` (`enabled` is a plain switch); it keeps its previous data with
- *   `keepPreviousData`, and its durations are named. The cache is written in a mutation's callbacks (an entity save's
- *   `storeSaved` is one), and an infinite query's items are `pageItems(data)`.
+ *   `keepPreviousData`, and its durations are named. The cache is written in a mutation's callbacks, or by a
+ *   `…Queries.ts` module, and an infinite query's items are `pageItems(data)`.
  * - `parsed-responses`: a request's answer is read with `parseResponse(…)`.
  * - `dot-notation`: a member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are
  *   for a name that isn't one (`[":id"]`, `["read-all"]`).
@@ -113,6 +112,7 @@
 import path from "node:path";
 
 import {
+  attribute,
   attributeExpression,
   calleeName,
   childElements,
@@ -234,8 +234,8 @@ const LOADING_OWNERS = new Set(["Autocomplete", "DiceSpinner", "NextPageSpinner"
 /** The text fields a form's field of several lines would be written with */
 const MULTILINE_FIELDS = new Set(["FormTextField", "TextField"]);
 
-/** A mutation's callbacks, where its writes to the cache go, and an entity save's `storeSaved`, its `onSuccess`'s step */
-const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess", "storeSaved"]);
+/** A mutation's callbacks, where its writes to the cache go */
+const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess"]);
 
 /**
  * The elements that hand a `title` to the browser, which shows it as a tooltip of its own: the DOM's (but a frame's,
@@ -293,15 +293,7 @@ const ROW_WARMERS = new Set(["onFocus", "onMouseEnter"]);
 const STATUS_PREDICATES = new Map([[429, "rateLimited"]]);
 
 /** The elements whose text names them, which a `Tooltip` describes rather than names (`describeChild`) */
-const TEXT_CONTROLS = new Set([
-  "Button",
-  "Chip",
-  "ListItemButton",
-  "MenuItem",
-  "TagChip",
-  "ToggleButton",
-  "Typography",
-]);
+const TEXT_CONTROLS = new Set(["Button", "Chip", "ListItemButton", "MenuItem", "ToggleButton", "Typography"]);
 
 /** A types grab bag: a `types/` folder (`levelUpTypes/`), or a `types.ts` module (`levelUpTypes.ts`). */
 const TYPES_GRAB_BAG = /(^|\/)([a-z]\w*T|t)ypes(\.tsx?$|\/)/;
@@ -369,7 +361,7 @@ function checkDialogContent(content, context) {
  */
 function checkLeadLine(content, context) {
   for (const lead of openingElements(content)) {
-    const severity = attributeExpression(jsxAttribute(lead, "severity") ?? {});
+    const severity = attributeExpression(attribute(lead, "severity"));
     const info = elementName(lead) === "Alert" && severity?.type === "Literal" && severity.value === "info";
     if (elementName(lead) !== "Typography" && !info) continue;
     context.report({
@@ -475,7 +467,6 @@ function createClickableElements(context) {
 
 function createClientApis(context) {
   if (!inClient(context)) return {};
-  const muiNamespaces = new Set();
   return {
     CallExpression(node) {
       if (node.callee.type === "MemberExpression" && node.callee.property.name === "mutateAsync") {
@@ -502,28 +493,6 @@ function createClientApis(context) {
         context.report({
           node,
           message: "Run a mutation with `.mutate()` and its `onSuccess` / `onError`, not `.mutateAsync()`.",
-        });
-      }
-    },
-    // <Mui.CircularProgress />
-    JSXMemberExpression(node) {
-      if (node.property.name === "CircularProgress" && muiNamespaces.has(node.object.name)) {
-        context.report({
-          node,
-          message: "A loader is a `DiceSpinner` (`components/common`), never `CircularProgress`.",
-        });
-      }
-    },
-    ImportDeclaration(node) {
-      if (!String(node.source.value).startsWith("@mui/material")) return;
-      for (const s of node.specifiers ?? []) if (s.type === "ImportNamespaceSpecifier") muiNamespaces.add(s.local.name);
-      const named = (node.specifiers ?? []).some(
-        (s) => s.type === "ImportSpecifier" && s.imported.name === "CircularProgress",
-      );
-      if (named || node.source.value === "@mui/material/CircularProgress") {
-        context.report({
-          node,
-          message: "A loader is a `DiceSpinner` (`components/common`), never `CircularProgress`.",
         });
       }
     },
@@ -796,7 +765,7 @@ function createDialogConventions(context) {
       const name = elementName(node);
       if (name === "Dialog" && !hasAttribute(node, "fullScreen"))
         report(node.openingElement, "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.");
-      const width = jsxAttribute(node, "maxWidth");
+      const width = attribute(node, "maxWidth");
       if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs") {
         report(
           width,
@@ -805,7 +774,7 @@ function createDialogConventions(context) {
       }
       if (icons.has(name) && inDialogTitle(node))
         report(node.openingElement, "A dialog's title is its words: no icon in a `DialogTitle`.");
-      const labelledBy = jsxAttribute(node, "aria-labelledby");
+      const labelledBy = attribute(node, "aria-labelledby");
       if (/Dialog$|^Modal$/.test(name ?? "") && labelledBy && holdsElement(node, "DialogTitle")) {
         report(
           labelledBy,
@@ -815,7 +784,7 @@ function createDialogConventions(context) {
       }
       if (name === "DialogContent") checkDialogContent(node, context);
       if (name === "CreateDialog" || name === "EditDialog") checkLeadLine(node, context);
-      const title = attributeExpression(jsxAttribute(node, "title") ?? {});
+      const title = attributeExpression(attribute(node, "title"));
       if (name === "CreateDialog" && String(title?.value).startsWith("Add ") && !hasAttribute(node, "submitLabel")) {
         report(
           node.openingElement,
@@ -1192,7 +1161,7 @@ function createLoadErrors(context) {
         });
         return;
       }
-      const helperText = jsxAttribute(node, "helperText");
+      const helperText = attribute(node, "helperText");
       if (elementName(node) === "SelectField" && helperText && saysLoadFailure(attributeExpression(helperText))) {
         context.report({
           node: helperText,
@@ -1401,7 +1370,7 @@ function createPendingProps(context) {
 function createQueries(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("client/src/")) return {};
-  const factory = /(^|\/)(queries|\w+Queries)\.ts$/.test(file);
+  const factory = isQueriesModule(context);
   const report = (node, message) => context.report({ node, message });
   return {
     Property(node) {
@@ -1467,7 +1436,7 @@ function createQueries(context) {
 
 function createQueryKeyRule(context) {
   const file = repoPath(context.filename);
-  if (!inClient(context) || file === "client/src/lib/queryKeys.ts") return {};
+  if (!inClient(context)) return {};
   return {
     Property(node) {
       if (node.key.type !== "Identifier" || node.key.name !== "queryKey") return;
@@ -1827,11 +1796,6 @@ function isQueriesModule(context) {
   return /(^|\/)(queries|\w+Queries)\.ts$/.test(repoPath(context.filename));
 }
 
-/** The attribute `name` of a JSX element, when it has one. */
-function jsxAttribute(element, name) {
-  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
 /** The function a component declares under `name`, in a block around `node`: `const handleX = () => {…}`. */
 function localFunction(name, node) {
   for (let p = node.parent; p; p = p.parent) {
@@ -2025,7 +1989,7 @@ function siblingElements(node) {
 
 /** The properties an element's `sx` sets at its top, written as an object or an array of them. */
 function sxProperties(element) {
-  const sx = jsxAttribute(element, "sx");
+  const sx = attribute(element, "sx");
   const value = sx?.value?.type === "JSXExpressionContainer" ? sx.value.expression : null;
   const objects = value?.type === "ArrayExpression" ? value.elements : [value];
   return objects.flatMap((object) => (object?.type === "ObjectExpression" ? object.properties : []));

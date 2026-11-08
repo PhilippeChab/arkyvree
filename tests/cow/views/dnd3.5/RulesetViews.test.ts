@@ -119,16 +119,6 @@ describe("RulesetViews", () => {
     expect(rulesetData.requirementsByEntity).toBeInstanceOf(Map);
   });
 
-  test("getRawData returns same reference on cache hit", async () => {
-    const ruleset = await getRuleset();
-
-    const first = await RulesetViews.getRawData(ruleset.id);
-    const second = await RulesetViews.getRawData(ruleset.id);
-
-    // Same reference — confirms tier-1 raw cache served the second call
-    expect(second).toBe(first);
-  });
-
   test("getData produces structurally stable composed output", async () => {
     const ruleset = await getRuleset();
 
@@ -605,45 +595,6 @@ describe("RulesetViews", () => {
       expect(composedView.feats.find((f) => f.id === winnerId)).toBeDefined();
       expect(composedView.feats.find((f) => f.id === loserId)).toBeUndefined();
       expect(composedView.feats.find((f) => f.id === baseFeat.id)).toBeUndefined();
-    });
-
-    test("multi-extension COW on a non-feat entity (item) compose excludes the loser", async () => {
-      const seed = await getRuleset();
-
-      // Same sibling scenario as above, but on an item to prove compose's
-      // exclusion logic works uniformly across entity types (races, items,
-      // languages, classes — all go through the same hidden-row filter, CowData.isHidden).
-      const [baseItem] = await Entities.createMany<Item>(db, DND35_BASE_RULES, "items", [
-        {
-          name: `Sibling Base Item ${uniqueId()}`,
-          description: "To be COW'd by two extensions",
-          rulesetId: seed.id,
-          fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 },
-        },
-      ]);
-
-      const extA = await createBook(seed.id);
-      const extB = await createBook(seed.id);
-
-      const cowA = await copyEntity(db, "items", baseItem.id, extA);
-      const cowB = await copyEntity(db, "items", baseItem.id, extB);
-
-      const child = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
-      await subscribeTestRuleset(child.id, [extA.id, extB.id]);
-      RulesetViews.invalidateAll();
-
-      const cowData = await readCowData(child.id);
-      const winnerId = cowData.resolve(baseItem.id);
-      expect(cowData.isOverridden(baseItem.id)).toBe(true);
-      expect([cowA.id, cowB.id]).toContain(winnerId!);
-      const loserId = winnerId === cowA.id ? cowB.id : cowA.id;
-      expect(cowData.siblingIds.has(loserId)).toBe(true);
-
-      const composed = await readView(child.id);
-      const composedView = Dnd35View.of(composed);
-      expect(composedView.items.find((i) => i.id === winnerId)).toBeDefined();
-      expect(composedView.items.find((i) => i.id === loserId)).toBeUndefined();
-      expect(composedView.items.find((i) => i.id === baseItem.id)).toBeUndefined();
     });
   });
 

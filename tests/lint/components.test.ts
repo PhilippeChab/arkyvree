@@ -274,44 +274,6 @@ describe("component rules", () => {
     ).toEqual(["confirm-dialogs client/src/closed.tsx", "confirm-dialogs client/src/flag.tsx"]);
   });
 
-  test("a table's frame is a TableFrame, the theme draws its header, and a TableColumnsHead its columns'", async () => {
-    expect(
-      await lintRepo(
-        {
-          "client/src/framed.tsx": "export const f = <TableContainer component={Paper}><Table /></TableContainer>;\n",
-          "client/src/bare.tsx": "export const b = <TableContainer><Table /></TableContainer>;\n",
-          "client/src/strong.tsx":
-            "export const s = <TableHead><TableRow><TableCell><strong>Name</strong></TableCell></TableRow></TableHead>;\n",
-          "client/src/tinted.tsx":
-            'export const t = <TableHead><TableRow sx={{ bgcolor: "action.hover" }} /></TableHead>;\n',
-          "client/src/weighted.tsx":
-            "const HEADER_SX = { fontWeight: 600 };\n" +
-            "export const w = <TableHead><TableRow><TableCell sx={HEADER_SX}>Name</TableCell></TableRow></TableHead>;\n",
-          "client/src/sized.tsx":
-            'export const z = <TableHead><TableRow><TableCell sx={{ width: "20%" }}>Name</TableCell></TableRow></TableHead>;\n',
-          "client/src/body.tsx":
-            "export const y = <TableBody><TableRow><TableCell sx={{ fontWeight: 600 }}>Total</TableCell></TableRow></TableBody>;\n",
-          "client/src/components/common/TableFrame.tsx":
-            'export const o = <TableContainer component={Paper} variant="outlined" />;\n',
-          "client/src/columns.tsx":
-            "export const c = <TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
-          "client/src/labels.tsx":
-            "export const l = <TableHead><TableRow>{labels.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>;\n",
-          "client/src/components/common/TableColumnsHead.tsx":
-            "export const h = <TableHead><TableRow>{columns.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
-        },
-        ["table-frames"],
-      ),
-    ).toEqual([
-      "table-frames client/src/columns.tsx",
-      "table-frames client/src/framed.tsx",
-      "table-frames client/src/labels.tsx",
-      "table-frames client/src/strong.tsx",
-      "table-frames client/src/tinted.tsx",
-      "table-frames client/src/weighted.tsx",
-    ]);
-  });
-
   test("a card's title is a CardTitle", async () => {
     const title =
       'export const t = <Typography component="h2" sx={{ typography: { xs: "h6", sm: "h5" } }}>Skills</Typography>;\n';
@@ -588,12 +550,10 @@ describe("component rules", () => {
     expect(
       await lintRepo(
         {
-          "client/src/table.tsx":
-            "export const t = <Table><TableHead /><TableBody><TableRow><TableCell><Skeleton /></TableCell></TableRow></TableBody></Table>;\n",
           "client/src/data-table.tsx":
             'export const d = <DataTable columns={COLUMNS}><DataRow><DataCell slot="primary"><Skeleton /></DataCell></DataRow></DataTable>;\n',
           "client/src/rows.tsx":
-            "export const r = <TableRow><TableCell colSpan={2}><Skeleton /></TableCell></TableRow>;\n",
+            'export const r = <DataRow><DataCell slot="primary"><Skeleton /></DataCell></DataRow>;\n',
           "client/src/hidden.tsx": 'export const h = <>{partial && <Skeleton variant="rounded" height={40} />}</>;\n',
           "client/src/bars.tsx": 'export const b = <Stack spacing={1}><Skeleton variant="rectangular" /></Stack>;\n',
           "client/src/components/common/TableSkeleton.tsx": own,
@@ -606,7 +566,6 @@ describe("component rules", () => {
       "skeletons client/src/bars.tsx",
       "skeletons client/src/data-table.tsx",
       "skeletons client/src/hidden.tsx",
-      "skeletons client/src/table.tsx",
     ]);
   });
 

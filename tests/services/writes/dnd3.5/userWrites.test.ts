@@ -296,20 +296,11 @@ describe("two accounts of one campaign, deleted at once", () => {
     expect(await holdersOf(seats.map(({ character }) => character.id))).toEqual([held, held, held]);
   });
 
-  test("a Game Master and the one player left: the campaign is archived, and every character goes", async () => {
-    const { campaign, seats } = await commitParty("Game Master", "Player Character");
-
-    await runQueued(campaign.id, deletion(seats[0].user.id), deletion(seats[1].user.id));
-
-    expect(await Campaigns.findOne(db, { id: campaign.id }, Visibility.ArchivedOnly)).toMatchObject({
-      id: campaign.id,
-    });
-    const ids = seats.map(({ character }) => character.id);
-    expect(await Characters.findMany(db, { ids }, Visibility.All)).toEqual([]);
-  });
-
-  test("two Game Masters, with nobody else: the campaign is archived, and every character goes", async () => {
-    const { campaign, seats } = await commitParty("Game Master", "Game Master");
+  test.each([
+    ["a Game Master and the one player left", "Player Character"],
+    ["two Game Masters, with nobody else", "Game Master"],
+  ] as const)("%s: the campaign is archived, and every character goes", async (_, second) => {
+    const { campaign, seats } = await commitParty("Game Master", second);
 
     await runQueued(campaign.id, deletion(seats[0].user.id), deletion(seats[1].user.id));
 

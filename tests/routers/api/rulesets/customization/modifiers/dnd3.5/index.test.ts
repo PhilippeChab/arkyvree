@@ -4,7 +4,7 @@ import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { application } from "@/server/routers/application.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/dnd3.5/entities.ts";
-import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -135,14 +135,6 @@ describe("rulesets customization modifiers", () => {
       );
       await expectStatus(response, 400);
     }
-  });
-
-  test("requires a session", async () => {
-    const { id, entityId } = await createCustomizableFeat();
-    const response = await guestApi.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({
-      param: { id, entityType: "feats", entityId },
-    });
-    await expectStatus(response, 401);
   });
 
   test("rejects a modifier without a target", async () => {

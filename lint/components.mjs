@@ -25,10 +25,6 @@
  *   No other expand icon, and no arrow-only button but a `ToggleLabel`'s.
  * - `toggle-states`: a button that flips between two states keeps one label, naming what it turns on, and says which
  *   state it's in: `aria-pressed`, or `aria-expanded` when it shows or hides something.
- * - `table-frames`: a table on a page or in a dialog is framed by a `TableFrame` (a table in a panel stands bare), and
- *   the theme draws its header: no cell of it sets its tint, weight or color, nor bolds its label. A header drawn from
- *   its columns (`{ key, label, width }`, or a list of labels) is a `TableColumnsHead`, never their cells mapped by
- *   hand.
  * - `card-titles`: a card's or a panel's title (an `h2` sized from `h6` up) is a `CardTitle`.
  * - `blank-notes`: an empty list's line ("No local changes") is a `BlankNote` in a panel, a dialog, a menu or the level
  *   wizard, and a page's or a tab's is a `BlankState`, its icon and its line required: never a `Typography` or an
@@ -44,10 +40,10 @@
  *   outlined).
  * - `section-headings`: a heading under a card's title is a `SubsectionTitle` (8px above its content: the column it
  *   leads takes `spacing={1}`), and an entry's name in a panel's list an `EntryTitle`: never a Typography of its own.
- * - `page-gaps`: a page starts 32px under the app bar, the theme padding its `Container` (an invite's `sm` card keeps
- *   its own), a column of the app's page width, its default (the legal page's `md` and an invite's `sm` narrower); its
- *   content sits 32px under its header (the column holding the header takes `spacing={4}`), and a tab's 56px under its
- *   tabs, in a `SectionTabPanel`.
+ * - `page-gaps`: a page starts 32px under the app bar, the theme padding its `Container` (an `sm` card, an invite's or
+ *   an app's consent, keeps its own), a column of the app's page width, its default (the legal page's `md` and an `sm`
+ *   card narrower); its content sits 32px under its header (the column holding the header takes `spacing={4}`), and a
+ *   tab's 56px under its tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite, an app's consent).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its
@@ -76,7 +72,17 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { calleeName, childElements, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
+import {
+  attribute,
+  attributeExpression,
+  calleeName,
+  childElements,
+  elementName,
+  hasAttribute,
+  inClient,
+  inFile,
+  parentElement,
+} from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /**
@@ -98,9 +104,6 @@ const ENTITY_PAGE_MODULES = {
   form: "client/src/pages/rulesets/hooks/useEntityForm.ts",
   save: "client/src/pages/rulesets/hooks/useEntitySave.ts",
 };
-
-/** What a table's header leaves to the theme, which tints it and sets its labels' weight and color. */
-const HEADER_STYLE_KEYS = new Set(["backgroundColor", "bgcolor", "color", "fontWeight"]);
 
 /** A list's own actions, which sit in its toolbar: its add button, a ruleset section's `SectionActions` */
 const LIST_ACTIONS = new Set(["AddButton", "SectionActions"]);
@@ -198,16 +201,6 @@ const TOP_PADDINGS = new Set(["p", "padding", "paddingTop", "paddingY", "pt", "p
 /** A ruleset's advancement wizard: its folder of the character page's components, its steps and its option tooltip. */
 const WIZARD_FOLDER = /^client\/src\/pages\/characters\/details\/components\/[^/]+\//;
 
-/** The attribute `name` of a JSX element, when it has one. */
-function attribute(element, name) {
-  return element.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-}
-
-/** What a JSX attribute holds: its expression, or its string. */
-function attributeValue(found) {
-  return found?.value?.type === "JSXExpressionContainer" ? found.value.expression : found?.value;
-}
-
 /** Whether a call closes a dialog: `dialog.close()`, `onClose()`, `setDeleteOpen(false)`. */
 function closesDialog(call) {
   const name = calleeName(call) ?? "";
@@ -222,13 +215,13 @@ function createAddButtons(context) {
   return {
     JSXAttribute(node) {
       if (node.name.name !== "startIcon") return;
-      const value = attributeValue(node);
+      const value = attributeExpression(node);
       if (value?.type !== "JSXElement" || elementName(value) !== "AddIcon") return;
       context.report({ node, message });
     },
     // A button whose words add ("Add Item"), without the add icon (with it, its `startIcon` says so)
     JSXElement(node) {
-      const icon = attributeValue(attribute(node, "startIcon"));
+      const icon = attributeExpression(attribute(node, "startIcon"));
       if (elementName(node) !== "Button" || (icon?.type === "JSXElement" && elementName(icon) === "AddIcon")) return;
       const words = node.children.find((child) => child.type === "JSXText" && child.value.trim());
       if (words && /^\s*Add\b/.test(words.value)) context.report({ node: node.openingElement, message });
@@ -258,7 +251,7 @@ function createBlankNotes(context) {
     context.report({ node, message: "A note says what isn't there without a final period, as every note does." });
   return {
     JSXAttribute(node) {
-      const value = attributeValue(node);
+      const value = attributeExpression(node);
       if (node.name.name === "noOptionsText" && endsWithPeriod(value)) period(node);
     },
     JSXElement(node) {
@@ -292,9 +285,9 @@ function createCardTitles(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/CardTitle.tsx")) return {};
   return {
     JSXElement(node) {
-      const component = attributeValue(attribute(node, "component"));
+      const component = attributeExpression(attribute(node, "component"));
       if (elementName(node) !== "Typography" || component?.type !== "Literal" || component.value !== "h2") return;
-      const sized = styleProperties(attributeValue(attribute(node, "sx")), node).some(
+      const sized = styleProperties(attributeExpression(attribute(node, "sx")), node).some(
         (property) => propertyKey(property) === "typography" && property.value.type === "ObjectExpression",
       );
       if (sized)
@@ -316,7 +309,10 @@ function createChoiceChips(context) {
       });
     },
     JSXElement(node) {
-      if (elementName(node) !== "Chip" || attributeValue(attribute(node, "variant"))?.type !== "ConditionalExpression")
+      if (
+        elementName(node) !== "Chip" ||
+        attributeExpression(attribute(node, "variant"))?.type !== "ConditionalExpression"
+      )
         return;
       context.report({
         node: node.openingElement,
@@ -341,7 +337,7 @@ function createConfirmDialogs(context) {
     // Closed as it sends, a confirmation hides the request's failure, and its retry
     JSXAttribute(node) {
       if (node.name.name !== "onConfirm" || !CONFIRMATIONS.has(elementName(node.parent.parent))) return;
-      const handler = attributeValue(node);
+      const handler = attributeExpression(node);
       if (handler?.type !== "ArrowFunctionExpression" && handler?.type !== "FunctionExpression") return;
       const calls = handler.body.type === "CallExpression" ? [handler.body] : statementCalls(handler.body);
       const closer = calls.some((call) => calleeName(call) === "mutate") && calls.find(closesDialog);
@@ -371,7 +367,7 @@ function createDialogFooters(context) {
     JSXElement(node) {
       const footer = parentElement(node);
       if (elementName(node) !== "Button" || !footer || elementName(footer) !== "DialogFooter") return;
-      const variant = attributeValue(attribute(node, "variant"));
+      const variant = attributeExpression(attribute(node, "variant"));
       if (variant?.type !== "Literal" || variant.value !== "contained") return;
       context.report({
         node: node.openingElement,
@@ -512,7 +508,7 @@ function createFormValidation(context) {
   return {
     JSXElement(node) {
       const raw = elementName(node) === "form";
-      const component = attributeValue(attribute(node, "component"));
+      const component = attributeExpression(attribute(node, "component"));
       const asForm = component?.type === "Literal" && component.value === "form";
       if (raw || asForm) {
         if (hasAttribute(node, "noValidate")) return;
@@ -522,7 +518,7 @@ function createFormValidation(context) {
         });
         return;
       }
-      const type = attributeValue(attribute(node, "type"));
+      const type = attributeExpression(attribute(node, "type"));
       const nativeCheck = hasAttribute(node, "required") || (type?.type === "Literal" && type.value === "email");
       if (!hasAttribute(node, "control") || !nativeCheck || hasAttribute(node, "rules")) return;
       context.report({
@@ -544,7 +540,7 @@ function createFormValidation(context) {
       const field = parentElement(node);
       if (bounds.size === 0 || !field || !hasAttribute(field, "control")) return;
       // `wholeNumberRules(min, required, max)`: the bounds the field's stepper keeps, checked as the form submits
-      const rules = attributeValue(attribute(field, "rules"));
+      const rules = attributeExpression(attribute(field, "rules"));
       const checked =
         rules?.type === "CallExpression" &&
         rules.callee.type === "Identifier" &&
@@ -566,7 +562,7 @@ function createLinkButtons(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/LinkButton.tsx")) return {};
   return {
     JSXElement(node) {
-      const component = attributeValue(attribute(node, "component"));
+      const component = attributeExpression(attribute(node, "component"));
       if (elementName(node) !== "MuiLink" || component?.type !== "Literal" || component.value !== "button") return;
       context.report({ node: node.openingElement, message: "An action written as a link is a `LinkButton`." });
     },
@@ -625,7 +621,7 @@ function createListToolbars(context) {
       }
       if (elementName(node) !== "Stack") return;
       const children = childElements(node).map(elementName);
-      const spacing = attributeValue(attribute(node, "spacing"));
+      const spacing = attributeExpression(attribute(node, "spacing"));
       const spaced = (units) => spacing?.type === "Literal" && spacing.value === units;
       if (children.some((child) => LIST_TOOLBARS.has(child)) && !spaced(3)) {
         context.report({
@@ -642,7 +638,7 @@ function createListToolbars(context) {
         });
       }
       // A row that pushes its actions to its end: alone, or across from a line of its own (a dialog's lead)
-      const endAligned = styleProperties(attributeValue(attribute(node, "sx")), node).some(
+      const endAligned = styleProperties(attributeExpression(attribute(node, "sx")), node).some(
         (property) =>
           propertyKey(property) === "justifyContent" &&
           property.value.type === "Literal" &&
@@ -695,7 +691,7 @@ function createOptionTooltips(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "Tooltip") return;
-      const title = attributeValue(attribute(node, "title"));
+      const title = attributeExpression(attribute(node, "title"));
       const text = title ? context.sourceCode.getText(title) : "";
       if (!step && !/requirementTree|\.slice\(0,/.test(text)) return;
       context.report({
@@ -712,7 +708,7 @@ function createPageGaps(context) {
   return {
     JSXElement(node) {
       const name = elementName(node);
-      const role = attributeValue(attribute(node, "role"));
+      const role = attributeExpression(attribute(node, "role"));
       if (role?.type === "Literal" && role.value === "tabpanel" && !tabPanelModule) {
         context.report({
           node: node.openingElement,
@@ -721,8 +717,8 @@ function createPageGaps(context) {
         return;
       }
       if (name === "Container") {
-        // An invite's card stands alone in its `sm` column, centred, deeper than a page's content
-        const maxWidth = attributeValue(attribute(node, "maxWidth"));
+        // An `sm` card (an invite's, an app's consent) stands alone in its column, centred, deeper than a page's content
+        const maxWidth = attributeExpression(attribute(node, "maxWidth"));
         if (maxWidth?.type === "Literal" && maxWidth.value === "sm") return;
         // The app's page width is a Container's own (`lg`, which `AppMain` caps every page at): narrower for reading
         if (maxWidth && !(maxWidth.type === "Literal" && maxWidth.value === "md")) {
@@ -734,7 +730,7 @@ function createPageGaps(context) {
           });
           return;
         }
-        const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
+        const properties = styleProperties(attributeExpression(attribute(node, "sx")), node);
         if (!properties.some((property) => TOP_PADDINGS.has(propertyKey(property)))) return;
         context.report({
           node: node.openingElement,
@@ -746,7 +742,7 @@ function createPageGaps(context) {
       }
       if (name !== "Stack") return;
       if (!node.children.some((child) => child.type === "JSXElement" && PAGE_HEADERS.has(elementName(child)))) return;
-      const spacing = attributeValue(attribute(node, "spacing"));
+      const spacing = attributeExpression(attribute(node, "spacing"));
       if (spacing?.type === "Literal" && spacing.value === 4) return;
       context.report({
         node: node.openingElement,
@@ -769,8 +765,8 @@ function createPageLoaders(context) {
       if (name === "CharacterSheetBody") showsSheet = true;
       if (name === "PageLoader") pageLoaders.push(node);
       if (name !== "DiceSpinner") return;
-      const size = attributeValue(attribute(node, "size"));
-      const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
+      const size = attributeExpression(attribute(node, "size"));
+      const properties = styleProperties(attributeExpression(attribute(node, "sx")), node);
       const large = size?.type === "Literal" && size.value === "large" && !skeleton;
       // A section's or a dialog's spinner: `py: 4` alone; a small one, a menu's or a popover's line: `py: 1.5` alone
       const spacing = size?.type === "Literal" && size.value === "small" ? 1.5 : 4;
@@ -805,7 +801,7 @@ function createPageTitles(context) {
   if (!inClient(context) || PAGE_TITLE_MODULES.has(repoPath(context.filename))) return {};
   return {
     JSXAttribute(node) {
-      const value = attributeValue(node);
+      const value = attributeExpression(node);
       if (node.name.name !== "component" || value?.type !== "Literal" || value.value !== "h1") return;
       context.report({
         node,
@@ -822,7 +818,7 @@ function createPanels(context) {
   return {
     JSXElement(node) {
       const name = elementName(node);
-      const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
+      const properties = styleProperties(attributeExpression(attribute(node, "sx")), node);
       const keys = properties.map(propertyKey);
       if (name === "Card" && holdsTitle(node)) {
         context.report({
@@ -839,9 +835,9 @@ function createPanels(context) {
         });
         return;
       }
-      const component = attributeValue(attribute(node, "component"));
+      const component = attributeExpression(attribute(node, "component"));
       const paper = name === "Paper" || (component?.type === "Identifier" && component.name === "Paper");
-      const variant = attributeValue(attribute(node, "variant"));
+      const variant = attributeExpression(attribute(node, "variant"));
       // A frame (an outlined paper) or a banner (a surface of its own) pads itself
       const outlined = variant?.type === "Literal" && variant.value === "outlined";
       if (!paper || outlined || !keys.some((key) => PADDINGS.has(key)) || keys.some((key) => SURFACES.has(key))) return;
@@ -857,7 +853,7 @@ function createRowActions(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/RowActions.tsx")) return {};
   return {
     JSXAttribute(node) {
-      const value = attributeValue(node);
+      const value = attributeExpression(node);
       if (node.name.name !== "className" || value?.type !== "Literal" || value.value !== "row-actions") return;
       context.report({
         node,
@@ -895,7 +891,7 @@ function createSectionHeadings(context) {
     JSXElement(node) {
       const name = elementName(node);
       if (name === "Typography") {
-        const component = attributeValue(attribute(node, "component"));
+        const component = attributeExpression(attribute(node, "component"));
         if (owner || component?.type !== "Literal" || !SUBHEADING_LEVELS.has(component.value)) return;
         context.report({
           node: node.openingElement,
@@ -906,7 +902,7 @@ function createSectionHeadings(context) {
         return;
       }
       if (name !== "Stack" || !leadsWith(node, "SubsectionTitle") || isRow(node)) return;
-      const spacing = attributeValue(attribute(node, "spacing"));
+      const spacing = attributeExpression(attribute(node, "spacing"));
       if (spacing?.type === "Literal" && spacing.value === 1) return;
       context.report({
         node: node.openingElement,
@@ -923,7 +919,7 @@ function createSelectFields(context) {
       const name = elementName(node);
       if (!hasAttribute(node, "select") || (name !== "TextField" && name !== "FormTextField")) return;
       // A form's field's own ref (`field.ref`); a ref the component is handed is a custom input's, its owner binding it
-      const ref = attributeValue(attribute(node, "inputRef"));
+      const ref = attributeExpression(attribute(node, "inputRef"));
       const fieldRef = ref?.type === "MemberExpression" && !ref.computed && ref.property.name === "ref";
       const bound =
         name === "FormTextField" ||
@@ -943,13 +939,9 @@ function createSkeletons(context) {
       let inCell = false;
       for (let p = parentElement(node); p; p = parentElement(p)) {
         const name = elementName(p);
-        if (name === "TableCell" || name === "DataCell") inCell = true;
-        // A table drawn by hand as it loads: its header (a `DataTable`'s columns) over rows of skeletons
-        const headed =
-          name === "DataTable"
-            ? hasAttribute(p, "columns")
-            : name === "Table" && holds(p, (child) => elementName(child) === "TableHead");
-        if (!headed) continue;
+        if (name === "DataCell") inCell = true;
+        // A table drawn by hand as it loads: a `DataTable`'s columns over rows of skeletons
+        if (name !== "DataTable" || !hasAttribute(p, "columns")) continue;
         context.report({ node: node.openingElement, message: "A table's first load is a `TableSkeleton`." });
         return;
       }
@@ -960,43 +952,6 @@ function createSkeletons(context) {
         message:
           "A skeleton means loading: a table's is a `TableSkeleton`, a page's its own (the sheet's, an entity " +
           "page's), anything else a section's `DiceSpinner`; what's empty or hidden says so in a `BlankNote`.",
-      });
-    },
-  };
-}
-
-function createTableFrames(context) {
-  if (!inClient(context)) return {};
-  const ownFrame = inFile(context, "client/src/components/common/TableFrame.tsx");
-  const ownHead = inFile(context, "client/src/components/common/TableColumnsHead.tsx");
-  return {
-    JSXElement(node) {
-      const name = elementName(node);
-      if (name === "TableContainer" && hasAttribute(node, "component") && !ownFrame) {
-        context.report({
-          node: node.openingElement,
-          message: "A table on a page or in a dialog is framed by a `TableFrame`; a table in a panel stands bare.",
-        });
-        return;
-      }
-      if (!inTableHead(node)) return;
-      if (name === "TableCell" && !ownHead && mapsColumns(node)) {
-        context.report({
-          node: node.openingElement,
-          message:
-            "A table's header drawn from its columns (`{ key, label, width }`, or a list of labels) is a " +
-            "`TableColumnsHead`.",
-        });
-      }
-      const bold = name === "strong" || name === "b";
-      const styled = styleProperties(attributeValue(attribute(node, "sx")), node).some((property) =>
-        HEADER_STYLE_KEYS.has(propertyKey(property)),
-      );
-      if (!bold && !styled) return;
-      context.report({
-        node: node.openingElement,
-        message:
-          "The theme draws a table's header (its tint, its labels' weight and color): its cells set only their size.",
       });
     },
   };
@@ -1018,7 +973,7 @@ function createTargetPaths(context) {
     JSXElement(node) {
       const name = elementName(node);
       if (name === "ValueChip" && !cells) {
-        const label = attributeValue(attribute(node, "label"));
+        const label = attributeExpression(attribute(node, "label"));
         const kind = label?.type === "CallExpression" && calleeName(label) === "formatOperator" && label.arguments[0];
         if (kind?.type === "Literal" && kind.value === "modifier") {
           report(
@@ -1045,7 +1000,7 @@ function createToggleStates(context) {
   return {
     JSXElement(node) {
       if (elementName(node) !== "IconButton") return;
-      const label = attributeValue(attribute(node, "aria-label"));
+      const label = attributeExpression(attribute(node, "aria-label"));
       if (flips(label)) {
         context.report({
           node: node.openingElement,
@@ -1117,7 +1072,7 @@ function holds(element, test) {
 /** Whether an element holds a page's or a panel's title: a `CardTitle`, an `h1`. */
 function holdsTitle(element) {
   return holds(element, (child) => {
-    const component = attributeValue(attribute(child, "component"));
+    const component = attributeExpression(attribute(child, "component"));
     return elementName(child) === "CardTitle" || (component?.type === "Literal" && component.value === "h1");
   });
 }
@@ -1135,11 +1090,6 @@ function inConfirmation(node) {
 function inDialog(node) {
   for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "DialogContent") return true;
   return false;
-}
-
-/** Whether the linted file is `file`, the one module the rule leaves the raw pattern to. */
-function inFile(context, file) {
-  return repoPath(context.filename) === file;
 }
 
 /** Whether `node` sits in a row whose `sx` reveals its actions on hover (`ROW_ACTIONS_HOVER_SX`). */
@@ -1166,15 +1116,9 @@ function inRowActions(node) {
   return false;
 }
 
-/** Whether `node` sits in a table's header, a `TableHead`. */
-function inTableHead(node) {
-  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "TableHead") return true;
-  return false;
-}
-
 /** Whether a `Stack` lays its children in a row, on any screen. */
 function isRow(stack) {
-  const direction = attributeValue(attribute(stack, "direction"));
+  const direction = attributeExpression(attribute(stack, "direction"));
   return !!direction && !(direction.type === "Literal" && direction.value === "column");
 }
 
@@ -1186,23 +1130,6 @@ function leadsWith(element, name) {
       (child.type === "JSXExpressionContainer" && child.expression.type !== "JSXEmptyExpression"),
   );
   return first?.type === "JSXElement" && elementName(first) === name;
-}
-
-/** Whether a header's cell is drawn for each of its columns: a `.map` callback's, its text a column's `label`. */
-function mapsColumns(cell) {
-  // A column's label (`{column.label}`), or the label a list of them holds (`{label}`)
-  const readsLabel = cell.children.some(
-    (child) =>
-      child.type === "JSXExpressionContainer" &&
-      (child.expression.type === "Identifier" ||
-        (child.expression.type === "MemberExpression" &&
-          !child.expression.computed &&
-          child.expression.property.name === "label")),
-  );
-  if (!readsLabel) return false;
-  for (let p = cell.parent; p && !(p.type === "JSXElement" && elementName(p) === "TableHead"); p = p.parent)
-    if (p.type === "CallExpression" && calleeName(p) === "map") return true;
-  return false;
 }
 
 /** Whether two words name a state and its opposite: `Star` and `Unstar`, `Expand` and `Collapse`. */
@@ -1263,7 +1190,6 @@ export default {
   "page-titles": { meta: { type: "suggestion" }, create: createPageTitles },
   panels: { meta: { type: "suggestion" }, create: createPanels },
   "section-headings": { meta: { type: "suggestion" }, create: createSectionHeadings },
-  "table-frames": { meta: { type: "suggestion" }, create: createTableFrames },
   "target-paths": { meta: { type: "suggestion" }, create: createTargetPaths },
   "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
   "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },

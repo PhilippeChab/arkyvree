@@ -148,6 +148,9 @@ const TEST_MIRRORS = [
   ["tests/routers/", "server/routers/"],
   ["tests/jobs/", "server/jobs/"],
   ["tests/cache/", "server/cache/"],
+  ["tests/cow/", "server/cow/"],
+  ["tests/database/", "server/database/"],
+  ["tests/repositories/", "server/repositories/"],
   ["tests/engine/", "engine/"],
   ["tests/middlewares/", "server/middlewares/"],
   ["tests/emails/", "server/emails/"],
@@ -1173,14 +1176,6 @@ function hasNullMember(type) {
   return isPromise && hasNullMember((type.typeArguments ?? type.typeParameters)?.params[0]);
 }
 
-/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
-function isConcern(fn) {
-  return (
-    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
-    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
-  );
-}
-
 /** Whether `node` is an empty value a skipped read stands in for: `[]`, `new Map()`, `Promise.resolve([])`, `false`… */
 function isEmptyValue(node) {
   if (!node) return true;
@@ -1353,6 +1348,14 @@ function validTargetOf(node) {
   if (request.type !== "MemberExpression" || request.property.name !== "req" || request.object.name !== "c")
     return null;
   return node.arguments[0]?.value ?? null;
+}
+
+/** Whether a function takes its base class as a concern does: `<B extends Constructor<…>>(Base: B)`. */
+export function isConcern(fn) {
+  return (
+    fn.typeParameters?.params[0]?.constraint?.type === "TSTypeReference" &&
+    fn.typeParameters.params[0].constraint.typeName.name === "Constructor"
+  );
 }
 
 export default {

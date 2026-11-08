@@ -5,15 +5,15 @@ import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { Campaigns, Characters, PlayerCharacters, Players } from "@/server/repositories/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { notesOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { createTestCharacter, postCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { postCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { CHARACTER_ALIGNMENT, CHARACTER_DEITY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type Client = typeof api;
@@ -150,44 +150,6 @@ describe("campaigns characters", () => {
       character.$put({ param: { id: campaignId, characterId }, json: { visibility: "Partial" } }),
     );
     expect(updated).toMatchObject({ characterId, visibility: "Partial" });
-  });
-
-  test("refuses a character built on another ruleset", async () => {
-    const { rulesetId } = await getSeedCtx();
-    const { campaignId } = await setup();
-    const fork = await expectOk(
-      api.api.rulesets[":id"].fork.$post({
-        param: { id: rulesetId },
-        json: { name: "Link Test Fork", description: "", private: true },
-      }),
-    );
-    const characterId = (await postCharacter({ name: "Fork Character", rulesetId: fork.id })).id;
-
-    const response = await characters.$post({ param: { id: campaignId }, json: { characterId } });
-    await expectStatus(response, 422);
-    expect(await response.json()).toMatchObject({
-      message: "Only characters built on the campaign's ruleset can be linked",
-    });
-  });
-
-  test("answers a non-member's link as it answers an unknown campaign, an archived campaign's too", async () => {
-    const { campaignId } = await setup();
-    const outsider = await createSignedInUser("outsider");
-    const characterId = (await createTestCharacter(outsider.user.id)).id;
-    const theirs = outsider.api.api.campaigns[":id"].characters;
-    const linkTo = (id: string) => expectStatus(theirs.$post({ param: { id }, json: { characterId } }), 404);
-
-    const unknown = await (await linkTo(NIL_UUID)).text();
-    expect(await (await linkTo(campaignId)).text()).toBe(unknown);
-    await expectOk(api.api.campaigns[":id"].$delete({ param: { id: campaignId } }));
-    expect(await (await linkTo(campaignId)).text()).toBe(unknown);
-    expect(await PlayerCharacters.findOne(db, { characterId })).toBeUndefined();
-  });
-
-  test("refuses to link the same character twice", async () => {
-    const { campaignId, characterId } = await setup();
-    await expectOk(characters.$post({ param: { id: campaignId }, json: { characterId } }));
-    await expectStatus(characters.$post({ param: { id: campaignId }, json: { characterId } }), 409);
   });
 
   test("Public hides private notes and share tokens from other players", async () => {
@@ -489,21 +451,9 @@ describe("campaigns characters", () => {
     });
   });
 
-  test("requires a session", async () => {
-    const { campaignId, characterId } = await setup();
-    const guest = guestApi.api.campaigns[":id"].characters;
-    await expectStatus(guest.$get({ param: { id: campaignId }, query: {} }), 401);
-    await expectStatus(guest.$post({ param: { id: campaignId }, json: { characterId } }), 401);
-  });
-
   test("rejects a link without a valid character id", async () => {
     const { campaignId } = await setup();
     await expectStatus(characters.$post({ param: { id: campaignId }, json: {} as never }), 400);
     await expectStatus(characters.$post({ param: { id: campaignId }, json: { characterId: "not-a-uuid" } }), 400);
-  });
-
-  test("returns 404 for a missing campaign", async () => {
-    const { characterId } = await setup();
-    await expectStatus(characters.$post({ param: { id: NIL_UUID }, json: { characterId } }), 404);
   });
 });

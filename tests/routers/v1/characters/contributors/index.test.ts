@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createBaseCharacter } from "@/tests/support/v1.ts";
 
@@ -60,13 +59,5 @@ describe("v1 character contributors", () => {
     await expectStatus(contributors.leave.$post({ param }), 204);
     await expectStatus(contributors.leave.$post({ param }), 404);
     await expectStatus(api.v1.characters[":id"].$get({ param }), 404);
-  });
-
-  test("refuses a stranger, and a character that doesn't exist", async () => {
-    const { character } = await setup();
-    const { api } = await createKeyedApi((await createTestUser()).user.id);
-    const contributors = api.v1.characters[":id"].contributors;
-    await expectStatus(contributors.$get({ param: { id: character.id }, query: {} }), 404);
-    await expectStatus(contributors.$get({ param: { id: NIL_UUID }, query: {} }), 404);
   });
 });

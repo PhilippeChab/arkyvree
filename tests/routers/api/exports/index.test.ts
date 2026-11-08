@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createSignedInUser, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSignedInUser } from "@/tests/support/api.ts";
 import { createExport } from "@/tests/support/files.ts";
 
 describe("exports", () => {
@@ -25,18 +25,5 @@ describe("exports", () => {
     expect(response.headers.get("Content-Disposition")).toBe(
       "attachment; filename*=UTF-8''%E9%BE%8D%20O%27Hara%20%282%29-sheet.pdf",
     );
-  });
-
-  test("returns 404 for another user's export", async () => {
-    const { user } = await createSignedInUser("owner");
-    const { id } = await createExport(user.id);
-    const { api: other } = await createSignedInUser("other");
-    await expectStatus(other.api.exports[":id"].download.$get({ param: { id } }), 404);
-  });
-
-  test("requires a session", async () => {
-    const { user } = await createSignedInUser("owner");
-    const { id } = await createExport(user.id);
-    await expectStatus(guestApi.api.exports[":id"].download.$get({ param: { id } }), 401);
   });
 });

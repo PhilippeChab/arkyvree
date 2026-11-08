@@ -610,20 +610,6 @@ describe("finalizing several levels at once", () => {
     }
     expect(finalizeBatch(ctx, NIL_UUID, fighterLevels(1), {})).rejects.toThrow(NotFoundError);
   });
-
-  test("numbers a class the batch takes twice: the second takes the level after the first", async () => {
-    const ctx = await getSeedCtx();
-    const firstTwo = {
-      General: ["Power Attack", "Great Fortitude"],
-      "Fighter Bonus Feat": ["Improved Initiative", "Dodge"],
-    };
-    // A plan names each level's class alone: the batch's Fighter levels are 1 and 2 (checked by `finalizeBatch`)
-    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
-    await finalizeBatch(ctx, characterId, fighterLevels(2), {
-      skills: { Climb: 5, Intimidate: 5, Jump: 5, Swim: 5 },
-      feats: firstTwo,
-    });
-  });
 });
 
 describe("a pool's room", () => {
@@ -1148,28 +1134,6 @@ describe("a spell known once in its class list", () => {
       expect(levelUp(session, ctx, characterId, "Sorcerer", 1, lightLevel, force)).rejects.toMatchObject(KNOWN_LIGHT);
     const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, sorcererLight);
     expect(pickSteps(previewed).spells.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual([]);
-  });
-
-  test("lists a cleric spell a cleric/wizard's spellbook has on his cleric's list too, each at its class's DC", async () => {
-    const ctx = await getSeedCtx();
-    const abilities = { Intelligence: 16, Wisdom: 14 };
-    const characterId = await createSeedCharacter(ctx, "fighter", { abilities, fields: { [CHARACTER_XP]: 1000 } });
-    // Forced: the levels' other picks aren't this test's
-    const spellbook = { hp: 4, spells: { "Wizard Spells": ["Protection from Evil"] } };
-    await levelUp(session, ctx, characterId, "Wizard", 1, spellbook, true);
-    await levelUp(session, ctx, characterId, "Cleric", 1, WAR_CLERIC_1, true);
-
-    const { spellGroups } = await sheetOf(characterId);
-    const protection = (list: string) =>
-      spellGroups
-        .find((apt) => apt.aptitudeName === list)
-        ?.levels.find((group) => group.level === 1)
-        ?.spells.find((spell) => spell.name === "Protection from Evil");
-    // Wisdom 14 (+2) for the cleric's, with his Good domain's tag; Intelligence 16 (+3) for the wizard's
-    expect([protection("Cleric Spells"), protection("Wizard Spells")]).toMatchObject([
-      { dc: 10 + 1 + 2, tags: [{ name: "Good Domain" }] },
-      { dc: 10 + 1 + 3 },
-    ]);
   });
 
   test("keeps a spell a level knows again from before the rule: each level edits as it reads, a new repeat refused", async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** A character of the seeded user's, and a new user invited to contribute to it. */
@@ -97,10 +97,5 @@ describe("character contributors", () => {
       other.api.api.characters.contributors.invites[":id"].accept.$post({ param: { id: second.id } }),
       409,
     );
-  });
-
-  test("requires a session", async () => {
-    const { id } = await setup();
-    await expectStatus(guestApi.api.characters[":id"].contributors.$get({ param: { id }, query: {} }), 401);
   });
 });

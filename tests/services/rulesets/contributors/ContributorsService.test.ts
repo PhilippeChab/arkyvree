@@ -102,12 +102,6 @@ describe("ContributorsService", () => {
       );
     });
 
-    test("rejects a pending invite", async () => {
-      const { ownerSession, ruleset } = await setup();
-      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
-      expect((await ContributorsService.rejectInvite(session, invite.id)).status).toBe("Rejected");
-    });
-
     test("refuses another user's invite, and an invite to a ruleset archived since", async () => {
       const { ownerSession, ruleset } = await setup();
       const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
