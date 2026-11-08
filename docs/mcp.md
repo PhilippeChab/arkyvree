@@ -103,9 +103,3 @@ authorization specification asks: the app is the OAuth client, the app (`APP_URL
   daily cleanup deletes expired sign-ins and pairs, and an app left without one.
 - **Its writes:** before the user answers, a sign-in locks no account (`withSignInWrite`); its answer and every write
   after it lock the user's (`withAccountWrite`).
-
-## Testing
-
-`tests/support/mcp.ts` connects the SDK's client to the app in the test's process (`connectMcp`), by either protocol,
-and reads a tool's result (`callTool`, `callToolRefused`). A test names no game's term: it reads the names it uses from
-the API's answers, as v1's do.

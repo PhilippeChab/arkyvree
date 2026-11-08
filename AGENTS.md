@@ -1,6 +1,6 @@
 # Development Guidelines
 
-> See [README.md](./README.md) for tech stack, project structure, and setup instructions.
+> See [README.md](./README.md) for setup instructions.
 
 ## Code Conventions
 
@@ -127,11 +127,7 @@ Anything that _throws_ on the basis of ownership is a permission check and shoul
 
 ## Frontend Architecture
 
-Read [docs/frontend.md](./docs/frontend.md) before writing or changing anything under `client/`. It holds the client's conventions:
-
-- mobile first, components, styles, the API layer, state, hooks;
-- the shared building blocks, toasts, loading, dialogs and pages;
-- each pattern's one way and the lint rule that holds it.
+Read [docs/frontend.md](./docs/frontend.md) before writing or changing anything under `client/`.
 
 `tests/lint/documentation.test.ts` fails when a lint rule, a shared component or a hook is missing from the docs.
 
@@ -203,7 +199,7 @@ Shared test code lives in `tests/support/` (and `tests/e2e/support/`), one modul
 - `pf1/`, `dnd5.2/`: each ruleset's own: `seed.ts` (`getPf1SeedCtx` / `getDnd52SeedCtx`; the other base rules' core rules, `findOtherCoreRules` / `findOtherCoreRulesets`), `characters.ts` (`createPf1Character` / `createDnd52Character`, `buildCharacter`), `levels.ts` (`addLevel`, `picksOf`, `findPicks`), `levelPlans.ts` (`levelUpPlan`, `levelEditPlan`, `savedPicksOf`); Pathfinder's `scrapedPages.ts`, 5e's `references.ts`
 - `tests/seeds/dnd3.5/seededRows.ts` (and `pf1/`'s, `dnd5.2/`'s): a seeded ruleset's own rows, for the seed tests; `tests/seeds/dnd3.5/freshSeed.ts`: a new system ruleset (or extension) for a seeder test to seed into, and what an entity was seeded with
 - `tests/e2e/support/`: signing in (`signIn.ts`: `signIn`, `signedInPage`, the form's `submitSignIn`, and `openContext` for another user's or a guest's context, which the run's coverage records), `characters.ts` (a shared character opened, `openSharedCharacter`), `campaigns.ts` and `rulesets.ts` (`createCampaign`, `forkCoreRuleset`, through the API, and the pages they open), 3.5's own in `dnd3.5/` (`characters.ts`: `createCharacter` and a character's first level, `addFirstLevel`, through the API, and the Create Character dialog filled, `fillNewCharacter`; `rulesets.ts`: its entities' customization pages, `openFeat`, `openRace`, `openFighterLevel1`, and a Strength modifier, `fillStrengthModifier`; `levelUp.ts`: the Add Level wizard), a campaign's invites in `campaigns.ts` (`invitePlayer`, through the API `postPlayerInvite`), `contributors.ts` (`inviteContributor`, `answerInvite`, `openContributors`), `users.ts` (`createUser`), `database.ts` (`queryDatabase`), `page.ts` (`uniqueName`, since ruleset names are unique across users, `openActionsMenu`, `filterList`, `apiResponse` waits), `emails.ts` (verification and reset codes, OTP, signing up), `notifications.ts` and `api.ts` (`apiOf(page)`). They scope dialog interactions to `[role="dialog"][aria-modal="true"]`; the seeded users' credentials are `TEST_USERS` in `tests/fixtures/auth.fixture.ts`
-- [docs/e2e-coverage.md](./docs/e2e-coverage.md) indexes what each e2e file covers: update it with the suite
+- [docs/e2e-coverage.md](./docs/e2e-coverage.md): the e2e suite's patterns, and what it deliberately leaves out
 
 ## Application Logic
 
@@ -213,11 +209,9 @@ Shared test code lives in `tests/support/` (and `tests/e2e/support/`), one modul
 - See [docs/caching.md](./docs/caching.md) for the caching system: ruleset raw-tier cache, request-scoped query dedup, compose step, invalidation
 - See [docs/deployment.md](./docs/deployment.md) for the Fly.io deployment: two-app topology, worker wake-up via Flycast, CI/CD, env vars, domain setup, and debugging
 - Each ruleset writes down its rulings in `docs/<ruleset>/rules-decisions.md`: how it reads its rules where the source is ambiguous or where it deliberately differs, each naming the code that holds it; settled, changed only on purpose. 3.5's: [docs/dnd3.5/rules-decisions.md](./docs/dnd3.5/rules-decisions.md) (retroactive skill points, no epic levels, rolled 1st-level hit points, overfull pools refused…)
-- See [docs/persistence.md](./docs/persistence.md) for the soft-archive vs hard-delete policy and decision rule
 - See [docs/public-api.md](./docs/public-api.md) for the public API (`/v1`): API keys, the translators and schemas that keep each version's shapes fixed over the app's services, and its OpenAPI document, built from its routes (each one's `describeRoute` and `validate`)
 - See [docs/mcp.md](./docs/mcp.md) for the MCP server (`/mcp`): its tools over the public API's routes, which tool calls a route (its `effect`), how it serves both protocols statelessly, and its OAuth sign-in for Claude and ChatGPT (Client ID Metadata Documents, the consent page, connected apps)
 - See [docs/auth-routing.md](./docs/auth-routing.md) for the auth/routing architecture: three-bucket layout-route tree, cookie security, demo lifecycle (entry-to-auth vs in-app TTL expiry), stale-cookie defense, cross-tab behavior
 - See [docs/access.md](./docs/access.md) for the policy matrix (rulesets / characters / campaigns / customizations), actor definitions (owner / contributor / campaign member), and the ruleset listing-scope reference
-- See [docs/frontend.md](./docs/frontend.md) for the client's conventions: read it before any client change
 - See [docs/ui-buttons.md](./docs/ui-buttons.md) for action button color / variant conventions across Buttons and MenuItems (destructive / caution / positive / cancel)
 - [help/](./help/README.md) is the user-facing help, Help in the app, and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior

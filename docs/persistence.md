@@ -5,8 +5,6 @@ Two row-removal primitives:
 - `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Only the tables that archive have a `deletedAt` column: characters, campaigns, players, invites, users, sessions, email verifications, password resets, OAuth accounts, starred rulesets and ruleset extensions, whose repositories set it. A ruleset's archive is its status instead: `Rulesets.archive` sets it `Archived`, which its listings and checks read. An account's and an invite's archive also take the address off the row (see *FK CASCADE avoidance*). Only those repositories define `archive`: on the others it doesn't exist, so a call is a type error.
 - `repo.delete(...)` — real `db.delete(this.table)`. Hard delete; FK CASCADE fires. Implemented per-repo where used.
 
-This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention. It opens with how a ruleset's and a character's data is stored: the generic tables, which every module's data shares.
-
 ## The generic tables
 
 A ruleset's entities and a character's build are stored in tables no game names (`drizzle/schema.ts`). What a module's data is, each module declares (`RulesetModule.storage`, `StorageDeclaration`: 3.5's `engine/rulesets/dnd3.5/storage/Dnd35Storage.ts`), and the server reads and writes the tables by those declarations (`Engine.forRules(baseRules).storage()`), holding no game's mapping.
@@ -193,7 +191,3 @@ Restoring an override reverts one copy the same way, characters' picks included 
 6. Does re-creating the same row need to restore prior state (star toggle, extension subscribe toggle)? → **archive**, with `upsert` to handle the restore.
 
 If you're adding a new repository that doesn't fit any of these, prefer hard-delete with appropriate `inUse` checks at the service layer. Soft-archive is only worth its weight when you have a concrete reason from the list above.
-
-## When to update this doc
-
-If you add a new repository or change an existing service's removal pattern, update the relevant section. The categorization is intentionally derived-from-code, not aspirational — if something here doesn't match what the code actually does, the doc is wrong, not the code.

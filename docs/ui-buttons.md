@@ -28,31 +28,9 @@ Apply the matrix even when the destructive action fires directly with no confirm
 
 Cancel/Close sits **left** of the primary action in `DialogFooter` (`components/common`), which ends every dialog. The four wrappers in `client/src/components/common/StandardDialogs.tsx` (`CreateDialog`, `EditDialog`, `ConfirmDialog`, `DeleteDialog`) render it already — prefer them over hand-rolling a dialog so the convention stays automatic.
 
-For confirmations, `ConfirmDialog` takes the intent directly: `intent="caution"` for Archive / Leave, `"positive"` for Publish, `"destructive"` for destructive actions (`DeleteDialog` is that preset), plus a `confirmLabel` naming the action and an optional `confirmIcon`. `DialogFooter`'s action takes its `intent` the same way: the one type and color map is `Intent` (`components/common/intent.ts`), shared with `ActionMenuItem` and `RowAction`.
-
 ## Pair patterns to know
 
 - **Accept + Reject (invites, notifications):** both `variant="contained"`, Accept = `success`, Reject = `error`. Visually equal-weight because both choices are equally consequential and there's no confirm.
 - **Primary + Cancel (form dialogs):** primary = contained gold, Cancel = outlined inherit. Hierarchy is clear.
 - **Unarchive + Delete Permanently (the header menu of an archived record's page):** Archive is replaced by Unarchive (`positive`) and Delete Permanently (`destructive`) sits below it. See `CharacterDetailsPage.tsx` and `CampaignDetailsPage.tsx`.
 - **Self-action vs admin-action on the same surface:** When one row action or dialog handles both "leave on my own behalf" and "remove someone else", branch the intent (and the dialog copy) on whether the row is the current user's. Self → `caution` + "Leave …"; other → `destructive` + "Remove …", each with its icon (`LeaveIcon`, `DeleteIcon`) and in one wording: what the leave ends, "unless you're invited again", for a leave (a campaign's "You will lose access unless you're invited again.", a contributor's "You will no longer be a contributor unless you're invited again.": a public ruleset stays readable), "This action cannot be undone." for a removal. See `PlayersSection.tsx`'s row `RowAction` (`isCurrentUser`: Leave / Remove) and `RemovePlayerDialog` in `PlayerDialogs.tsx` (`isSelfRemoval`: Leave Campaign / Remove Player), and a contributor's Leave and Remove, both a `RemoveContributorDialog` (`components/contributors`, `isSelfRemoval`).
-
-## Anti-patterns
-
-- ❌ `<Button variant="contained" sx={{ background: "red" }}>Delete</Button>` — bypasses the theme and the dark-mode palette. Use `color="error"` instead.
-- ❌ `<Button>Delete</Button>` with no color on a destructive confirm — reads as a default action. Use `color="error" variant="contained"`.
-- ❌ `<Button>Cancel</Button>` in a dialog with no variant/color — reads heavier than intended next to a contained submit. Use `variant="outlined" color="inherit"`, or rely on `StandardDialogs`.
-- ❌ Confirming an Archive with `DeleteDialog` — its red "Delete" button reads as destruction. Use `ConfirmDialog` with `intent="caution"` and a label like "Archive Character".
-- ❌ Splitting Cancel into a Modal that wraps a `<form>` — `Modal` doesn't run the dirty-form close guard. Use `FormDialog` (see [docs/frontend.md](./frontend.md#dialog-conventions)).
-
-## Loading state
-
-Pair the action's `color` with `<DiceSpinner>` in wrapper mode so the button doesn't shrink when loading flips:
-
-```tsx
-<Button onClick={onConfirm} variant="contained" color="error" disabled={isPending}>
-  <DiceSpinner size="small" loading={isPending}>Delete</DiceSpinner>
-</Button>
-```
-
-Static `startIcon` stays outside the wrapper.

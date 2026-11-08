@@ -69,7 +69,7 @@ Every id-keyed Map of the view (`byId(type)`, `*BySource`, `*ByEntity`, a module
 const feat = rulesetData.find("feats", storedFeatId);
 ```
 
-This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
+When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
 Also at compose time: an entity's links (`linksOf`, a feat's or a spell's `listedIn` links, a class level's `grants`) name the entities that stand for their targets and pools (`toId`, `viaId` resolved), and a sibling loser's links of a role that merges (its declared `merge`, `union`: a feat's pools) merge into its winner's, deduped by target. `CowData.resolveLinks` only touches an entity's single links (its record's `links`, by role), so its links are composed apart from the entities, the first time an entity's are read.
 
@@ -112,9 +112,6 @@ From `server/cow/views/` (the scopes) and `server/cow/` (the copies):
 | `withRulesetScope`                      | The single entry point for a single-ruleset operation.                                                                                                                          |
 | `withRulesetScopes`                     | Multi-ruleset list enrichment.                                                                                                                                                  |
 | `RulesetViews.getTargetPaths` / `getTargetPathCatalogs` | A ruleset's target paths of a kind (a template's too), as the engine lists them from its view, kept with it.                                                     |
-| `withRulesetWrite` / `withLockedRuleset` / `withContributorsRuleset` | How a ruleset's write opens its transaction, the only way (`server/services/writes/rulesetWrites.ts`; `arkyvree/writes-in-transactions`): its locks taken before it reads anything (`Locks`), its waits bounded (`withWrite`: `lock_timeout`, a 409 `BUSY_RULESET_MESSAGE` past them, or on a deadlock). `withRulesetWrite`, a write of its content: the scope its lock gives (`withLockedRulesetScope`), the session's policy, its views dropped once it commits (everything, or its entities alone). `withLockedRuleset`, a write of the ruleset's own row alone (its status, its contributors) or of a ruleset it's the source of (a fork's, shared): the row locked, the session's policy on it read under the lock, no view read, its content version as it is. `withContributorsRuleset`, a write of a contributor named by its id (an invite's answer, a role's change, a revoke): the contributor read in the write's transaction, then its ruleset's row locked as `withLockedRuleset` locks it, and the write handed the session's policy on the ruleset and the ruleset, read under the lock whether or not the session may read it (`getRulesetPolicy`), which decides the session's rights (an invitee can't read the ruleset yet). |
-| `withCharacterWrite` / `withLockedCharacter` / `withInviteCharacter` / `withCharacterCreate` | How a character's write opens its transaction, the only way (`server/services/writes/characterWrites.ts`; `arkyvree/writes-in-transactions`), bounded as a ruleset's (`withWrite`, a 409 `BUSY_CHARACTER_MESSAGE`). `withCharacterWrite`, a write that reads its ruleset's view (its levels, edit, scores, inventory, modifiers): its ruleset's chain shared (`withSharedRulesetScope`), then the character's row, then its access, then its view, fresh. `withLockedCharacter`, a write that reads none of its ruleset (its own columns alone, its archive, contributors, share link, an item's or a modifier's removal): the row locked, archived or not, then read again under the lock and handed on with the session's policy on it, which refuses who may not make the write and the wrong state; no view read. `withInviteCharacter`, a contributor invite's answer, named by its id: the invite read in the write's transaction, then its character's row locked as `withLockedCharacter` locks it. `withCharacterCreate`, a new character's or an import's: the ruleset's chain shared, the session's policy on it, its view. |
-| `withCampaignWrite` / `withInviteCampaign` / `withCampaignCreate` | How a campaign's write opens its transaction, the only way (`server/services/writes/campaignWrites.ts`; `arkyvree/writes-in-transactions`), bounded as a ruleset's (`withWrite`, a 409 `BUSY_CAMPAIGN_MESSAGE`, a creation's `BUSY_CREATION_MESSAGE`): the campaign's row locked first (an invite's answer, by its seat's campaign, the invite and its seat read in the write's transaction), so its writes take turns (two Game Masters' removals of each other leave the last one), then the session's access; a new campaign's, its creator's row and its ruleset's, shared. An invite to a seat locks its invitee's account shared before the campaign's row (`account`, `lockAccount`). Users lock before rulesets, rulesets before campaigns, campaigns before characters (a character's link), as an account's deletion takes them. |
 | `withLockedRulesetScope`                | A write's scope, under its lock (`LockedRulesetScope`, which only it makes): the ruleset's row locked and its content version bumped (`Locks.lockRulesetContent`), then its row, its sources and its source chain's rows shared, with what else it reads of other rulesets (`reads`: a subscribe's new extensions), in the one order every lock of several takes (forks, extensions, bases, by id: `Locks.lockRulesets`), then its view, fresh at the versions they read (`RulesetViews.getFreshData`). Its chain can't change while it holds them. |
 | `withSharedRulesetScope`                | A scope of a write that reads a ruleset without changing it (a character's), in its transaction: the ruleset's row shared, then its source chain's, in the one order every lock of several takes, then what the write checks under them (`before`: its own row's lock, its access), then its view, fresh at the versions they read (`SharedRulesetScope`, whose `versions` its target paths are checked by). Writes that hold it run alongside each other; a write of the ruleset waits for them, and they for it. |
 | `EntityEdit.cowToEdit` / `cowOwned` / `cowById` | The row an entity's update or delete writes: the ruleset's own entity, or the copy of an inherited one; an owned entity's on its owner's copy, mapped by position (`cowOwned`); by id through the view (`cowById`). Built in a write's locked scope (`new EntityEdit(scope)`): no other write of the ruleset or of its source chain runs meanwhile, and its view is fresh, so a row it finds stays until it ends, and none locks a row. Each refuses an entity the view doesn't show in the write's words (an entity's `Feat not found`, `EntityWriter.getNotFound`; a customization's source's). Each answers an `EditTarget`, which a write asks what it needs of a copy, for what the client sent: the token to check (`expected`: none on a copy this call made, whose token was its source's; a copy another write made since the client read the entity is checked by the client's token, its source's, a 409 when the copy's row changed since: an entity's copy, stamped as it's made, always; an owned entity's copy, which keeps its source's times, once it's written), the entities it owns by their positions (`findOwned`), and a customization's row (`customization`, several at once `resolveCustomizations`: its copy, by the ids this call's copy recorded, or itself, which must still exist; a 404 otherwise, and a 409 on a copy another write made, whose ids the client doesn't have). |
@@ -129,14 +126,6 @@ From `server/cow/views/` (the scopes) and `server/cow/` (the copies):
 The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (merged links, modifiers, field values, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
 
 From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`RulesetViews.ts`). The view a read gets, `RulesetData` (`engine/core/view/`), is the engine's: `engine/index.ts` exports its type and composes it (`Engine.forRules(baseRules).copyOnWrite().buildView`).
-
-| Symbol                            | Purpose                                                                                               |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `RulesetViews.invalidate`         | Clear the cache entries for a single ruleset. A write's helper calls it once the write commits.        |
-| `RulesetViews.invalidateEntities` | Same, but keep target-paths cache for reads (a requirement's write, which changes no target path; the next write re-lists them, its version moved). |
-| `RulesetViews.invalidateAll`      | Nuclear option — every ruleset. Used by tests and broad recomputations.                               |
-| `RulesetViews.warm`               | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
-| `RulesetData` (type)              | Parameter / return type for scope callbacks and framework extension points.                           |
 
 `CowData`, the class `rulesetData.cow` is (`engine/core/cow/CowData.ts`), comes from `engine/index.ts` too.
 
@@ -172,10 +161,6 @@ interface RulesetRawData {
 ```
 
 The fork and each ancestor in its source chain gets its own entry. Bases + published extensions (`system: true`) are shared across every fork that descends from them.
-
-### Why two tiers weren't needed
-
-An earlier design cached the fully-composed `RulesetData` per fork. That duplicated the base's entities into every fork's cache entry — ~500 forks × a hot D&D 3.5 base = ~500× RAM waste and ancestor data evicted under load. The raw-tier-only design pins the base once and re-composes on read (sub-millisecond over arrays of a few hundred entities).
 
 ### Compose step
 
@@ -229,6 +214,22 @@ Three calls:
 | `RulesetViews.invalidate(id)`         | Raw entities for this ruleset + dependent COW data and target paths  | Entities added/removed/renamed, or a modifier written: a list's slots and links decide which lists have spell levels and known-spell paths (target paths change) |
 | `RulesetViews.invalidateAll()`        | Every ruleset's everything                                           | Test teardown, rare                                                                                                                                              |
 
+The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Each in-flight read uses its promise identity as a token for its cache key. Invalidation removes only reads depending on the edited ruleset; a late completion may finish for its caller but cannot repopulate the cache or remove a newer pending read.
+
+With process caching disabled, raw reads also bypass the process-wide in-flight
+map so separate worker jobs do not share old reads.
+
+Shared cache fills run in their own request-dedup scope. An older HTTP request
+must not refill an invalidated process cache from promises it cached before a
+concurrent edit. Reads within each fill still deduplicate. COW and target-path
+cache keys include the ordered source chain, so old subscription metadata cannot
+replace entries for a newly subscribed or unsubscribed ruleset.
+
+Target-path composition happens inside the registered cache fill, not before it.
+This lets invalidation reject a late fill throughout composition and generation.
+A path cache hit reads ruleset metadata but skips composition; entity-only
+invalidation still preserves paths, and unrelated rulesets remain cached.
+
 ### A write's fresh view
 
 The cache is in-process, filled through the shared `db`, and a write's invalidation runs after it commits: a write that waited on another could read the view from before it, and another process's cache never hears of it. So a write doesn't trust the cache as it stands: under its locks (a ruleset's write's, `withLockedRulesetScope`; a character's, which reads its ruleset without changing it, `withSharedRulesetScope`), it reads its view fresh (`RulesetViews.getFreshData`), at the content versions its locks read.
@@ -242,7 +243,7 @@ In tests, the cache reads through the test's transaction and outlives its rollba
 
 ### Lookup indices (accessor maps)
 
-Services used to query the DB for single rows even after the cache was warm. The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:
+The composed view now exposes pre-built Maps over the arrays so consumers do O(1) lookups without round-tripping Postgres:
 
 The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
@@ -281,7 +282,7 @@ Each is built from the composed lists the first time it's read and kept with the
 
 Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), which an entity's description reads (`entities(type).describe(id)`) with its modifiers and its requirements (`modifiersBySource`, `requirementsByEntity`).
 
-The flat `modifiers` / `requirements` arrays were removed from `RulesetData`, and an entity's fields are its own (`ViewEntity.fields`) — flat arrays encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
+Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
 
 ### What's not in the ruleset cache (and why)
 
@@ -409,66 +410,6 @@ flowchart LR
 - **Sweep**: every 60s, delete expired non-pinned entries. Timer is `unref`d so it doesn't hold the process alive.
 - **Disable knob**: set `DISABLE_CACHE=true` to make every `get` miss and every `set` a no-op (for debugging).
 
-## End-to-end example: `POST /api/characters/advancements/:id/options/spells`
-
-With both cache layers warm:
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Middle as Hono middleware
-    participant Svc as getStepOptions
-    participant Repo as Repo Proxy
-    participant RS as Ruleset Cache
-    participant Dedup as Request Dedup
-    participant DB
-
-    Client->>Middle: POST /options/spells
-    Middle->>Middle: runWithRequestCache(next)
-    Middle->>Svc: call
-    Svc->>Repo: Characters.findOne(db, {id, userId})
-    Repo->>Dedup: miss
-    Repo->>DB: SELECT ...
-    DB-->>Repo: row
-    Repo-->>Svc: character
-
-    Svc->>Repo: Rulesets.findOne(db, {id: rulesetId})
-    Repo->>Dedup: miss
-    Repo->>DB: SELECT ...
-    DB-->>Repo: ruleset
-
-    Svc->>RS: RulesetViews.getData(rulesetId, cowData)
-    RS->>RS: tier-1 hit (pinned)
-    RS->>RS: compose
-    RS-->>Svc: RulesetData
-
-    Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
-    Svc->>Svc: grants = rulesetData.linksOf(level.id, "grants")
-
-    Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
-    Repo->>Dedup: miss
-    Repo->>DB: SELECT ...
-    DB-->>Repo: rows
-
-    Note over Svc: detailedCharacter.build(...)
-    Svc->>Repo: Rulesets.findOne(db, {id})
-    Repo->>Dedup: HIT (same key as earlier)
-    Repo-->>Svc: (same promise)
-
-    Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
-    Repo->>Dedup: HIT
-    Repo-->>Svc: (same promise)
-
-    Note over Svc: ...more reads, some hit dedup
-
-    Svc->>Repo: Entities.findOptionPage(db, ...)
-    Note over Repo: paginated — not cached
-    Repo->>DB: SELECT ... LIMIT 20
-    DB-->>Repo: rows
-    Repo-->>Svc: rows
-    Svc-->>Client: JSON
-```
-
 ## Adding a new entity to the ruleset cache
 
 1. Declare the kind in its module's storage (`RulesetModule.storage`), its link roles in its registries (`linkRoles`), and its entity's type in its module's entry in the view's registry (`ModuleKinds`, `declare module` from the module's `view/rows.ts`: a `ViewEntity` of its own fields and single links' roles, which its code reads it by, `DeclaredRows`): `RawDataReader` reads every kind's stored entities alike, the engine builds the raw data from them by the declaration (`CopyOnWriteEngine.buildRawData`: each its record, `StorageEngine.recordOf`, and its links, `StorageEngine.viewLinksOf`), and the compose step composes every declared kind alike (`RulesetComposition`, by `StorageEngine.viewSchema`: an owned kind's entities follow their owners', by their `ownerId`, an entity's links name the entities that stand for their targets, a sibling's of a role that merges merged in).
@@ -476,42 +417,3 @@ sequenceDiagram
 3. An index past those (a kind's entities by another key, an entity's links of a role in another order) is its module's: a getter or a method of the view it derives (3.5's `Dnd35View`), built on first read and wrapped with `rulesetData.resolvingIds(map)` so `.get` auto-resolves stored pre-COW ids (`linksOf` resolves its entity's id itself).
 4. Update `tests/cow/views/dnd3.5/RulesetViews.test.ts` with a smoke test (the existing compose+invalidation patterns are copy-paste templates); include a COW-fork assertion so regressions in the auto-resolve path are caught.
 5. Migrate callers: `Repo.findOne(db, { id })` inside a `withRulesetScope` → `rulesetData.find(type, id)`. No canonicalize needed — the wrapper handles it.
-
-## A repository method's verb
-
-The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `has`, `count`) is memoized, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
-
-A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A verb added to `methodVerbs.json` joins its class for every repository at once: a read verb would memoize, a write verb would clear.
-
-## References
-
-- `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cow/views/` — `RulesetViews` (`RulesetViews.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up; the engine composes a read's view, `Engine.forRules(baseRules).copyOnWrite().buildView`, its owners' values in their declared fields' order; the target paths, the engine's listing of a view), and what it reads with: a ruleset's own rows (`RawDataReader.ts`) and its `CowData` (`CowDataReader.ts`, which a copy's transaction reads too), and what a fork's snapshots stand for (`RulesetChanges.ts`, its Local Changes)
-- `server/cow/views/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the scope a service reads a view in
-- `engine/core/view/` — the compose step with its sibling merging and FK remap (`RulesetComposition.ts`, with `RulesetRawData`, the rows it takes; `buildView`, `engine/api/CopyOnWriteEngine.ts`, runs it), the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`), the sibling merge's rules, which the compose step and a copy share (`SiblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
-- `server/cow/` (copy-on-write's write side) (`server/cow/writes/`) — `EntityEdit` (the row an entity's change writes, an owned one's on its owner's), `EditTarget` (what a write asks of that row: a copy's token, its owned entities, its customizations' rows), `CustomizationEdit` (the row a customization's change writes), `EntityUses` (what keeps an entity in use), `EntityNames` (the names a create, a rename, a restore or a subscribe takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source), `ExtensionDeparture` (what a ruleset keeps of an extension it unsubscribes from), `CustomizationCopies` (an entity's customizations read and copied), `findOwnedPairs` (the owned entities of two owners paired by position)
-- `engine/core/cow/` — a ruleset's copy-on-write state (`CowData.ts`: what an id resolves to, and whether it's overridden or a sibling loser), its build from rows (`CowDataBuilder.ts`: the snapshot, sibling, reprint, identity, own-namesake and owned passes), and what it's read from (`CowSources.ts`: `buildSourceChain`, `getReads`, `getPairedOwnerIds`, by how a module's kinds pair, `CowKinds`: the storage's `namesakes` of each kind, the kinds that own another, and the kinds they own)
-- `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
-- `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation
-- `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a child's parent's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/core/character/CharacterBuilder.ts`), its parent first
-- `engine/core/character/CharacterBase.ts` — `build(rows, view, master)` reads nothing: the ruleset's data loader assembles the character's data from the rows and the view
-- `server/timing.ts` — hit/miss counters surfaced in request logs
-- `tests/cow/views/dnd3.5/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork resolving maps
-- `tests/cache/dnd3.5/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
-- `tests/services/characters/advancements/dnd3.5/CharacterAdvancementsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
-
-The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Each in-flight read uses its promise identity as a token for its cache key. Invalidation removes only reads depending on the edited ruleset; a late completion may finish for its caller but cannot repopulate the cache or remove a newer pending read. This replaces global generation counters without an unbounded per-ruleset counter registry.
-
-With process caching disabled, raw reads also bypass the process-wide in-flight
-map so separate worker jobs do not share old reads.
-
-Shared cache fills run in their own request-dedup scope. An older HTTP request
-must not refill an invalidated process cache from promises it cached before a
-concurrent edit. Reads within each fill still deduplicate. COW and target-path
-cache keys include the ordered source chain, so old subscription metadata cannot
-replace entries for a newly subscribed or unsubscribed ruleset.
-
-Target-path composition happens inside the registered cache fill, not before it.
-This lets invalidation reject a late fill throughout composition and generation.
-A path cache hit reads ruleset metadata but skips composition; entity-only
-invalidation still preserves paths, and unrelated rulesets remain cached.
