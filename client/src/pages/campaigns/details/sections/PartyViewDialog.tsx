@@ -1,7 +1,7 @@
 import { Box, DialogTitle, IconButton, Stack } from "@mui/material";
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
-import { ListPageResults, Modal } from "@/client/src/components/common/index.ts";
+import { ListPageResults, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 import type { useListPageQuery } from "@/client/src/hooks/index.ts";
 import { DURATION, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
@@ -20,10 +20,10 @@ interface PartyViewProps {
   characters: { card: ReactNode; isPartial: boolean; key: string }[];
   /** Its list's own empty state, when it holds nothing and no search runs (a `BlankState`). */
   empty: ReactNode;
-  /** What its row ends on, past its last column: its list's Load More, while there's more to load. */
-  end?: ReactNode;
   /** Its characters' list (`useListPageQuery`): its first load, its failure and its emptiness show in its place. */
   list: ReturnType<typeof useListPageQuery>;
+  /** Its list's next page, while there's one: whether it loads, and what loads it (its row's Load More, at its end). */
+  next?: { loading: boolean; onLoad: () => void };
   /** Closes it: its X, Escape. */
   onClose: () => void;
   /** The search its list runs, if any. */
@@ -45,8 +45,9 @@ interface TrackEdges {
 const CHROME = 96;
 
 /**
- * A column: as tall as the track; a phone's width less a peek of the next, then a fixed width: past a tablet's, two show
- * whole on a laptop, more on a wider screen. Its cards stand 24px apart, and it stops at its start as the row scrolls.
+ * A column: as tall as the track; a phone's width less a peek of the next, then a fixed width: past a tablet's, two
+ * show whole on a laptop, more on a wider screen. Its cards stand 24px apart, and it stops at its start as the row
+ * scrolls.
  */
 const COLUMN_SX = {
   flexShrink: 0,
@@ -60,13 +61,19 @@ const END_SX = { flexShrink: 0, justifyContent: "center", px: 3, scrollSnapAlign
 /** The least height of a column whose short card leaves room under it for the next one, its header and more. */
 const PAIRING_HEIGHT = 620;
 
+/**
+ * How long the row slides to a new page's first card before it snaps to its columns again: it doesn't snap meanwhile,
+ * so the page coming in doesn't make it jump to the nearest column first.
+ */
+const SETTLE_TIME = DURATION.ring;
+
 /** A card's place in its column: as tall as its card, but the column's last, which shrinks to what the others leave. */
 const SLOT_SX = { flex: "0 0 auto", minHeight: 0, "&:last-child": { flexShrink: 1 } } as const;
 
 /**
- * Its track: the columns in a row filling the dialog under its header, which scrolls sideways, smoothly but for a viewer
- * who asked for less motion, each column stopping at the page's gutter; room above them for a card's lift on hover, and
- * below for the scrollbar.
+ * Its track: the columns in a row filling the dialog under its header, which scrolls sideways, smoothly but for a
+ * viewer who asked for less motion, each column stopping at the page's gutter; room above them for a card's lift on
+ * hover, and below for the scrollbar.
  */
 const TRACK_SX = {
   flex: 1,
@@ -109,13 +116,29 @@ function pairsAtFirst() {
  * scrolling it; a partly seen character's, short, leaves the rest of its column to the next where the column is tall
  * enough to show both. Mounted with the dialog's content, so its sheets load as it opens.
  */
-function PartyView({ characters, empty, end, list, onClose, search, title }: PartyViewProps) {
+function PartyView({ characters, empty, list, next, onClose, search, title }: PartyViewProps) {
   const trackId = useId();
   // The track appears once the list has loaded: its listeners attach to it then
   const [track, setTrack] = useState<HTMLDivElement | null>(null);
   const [edges, setEdges] = useState<TrackEdges>({ atStart: true, atEnd: true });
   const [pairs, setPairs] = useState(pairsAtFirst);
   const columns = groupPartyColumns(characters, pairs);
+  // From its Load More's click till it has slid to the page it loaded: the row doesn't snap
+  const [settling, setSettling] = useState(false);
+  // How many characters it showed: a page that comes in slides the row to its first, before the browser shows it
+  const shown = useRef(characters.length);
+
+  useLayoutEffect(() => {
+    const first = shown.current;
+    shown.current = characters.length;
+    if (!track || first === 0 || characters.length <= first) return;
+    const key = characters[first]?.key;
+    slideTo(
+      track,
+      columns.findIndex((column) => column.some((placed) => placed.key === key)),
+    );
+    setTimeout(() => setSettling(false), SETTLE_TIME);
+  }, [characters, columns, track]);
 
   useEffect(() => {
     if (!track) return;
@@ -161,6 +184,10 @@ function PartyView({ characters, empty, end, list, onClose, search, title }: Par
   const handleNext = () => {
     if (track) slide(track, 1);
   };
+  const handleLoadMore = () => {
+    setSettling(true);
+    next?.onLoad();
+  };
 
   return (
     <Stack sx={{ height: "100%" }}>
@@ -168,7 +195,7 @@ function PartyView({ characters, empty, end, list, onClose, search, title }: Par
         <DialogTitle noWrap sx={{ flex: 1, minWidth: 0 }}>
           {title}
         </DialogTitle>
-        {(columns.length > 1 || !!end) && (
+        {(columns.length > 1 || !!next) && (
           <>
             <IconButton
               aria-label="Previous Characters"
@@ -207,7 +234,7 @@ function PartyView({ characters, empty, end, list, onClose, search, title }: Par
               const scrolled = event.currentTarget;
               setEdges((previous) => edgesOf(scrolled, previous));
             }}
-            sx={TRACK_SX}
+            sx={[TRACK_SX, settling && { scrollSnapType: "none" }]}
           >
             {columns.map((column) => (
               // Keyed by its first character, its cards by theirs
@@ -220,7 +247,12 @@ function PartyView({ characters, empty, end, list, onClose, search, title }: Par
                 ))}
               </Stack>
             ))}
-            {end && <Stack sx={END_SX}>{end}</Stack>}
+            {next && (
+              // Its next page loads from its end, sideways
+              <Stack spacing={2} sx={END_SX}>
+                <LoadMoreButton hasNextPage isFetchingNextPage={next.loading} onClick={handleLoadMore} />
+              </Stack>
+            )}
           </Stack>
         </ListPageResults>
       </Stack>
@@ -247,6 +279,18 @@ function slide(track: HTMLElement, direction: number) {
   const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
   const width = first ? first.getBoundingClientRect().width + gap : track.clientWidth;
   track.scrollBy({ left: direction * width });
+}
+
+/**
+ * Slides the track to its column `index` (a new page's first), stopping at its start: smoothly, but for a viewer who
+ * asked for less motion (its scroll behavior).
+ */
+function slideTo(track: HTMLElement, index: number) {
+  const column = track.children[index];
+  if (!column) return;
+  const inset = Number.parseFloat(getComputedStyle(track).paddingLeft) || 0;
+  const offset = column.getBoundingClientRect().left - track.getBoundingClientRect().left;
+  track.scrollTo({ left: track.scrollLeft + offset - inset });
 }
 
 /**

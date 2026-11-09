@@ -22,7 +22,6 @@ import {
   ListCard,
   ListCardGrid,
   ListPageResults,
-  LoadMoreButton,
   Modal,
   ScrollSafeListbox,
   SearchBar,
@@ -57,7 +56,8 @@ import { PartyViewDialog } from "./PartyViewDialog.tsx";
 import { VisibilityControl } from "./VisibilityControl.tsx";
 
 interface CharacterCardProps {
-  animationIndex: number;
+  /** Its place in the grid, which staggers its entry: none in the Party View, which slides to a new page's cards. */
+  animationIndex?: number;
   animationOffset: number;
   /** Its sheet in brief, under its description, which scroll within the card: the Party View's. */
   brief?: ReactNode;
@@ -261,7 +261,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       key={character.id}
       character={character}
       campaignId={campaign.id}
-      animationIndex={index}
+      animationIndex={brief ? undefined : index}
       animationOffset={characters.offset}
       portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
       brief={brief}
@@ -317,15 +317,8 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
               }))
             : []
         }
-        // Its next page loads from its row's end, sideways
-        end={
-          characters.hasNextPage && (
-            <LoadMoreButton
-              hasNextPage={characters.hasNextPage}
-              isFetchingNextPage={characters.isFetchingNextPage}
-              onClick={characters.loadMore}
-            />
-          )
+        next={
+          characters.hasNextPage ? { loading: characters.isFetchingNextPage, onLoad: characters.loadMore } : undefined
         }
       />
 
