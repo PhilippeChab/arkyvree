@@ -158,10 +158,10 @@ describe("CampaignDocumentsService", () => {
       const { gm, rogue, add } = await setup();
       const outsider = await seat((await createTestCampaign(gm.userId)).campaign.id, "Player Character");
       expect(add({ visibility: "Selected" })).rejects.toEqual(
-        new BadRequestError("A Selected folder or document names one player at least"),
+        new BadRequestError("A Selected item names one player at least"),
       );
       expect(add({ visibility: "Public", readerIds: [rogue.player.id] })).rejects.toEqual(
-        new BadRequestError("Only a Selected folder or document names its players"),
+        new BadRequestError("Only a Selected item names its players"),
       );
       expect(add({ visibility: "Selected", readerIds: [outsider.player.id] })).rejects.toEqual(
         new UnprocessableEntityError("Player not found in this campaign"),
@@ -296,10 +296,10 @@ describe("CampaignDocumentsService", () => {
       );
       expect(await update({ visibility: "Public" })).toMatchObject({ visibility: "Public", readerIds: [] });
       expect(update({ visibility: "Selected" })).rejects.toEqual(
-        new BadRequestError("A Selected folder or document names one player at least"),
+        new BadRequestError("A Selected item names one player at least"),
       );
       expect(update({ readerIds: [bard.player.id] })).rejects.toEqual(
-        new BadRequestError("Only a Selected folder or document names its players"),
+        new BadRequestError("Only a Selected item names its players"),
       );
     });
 

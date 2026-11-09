@@ -1,4 +1,4 @@
-import { Box, Button, Container, Menu, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Menu, Link as MuiLink, Stack, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -34,6 +34,7 @@ import {
   type DocumentFormData,
   DocumentFormDialog,
   EMPTY_DOCUMENT_FORM,
+  MAX_SHOWN_TEXT_BYTES,
   readFileKind,
   readSeatNames,
   saveDocumentFileFn,
@@ -51,46 +52,24 @@ interface DocumentFilePanelProps {
   name: string;
 }
 
-/** What opens a file in its own tab, by what it is. */
-const OPEN_LABELS = { Pdf: "Open PDF", Picture: "Open Full Size", Text: "Open Text File" } as const;
-
 /** A picture's height at most, so what's under it stays in reach. */
 const PICTURE_MAX_HEIGHT = "60vh";
 
 /**
- * A document's file: a picture shown whole, a text file's words (one too large to show opens in its own tab, as a PDF
- * does, in the browser's reader), with its name, type and size, and what opens it there.
+ * A document's file, by what it is. A picture is shown whole and opens at its full size when it's clicked; a text
+ * file's words are shown (one too large to show opens in its own tab alone); either has its file's name, kind and size
+ * in a line under it. A PDF is its file's line and what opens it in its own tab, the browser's reader.
  */
 function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFilePanelProps) {
   const kind = readFileKind(file);
   const FileIcon = DOCUMENT_ICONS[kind];
   const url = toDocumentFileUrl(campaignId, documentId, file);
   const text = useQuery(campaignDocumentTextQuery(campaignId, documentId, file));
-  return (
-    <Panel>
-      <Stack spacing={2}>
-        {kind === "Picture" && (
-          <Box
-            component="img"
-            src={url}
-            alt={name}
-            sx={{
-              display: "block",
-              maxWidth: "100%",
-              maxHeight: PICTURE_MAX_HEIGHT,
-              mx: "auto",
-              borderRadius: 1,
-              objectFit: "contain",
-            }}
-          />
-        )}
-        {kind === "Text" && text.data !== undefined && (
-          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-            {text.data}
-          </Typography>
-        )}
-        {kind === "Text" && text.isLoading && <DiceSpinner />}
-        {kind === "Text" && text.error && <LoadError what="Text" error={text.error} onRetry={() => text.refetch()} />}
+  const caption = `${file.name} · ${describeDocumentFile(file)}`;
+
+  if (kind === "Pdf") {
+    return (
+      <Panel>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
@@ -108,16 +87,66 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
             </Box>
           </Stack>
           <Button
-            variant={kind === "Pdf" ? "outlined" : "text"}
+            variant="outlined"
             startIcon={<OpenInNewIcon />}
             href={url}
             target="_blank"
             rel="noopener"
             sx={{ flexShrink: 0 }}
           >
-            {OPEN_LABELS[kind]}
+            Open PDF
           </Button>
         </Stack>
+      </Panel>
+    );
+  }
+
+  if (kind === "Picture") {
+    return (
+      <Panel>
+        <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+          <Tooltip title="Open Full Size">
+            <Box
+              component="a"
+              href={url}
+              target="_blank"
+              rel="noopener"
+              aria-label={`Open ${name} Full Size`}
+              sx={{ display: "block", maxWidth: "100%", cursor: "zoom-in", lineHeight: 0 }}
+            >
+              <Box
+                component="img"
+                src={url}
+                alt={name}
+                sx={{ maxWidth: "100%", maxHeight: PICTURE_MAX_HEIGHT, borderRadius: 1, objectFit: "contain" }}
+              />
+            </Box>
+          </Tooltip>
+          <Typography variant="caption" sx={{ color: "text.secondary", overflowWrap: "anywhere", textAlign: "center" }}>
+            {caption}
+          </Typography>
+        </Stack>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel>
+      <Stack spacing={2}>
+        {text.data !== undefined && (
+          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {text.data}
+          </Typography>
+        )}
+        {file.byteSize > MAX_SHOWN_TEXT_BYTES && <BlankNote>This file is too large to show here</BlankNote>}
+        {text.isLoading && <DiceSpinner />}
+        {text.error && <LoadError what="Text" error={text.error} onRetry={() => text.refetch()} />}
+        <Typography variant="caption" sx={{ color: "text.secondary", overflowWrap: "anywhere" }}>
+          {caption} ·{" "}
+          <MuiLink href={url} target="_blank" rel="noopener" underline="hover">
+            Open Text File
+          </MuiLink>
+        </Typography>
       </Stack>
     </Panel>
   );
@@ -163,7 +192,8 @@ export default function CampaignDocumentPage() {
       await parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaignId, documentId },
-          json: { ...toDocumentEdit(form, opened, true), updatedAt },
+          // A note's text alone: a document is its file, and a body sent for one is refused
+          json: { ...toDocumentEdit(form, opened, data?.kind === "Note"), updatedAt },
         }),
       );
       return await saveDocumentFileFn(campaignId, documentId, form);

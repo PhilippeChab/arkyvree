@@ -214,6 +214,7 @@ describe("the Documents tab", () => {
     // A text file by its name, whatever the browser calls it, stored as plain text
     expect(describeFileRefusal({ name: "Prep.MD", size: 10, type: "text/markdown" })).toBeNull();
     expect(describeFileRefusal({ name: "letter.txt", size: 10, type: "text/plain" })).toBeNull();
+    expect(describeFileRefusal({ name: "server.log", size: 10, type: "text/plain" })).toBe(refusal);
     expect(toContentType({ name: "Prep.MD", type: "text/markdown" })).toBe("text/plain");
     expect(toContentType({ name: "map.png", type: "image/png" })).toBe("image/png");
     // A file the browser can't name goes to the server, which reads its bytes

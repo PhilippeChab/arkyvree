@@ -90,9 +90,9 @@ class CampaignDocumentsService {
    */
   private assertReaderCount(visibility: DocumentVisibility, readerIds: string[]) {
     if (visibility !== "Selected" && readerIds.length > 0)
-      throw new BadRequestError("Only a Selected folder or document names its players");
+      throw new BadRequestError("Only a Selected item names its players");
     if (visibility === "Selected" && readerIds.length === 0)
-      throw new BadRequestError("A Selected folder or document names one player at least");
+      throw new BadRequestError("A Selected item names one player at least");
   }
 
   /**

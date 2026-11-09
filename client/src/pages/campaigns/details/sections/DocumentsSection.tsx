@@ -1,7 +1,7 @@
 import { Box, Button, IconButton, Menu, Stack, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type DragEvent, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -223,6 +223,20 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
     createForm.reset(EMPTY_DOCUMENT_FORM);
     createDialog.openWith({ kind, parentId: folderId });
   };
+
+  // A file dropped beside the list isn't the browser's to open, which would leave the app: nothing takes it there
+  useEffect(() => {
+    if (!canManageDocuments) return undefined;
+    const ignore = (event: globalThis.DragEvent) => {
+      if (event.dataTransfer?.types.includes("Files")) event.preventDefault();
+    };
+    window.addEventListener("dragover", ignore);
+    window.addEventListener("drop", ignore);
+    return () => {
+      window.removeEventListener("dragover", ignore);
+      window.removeEventListener("drop", ignore);
+    };
+  }, [canManageDocuments]);
 
   // A file dropped on the list is uploaded as one picked is: one at a time
   const dropProps = canManageDocuments

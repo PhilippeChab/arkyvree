@@ -112,7 +112,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       directUpload: false,
       names: [DOCUMENT_FILE_SLOT.name],
       policy: { maxBytes: MAX_DOCUMENT_FILE_BYTES, contentTypes: [...ALLOWED_DOCUMENT_FILE_TYPES] },
-      takes: "a picture, a PDF or a text file",
+      takes: "a picture, a PDF or a text file (.txt or .md, saved as UTF-8)",
     },
   ],
 ]);
@@ -498,7 +498,9 @@ class AttachmentsService {
    * its stored file, and its row.
    */
   async removePendingFile(pending: { id: string; key: string }) {
-    await this.purgeOrphan(pending);
+    // A write that failed after its commit went through left the file attached: it stays its record's
+    const held = await Attachments.findMany(db, { blobIds: [pending.id] });
+    if (held.length === 0) await this.purgeOrphan(pending);
   }
 
   /**

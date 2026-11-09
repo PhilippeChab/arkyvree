@@ -105,7 +105,7 @@ describe("CampaignDocumentFilesService", () => {
     expect(await typeOf(fileOf(TEXT, "LETTER.MD"))).toBe("text/plain");
 
     // No other file: a page, text under another name, a file whose bytes aren't text, one too large; a note holds none
-    const refused = new BadRequestError("The file isn't a picture, a PDF or a text file");
+    const refused = new BadRequestError("The file isn't a picture, a PDF or a text file (.txt or .md, saved as UTF-8)");
     const binary = new Uint8Array([0x4d, 0x5a, 0x00, 0x01, 0xff]);
     for (const file of [fileOf(HTML, "map.png"), fileOf(HTML, "page.html"), fileOf(binary, "tool.txt")])
       expect(upload(file)).rejects.toEqual(refused);

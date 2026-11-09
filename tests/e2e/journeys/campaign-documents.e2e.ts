@@ -83,6 +83,17 @@ test.describe("A campaign's documents", () => {
       await expect(player.getByRole("heading", { name: "A letter" })).toBeVisible();
       await expect(player.getByText("Meet me at the old mill.")).toBeVisible();
       await expect(player.getByRole("link", { name: "Open Text File" })).toBeVisible();
+
+      // The Game Master renames the letter from its own page, which keeps its file
+      await page.getByRole("row", { name: "Open A letter" }).click();
+      await page.getByRole("button", { name: "More Actions" }).click();
+      await page.getByRole("menuitem", { name: "Edit" }).click();
+      const editDialog = page.getByRole("dialog", { name: "Edit Document" });
+      await editDialog.getByLabel("Name").fill("A sealed letter");
+      await editDialog.getByRole("button", { name: "Update" }).click();
+      await expect(editDialog).toBeHidden();
+      await expect(page.getByRole("heading", { name: "A sealed letter" })).toBeVisible();
+      await expect(page.getByText("Meet me at the old mill.")).toBeVisible();
     } finally {
       await player.context().close();
     }

@@ -67,6 +67,9 @@ export default new Hono<SessionContext>()
       "Content-Disposition": toInlineDisposition(file.filename),
       // A text file's bytes are UTF-8 (its upload's check)
       "Content-Type": file.contentType === "text/plain" ? "text/plain; charset=utf-8" : file.contentType,
+      // Nothing a picture or a text file holds runs or loads anything, were a browser to read it as a page; a PDF's
+      // reader, the browser's, takes none
+      ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "default-src 'none'; sandbox" }),
       "X-Content-Type-Options": "nosniff",
     });
   })
@@ -76,7 +79,8 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        kind: z.enum(DOCUMENT_KINDS),
+        // A document is the file its upload sends
+        kind: z.enum(DOCUMENT_KINDS).exclude(["Document"]),
         name: documentName,
         body: documentText.optional(),
         parentId: z.string().uuid().nullable().default(null),

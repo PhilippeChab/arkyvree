@@ -59,7 +59,10 @@ export type DocumentFile = NonNullable<CampaignDocument["file"]>;
 const FILE_KIND_LABELS = { Pdf: "PDF", Picture: "Picture", Text: "Text file" } as const;
 
 /** The files a document takes, as a file input's `accept` lists them: their types, and a text file's names. */
-export const DOCUMENT_FILE_ACCEPT = [...ALLOWED_DOCUMENT_FILE_TYPES, ...DOCUMENT_TEXT_EXTENSIONS].join(",");
+export const DOCUMENT_FILE_ACCEPT = [
+  ...ALLOWED_DOCUMENT_FILE_TYPES.filter((type) => type !== "text/plain"),
+  ...DOCUMENT_TEXT_EXTENSIONS,
+].join(",");
 
 /**
  * Each item's icon (`readDocumentIconKind`): a folder's, a note's, and a document's by its file, a picture's, a PDF's
@@ -151,7 +154,8 @@ export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "cont
  * it can.
  */
 export function describeFileRefusal(file: Pick<File, "name" | "size" | "type">) {
-  const typed = (ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type);
+  // A text file by its name alone, as the server takes it, whatever the browser calls it
+  const typed = file.type !== "text/plain" && (ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type);
   if (file.type && !typed && !isNamedAsText(file.name))
     return "Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)";
   if (file.size > MAX_DOCUMENT_FILE_BYTES) return `Pick a file of ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;

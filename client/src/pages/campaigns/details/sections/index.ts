@@ -8,6 +8,7 @@ export {
   type DocumentFile,
   type DocumentFormData,
   EMPTY_DOCUMENT_FORM,
+  MAX_SHOWN_TEXT_BYTES,
   readDocumentIconKind,
   readFileKind,
   readSeatNames,
