@@ -5,7 +5,7 @@ import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index
 
 import { ScoreBox } from "./ScoreBox.tsx";
 import { ScoreTile } from "./ScoreTile.tsx";
-import { openingBlock, type SheetBlock, type SheetField } from "./sheetBlocks.ts";
+import { openingBlock, type SheetBlock, type SheetEntry, type SheetField } from "./sheetBlocks.ts";
 
 interface BoxRowProps {
   children: ReactNode;
@@ -18,6 +18,10 @@ interface CompactBlockProps {
 interface CompactSheetProps {
   /** The sheet's blocks, as the engine describes them: a partly seen character's, its identity's alone. */
   blocks: readonly SheetBlock[];
+}
+
+interface EntryChipsProps {
+  entries: SheetEntry[];
 }
 
 /**
@@ -41,7 +45,7 @@ function BoxRow({ children }: BoxRowProps) {
 
 /**
  * A block of the sheet, in brief: its scores in compact boxes; its stats' line, then its first panel's boxes, each a
- * row of them (3.5's combat, then its first weapon set's armor class); its entries' names.
+ * row of them (3.5's combat, then its first weapon set's armor class); its entries' names, then those granted apart.
  */
 function CompactBlock({ block }: CompactBlockProps) {
   if (block.kind === "scores") {
@@ -74,23 +78,36 @@ function CompactBlock({ block }: CompactBlockProps) {
       </Stack>
     );
   }
-  if (block.kind === "entries" && block.entries.length > 0) {
+  if (block.kind === "entries" && (block.entries.length > 0 || !!block.granted?.entries.length)) {
     return (
       <Stack spacing={1}>
         <SubsectionTitle>{block.title}</SubsectionTitle>
-        <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
-          {block.entries.map((entry) => (
-            <ValueChip
-              key={entry.key}
-              color="default"
-              label={entry.count === undefined ? entry.name : `${entry.name} (x${entry.count})`}
-            />
-          ))}
-        </Stack>
+        <EntryChips entries={block.entries} />
+        {block.granted && block.granted.entries.length > 0 && (
+          <Stack spacing={1}>
+            <SubsectionTitle component="h4">{block.granted.label}</SubsectionTitle>
+            <EntryChips entries={block.granted.entries} />
+          </Stack>
+        )}
       </Stack>
     );
   }
   return null;
+}
+
+/** An entries block's entries, each its name as a chip, with its count when it's held more than once. */
+function EntryChips({ entries }: EntryChipsProps) {
+  return (
+    <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
+      {entries.map((entry) => (
+        <ValueChip
+          key={entry.key}
+          color="default"
+          label={entry.count === undefined ? entry.name : `${entry.name} (x${entry.count})`}
+        />
+      ))}
+    </Stack>
+  );
 }
 
 /** A field that holds a value: a number, an option or a text, none of them empty. */

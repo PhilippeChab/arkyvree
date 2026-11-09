@@ -100,7 +100,9 @@ export function ListCard({
     const update = () => setOverflow((previous) => overflowOf(body, previous));
     // Its first overflow once it's laid out, then as its height or what it holds changes (a sheet that comes in)
     const resizes = new ResizeObserver(update);
+    // Its current blocks alone: one it no longer holds (a sheet's spinner) is let go
     const observeAll = () => {
+      resizes.disconnect();
       resizes.observe(body);
       for (const block of body.children) resizes.observe(block);
     };

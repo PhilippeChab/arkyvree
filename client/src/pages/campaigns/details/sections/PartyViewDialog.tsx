@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } f
 
 import { ListPageResults, LoadMoreButton, Modal } from "@/client/src/components/common/index.ts";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
-import type { useListPageQuery } from "@/client/src/hooks/index.ts";
+import { useLatest, type useListPageQuery } from "@/client/src/hooks/index.ts";
 import { DURATION, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 import { groupPartyColumns } from "./partyColumns.ts";
@@ -123,22 +123,34 @@ function PartyView({ characters, empty, list, next, onClose, search, title }: Pa
   const [edges, setEdges] = useState<TrackEdges>({ atStart: true, atEnd: true });
   const [pairs, setPairs] = useState(pairsAtFirst);
   const columns = groupPartyColumns(characters, pairs);
-  // From its Load More's click till it has slid to the page it loaded: the row doesn't snap
+  // From its Load More's click till it has slid to the page that came in, or the load ended without one: no snapping
   const [settling, setSettling] = useState(false);
-  // How many characters it showed: a page that comes in slides the row to its first, before the browser shows it
-  const shown = useRef(characters.length);
+  // How many characters it held at its Load More's click, the page after them the one it slides to; none otherwise
+  const requested = useRef<number | null>(null);
+  const settleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const latest = useLatest({ characters, columns });
+  const loading = next?.loading ?? false;
+  const count = characters.length;
 
+  // A Load More's page in, the row slides to its first character before the browser shows it
   useLayoutEffect(() => {
-    const first = shown.current;
-    shown.current = characters.length;
-    if (!track || first === 0 || characters.length <= first) return;
-    const key = characters[first]?.key;
-    slideTo(
-      track,
-      columns.findIndex((column) => column.some((placed) => placed.key === key)),
-    );
-    setTimeout(() => setSettling(false), SETTLE_TIME);
-  }, [characters, columns, track]);
+    const from = requested.current;
+    if (!track || from === null || loading) return;
+    requested.current = null;
+    const grew = count > from;
+    if (grew) {
+      const key = latest.current.characters[from]?.key;
+      slideTo(
+        track,
+        latest.current.columns.findIndex((column) => column.some((placed) => placed.key === key)),
+      );
+    }
+    // It snaps again once it has slid there, or at once when the load brought no one
+    clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => setSettling(false), grew ? SETTLE_TIME : 0);
+  }, [count, latest, loading, track]);
+
+  useEffect(() => () => clearTimeout(settleTimer.current), []);
 
   useEffect(() => {
     if (!track) return;
@@ -185,6 +197,7 @@ function PartyView({ characters, empty, list, next, onClose, search, title }: Pa
     if (track) slide(track, 1);
   };
   const handleLoadMore = () => {
+    requested.current = characters.length;
     setSettling(true);
     next?.onLoad();
   };

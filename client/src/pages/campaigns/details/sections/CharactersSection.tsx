@@ -12,7 +12,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
 import {
@@ -51,6 +51,7 @@ import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index
 import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
+import { campaignCharactersState } from "./campaignCharactersState.ts";
 import { PartySheet } from "./PartySheet.tsx";
 import { PartyViewDialog } from "./PartyViewDialog.tsx";
 import { VisibilityControl } from "./VisibilityControl.tsx";
@@ -250,6 +251,8 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const { value: viewParam, setValue: setViewParam } = useSearchParam("characterView", "grid");
   // The tabs share the URL's params and stay mounted: hidden behind the Players tab, it loads no sheet
   const { section } = useParams<{ section?: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const party = section === "characters" && oneOf(viewParam, CHARACTER_VIEWS, "grid") === "party";
 
   const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
@@ -267,6 +270,12 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       brief={brief}
     />
   );
+  // Opened from the tab, it closes back to the tab's entry in the history; opened from a link, it leaves its address
+  const handlePartyViewOpen = () => setViewParam("party", { state: { partyView: true } });
+  const handlePartyViewClose = () => {
+    if (campaignCharactersState(location.state).partyView) navigate(-1);
+    else setViewParam("grid", { replace: true });
+  };
   const empty = (
     <BlankState
       icon={CharacterIcon}
@@ -285,7 +294,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
             <Button
               variant="outlined"
               aria-haspopup="dialog"
-              onClick={() => setViewParam("party")}
+              onClick={handlePartyViewOpen}
               sx={{ textTransform: "none" }}
             >
               Party View
@@ -302,21 +311,17 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
       <PartyViewDialog
         open={party}
-        // Closed, it leaves the address as it was before it opened
-        onClose={() => setViewParam("grid", { replace: true })}
+        onClose={handlePartyViewClose}
         title={`${campaign.name} — Party View`}
         list={characters}
         search={searchQuery}
         empty={empty}
-        characters={
-          party
-            ? characters.items.map((character, index) => ({
-                key: character.id,
-                isPartial: character.isPartial,
-                card: renderCard(character, index, <PartySheet campaignId={campaign.id} characterId={character.id} />),
-              }))
-            : []
-        }
+        // Its cards stay while it fades out as it closes; mounted with its content alone, their sheets load as it opens
+        characters={characters.items.map((character, index) => ({
+          key: character.id,
+          isPartial: character.isPartial,
+          card: renderCard(character, index, <PartySheet campaignId={campaign.id} characterId={character.id} />),
+        }))}
         next={
           characters.hasNextPage ? { loading: characters.isFetchingNextPage, onLoad: characters.loadMore } : undefined
         }
