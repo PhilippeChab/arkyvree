@@ -198,13 +198,15 @@ class CampaignDocumentsService {
 
   /**
    * A campaign's folders and documents the session sees (`isDocumentReader`), their text left out: every one for its
-   * Game Master, a player's those its audience admits, which hold every folder above them.
+   * Game Master, a player's those its audience admits, which hold every folder above them; and whether the session is
+   * its Game Master (`isGameMaster`), whose page says whom each admits, an empty or archived campaign's too.
    */
   async getDocuments(session: Session, campaignId: string) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     const tree = await readDocumentTree(db, campaignId);
     const items = [...tree.values()].filter((item) => policy.isDocumentReader(readDocumentAudience(tree, item.id)));
-    return { items: items.map((item) => this.describe(item, tree, policy)) };
+    // Whether the session reads whom each item admits, which its page lays out by, an archived campaign's too
+    return { isGameMaster: policy.isGameMaster(), items: items.map((item) => this.describe(item, tree, policy)) };
   }
 
   /**

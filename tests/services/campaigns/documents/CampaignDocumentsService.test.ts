@@ -182,6 +182,14 @@ describe("CampaignDocumentsService", () => {
       expect(await namesSeen(rogue.session, campaign.id)).toEqual(["Act", "Letter", "Map"]);
       expect(await namesSeen(bard.session, campaign.id)).toEqual(["Act", "Map"]);
 
+      // Who reads whom each item admits, an archived campaign's Game Master too
+      await CampaignsService.archiveCampaign(gm, campaign.id);
+      for (const [session, isGameMaster] of [
+        [gm, true],
+        [rogue.session, false],
+      ] as const)
+        expect((await CampaignDocumentsService.getDocuments(session, campaign.id)).isGameMaster).toBe(isGameMaster);
+
       const { session: outsider } = await createTestUser();
       expect(CampaignDocumentsService.getDocuments(outsider, campaign.id)).rejects.toEqual(
         new NotFoundError("Campaign not found"),
