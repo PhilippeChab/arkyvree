@@ -109,9 +109,9 @@ describe("campaign documents", () => {
     );
     const twist = await expectOk(documents.$post({ param, json: { kind: "Document", name: "Twist" } }));
     const mapFile = document.file;
-    const file = mapFile.$put({ param: { ...param, documentId: map.id }, form: { file: png("Keep map.png") } });
+    const file = mapFile.$put({ param: { ...param, documentId: map.id }, form: { file: png("Bob's map.png") } });
     expect(await expectOk(file)).toEqual({
-      name: "Keep map.png",
+      name: "Bob's map.png",
       contentType: "image/png",
       byteSize: 64,
       uploadedAt: expect.any(String),
@@ -122,11 +122,13 @@ describe("campaign documents", () => {
     expect(read.status).toBe(200);
     expect(Object.fromEntries(read.headers)).toMatchObject({
       "cache-control": "private, no-store",
-      "content-disposition": "inline; filename*=UTF-8''Keep%20map.png",
+      // Its name escaped as RFC 5987 takes it, past what `encodeURIComponent` escapes (a quote mark among them, which a
+      // browser reads as its syntax), and an ASCII one for the browsers that read no other
+      "content-disposition": `inline; filename="Bob's map.png"; filename*=UTF-8''Bob%27s%20map.png`,
       "content-type": "image/png",
       "x-content-type-options": "nosniff",
     });
-    expect(new Uint8Array(await read.arrayBuffer())).toEqual(new Uint8Array(await png("Keep map.png").arrayBuffer()));
+    expect(new Uint8Array(await read.arrayBuffer())).toEqual(new Uint8Array(await png("Bob's map.png").arrayBuffer()));
 
     // A hidden document's file is an unknown one's, and a player changes none
     await mapFile.$put({ param: { ...param, documentId: twist.id }, form: { file: png("twist.png") } });

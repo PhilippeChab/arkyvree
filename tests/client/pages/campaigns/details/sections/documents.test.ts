@@ -168,6 +168,8 @@ describe("the Documents tab", () => {
     expect(readDocumentIconKind({ kind: "Document", file: pdf })).toBe("Pdf");
 
     expect(describeFileRefusal({ size: 10, type: "application/pdf" })).toBeNull();
+    // A file the browser can't name goes to the server, which reads its bytes
+    expect(describeFileRefusal({ size: 10, type: "" })).toBeNull();
     expect(describeFileRefusal({ size: 10, type: "text/html" })).toBe("Pick a picture (PNG, JPEG, WebP, GIF) or a PDF");
     expect(describeFileRefusal({ size: MAX_DOCUMENT_FILE_BYTES + 1, type: "image/png" })).toBe(
       "Pick a file of 10 MB at most",

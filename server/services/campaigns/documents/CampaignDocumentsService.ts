@@ -85,8 +85,9 @@ class CampaignDocumentsService {
 
   /**
    * An item as the session reads it (`policy`): what it is, where it stands (`path`, the folders above it), its file
-   * (none without one) and when it changed; its Game Master also reads whom it admits, by its own setting (`visibility`, `readerIds`) and in effect
-   * (`audience`), which a player doesn't, so a Selected item doesn't tell them who else sees it. Its text is its read's.
+   * (none without one) and when it changed; its Game Master also reads whom it admits, by its own setting
+   * (`visibility`, `readerIds`) and in effect (`audience`), which a player doesn't, so a Selected item doesn't tell them
+   * who else sees it. Its text is its read's.
    */
   private describe(item: TreeItem, tree: Tree, policy: CampaignsPolicy) {
     const { body: _body, fileName, fileSize, fileType, fileUploadedAt, readerIds, visibility, ...stored } = item;

@@ -63,7 +63,7 @@ describe("CampaignDocumentFilesService", () => {
   });
 
   test("puts an image or a PDF in a document, read back by whoever sees it, never at a public URL", async () => {
-    const { gm, player, campaign, shown } = await setup();
+    const { gm, player, campaign, shown, hidden } = await setup();
     const map = { name: "map.png", contentType: "image/png", byteSize: PNG.byteLength, uploadedAt: expect.any(String) };
     expect(
       await CampaignDocumentFilesService.setDocumentFile(gm, campaign.id, shown.id, fileOf(PNG, "map.png")),
@@ -91,16 +91,16 @@ describe("CampaignDocumentFilesService", () => {
     ).rejects.toEqual(unsupported);
     const attachment = await Attachments.findOne(db, slot);
     expect(AttachmentsService.detach(gm, attachment!.id)).rejects.toEqual(new NotFoundError("Attachment not found"));
-    expect(
-      AttachmentsService.createDirectUpload(gm, {
-        ...slot,
-        byteSize: 64,
-        contentType: "image/png",
-        filename: "map.png",
-      }),
-    ).rejects.toEqual(
-      new BadRequestError(`${DOCUMENT_FILE_SLOT.recordType} files are uploaded through their own route`),
+    // A direct upload is refused before anything is read of the document, whoever asks: its answer says nothing of it
+    const { session: outsider } = await createTestUser("outsider");
+    const throughRoute = new BadRequestError(
+      `${DOCUMENT_FILE_SLOT.recordType} files are uploaded through their own route`,
     );
+    const upload = { ...slot, byteSize: 64, contentType: "image/png", filename: "map.png" };
+    for (const [session, recordId] of [gm, player, outsider].flatMap((one) =>
+      [shown.id, hidden.id, NIL_UUID].map((id) => [one, id] as const),
+    ))
+      expect(AttachmentsService.createDirectUpload(session, { ...upload, recordId })).rejects.toEqual(throughRoute);
   });
 
   test("refuses a file that's no image or PDF, one too large, and a folder", async () => {
@@ -113,6 +113,21 @@ describe("CampaignDocumentFilesService", () => {
     expect(
       CampaignDocumentFilesService.setDocumentFile(gm, campaign.id, shown.id, fileOf(large, "huge.png")),
     ).rejects.toEqual(new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`));
+
+    // A name is stored without control characters nor the marks that reverse its text, and cut short
+    await CampaignDocumentFilesService.setDocumentFile(gm, campaign.id, shown.id, fileOf(PNG, "map\u202Egnp.exe\n"));
+    expect((await CampaignDocumentFilesService.getDocumentFile(gm, campaign.id, shown.id)).filename).toBe("mapgnp.exe");
+    await CampaignDocumentFilesService.setDocumentFile(
+      gm,
+      campaign.id,
+      shown.id,
+      fileOf(PNG, `${"a".repeat(300)}.png`),
+    );
+    expect((await CampaignDocumentFilesService.getDocumentFile(gm, campaign.id, shown.id)).filename).toBe(
+      "a".repeat(255),
+    );
+    await CampaignDocumentFilesService.removeDocumentFile(gm, campaign.id, shown.id);
+    stored.clear();
 
     const folder = await add("Handouts", "Public", "Folder");
     expect(

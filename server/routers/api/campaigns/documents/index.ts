@@ -21,6 +21,20 @@ const FORM_OVERHEAD_BYTES = 64 * 1024;
 /** The seats a Selected folder or document admits. */
 const readerIds = z.array(z.string().uuid());
 
+/**
+ * A file's `Content-Disposition`, shown in the browser under its name: an ASCII name for the browsers that read no
+ * other, and its own (RFC 5987), whose encoding escapes what `encodeURIComponent` leaves (`'`, `(`, `)`, `*`), which a
+ * browser would read as its syntax and drop the name for.
+ */
+function toInlineDisposition(filename: string) {
+  const ascii = filename.replace(/[^\x20-\x7e]|["\\]/g, "_");
+  const encoded = encodeURIComponent(filename).replace(
+    /['()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  return `inline; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
 export default new Hono<SessionContext>()
   .get("/:id/documents", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
@@ -36,7 +50,7 @@ export default new Hono<SessionContext>()
     const file = await CampaignDocumentFilesService.getDocumentFile(c.var.requestSession, id, documentId);
     return c.body(file.data, 200, {
       "Cache-Control": "private, no-store",
-      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
+      "Content-Disposition": toInlineDisposition(file.filename),
       "Content-Type": file.contentType,
       "X-Content-Type-Options": "nosniff",
     });

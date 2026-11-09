@@ -149,8 +149,8 @@ function AudienceNote({ change, doing, loadError }: AudienceNoteProps) {
 }
 
 /**
- * A document's file, a picture or a PDF: one picked to upload once its form is saved (`file`), checked as it's picked;
- * the one it holds, kept, or removed once it's saved (`removeFile`), which Undo takes back.
+ * A document's file, a picture or a PDF: one picked to upload once its form is saved (`file`), checked as it's picked,
+ * which its bin lets go; the one it holds, kept, or removed once it's saved (`removeFile`), which Undo takes back.
  */
 function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
@@ -172,8 +172,8 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
     ? `${describeDocumentFile(shown!)} · uploaded when saved`
     : kept
       ? describeDocumentFile(kept)
-      : removed
-        ? `${current?.name} is removed when saved`
+      : removed && current
+        ? `${current.name} is removed when saved`
         : "A picture (PNG, JPEG, WebP, GIF) or a PDF, 10 MB at most";
 
   return (
@@ -202,8 +202,10 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
                   aria-label="Remove File"
                   disabled={disabled}
                   onClick={() => {
-                    setPicked(null);
-                    setRemoved(!!current);
+                    // A pick is let go, back to the file the document holds; that file, once none is picked
+                    if (picked) setPicked(null);
+                    else setRemoved(true);
+                    form.clearErrors("file");
                   }}
                 >
                   <DeleteIcon fontSize="small" />
@@ -217,7 +219,7 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
         <FormHelperText error={!!fieldState.error} sx={{ mt: 0 }}>
           {fieldState.error?.message ?? said}
         </FormHelperText>
-        {removed && !picked && (
+        {removed && !picked && current && (
           <Button size="small" onClick={() => setRemoved(false)} disabled={disabled}>
             Undo
           </Button>

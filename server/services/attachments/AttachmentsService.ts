@@ -114,6 +114,9 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   ],
 ]);
 
+/** The longest name a file is stored under, as most file systems take. */
+const MAX_FILENAME_LENGTH = 255;
+
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 class AttachmentsService {
@@ -148,6 +151,16 @@ class AttachmentsService {
   private buildKey(blobId: string, filename: string): string {
     const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
     return `blobs/${blobId}/${safe}`;
+  }
+
+  /**
+   * The name a file is stored and shown under (a document's file's, to its players too): without control characters
+   * nor the marks that reverse its text ("map\u202Egnp.exe"), at most `MAX_FILENAME_LENGTH` characters, "file" if none
+   * is left.
+   */
+  private cleanFilename(name: string): string {
+    const cleaned = name.replace(/[\p{Cc}\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu, "").trim();
+    return cleaned.slice(0, MAX_FILENAME_LENGTH) || "file";
   }
 
   private getAttachableConfig(recordType: string): AttachableConfig {
@@ -303,10 +316,9 @@ class AttachmentsService {
     this.assertWithinPolicy(slot.recordType, data.byteLength, contentType);
 
     const blobId = randomUUID();
-    const key = this.buildKey(blobId, file.name);
-    await withNewBlob((tx) =>
-      Blobs.create(tx, { id: blobId, key, filename: file.name || "file", contentType, byteSize: data.byteLength }),
-    );
+    const filename = this.cleanFilename(file.name);
+    const key = this.buildKey(blobId, filename);
+    await withNewBlob((tx) => Blobs.create(tx, { id: blobId, key, filename, contentType, byteSize: data.byteLength }));
 
     let result;
     try {
@@ -359,8 +371,10 @@ class AttachmentsService {
       recordType: string;
     },
   ) {
-    await this.assertCanAttach(db, session, params.recordType, params.recordId);
+    // A record type whose files go through the server is refused before anything is read of its record: its answer
+    // would say whether the record exists
     this.assertDirectUpload(params.recordType);
+    await this.assertCanAttach(db, session, params.recordType, params.recordId);
     this.assertValidName(params.recordType, params.name);
     this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
 

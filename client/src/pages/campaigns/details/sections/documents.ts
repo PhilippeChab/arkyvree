@@ -128,10 +128,10 @@ export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "cont
 
 /**
  * Why a document can't take a file picked for it, which the server would refuse: its type (by what the browser says
- * of it: the server reads its bytes) or its size; none when it can.
+ * of it, the server reading its bytes, which decide one the browser can't name) or its size; none when it can.
  */
 export function describeFileRefusal(file: Pick<File, "size" | "type">) {
-  if (!(ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type))
+  if (file.type && !(ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type))
     return "Pick a picture (PNG, JPEG, WebP, GIF) or a PDF";
   if (file.size > MAX_DOCUMENT_FILE_BYTES) return `Pick a file of ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;
   return null;

@@ -14,7 +14,7 @@ interface AttachedRecord {
 }
 
 /** What an attachment's write that gave up on a lock answers: another save held its record or its image. */
-const BUSY_ATTACHMENT_MESSAGE = "The image is being changed by another save; try again";
+const BUSY_ATTACHMENT_MESSAGE = "The file is being changed by another save; try again";
 
 /**
  * Locks the campaign a document (`documentId`) is in, as its documents' writes lock it (`withCampaignWrite`): a
