@@ -39,5 +39,6 @@ Answers to common questions about Arkyvree. Something missing or unclear? [Open 
 - [What are Campaigns?](characters-and-campaigns.md#what-are-campaigns)
 - [What is character visibility?](characters-and-campaigns.md#what-is-character-visibility)
 - [What are campaign documents?](characters-and-campaigns.md#what-are-campaign-documents)
+- [What is the Party View?](characters-and-campaigns.md#what-is-the-party-view)
 - [What is the Level-Up Wizard?](characters-and-campaigns.md#what-is-the-level-up-wizard)
 - [Can I export my character?](characters-and-campaigns.md#can-i-export-my-character)

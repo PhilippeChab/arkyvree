@@ -4,11 +4,17 @@
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+
+/** A character of the campaign's Characters tab, as its list answers it: its card, with its link's facts. */
+export type CampaignCharacter = InferResponseType<
+  (typeof rpc.api.campaigns)[":id"]["characters"]["$get"],
+  200
+>["items"][number];
 
 export type CampaignSection = "characters" | "documents" | "players";
 

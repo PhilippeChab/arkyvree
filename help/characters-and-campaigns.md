@@ -108,6 +108,12 @@ Each row tells the Game Masters who sees it (**Seen by every player**, the playe
 
 A player is notified when a folder, a document or a note is shared with them, once for the folder revealed rather than for each document in it, and their tab refreshes on its own. Deleting a folder deletes everything in it. A player removed from the campaign leaves every list they were on.
 
+## What is the Party View?
+
+The campaign's **Characters** tab lists its characters as cards. **Party View**, beside its search (on a phone, under its filter button), opens them over the whole screen, side by side in columns as tall as the screen, in a row that slides: swipe it, scroll it sideways (Shift and the mouse wheel), turn the mouse wheel over it anywhere but a card that scrolls, or use the previous and next arrows at its top. **Load More** waits at the row's end. The **X** at its top right, Escape or the browser's Back closes it. A card that holds more than its column scrolls within it, its name staying at its top, its edge fading while there's more: the mouse wheel over it scrolls it. A Partial character's card is short, so on a screen tall enough the next character's card goes under it, in the rest of the column.
+
+Each card is a character's sheet in brief, what the table needs at a glance first: its combat figures (hit points, initiative, speed, attack bonus, armor class), its ability scores and saving throws, then its identity (alignment, experience points, age…) and its feats, under its race and classes and its description. Click a card to open the full sheet; Back returns to the Party View. It shows each character as its [visibility](#what-is-character-visibility) lets you see it: a Game Master sees every character whole; another player sees a Public character whole, a Partial one's physical traits alone, and no Private one. The page's address keeps it open, so a link to it opens on it.
+
 ## What is the Level-Up Wizard?
 
 The **level-up wizard** is the step-by-step dialog that handles every choice for a new level. It runs at level 1 and at every level after. Each step validates against the ruleset.
