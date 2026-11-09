@@ -137,7 +137,7 @@ describe("campaign documents", () => {
       // Its name escaped as RFC 5987 takes it, past what `encodeURIComponent` escapes (a quote mark among them, which a
       // browser reads as its syntax), and an ASCII one for the browsers that read no other
       "content-disposition": `inline; filename="Bob's map.png"; filename*=UTF-8''Bob%27s%20map.png`,
-      "content-security-policy": "default-src 'none'; sandbox",
+      "content-security-policy": "sandbox",
       "content-type": "image/png",
       "x-content-type-options": "nosniff",
     });

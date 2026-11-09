@@ -67,9 +67,10 @@ export default new Hono<SessionContext>()
       "Content-Disposition": toInlineDisposition(file.filename),
       // A text file's bytes are UTF-8 (its upload's check)
       "Content-Type": file.contentType === "text/plain" ? "text/plain; charset=utf-8" : file.contentType,
-      // Nothing a picture or a text file holds runs or loads anything, were a browser to read it as a page; a PDF's
-      // reader, the browser's, takes none
-      ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "default-src 'none'; sandbox" }),
+      // Nothing a picture or a text file holds runs, were a browser to read it as a page. No more than that: the
+      // browser's own viewer styles what it shows (a picture centered, a text file's lines wrapped), which a stricter
+      // policy would strip. A PDF's reader, the browser's, takes none
+      ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "sandbox" }),
       "X-Content-Type-Options": "nosniff",
     });
   })
