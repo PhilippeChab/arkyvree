@@ -45,7 +45,7 @@ function BoxRow({ children }: BoxRowProps) {
 
 /**
  * A block of the sheet, in brief: its scores in compact boxes; its stats' line, then its first panel's boxes, each a
- * row of them (3.5's combat, then its first weapon set's armor class); its entries' names, then those granted apart.
+ * row of them (3.5's combat, then its first weapon set's armor class); its entries' names, not those granted apart.
  */
 function CompactBlock({ block }: CompactBlockProps) {
   if (block.kind === "scores") {
@@ -78,17 +78,11 @@ function CompactBlock({ block }: CompactBlockProps) {
       </Stack>
     );
   }
-  if (block.kind === "entries" && (block.entries.length > 0 || !!block.granted?.entries.length)) {
+  if (block.kind === "entries" && block.entries.length > 0) {
     return (
       <Stack spacing={1}>
         <SubsectionTitle>{block.title}</SubsectionTitle>
         <EntryChips entries={block.entries} />
-        {block.granted && block.granted.entries.length > 0 && (
-          <Stack spacing={1}>
-            <SubsectionTitle component="h4">{block.granted.label}</SubsectionTitle>
-            <EntryChips entries={block.granted.entries} />
-          </Stack>
-        )}
       </Stack>
     );
   }
