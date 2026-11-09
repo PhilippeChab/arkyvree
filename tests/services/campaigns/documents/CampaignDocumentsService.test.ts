@@ -31,9 +31,12 @@ import { createTestUser } from "@/tests/support/users.ts";
 
 type NewDocument = Parameters<typeof CampaignDocumentsService.createDocument>[2];
 
-/** A new item's parts: a Private document at the top, unless `parts` say otherwise. */
+/**
+ * A new item's parts: a Private note at the top, unless `parts` say otherwise. A note stands for a document here, whose
+ * file its own tests upload (`files/`): the tree's rules read neither's kind.
+ */
 function newDocument(parts: Partial<NewDocument> = {}): NewDocument {
-  return { kind: "Document", name: "Notes", parentId: null, readerIds: [], visibility: "Private", ...parts };
+  return { kind: "Note", name: "Notes", parentId: null, readerIds: [], visibility: "Private", ...parts };
 }
 
 /** What a user was notified of: each notification's type and the name its data gives. */
@@ -74,7 +77,7 @@ describe("CampaignDocumentsService", () => {
       const document = await add({ name: "Map", parentId: folder.id, body: "The keep" });
 
       expect(folder).toMatchObject({ kind: "Folder", body: null, visibility: "Private", authorId: gm.userId });
-      expect(document).toMatchObject({ kind: "Document", body: "The keep", parentId: folder.id, readerIds: [] });
+      expect(document).toMatchObject({ kind: "Note", body: "The keep", parentId: folder.id, readerIds: [] });
       expect((await add({ name: "Blank" })).body).toBe("");
       expect(await activityTypes(gm.userId, TARGET_TYPES.campaignDocuments, folder.id)).toEqual([
         "createCampaignDocument",
@@ -109,7 +112,9 @@ describe("CampaignDocumentsService", () => {
       );
       for (const parentId of [document.id, elsewhere.id, NIL_UUID])
         expect(add({ parentId })).rejects.toEqual(new UnprocessableEntityError("Folder not found in this campaign"));
-      expect(add({ kind: "Folder", body: "text" })).rejects.toEqual(new BadRequestError("A folder holds no text"));
+      expect(add({ kind: "Folder", body: "text" })).rejects.toEqual(new BadRequestError("Only a note holds text"));
+      // A document is its file, which its upload stores with it (`CampaignDocumentFilesService.createDocumentFile`)
+      expect(add({ kind: "Document" })).rejects.toEqual(new BadRequestError("A document is a file: upload one"));
 
       let parentId: string | null = null;
       for (let depth = 1; depth <= MAX_DOCUMENT_DEPTH; depth++) parentId = (await add({ kind: "Folder", parentId })).id;
@@ -145,7 +150,7 @@ describe("CampaignDocumentsService", () => {
       await insertRows(documentsInCampaign, rows);
       await add();
       expect(add()).rejects.toEqual(
-        new ConflictError(`A campaign keeps ${MAX_CAMPAIGN_DOCUMENTS} folders and documents at most`),
+        new ConflictError(`A campaign keeps ${MAX_CAMPAIGN_DOCUMENTS} folders, documents and notes at most`),
       );
     });
 
@@ -314,7 +319,7 @@ describe("CampaignDocumentsService", () => {
       const { gm, campaign, rogue, add } = await setup();
       const folder = await add({ kind: "Folder", visibility: "Public" });
       expect(CampaignDocumentsService.updateDocument(gm, campaign.id, folder.id, { body: "x" })).rejects.toEqual(
-        new BadRequestError("A folder holds no text"),
+        new BadRequestError("Only a note holds text"),
       );
       expect(
         CampaignDocumentsService.updateDocument(rogue.session, campaign.id, folder.id, { name: "Mine" }),
@@ -386,7 +391,7 @@ describe("CampaignDocumentsService", () => {
           {
             campaignId: campaign.id,
             campaignName: campaign.name,
-            kind: "Document",
+            kind: "Note",
             entityName: "Map",
             actorName: null,
           },

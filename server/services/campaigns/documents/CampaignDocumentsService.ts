@@ -29,7 +29,7 @@ import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import { readDocumentTree, type TreeItem } from "./documentTree.ts";
 
-/** An edit of a folder or a document: the parts it changes, and the version of the item it read (`updatedAt`). */
+/** An edit of a folder, a document or a note: the parts it changes, and the version of the item it read (`updatedAt`). */
 interface DocumentEdit {
   body?: string;
   name?: string;
@@ -39,7 +39,7 @@ interface DocumentEdit {
   visibility?: DocumentVisibility;
 }
 
-/** A new folder or document: its kind, its folder (none at the top), its name, a document's text, and whom it admits. */
+/** A new folder, document or note: its kind, its folder (none at the top), its name, a note's text, and whom it admits. */
 interface NewDocument {
   body?: string;
   kind: DocumentKind;
@@ -47,6 +47,18 @@ interface NewDocument {
   parentId: string | null;
   readerIds: string[];
   visibility: DocumentVisibility;
+}
+
+/**
+ * A new document's file, stored ahead of it (`blobId`), which its creation attaches to it in its own write (`attach`),
+ * answering what it holds: the document and its file are stored together, or neither.
+ */
+interface NewDocumentFile {
+  attach: (
+    tx: Db,
+    documentId: string,
+  ) => Promise<{ byteSize: number; contentType: string; name: string; uploadedAt: string }>;
+  blobId: string;
 }
 
 /**
@@ -157,41 +169,52 @@ class CampaignDocumentsService {
   }
 
   /**
-   * Adds a folder or a document to a campaign (`campaignId`), under its lock: its Game Master's
+   * Adds a folder, a document or a note to a campaign (`campaignId`), under its lock: its Game Master's
    * (`canManageDocuments`), in one of its folders, admitting its seats, then within its count
-   * (`MAX_CAMPAIGN_DOCUMENTS`). A folder holds no text; a document's is empty unless given.
+   * (`MAX_CAMPAIGN_DOCUMENTS`). A document is a file (`file`, stored ahead of it and attached in the same write), a
+   * note is text, empty unless given, and a folder holds neither.
    */
-  async createDocument(session: Session, campaignId: string, document: NewDocument) {
+  async createDocument(session: Session, campaignId: string, document: NewDocument, file?: NewDocumentFile) {
     const { body, kind, name, parentId, visibility } = document;
     const readerIds = [...new Set(document.readerIds)].sort();
-    return await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
+    const write = async (tx: Db, { campaign, policy }: Awaited<ReturnType<typeof getReadableCampaign>>) => {
       const tree = await readDocumentTree(tx, campaignId);
       const seats = await Players.findMany(tx, { campaignId });
       policy.canManageDocuments(
         this.placementOf(tree, seats, { height: kind === "Folder" ? 1 : 0, parentId }, readerIds),
       );
-      if (kind === "Folder" && body !== undefined) throw new BadRequestError("A folder holds no text");
+      if (kind !== "Note" && body !== undefined) throw new BadRequestError("Only a note holds text");
+      if (kind === "Document" && !file) throw new BadRequestError("A document is a file: upload one");
+      if (kind !== "Document" && file) throw new BadRequestError("Only a document holds a file");
       this.assertReaderCount(visibility, readerIds);
       if (tree.size >= MAX_CAMPAIGN_DOCUMENTS)
-        throw new ConflictError(`A campaign keeps ${MAX_CAMPAIGN_DOCUMENTS} folders and documents at most`);
+        throw new ConflictError(`A campaign keeps ${MAX_CAMPAIGN_DOCUMENTS} folders, documents and notes at most`);
 
-      const text = kind === "Document" ? (body ?? "") : null;
+      const text = kind === "Note" ? (body ?? "") : null;
       const values = { campaignId, parentId, kind, name, body: text, visibility, authorId: session.userId };
       const [row] = await Documents.create(tx, values);
       if (!row) throw new InternalError("Failed to create the document");
       await DocumentReaders.create(tx, { documentId: row.id, playerIds: readerIds });
 
-      // A new document holds no file yet
-      const item = { ...row, readerIds, fileName: null, fileSize: null, fileType: null, fileUploadedAt: null };
+      const held = file ? await file.attach(tx, row.id) : undefined;
+      const fileOf = {
+        fileName: held?.name ?? null,
+        fileSize: held?.byteSize ?? null,
+        fileType: held?.contentType ?? null,
+        fileUploadedAt: held?.uploadedAt ?? null,
+      };
+      const item = { ...row, readerIds, ...fileOf };
       const after = new Map(tree).set(item.id, item);
       await this.recordWrite(tx, session, campaign, seats, "createCampaignDocument", item, { after });
       return { ...this.describe(item, after, policy), body: item.body };
-    });
+    };
+    return await withCampaignWrite(session, campaignId, write, { blobId: file?.blobId });
   }
 
   /**
-   * A folder or a document of a campaign (`documentId`), as the session sees it (`canSeeDocument`: a player reads one
-   * its audience admits, refused as not found otherwise), with a document's text, read with the tree in one statement.
+   * A folder, a document or a note of a campaign (`documentId`), as the session sees it (`canSeeDocument`: a player
+   * reads one its audience admits, refused as not found otherwise), with a note's text, read with the tree in one
+   * statement.
    */
   async getDocument(session: Session, campaignId: string, documentId: string) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
@@ -217,8 +240,8 @@ class CampaignDocumentsService {
 
   /**
    * Deletes a folder, with whatever it holds, or a document of a campaign (`documentId`): its Game Master's
-   * (`canManageDocuments`, an unknown item's 404 after who and before the campaign's state), under its lock. What it held goes with it, never up to its folder, where a Private folder's
-   * contents would show.
+   * (`canManageDocuments`, an unknown item's 404 after who and before the campaign's state), under its lock. What it
+   * held goes with it, never up to its folder, where a Private folder's contents would show.
    */
   async removeDocument(session: Session, campaignId: string, documentId: string) {
     return await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
@@ -257,7 +280,7 @@ class CampaignDocumentsService {
       const seats = await Players.findMany(tx, { campaignId });
       const placed = { height: countFolderHeight(tree, documentId), id: documentId, parentId };
       policy.canManageDocuments(this.placementOf(tree, seats, placed, readerIds, parentId !== current.parentId));
-      if (current.kind === "Folder" && edit.body !== undefined) throw new BadRequestError("A folder holds no text");
+      if (current.kind !== "Note" && edit.body !== undefined) throw new BadRequestError("Only a note holds text");
       const readersChange = edit.readerIds !== undefined || !sameSetting;
       if (readersChange) this.assertReaderCount(visibility, readerIds);
 

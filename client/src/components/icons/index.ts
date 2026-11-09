@@ -8,7 +8,6 @@ export {
   Add as AddIcon,
   Archive as ArchiveIcon,
   ArrowBack as ArrowBackIcon,
-  AttachFile as AttachFileIcon,
   Bolt as BoltIcon,
   Map as CampaignIcon,
   Casino as CasinoIcon,
@@ -56,6 +55,7 @@ export {
   Tune as ModifiersIcon,
   MoreVert as MoreVertIcon,
   DriveFileMove as MoveIcon,
+  StickyNote2 as NoteIcon,
   Notifications as NotificationsIcon,
   OpenInNew as OpenInNewIcon,
   PictureAsPdf as PdfIcon,
@@ -92,6 +92,7 @@ export {
   Translate as TranslateIcon,
   Unarchive as UnarchiveIcon,
   PersonOff as UnassignedIcon,
+  UploadFile as UploadFileIcon,
   EventRepeat as UsesIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";

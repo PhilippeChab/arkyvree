@@ -85,23 +85,28 @@ Independent of campaign visibility, a character's owner can share it with a publ
 
 ## What are campaign documents?
 
-A campaign's **Documents** tab holds its Game Masters' folders and documents: their notes and prep, and the handouts they give their players. A Game Master adds them with **Add Folder** and **Add Document**, and changes each from its row: **Edit** (its name and who sees it), **Move** (into another folder, or to the top) and **Delete**. Opening a document shows its text; its **⋮** menu edits the text too. Folders nest 5 deep at most.
+A campaign's **Documents** tab holds what its Game Masters keep for the campaign, in folders: their maps and prep, and the handouts they give their players. It holds two kinds of things:
 
-Each folder and document has a visibility:
+- A **document** is a file a Game Master uploads: a picture (PNG, JPEG, WebP or GIF), a PDF or a text file (.txt or .md), 10 MB at most. **Upload File** picks it, then asks for its name (the file's, until changed) and who sees it. Opening a document shows a picture or a text file on its page, and a PDF opens in its own tab with **Open PDF**. **Edit** replaces its file with another.
+- A **note** is text typed in the app, with no file: **Add Note** creates one, and its **⋮** menu edits its text.
+
+**Add Folder** adds a folder; folders nest 5 deep at most. Each item changes from its row: **Edit** (its name and who sees it), **Move** (into another folder, or to the top) and **Delete**.
+
+Each folder, document and note has a visibility:
 
 | Visibility | Who sees it |
 |---|---|
-| **Private** | The Game Masters alone. A new folder or document starts Private. |
+| **Private** | The Game Masters alone. A new folder, document or note starts Private. |
 | **Public** | Every player. |
 | **Selected** | The players picked, an unassigned slot among them, for the player who takes it. |
 
-A player sees a folder or a document only when it **and every folder above it** let them: a Private folder hides everything in it, names included. So a Game Master can prepare a reveal: mark the handouts in a Private folder Public, then make the folder Public when the moment comes, and they all appear at once.
+A player sees a folder, a document or a note only when it **and every folder above it** let them: a Private folder hides everything in it, names included. So a Game Master can prepare a reveal: mark the handouts in a Private folder Public, then make the folder Public when the moment comes, and they all appear at once.
 
-A document can also hold a file: a picture (PNG, JPEG, WebP or GIF) or a PDF, 10 MB at most. **Attach File** in its **Create** or **Edit** dialog picks one, which is uploaded when the dialog is saved; the same place replaces it or removes it. Opening the document shows a picture on its page, with **Open Full Size**, and a PDF opens in its own tab with **Open PDF**. A file follows its document's visibility: only those who see the document can open it, and it never has a public link.
+A document's file follows its visibility: only those who see the document can open it, and it never has a public link.
 
 Each row tells the Game Masters who sees it (**Seen by every player**, the players' names, or **Seen by no player**), and an edit or a move says at the top of its dialog who it would show the item to or hide it from before it's saved. Opening a folder shows what's in it under its name; the arrow beside the name goes back up.
 
-A player is notified when a folder or a document is shared with them, once for the folder revealed rather than for each document in it, and their tab refreshes on its own. Deleting a folder deletes everything in it. A player removed from the campaign leaves every list they were on.
+A player is notified when a folder, a document or a note is shared with them, once for the folder revealed rather than for each document in it, and their tab refreshes on its own. Deleting a folder deletes everything in it. A player removed from the campaign leaves every list they were on.
 
 ## What is the Level-Up Wizard?
 

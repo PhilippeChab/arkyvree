@@ -33,15 +33,8 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1794175402203,
+      "when": 1794261200986,
       "tag": "0004_campaign_documents",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1794184936299,
-      "tag": "0005_document_attachments",
       "breakpoints": true
     }
   ]

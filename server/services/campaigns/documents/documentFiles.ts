@@ -18,13 +18,13 @@ async function findDocument(db: Db, documentId: string) {
 /**
  * The document `documentId`, once the session may change its file (its campaign's Game Master's, `canManageDocuments`,
  * read through `db`: a write's, under its campaign's lock): whoever may not read its campaign gets the 404 an unknown
- * one gets, and a folder, which holds no file, is refused.
+ * one gets, and a folder or a note, which holds no file, is refused.
  */
 export async function getFileEditableDocument(db: Db, session: Session, documentId: string) {
   const document = await findDocument(db, documentId);
   const { policy } = await getReadableCampaign(db, session, document.campaignId);
   policy.canManageDocuments();
-  if (document.kind !== "Document") throw new BadRequestError("A folder holds no file");
+  if (document.kind !== "Document") throw new BadRequestError(`A ${document.kind.toLowerCase()} holds no file`);
   return document;
 }
 

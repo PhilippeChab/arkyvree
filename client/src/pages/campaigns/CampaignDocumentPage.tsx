@@ -7,6 +7,8 @@ import {
   ActionMenuItem,
   BlankNote,
   DetailPageHeader,
+  DiceSpinner,
+  LoadError,
   PageError,
   PageLoader,
   PageTransition,
@@ -20,7 +22,7 @@ import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { campaignDetailQuery, campaignDocumentQuery } from "./campaignQueries.ts";
+import { campaignDetailQuery, campaignDocumentQuery, campaignDocumentTextQuery } from "./campaignQueries.ts";
 import { campaignDocumentsQuery, campaignSeatsQuery, invalidateCampaignDocuments } from "./details/sectionQueries.ts";
 import {
   DeleteDocumentDialog,
@@ -32,8 +34,7 @@ import {
   type DocumentFormData,
   DocumentFormDialog,
   EMPTY_DOCUMENT_FORM,
-  isPictureFile,
-  readDocumentIconKind,
+  readFileKind,
   readSeatNames,
   saveDocumentFileFn,
   toDocumentEdit,
@@ -43,27 +44,32 @@ import {
 import { useCampaignPermissions } from "./hooks/index.ts";
 
 interface DocumentFilePanelProps {
+  campaignId: string;
+  documentId: string;
   file: DocumentFile;
   /** Its document's name, a picture's alternative text. */
   name: string;
-  /** Where its bytes are read, through the server. */
-  url: string;
 }
 
-/** A picture's height at most, so its page's text stays in reach under it. */
+/** What opens a file in its own tab, by what it is. */
+const OPEN_LABELS = { Pdf: "Open PDF", Picture: "Open Full Size", Text: "Open Text File" } as const;
+
+/** A picture's height at most, so what's under it stays in reach. */
 const PICTURE_MAX_HEIGHT = "60vh";
 
 /**
- * A document's file: a picture shown whole, a PDF opened in its own tab, the browser's reader; either opens there, at
- * its full size, with its name, type and size beside.
+ * A document's file: a picture shown whole, a text file's words (one too large to show opens in its own tab, as a PDF
+ * does, in the browser's reader), with its name, type and size, and what opens it there.
  */
-function DocumentFilePanel({ file, name, url }: DocumentFilePanelProps) {
-  const FileIcon = DOCUMENT_ICONS[readDocumentIconKind({ kind: "Document", file })];
-  const picture = isPictureFile(file);
+function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFilePanelProps) {
+  const kind = readFileKind(file);
+  const FileIcon = DOCUMENT_ICONS[kind];
+  const url = toDocumentFileUrl(campaignId, documentId, file);
+  const text = useQuery(campaignDocumentTextQuery(campaignId, documentId, file));
   return (
     <Panel>
       <Stack spacing={2}>
-        {picture && (
+        {kind === "Picture" && (
           <Box
             component="img"
             src={url}
@@ -78,6 +84,13 @@ function DocumentFilePanel({ file, name, url }: DocumentFilePanelProps) {
             }}
           />
         )}
+        {kind === "Text" && text.data !== undefined && (
+          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {text.data}
+          </Typography>
+        )}
+        {kind === "Text" && text.isLoading && <DiceSpinner />}
+        {kind === "Text" && text.error && <LoadError what="Text" error={text.error} onRetry={() => text.refetch()} />}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
@@ -95,14 +108,14 @@ function DocumentFilePanel({ file, name, url }: DocumentFilePanelProps) {
             </Box>
           </Stack>
           <Button
-            variant={picture ? "text" : "outlined"}
+            variant={kind === "Pdf" ? "outlined" : "text"}
             startIcon={<OpenInNewIcon />}
             href={url}
             target="_blank"
             rel="noopener"
             sx={{ flexShrink: 0 }}
           >
-            {picture ? "Open Full Size" : "Open PDF"}
+            {OPEN_LABELS[kind]}
           </Button>
         </Stack>
       </Stack>
@@ -156,12 +169,12 @@ export default function CampaignDocumentPage() {
       return await saveDocumentFileFn(campaignId, documentId, form);
     },
     onSuccess: (fileError) => {
-      const { message, severity } = describeFileSave("Document updated", fileError);
+      const { message, severity } = describeFileSave(`${data?.kind ?? "Document"} updated`, fileError);
       snackbar[severity](message);
       invalidateCampaignDocuments(queryClient, campaignId);
       editDialog.close();
     },
-    onError: (error) => snackbar.error(error, "Failed to update document"),
+    onError: (error) => snackbar.error(error, `Failed to update ${(data?.kind ?? "Document").toLowerCase()}`),
   });
 
   const deleteMutation = useMutation({
@@ -170,13 +183,13 @@ export default function CampaignDocumentPage() {
         rpc.api.campaigns[":id"].documents[":documentId"].$delete({ param: { id: campaignId, documentId } }),
       ),
     onSuccess: () => {
-      snackbar.success("Document deleted");
+      snackbar.success(`${data?.kind ?? "Document"} deleted`);
       invalidateCampaignDocuments(queryClient, campaignId);
       navigate(documentsTab(campaignId, data?.parentId ?? null));
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: QUERY_KEYS.campaigns.documentDetail(campaignId, documentId) });
     },
-    onError: (error) => snackbar.error(error, "Failed to delete document"),
+    onError: (error) => snackbar.error(error, `Failed to delete ${(data?.kind ?? "Document").toLowerCase()}`),
   });
 
   if (isLoading) {
@@ -246,21 +259,16 @@ export default function CampaignDocumentPage() {
             }
           />
           {data.file && (
-            <DocumentFilePanel
-              file={data.file}
-              name={data.name}
-              url={toDocumentFileUrl(campaignId, documentId, data.file)}
-            />
+            <DocumentFilePanel campaignId={campaignId} documentId={documentId} file={data.file} name={data.name} />
           )}
-          {/* A file says what a document is: its text, when it has none, goes unsaid */}
-          {(data.body || !data.file) && (
+          {data.kind === "Note" && (
             <Panel>
               {data.body ? (
                 <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                   {data.body}
                 </Typography>
               ) : (
-                <BlankNote>This document has no text yet</BlankNote>
+                <BlankNote>This note has no text yet</BlankNote>
               )}
             </Panel>
           )}

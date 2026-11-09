@@ -6,11 +6,9 @@ import {
   DialogContentText,
   DialogTitle,
   FormHelperText,
-  IconButton,
   MenuItem,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
@@ -30,7 +28,7 @@ import {
   SelectField,
   TextAreaField,
 } from "@/client/src/components/common/index.ts";
-import { AttachFileIcon, DeleteIcon, FolderIcon, MoveIcon } from "@/client/src/components/icons/index.ts";
+import { FolderIcon, MoveIcon, UploadFileIcon } from "@/client/src/components/icons/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { DOCUMENT_VISIBILITY_OPTIONS, MAX_DOCUMENT_NAME_LENGTH } from "@/shared/campaignDocuments.ts";
 
@@ -49,6 +47,7 @@ import {
   listFolder,
   previewAudience,
   readDocumentIconKind,
+  toContentType,
   VISIBILITY_DESCRIPTIONS,
 } from "./documents.ts";
 
@@ -70,7 +69,7 @@ interface DeleteDocumentDialogProps {
 }
 
 interface DocumentFileFieldProps {
-  /** The file the document holds, which an edit keeps unless another is picked or it's removed. */
+  /** The file the document holds, which an edit keeps unless another is picked; none for a new document. */
   current: DocumentFile | null;
   disabled: boolean;
   form: UseFormReturn<DocumentFormData>;
@@ -94,7 +93,7 @@ interface DocumentFormDialogProps {
   seatsError: unknown;
   /** Why the campaign's tree didn't load, said in place of whom the change shows it to. */
   treeError?: unknown;
-  /** Whether its form shows a document's text: an edit from the tab, which hasn't read it, doesn't. */
+  /** Whether its form shows a note's text: an edit from the tab, which hasn't read it, doesn't. */
   withText: boolean;
 }
 
@@ -149,8 +148,9 @@ function AudienceNote({ change, doing, loadError }: AudienceNoteProps) {
 }
 
 /**
- * A document's file, a picture or a PDF: one picked to upload once its form is saved (`file`), checked as it's picked,
- * which its bin lets go; the one it holds, kept, or removed once it's saved (`removeFile`), which Undo takes back.
+ * A document's file (a picture, a PDF or a text file), checked as it's picked: a new document's, picked before its
+ * dialog opened; an edited one's, kept unless another is picked to replace it once the form is saved, which Undo lets
+ * go. A document always holds one.
  */
 function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
@@ -160,21 +160,15 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
   } = useController({
     control: form.control,
     name: "file",
-    rules: { validate: (file) => (file && describeFileRefusal(file)) || true },
+    rules: { validate: (file) => (file ? describeFileRefusal(file) : !current && "Pick a file") || true },
   });
-  const {
-    field: { value: removed, onChange: setRemoved },
-  } = useController({ control: form.control, name: "removeFile" });
-  const kept = removed ? null : current;
-  const shown = picked ? { name: picked.name, byteSize: picked.size, contentType: picked.type } : kept;
+  const shown = picked ? { name: picked.name, byteSize: picked.size, contentType: toContentType(picked) } : current;
   const ShownIcon = DOCUMENT_ICONS[readDocumentIconKind({ kind: "Document", file: shown })];
-  const said = picked
-    ? `${describeDocumentFile(shown!)} · uploaded when saved`
-    : kept
-      ? describeDocumentFile(kept)
-      : removed && current
-        ? `${current.name} is removed when saved`
-        : "A picture (PNG, JPEG, WebP, GIF) or a PDF, 10 MB at most";
+  const said = !shown
+    ? "A picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md), 10 MB at most"
+    : picked
+      ? `${describeDocumentFile(shown)} · ${current ? `replaces ${current.name} when saved` : "uploaded when saved"}`
+      : describeDocumentFile(shown);
 
   return (
     <Stack spacing={0.5}>
@@ -182,12 +176,12 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
         <Button
           ref={ref}
           variant="outlined"
-          startIcon={<AttachFileIcon />}
+          startIcon={<UploadFileIcon />}
           onClick={() => fileInput?.click()}
           disabled={disabled}
           sx={{ flexShrink: 0 }}
         >
-          {shown ? "Replace File" : "Attach File"}
+          {shown ? "Replace File" : "Choose File"}
         </Button>
         {shown && (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
@@ -195,23 +189,6 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
             <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
               {shown.name}
             </Typography>
-            <Tooltip title="Remove File">
-              <span>
-                <IconButton
-                  size="small"
-                  aria-label="Remove File"
-                  disabled={disabled}
-                  onClick={() => {
-                    // A pick is let go, back to the file the document holds; that file, once none is picked
-                    if (picked) setPicked(null);
-                    else setRemoved(true);
-                    form.clearErrors("file");
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
           </Stack>
         )}
       </Stack>
@@ -219,8 +196,15 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
         <FormHelperText error={!!fieldState.error} sx={{ mt: 0 }}>
           {fieldState.error?.message ?? said}
         </FormHelperText>
-        {removed && !picked && current && (
-          <Button size="small" onClick={() => setRemoved(false)} disabled={disabled}>
+        {picked && current && (
+          <Button
+            size="small"
+            disabled={disabled}
+            onClick={() => {
+              setPicked(null);
+              form.clearErrors("file");
+            }}
+          >
             Undo
           </Button>
         )}
@@ -321,7 +305,7 @@ function ReaderSelect({ form, seatNames, disabled, loadError }: ReaderSelectProp
 }
 
 /**
- * Confirms a folder's or a document's delete: a folder's says what goes with it, never moved up to its folder, where a
+ * Confirms a folder's, a document's or a note's delete: a folder's says what goes with it, never moved up to its folder, where a
  * Private folder's contents would show.
  */
 export function DeleteDocumentDialog({ item, items, open, onClose, onConfirm, pending }: DeleteDocumentDialogProps) {
@@ -340,8 +324,9 @@ export function DeleteDocumentDialog({ item, items, open, onClose, onConfirm, pe
 }
 
 /**
- * Creates or edits a folder or a document: its name, a document's text and file, and whom it admits, a Selected one's
- * players picked. What the change shows it to or hides it from is said at its top before it's saved (`previewAudience`).
+ * Creates or edits a folder, a document or a note: its name, a note's text, a document's file, and whom it admits, a
+ * Selected one's players picked. A new document is uploaded: its file is picked before its dialog opens. What the
+ * change shows it to or hides it from is said at its top before it's saved (`previewAudience`).
  */
 export function DocumentFormDialog({
   form,
@@ -360,19 +345,28 @@ export function DocumentFormDialog({
 }: DocumentFormDialogProps) {
   const [visibility, readerIds] = form.watch(["visibility", "readerIds"]);
   const change = previewAudience(items, item, { parentId: item.parentId, visibility, readerIds }, playerNames);
+  // A new document is uploaded, its file picked before its dialog opened
+  const uploads = mode === "create" && item.kind === "Document";
   const Wrapper = mode === "create" ? CreateDialog : EditDialog;
   return (
     <Wrapper
       open={open}
       onClose={onClose}
-      title={mode === "create" ? `Create New ${item.kind}` : `Edit ${item.kind}`}
+      title={uploads ? "Upload Document" : `${mode === "create" ? "Create New" : "Edit"} ${item.kind}`}
       form={form}
       onSubmit={onSubmit}
       pending={pending}
+      submitLabel={uploads ? "Upload" : undefined}
     >
-      <AudienceNote change={change} doing={mode === "create" ? "Creating" : "Saving"} loadError={treeError} />
+      <AudienceNote
+        change={change}
+        doing={uploads ? "Uploading" : mode === "create" ? "Creating" : "Saving"}
+        loadError={treeError}
+      />
       <NameField control={form.control} name="name" max={MAX_DOCUMENT_NAME_LENGTH} autoFocus disabled={pending} />
-      {withText && <TextAreaField control={form.control} name="body" label="Text" rows={8} disabled={pending} />}
+      {item.kind === "Note" && withText && (
+        <TextAreaField control={form.control} name="body" label="Text" rows={8} disabled={pending} />
+      )}
       {item.kind === "Document" && <DocumentFileField current={item.file ?? null} disabled={pending} form={form} />}
       <SelectField
         control={form.control}

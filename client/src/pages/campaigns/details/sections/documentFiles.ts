@@ -1,4 +1,4 @@
-/** A document's file's requests: where it's read, and its upload or removal once its form is saved. */
+/** A document's file's requests: where it's read, and its replacement once an edit's form is saved. */
 
 import { parseResponse } from "hono/client";
 
@@ -27,20 +27,21 @@ export function toDocumentFileUrl(campaignId: string, documentId: string, file: 
   return url.toString();
 }
 
+/** A text file's words, read through the server as its document's page shows them: UTF-8, as its upload checked. */
+export async function readDocumentTextFn(campaignId: string, documentId: string) {
+  const file = await (await fileApi.$get({ param: { id: campaignId, documentId } })).blob();
+  return await file.text();
+}
+
 /**
- * Uploads the file a document's form picked (`file`), or removes the one it held (`removeFile`): nothing when it left
- * it. Run by the mutation that saves the form, once the rest is in. Answers why it failed, none when it saved, so the
- * save it follows is said with it.
+ * Uploads the file an edit's form picked to replace a document's (`file`): nothing when it kept it. Run by the mutation
+ * that saves the form, once the rest is in. Answers why it failed, none when it saved, so the save it follows is said
+ * with it.
  */
-export async function saveDocumentFileFn(
-  campaignId: string,
-  documentId: string,
-  data: Pick<DocumentFormData, "file" | "removeFile">,
-) {
-  const param = { id: campaignId, documentId };
+export async function saveDocumentFileFn(campaignId: string, documentId: string, data: Pick<DocumentFormData, "file">) {
+  if (!data.file) return null;
   try {
-    if (data.file) await parseResponse(fileApi.$put({ param, form: { file: data.file } }));
-    else if (data.removeFile) await parseResponse(fileApi.$delete({ param }));
+    await parseResponse(fileApi.$put({ param: { id: campaignId, documentId }, form: { file: data.file } }));
     return null;
   } catch (error) {
     return error;

@@ -1,4 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
+import { blobsInStorage } from "@/drizzle/schema.ts";
 import { withWrite } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Invites, Locks, Players, Visibility } from "@/server/repositories/index.ts";
@@ -9,9 +10,13 @@ import type { Session } from "@/shared/relations.ts";
 
 import { assertAccountStill, lockAccount, type NamedAccount } from "./userWrites.ts";
 
-/** The account a campaign's write makes rows for (`account`: an invite's invitee). */
+/**
+ * The account a campaign's write makes rows for (`account`: an invite's invitee), and the stored file it attaches
+ * (`blobId`: a new document's).
+ */
 interface CampaignWriteOptions {
   account?: NamedAccount;
+  blobId?: string;
 }
 
 /** What a campaign's creation that gave up on a lock answers: another save held its ruleset or its creator's account. */
@@ -47,20 +52,23 @@ export async function withCampaignCreate<T>(
  * links), the one way such a write opens its transaction: the campaign's row locked first, archived or not, so its
  * writes take turns (two Game Masters' removals of each other read each other's seat in turn, so the last one stays),
  * then the session's access (`getReadableCampaign`, archived or not: the write's policy refuses the wrong state),
- * before the write reads anything. The account it makes rows for (`account`) is locked shared first (`lockAccount`). A
- * write that waited past the lock wait, or deadlocked, is refused as a conflict (`BUSY_CAMPAIGN_MESSAGE`).
+ * before the write reads anything. The account it makes rows for (`account`) is locked shared first (`lockAccount`);
+ * the stored file it attaches (`blobId`), after the campaign, as an attachment's write locks it
+ * (`withAttachmentWrite`), so the sweep of unattached files doesn't delete it meanwhile. A write that waited past the
+ * lock wait, or deadlocked, is refused as a conflict (`BUSY_CAMPAIGN_MESSAGE`).
  */
 export async function withCampaignWrite<T>(
   session: Session,
   campaignId: string,
   write: (tx: Db, readable: Awaited<ReturnType<typeof getReadableCampaign>>) => Promise<T>,
-  { account }: CampaignWriteOptions = {},
+  { account, blobId }: CampaignWriteOptions = {},
 ): Promise<T> {
   return await withWrite(async (tx) => {
     const accountId = account && (await lockAccount(tx, account));
     const locked = await Locks.lockCampaigns(tx, { ids: [campaignId] }, "no key update");
     if (locked.length === 0) throw new NotFoundError("Campaign not found");
     if (account) await assertAccountStill(tx, account, accountId);
+    if (blobId) await Locks.lockRow(tx, blobsInStorage, blobId, "no key update");
     return await write(tx, await getReadableCampaign(tx, session, campaignId));
   }, BUSY_CAMPAIGN_MESSAGE);
 }

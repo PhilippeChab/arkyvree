@@ -1,6 +1,6 @@
 /**
- * A campaign's documents: a tree of folders and documents its Game Masters keep, each admitting some of its players,
- * which the server answers by and the client previews a change with. A tree is its items by id.
+ * A campaign's documents: a tree of folders, documents (files) and notes its Game Masters keep, each admitting some of
+ * its players, which the server answers by and the client previews a change with. A tree is its items by id.
  */
 
 /** An item of a campaign's tree: what it is, its folder (`parentId`, none at the top), and whom it admits. */
@@ -16,14 +16,17 @@ export interface DocumentNode {
 /** Which players a folder or a document admits: all of them, or some seats (`playerIds`). */
 export type DocumentAudience = { everyone: true } | { everyone: false; playerIds: string[] };
 
-/** What a campaign's document is: a folder, which holds others, or a document, which holds text. */
+/**
+ * What an item of a campaign's tree is: a folder, which holds others; a document, a file its Game Master uploads; or a
+ * note, text typed in the app.
+ */
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
 /** Who a folder or a document admits, by its own setting. */
 export type DocumentVisibility = (typeof DOCUMENT_VISIBILITY_OPTIONS)[number];
 
 /** The kinds a campaign's document is, the column's check (`documents_kind_check`), which its tests hold them to. */
-export const DOCUMENT_KINDS = ["Folder", "Document"] as const;
+export const DOCUMENT_KINDS = ["Folder", "Document", "Note"] as const;
 
 /**
  * Who a folder or a document admits, the column's check (`documents_visibility_check`), which its tests hold them to:
@@ -34,7 +37,7 @@ export const DOCUMENT_VISIBILITY_OPTIONS = ["Private", "Public", "Selected"] as 
 /** The most folders and documents a campaign keeps. */
 export const MAX_CAMPAIGN_DOCUMENTS = 500;
 
-/** The longest text a document holds. */
+/** The longest text a note holds. */
 export const MAX_DOCUMENT_BODY_LENGTH = 100_000;
 
 /** The most folders one stands in, itself counted: a folder at the top is at depth 1. */

@@ -1,5 +1,5 @@
 {
-  "id": "bb6256c3-0a6b-4de1-a442-8137543e4ee8",
+  "id": "8f41c8d2-d3fd-47b9-97f6-f5246cc6f053",
   "prevId": "cbf7c9d0-b905-4600-9015-7c9cf378defb",
   "version": "7",
   "dialect": "postgresql",
@@ -2215,15 +2215,15 @@
       "checkConstraints": {
         "documents_kind_check": {
           "name": "documents_kind_check",
-          "value": "kind = ANY (ARRAY['Folder'::text, 'Document'::text])"
+          "value": "kind = ANY (ARRAY['Folder'::text, 'Document'::text, 'Note'::text])"
         },
         "documents_visibility_check": {
           "name": "documents_visibility_check",
           "value": "visibility = ANY (ARRAY['Private'::text, 'Public'::text, 'Selected'::text])"
         },
-        "documents_folder_body_check": {
-          "name": "documents_folder_body_check",
-          "value": "(kind = 'Document'::text) OR (body IS NULL)"
+        "documents_note_body_check": {
+          "name": "documents_note_body_check",
+          "value": "(kind = 'Note'::text) = (body IS NOT NULL)"
         }
       },
       "isRLSEnabled": false

@@ -8,8 +8,8 @@ import { selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 // A Game Master keeping a campaign's documents in its Documents tab, and a player reading what they're shown: a Public
-// folder, a letter shown to that player alone, and notes the Game Master keeps to themselves. The player joins through
-// the API; what the test clicks is the Game Master's, then the player's.
+// folder, a letter uploaded for that player alone, and a note the Game Master keeps to themselves. The player joins
+// through the API; what the test clicks is the Game Master's, then the player's.
 test.describe("A campaign's documents", () => {
   test("show a player what the Game Master shares with them, and nothing they keep", async ({
     page,
@@ -37,37 +37,42 @@ test.describe("A campaign's documents", () => {
       await page.getByRole("row", { name: "Open Handouts" }).click();
       await expect(page.getByRole("heading", { name: "Handouts" })).toBeVisible();
 
-      await page.getByRole("button", { name: "Add Document" }).click();
-      const letterDialog = page.getByRole("dialog", { name: "Create New Document" });
-      await letterDialog.getByLabel("Name").fill("A letter");
-      await letterDialog.getByLabel("Text").fill("Meet me at the old mill.");
+      // A document is a file: a page posing as one is refused as it's picked, a text file opens its dialog, named
+      // after it
+      const fileInput = page.locator('input[type="file"]');
+      await fileInput.setInputFiles({
+        name: "letter.html",
+        mimeType: "text/html",
+        buffer: Buffer.from("<html></html>"),
+      });
+      await expect(
+        page.getByText("Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)"),
+      ).toBeVisible();
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      const letter = Buffer.from("Meet me at the old mill.");
+      await fileInput.setInputFiles({ name: "A letter.txt", mimeType: "text/plain", buffer: letter });
+      const letterDialog = page.getByRole("dialog", { name: "Upload Document" });
+      await expect(letterDialog.getByLabel("Name")).toHaveValue("A letter");
+      await expect(letterDialog.getByText("Text file · 1 KB · uploaded when saved")).toBeVisible();
       await selectOption(page, "Visibility", "Selected");
       await letterDialog.getByRole("combobox", { name: "Players" }).click();
       await page.getByRole("option", { name: inviteeUser.username }).click();
       await page.keyboard.press("Escape");
-      await expect(letterDialog.getByText(`Creating it shows it to ${inviteeUser.username}`)).toBeVisible();
-      await letterDialog.getByRole("button", { name: "Create" }).click();
+      await expect(letterDialog.getByText(`Uploading it shows it to ${inviteeUser.username}`)).toBeVisible();
+      await letterDialog.getByRole("button", { name: "Upload" }).click();
       await expect(letterDialog).toBeHidden();
 
-      await page.getByRole("button", { name: "Add Document" }).click();
-      const notesDialog = page.getByRole("dialog", { name: "Create New Document" });
+      // A note is text typed in the app, with no file
+      await page.getByRole("button", { name: "Add Note" }).click();
+      const notesDialog = page.getByRole("dialog", { name: "Create New Note" });
       await notesDialog.getByLabel("Name").fill("Secret notes");
-      // A file is checked as it's picked: a page posing as a picture is refused, a picture taken, then removed. The
-      // tests' storage takes none, so the notes go without one
-      const fileInput = notesDialog.locator('input[type="file"]');
-      await fileInput.setInputFiles({ name: "map.html", mimeType: "text/html", buffer: Buffer.from("<html></html>") });
-      await expect(notesDialog.getByText("Pick a picture (PNG, JPEG, WebP, GIF) or a PDF")).toBeVisible();
-      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      await fileInput.setInputFiles({ name: "map.png", mimeType: "image/png", buffer: png });
-      await expect(notesDialog.getByText("Picture · 1 KB · uploaded when saved")).toBeVisible();
-      await notesDialog.getByRole("button", { name: "Remove File" }).click();
-      await expect(notesDialog.getByText("A picture (PNG, JPEG, WebP, GIF) or a PDF, 10 MB at most")).toBeVisible();
+      await notesDialog.getByLabel("Text").fill("The miller is the cultist.");
       await notesDialog.getByRole("button", { name: "Create" }).click();
       await expect(notesDialog).toBeHidden();
       await expect(page.getByRole("row", { name: "Open A letter" })).toContainText(`Seen by ${inviteeUser.username}`);
       await expect(page.getByRole("row", { name: "Open Secret notes" })).toContainText("Seen by no player");
 
-      // The player's tab: the folder and their letter, never the notes; the letter reads as written
+      // The player's tab: the folder and their letter, never the note; the letter reads as its file holds it
       await player.goto(`/campaigns/${id}/documents`);
       await player.getByRole("row", { name: "Open Handouts" }).click();
       await expect(player.getByRole("row", { name: "Open A letter" })).toBeVisible();
@@ -75,6 +80,7 @@ test.describe("A campaign's documents", () => {
       await player.getByRole("row", { name: "Open A letter" }).click();
       await expect(player.getByRole("heading", { name: "A letter" })).toBeVisible();
       await expect(player.getByText("Meet me at the old mill.")).toBeVisible();
+      await expect(player.getByRole("link", { name: "Open Text File" })).toBeVisible();
     } finally {
       await player.context().close();
     }

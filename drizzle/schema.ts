@@ -786,12 +786,13 @@ export const documentsInCampaign = campaign.table(
       foreignColumns: [usersInAccount.id],
       name: "documents_author_id_fkey",
     }).onDelete("set null"),
-    check("documents_kind_check", sql`kind = ANY (ARRAY['Folder'::text, 'Document'::text])`),
+    check("documents_kind_check", sql`kind = ANY (ARRAY['Folder'::text, 'Document'::text, 'Note'::text])`),
     check(
       "documents_visibility_check",
       sql`visibility = ANY (ARRAY['Private'::text, 'Public'::text, 'Selected'::text])`,
     ),
-    check("documents_folder_body_check", sql`(kind = 'Document'::text) OR (body IS NULL)`),
+    // A note's text is typed in the app; a document is a file (its attachment), and a folder holds neither
+    check("documents_note_body_check", sql`(kind = 'Note'::text) = (body IS NOT NULL)`),
   ],
 );
 

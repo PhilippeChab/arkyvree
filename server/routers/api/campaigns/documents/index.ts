@@ -12,14 +12,28 @@ import { DOCUMENT_KINDS, DOCUMENT_VISIBILITY_OPTIONS, MAX_DOCUMENT_BODY_LENGTH }
 
 const documentParams = idParam.extend({ documentId: z.string().uuid() });
 
-/** A document's text, as its Game Master wrote it. */
+/** A note's text, as its Game Master wrote it. */
 const documentText = z.string().max(MAX_DOCUMENT_BODY_LENGTH);
 
 /** What a form adds to its file: each part's boundary and headers. */
 const FORM_OVERHEAD_BYTES = 64 * 1024;
 
-/** The seats a Selected folder or document admits. */
+/** Refuses a file's form before its body is read whole: a part's headers take a few bytes past the file. */
+const fileLimit = bodyLimit({
+  maxSize: MAX_DOCUMENT_FILE_BYTES + FORM_OVERHEAD_BYTES,
+  onError: () => {
+    throw new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`);
+  },
+});
+
+/** The seats a Selected folder, document or note admits. */
 const readerIds = z.array(z.string().uuid());
+
+/** A form's seats: one field for each, which a form with one alone sends as a string. */
+const formReaderIds = z
+  .union([z.string().uuid(), readerIds])
+  .optional()
+  .transform((ids) => (ids === undefined ? [] : [ids].flat()));
 
 /**
  * A file's `Content-Disposition`, shown in the browser under its name: an ASCII name for the browsers that read no
@@ -51,7 +65,8 @@ export default new Hono<SessionContext>()
     return c.body(file.data, 200, {
       "Cache-Control": "private, no-store",
       "Content-Disposition": toInlineDisposition(file.filename),
-      "Content-Type": file.contentType,
+      // A text file's bytes are UTF-8 (its upload's check)
+      "Content-Type": file.contentType === "text/plain" ? "text/plain; charset=utf-8" : file.contentType,
       "X-Content-Type-Options": "nosniff",
     });
   })
@@ -73,6 +88,35 @@ export default new Hono<SessionContext>()
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(await CampaignDocumentsService.createDocument(c.var.requestSession, id, body), 201);
+    },
+  )
+  // A document: the file its Game Master uploads, with its name, its folder and whom it admits
+  .post(
+    "/:id/documents/upload",
+    attachmentUploadRateLimit,
+    fileLimit,
+    validate("param", idParam),
+    validate(
+      "form",
+      z.object({
+        file: z.file(),
+        name: documentName,
+        // A form's field is text: none, or an empty one, is the top
+        parentId: z
+          .union([z.literal(""), z.string().uuid()])
+          .optional()
+          .transform((id) => id || null),
+        visibility: z.enum(DOCUMENT_VISIBILITY_OPTIONS).default("Private"),
+        readerIds: formReaderIds,
+      }),
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { file, ...document } = c.req.valid("form");
+      return c.json(
+        await CampaignDocumentFilesService.createDocumentFile(c.var.requestSession, id, document, file),
+        201,
+      );
     },
   )
   .put(
@@ -98,13 +142,7 @@ export default new Hono<SessionContext>()
   .put(
     "/:id/documents/:documentId/file",
     attachmentUploadRateLimit,
-    // Refused before its body is read whole: a part's headers take a few bytes past the file
-    bodyLimit({
-      maxSize: MAX_DOCUMENT_FILE_BYTES + FORM_OVERHEAD_BYTES,
-      onError: () => {
-        throw new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`);
-      },
-    }),
+    fileLimit,
     validate("param", documentParams),
     validate("form", z.object({ file: z.file() })),
     async (c) => {
@@ -119,8 +157,4 @@ export default new Hono<SessionContext>()
   .delete("/:id/documents/:documentId", validate("param", documentParams), async (c) => {
     const { id, documentId } = c.req.valid("param");
     return c.json(await CampaignDocumentsService.removeDocument(c.var.requestSession, id, documentId), 200);
-  })
-  .delete("/:id/documents/:documentId/file", validate("param", documentParams), async (c) => {
-    const { id, documentId } = c.req.valid("param");
-    return c.json(await CampaignDocumentFilesService.removeDocumentFile(c.var.requestSession, id, documentId), 200);
   });

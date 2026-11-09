@@ -4,10 +4,11 @@ export type AttachmentSlotName = keyof typeof ATTACHMENT_SLOTS;
 export const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
 
 /**
- * What a campaign's document's file may be: a picture of `ALLOWED_IMAGE_TYPES` or a PDF, its type read from its bytes.
- * Never an SVG or HTML, which a browser would run.
+ * What a campaign's document's file may be: a picture of `ALLOWED_IMAGE_TYPES` or a PDF, its type read from its bytes,
+ * or a text file (`DOCUMENT_TEXT_EXTENSIONS`), served as plain text. Never an SVG or HTML, which a browser would run.
  */
-export const ALLOWED_DOCUMENT_FILE_TYPES = [...ALLOWED_IMAGE_TYPES, "application/pdf"] as const;
+export const ALLOWED_DOCUMENT_FILE_TYPES = [...ALLOWED_IMAGE_TYPES, "application/pdf", "text/plain"] as const;
+
 /** The images records keep, by slot: the record type that takes it, and the slot's name the API reads it by. */
 export const ATTACHMENT_SLOTS = {
   avatar: { name: "avatar", recordType: "User" },
@@ -19,6 +20,9 @@ export const ATTACHMENT_SLOTS = {
  * URL, so it's no slot of `ATTACHMENT_SLOTS`, whose images any signed-in session reads.
  */
 export const DOCUMENT_FILE_SLOT = { name: "file", recordType: "CampaignDocument" } as const;
+
+/** How a text file's name ends, which a campaign's document takes as plain text: its bytes have no signature. */
+export const DOCUMENT_TEXT_EXTENSIONS = [".txt", ".md"] as const;
 
 /** The largest file a campaign's document takes. */
 export const MAX_DOCUMENT_FILE_BYTES = 10 * 1024 * 1024;

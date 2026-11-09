@@ -2,10 +2,19 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Documents } from "@/server/repositories/index.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
-import { noteDocumentChanged } from "@/server/services/campaigns/documents/index.ts";
+import { CampaignDocumentsService, noteDocumentChanged } from "@/server/services/campaigns/documents/index.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { DOCUMENT_FILE_SLOT } from "@/shared/attachments.ts";
+import type { DocumentVisibility } from "@/shared/campaignDocuments.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** A new document, beside its file: its name, its folder (none at the top) and whom it admits. */
+interface NewDocumentFile {
+  name: string;
+  parentId: string | null;
+  readerIds: string[];
+  visibility: DocumentVisibility;
+}
 
 class CampaignDocumentFilesService {
   /** A document's file slot, as the attachments read and write it. */
@@ -20,6 +29,33 @@ class CampaignDocumentFilesService {
   }
 
   /**
+   * Adds a document to a campaign (`campaignId`): the file its Game Master uploads (a picture, a PDF or a text file,
+   * its type read from its bytes), under a name, in a folder, admitting its seats (`document`). Who asks first, before
+   * anything is stored; then its file, stored ahead of it and attached in the write that creates it
+   * (`CampaignDocumentsService.createDocument`), so no document is ever without its file; a refused creation removes
+   * what it stored.
+   */
+  async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: File) {
+    const { policy } = await getReadableCampaign(db, session, campaignId);
+    policy.canManageDocuments();
+    const pending = await AttachmentsService.createPendingFile(DOCUMENT_FILE_SLOT.recordType, file);
+    try {
+      return await CampaignDocumentsService.createDocument(
+        session,
+        campaignId,
+        { ...document, kind: "Document" },
+        {
+          blobId: pending.id,
+          attach: (tx, documentId) => AttachmentsService.attachPendingFile(tx, this.slotOf(documentId), pending),
+        },
+      );
+    } catch (error) {
+      await AttachmentsService.removePendingFile(pending);
+      throw error;
+    }
+  }
+
+  /**
    * A document's file (`documentId`, of `campaignId`), its bytes with its type and name, for whoever sees the document
    * (`getFileReadableDocument`): a hidden or unknown document's, or one that holds none, refused as not found.
    */
@@ -30,20 +66,7 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Removes a document's file, its campaign's Game Master's: who asks first, so a player's request says nothing of which
-   * documents there are or hold one, then the document, then its file. Answers the document's id.
-   */
-  async removeDocumentFile(session: Session, campaignId: string, documentId: string) {
-    const { policy } = await getReadableCampaign(db, session, campaignId);
-    policy.canUpdate();
-    await this.assertInCampaign(campaignId, documentId);
-    await AttachmentsService.removeAttachmentFile(session, this.slotOf(documentId));
-    await noteDocumentChanged(db, session, campaignId, documentId);
-    return { id: documentId };
-  }
-
-  /**
-   * Puts a file in a document (an image or a PDF, its type read from its bytes), replacing the one it held: its
+   * Puts another file in a document (a picture, a PDF or a text file), replacing the one it held: its
    * campaign's Game Master's, who asks first, then the document; whoever sees it has their page refreshed. Answers what
    * the document now holds: its file's name, type, size and upload time.
    */

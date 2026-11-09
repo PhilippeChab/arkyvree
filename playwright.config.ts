@@ -58,28 +58,37 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    // Builds the client for production (a couple of seconds; `E2E_SKIP_BUILD=1` reuses dist/), copies the database,
-    // then serves both, with .env.test's settings only (not a developer's .env). `E2E_COVERAGE=1` builds with inline
-    // source maps, which the coverage report maps back to client/src.
-    // WSL2 mirrored networking drops TCP RSTs on 127.0.0.1 for closed ports, so Playwright's probe would hang until
-    // the timeout: it checks [::1], and HOST=:: makes Bun.serve bind both loopbacks.
-    // https://github.com/microsoft/WSL/issues/13327
-    command: [
-      ...(process.env.E2E_SKIP_BUILD === "1"
-        ? []
-        : [`NODE_ENV=production bunx vite build${coverage ? " --sourcemap inline" : ""}`]),
-      `bun --env-file=.env.test scripts/db/clone-database.ts ${port}`,
-      "HOST=:: NODE_ENV=test bun --env-file=.env.test server/main.ts",
-    ].join(" && "),
-    url: `http://[::1]:${port}/health`,
-    // A server already on the port isn't this run's: it would serve another database
-    reuseExistingServer: false,
-    timeout: 120 * 1000,
-    // Its errors, not every request it logs
-    stdout: "ignore",
-    stderr: "pipe",
-  },
+  webServer: [
+    // The run's object storage, a stand-in its server stores a journey's uploads in (`prepareE2eEnvironment`)
+    {
+      command: `bun tests/fixtures/storageServer.ts ${process.env.E2E_STORAGE_PORT}`,
+      url: `http://[::1]:${process.env.E2E_STORAGE_PORT}/health`,
+      reuseExistingServer: false,
+      stdout: "ignore",
+    },
+    {
+      // Builds the client for production (a couple of seconds; `E2E_SKIP_BUILD=1` reuses dist/), copies the database,
+      // then serves both, with .env.test's settings only (not a developer's .env). `E2E_COVERAGE=1` builds with inline
+      // source maps, which the coverage report maps back to client/src.
+      // WSL2 mirrored networking drops TCP RSTs on 127.0.0.1 for closed ports, so Playwright's probe would hang until
+      // the timeout: it checks [::1], and HOST=:: makes Bun.serve bind both loopbacks.
+      // https://github.com/microsoft/WSL/issues/13327
+      command: [
+        ...(process.env.E2E_SKIP_BUILD === "1"
+          ? []
+          : [`NODE_ENV=production bunx vite build${coverage ? " --sourcemap inline" : ""}`]),
+        `bun --env-file=.env.test scripts/db/clone-database.ts ${port}`,
+        "HOST=:: NODE_ENV=test bun --env-file=.env.test server/main.ts",
+      ].join(" && "),
+      url: `http://[::1]:${port}/health`,
+      // A server already on the port isn't this run's: it would serve another database
+      reuseExistingServer: false,
+      timeout: 120 * 1000,
+      // Its errors, not every request it logs
+      stdout: "ignore",
+      stderr: "pipe",
+    },
+  ],
 
   // Global setup and teardown
   globalSetup: "./tests/fixtures/global.setup.ts",

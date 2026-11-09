@@ -1,6 +1,10 @@
 /** The type an upload's bytes say it is (an image, a document's file), which its declared type can't change. */
 
-import type { ALLOWED_DOCUMENT_FILE_TYPES, ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
+import {
+  type ALLOWED_DOCUMENT_FILE_TYPES,
+  type ALLOWED_IMAGE_TYPES,
+  DOCUMENT_TEXT_EXTENSIONS,
+} from "@/shared/attachments.ts";
 
 /** A type a campaign's document's file may be. */
 type AllowedDocumentFileType = (typeof ALLOWED_DOCUMENT_FILE_TYPES)[number];
@@ -25,10 +29,28 @@ const SIGNATURES: Record<AllowedImageType, readonly (readonly [offset: number, b
   ],
 };
 
-/** The type a campaign's document's file's bytes open with (an image's, or a PDF's), or null for any other file. */
-export function detectDocumentFileType(data: Uint8Array): AllowedDocumentFileType | null {
+/**
+ * Whether a file's bytes are text: UTF-8, with no control character but its tabs and line ends, which a binary file
+ * holds.
+ */
+function isText(data: Uint8Array) {
+  try {
+    return !/[\p{Cc}--[\t\n\r\f]]/v.test(new TextDecoder("utf-8", { fatal: true }).decode(data));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The type of a campaign's document's file: the one its bytes open with (an image's, or a PDF's), or plain text for a
+ * file named as one (`filename`: `DOCUMENT_TEXT_EXTENSIONS`) whose bytes are text; null for any other file.
+ */
+export function detectDocumentFileType(data: Uint8Array, filename: string): AllowedDocumentFileType | null {
   if (PDF_SIGNATURE.every((byte, i) => data[i] === byte)) return "application/pdf";
-  return detectImageType(data);
+  const image = detectImageType(data);
+  if (image) return image;
+  const named = DOCUMENT_TEXT_EXTENSIONS.some((extension) => filename.toLowerCase().endsWith(extension));
+  return named && isText(data) ? "text/plain" : null;
 }
 
 /** The image type a file's bytes open with (PNG, JPEG, GIF, WebP), or null for any other file. */

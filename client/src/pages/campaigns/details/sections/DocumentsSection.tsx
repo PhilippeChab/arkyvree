@@ -1,6 +1,7 @@
-import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -29,6 +30,7 @@ import {
   DocumentIcon,
   EditIcon,
   MoveIcon,
+  UploadFileIcon,
   VisibilityIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -55,6 +57,8 @@ import {
   buildTree,
   type CampaignDocument,
   describeAudience,
+  describeFileRefusal,
+  DOCUMENT_FILE_ACCEPT,
   DOCUMENT_ICONS,
   type DocumentEdit,
   type DocumentFormData,
@@ -64,6 +68,8 @@ import {
   readSeatNames,
   toDocumentBody,
   toDocumentEdit,
+  toDocumentName,
+  toDocumentUpload,
   toEditForm,
 } from "./documents.ts";
 
@@ -118,6 +124,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   // Who sees each item, by name once the players have loaded, by how many until then
   const audienceNames = seats.data ? seatNames : undefined;
 
+  // The hidden file input Upload File opens, in state: its buttons hand their click on to it
+  const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
   const createDialog = useDialogState<NewItem>();
   const editDialog = useDialogState<OpenedEdit>();
   const moveDialog = useDialogState<CampaignDocument>();
@@ -136,24 +144,23 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const columns = !isGameMaster ? PLAYER_COLUMNS : canManageDocuments ? MASTER_COLUMNS : READER_COLUMNS;
   const newItem = createDialog.target;
 
-  // A document's file goes once it's created: its failure leaves it created, and says so
+  // A document is uploaded with its file, in one request; a folder and a note are created as they're typed
   const createMutation = useMutation({
-    mutationFn: async ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) => {
-      const created = await parseResponse(
-        rpc.api.campaigns[":id"].documents.$post({
-          param: { id: campaign.id },
-          json: { kind, parentId, ...toDocumentBody(data, kind) },
-        }),
-      );
-      return { created, fileError: await saveDocumentFileFn(campaign.id, created.id, data) };
+    mutationFn: ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) => {
+      const param = { id: campaign.id };
+      const api = rpc.api.campaigns[":id"].documents;
+      if (kind !== "Document")
+        return parseResponse(api.$post({ param, json: { parentId, ...toDocumentBody(data, kind) } }));
+      if (!data.file) throw new Error("Pick a file");
+      return parseResponse(api.upload.$post({ param, form: toDocumentUpload(data, data.file, parentId) }));
     },
-    onSuccess: ({ created, fileError }) => {
-      const { message, severity } = describeFileSave(`${created.kind} created`, fileError);
-      snackbar[severity](message);
+    onSuccess: (created) => {
+      snackbar.success(`${created.kind} ${created.kind === "Document" ? "uploaded" : "created"}`);
       invalidateCampaignDocuments(queryClient, campaign.id);
       createDialog.close();
     },
-    onError: (error, { kind }) => snackbar.error(error, `Failed to create ${kind.toLowerCase()}`),
+    onError: (error, { kind }) =>
+      snackbar.error(error, `Failed to ${kind === "Document" ? "upload document" : `create ${kind.toLowerCase()}`}`),
   });
 
   // An edit's file goes once the rest is saved, a version another Game Master changed meanwhile refused first
@@ -201,9 +208,17 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
     onError: (error, item) => snackbar.error(error, `Failed to delete ${item.kind.toLowerCase()}`),
   });
 
-  const handleAdd = (kind: DocumentKind) => {
+  const handleAdd = (kind: "Folder" | "Note") => {
     createForm.reset(EMPTY_DOCUMENT_FORM);
     createDialog.openWith({ kind, parentId: folderId });
+  };
+
+  // A document starts from its file: picked first, checked, then named after it in its dialog
+  const handleUpload = (file: File) => {
+    const refusal = describeFileRefusal(file);
+    if (refusal) return snackbar.warning(refusal);
+    createForm.reset({ ...EMPTY_DOCUMENT_FORM, file, name: toDocumentName(file.name) });
+    createDialog.openWith({ kind: "Document", parentId: folderId });
   };
 
   const handleEdit = (item: CampaignDocument) => {
@@ -250,7 +265,15 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
           </Box>
         </Tooltip>
       )}
-      <AddButton label="Add Document" onClick={() => handleAdd("Document")} sx={FULL_ON_PHONE_SX} />
+      <AddButton label="Add Note" onClick={() => handleAdd("Note")} sx={FULL_ON_PHONE_SX} />
+      <Button
+        variant="contained"
+        startIcon={<UploadFileIcon />}
+        onClick={() => fileInput?.click()}
+        sx={FULL_ON_PHONE_SX}
+      >
+        Upload File
+      </Button>
     </Stack>
   );
 
@@ -269,17 +292,19 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
             title={folder ? "This folder is empty" : "No documents yet"}
             description={
               isGameMaster
-                ? "Keep your notes here, and choose what each player sees"
+                ? "Keep your maps, handouts and notes here, and choose what each player sees"
                 : "Your Game Masters haven't shared anything with you here yet"
             }
             action={
               canManageDocuments && !folder ? (
-                <AddButton
+                <Button
                   variant="outlined"
                   size="large"
-                  label="Add Your First Document"
-                  onClick={() => handleAdd("Document")}
-                />
+                  startIcon={<UploadFileIcon />}
+                  onClick={() => fileInput?.click()}
+                >
+                  Upload Your First Document
+                </Button>
               ) : undefined
             }
           />
@@ -344,6 +369,20 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         )}
       </Stack>
 
+      {canManageDocuments && (
+        <input
+          ref={setFileInput}
+          type="file"
+          accept={DOCUMENT_FILE_ACCEPT}
+          hidden
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            // Reset so picking the same file again fires its change
+            event.target.value = "";
+            if (file) handleUpload(file);
+          }}
+        />
+      )}
       <DocumentFormDialog
         mode="create"
         open={createDialog.open}
@@ -354,7 +393,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         playerNames={playerNames}
         seatNames={seatNames}
         seatsError={seats.error}
-        withText={newItem?.kind === "Document"}
+        withText
         onSubmit={(data) => newItem && createMutation.mutate({ ...newItem, data })}
         pending={createMutation.isPending}
       />

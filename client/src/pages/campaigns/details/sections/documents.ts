@@ -2,10 +2,14 @@
 
 import type { InferRequestType, InferResponseType } from "hono/client";
 
-import { DocumentIcon, FolderIcon, ImageOutlinedIcon, PdfIcon } from "@/client/src/components/icons/index.ts";
+import { DocumentIcon, FolderIcon, ImageOutlinedIcon, NoteIcon, PdfIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { ALLOWED_DOCUMENT_FILE_TYPES, MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
+import {
+  ALLOWED_DOCUMENT_FILE_TYPES,
+  DOCUMENT_TEXT_EXTENSIONS,
+  MAX_DOCUMENT_FILE_BYTES,
+} from "@/shared/attachments.ts";
 import {
   countDocumentDepth,
   countFolderHeight,
@@ -16,6 +20,7 @@ import {
   isInDocumentAudience,
   isWithinDocument,
   MAX_DOCUMENT_DEPTH,
+  MAX_DOCUMENT_NAME_LENGTH,
   readDocumentAudience,
 } from "@/shared/campaignDocuments.ts";
 
@@ -30,36 +35,42 @@ export interface AudienceChange {
 }
 
 /**
- * The Create and Edit dialogs' form: a name, a document's text and file, and whom it admits. Its file is one picked to
- * upload (`file`), or none; an edit removes the one it held (`removeFile`) or keeps it.
+ * The Create and Edit dialogs' form: a name, a note's text, a document's file, and whom it admits. Its file is the one
+ * picked to upload (`file`): a new document's, or the one that replaces an edited document's, none to keep it.
  */
 export interface DocumentFormData {
   body: string;
   file: File | null;
   name: string;
   readerIds: string[];
-  removeFile: boolean;
   visibility: DocumentVisibility;
 }
 
-/** A folder or a document of the tab's tree, as the server answers the session: whom it admits, its Game Master's. */
+/** An item of the tab's tree (a folder, a document or a note), as the server answers the session: whom it admits, its Game Master's. */
 export type CampaignDocument = InferResponseType<DocumentsApi["$get"], 200>["items"][number];
 
-/** An edit of a folder or a document, as its request takes it: what it changes, and the version it read. */
+/** An edit of a folder, a document or a note, as its request takes it: what it changes, and the version it read. */
 export type DocumentEdit = InferRequestType<DocumentsApi[":documentId"]["$put"]>["json"];
 
 /** A document's file, as its tree says: its name, its type, its size and when it was uploaded. */
 export type DocumentFile = NonNullable<CampaignDocument["file"]>;
 
-/** The files a document takes, as a file input's `accept` lists them. */
-export const DOCUMENT_FILE_ACCEPT = ALLOWED_DOCUMENT_FILE_TYPES.join(",");
+/** What a document's file is, in words, by its kind (`readDocumentIconKind`). */
+const FILE_KIND_LABELS = { Pdf: "PDF", Picture: "Picture", Text: "Text file" } as const;
 
-/** Each kind of item's icon (`readDocumentIconKind`): a folder's, a written document's, a picture's and a PDF's. */
+/** The files a document takes, as a file input's `accept` lists them: their types, and a text file's names. */
+export const DOCUMENT_FILE_ACCEPT = [...ALLOWED_DOCUMENT_FILE_TYPES, ...DOCUMENT_TEXT_EXTENSIONS].join(",");
+
+/**
+ * Each item's icon (`readDocumentIconKind`): a folder's, a note's, and a document's by its file, a picture's, a PDF's
+ * or a text file's.
+ */
 export const DOCUMENT_ICONS = {
-  Document: DocumentIcon,
   Folder: FolderIcon,
+  Note: NoteIcon,
   Pdf: PdfIcon,
   Picture: ImageOutlinedIcon,
+  Text: DocumentIcon,
 } as const;
 
 /** A new item's form: Private, as the server stores one, until its Game Master shows it. */
@@ -68,9 +79,11 @@ export const EMPTY_DOCUMENT_FORM: DocumentFormData = {
   file: null,
   name: "",
   readerIds: [],
-  removeFile: false,
   visibility: "Private",
 };
+
+/** The largest text file a document's page shows in place: a larger one opens in its own tab. */
+export const MAX_SHOWN_TEXT_BYTES = 512 * 1024;
 
 /** What a setting means, under its choice in the dialogs. */
 export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
@@ -83,6 +96,11 @@ export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
 function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
+}
+
+/** Whether a file is named as a text file (`DOCUMENT_TEXT_EXTENSIONS`), which a document takes as plain text. */
+function isNamedAsText(filename: string) {
+  return DOCUMENT_TEXT_EXTENSIONS.some((extension) => filename.toLowerCase().endsWith(extension));
 }
 
 /** Whether two lists of seats name the same seats, in any order. */
@@ -112,27 +130,30 @@ export function describeAudience(audience: DocumentAudience, seatNames: Readonly
   return `Seen by ${names.join(", ")}`;
 }
 
-/** What a folder holds, in words, for its delete's confirmation: "2 folders and 9 documents", or none. */
+/** What a folder holds, in words, for its delete's confirmation: "2 folders, 9 documents and 1 note", or none. */
 export function describeContents(items: readonly CampaignDocument[], folderId: string) {
   const held = findDocumentContents(buildTree(items), folderId);
-  const folders = held.filter((item) => item.kind === "Folder").length;
-  const documents = held.length - folders;
-  const parts = [folders > 0 && formatCount(folders, "folder"), documents > 0 && formatCount(documents, "document")];
-  return parts.filter(Boolean).join(" and ");
+  const parts = (["Folder", "Document", "Note"] as const).flatMap((kind) => {
+    const count = held.filter((item) => item.kind === kind).length;
+    return count > 0 ? [formatCount(count, kind.toLowerCase())] : [];
+  });
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts.join("");
 }
 
-/** What a document's file is, in words, under its name: "PDF · 2.4 MB", "Picture · 820 KB". */
+/** What a document's file is, in words, under its name: "PDF · 2.4 MB", "Picture · 820 KB", "Text file · 2 KB". */
 export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "contentType">) {
-  return `${isPictureFile(file) ? "Picture" : "PDF"} · ${formatFileSize(file.byteSize)}`;
+  return `${FILE_KIND_LABELS[readFileKind(file)]} · ${formatFileSize(file.byteSize)}`;
 }
 
 /**
  * Why a document can't take a file picked for it, which the server would refuse: its type (by what the browser says
- * of it, the server reading its bytes, which decide one the browser can't name) or its size; none when it can.
+ * of it and its name, the server reading its bytes, which decide one the browser can't name) or its size; none when
+ * it can.
  */
-export function describeFileRefusal(file: Pick<File, "size" | "type">) {
-  if (file.type && !(ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type))
-    return "Pick a picture (PNG, JPEG, WebP, GIF) or a PDF";
+export function describeFileRefusal(file: Pick<File, "name" | "size" | "type">) {
+  const typed = (ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type);
+  if (file.type && !typed && !isNamedAsText(file.name))
+    return "Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)";
   if (file.size > MAX_DOCUMENT_FILE_BYTES) return `Pick a file of ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;
   return null;
 }
@@ -157,18 +178,13 @@ export function isAudienceChanged(data: DocumentFormData, opened: DocumentFormDa
   return data.visibility !== opened.visibility || !isSameSeats(data.readerIds, opened.readerIds);
 }
 
-/** Whether a document's file is a picture, shown on its page, rather than a PDF, opened in its own tab. */
-export function isPictureFile(file: Pick<DocumentFile, "contentType">) {
-  return file.contentType.startsWith("image/");
-}
-
-/** What a folder (`folderId`, none for the top) holds, its folders first, each by name. */
+/** What a folder (`folderId`, none for the top) holds, its folders first, then its documents and notes, each by name. */
 export function listFolder(items: readonly CampaignDocument[], folderId: string | null) {
   const held = items.filter((item) => item.parentId === folderId);
   const byName = (a: CampaignDocument, b: CampaignDocument) => a.name.localeCompare(b.name);
   return [
     ...held.filter((item) => item.kind === "Folder").sort(byName),
-    ...held.filter((item) => item.kind === "Document").sort(byName),
+    ...held.filter((item) => item.kind !== "Folder").sort(byName),
   ];
 }
 
@@ -196,12 +212,18 @@ export function previewAudience(
   };
 }
 
-/** Which icon an item shows (`DOCUMENT_ICONS`): a folder's, its file's (a picture's, a PDF's), or a written one's. */
+/** Which icon an item shows (`DOCUMENT_ICONS`): a folder's, a note's, or its file's (`readFileKind`). */
 export function readDocumentIconKind(
   item: Pick<CampaignDocument, "kind"> & { file: Pick<DocumentFile, "contentType"> | null },
 ) {
-  if (!item.file) return item.kind;
-  return isPictureFile(item.file) ? "Picture" : "Pdf";
+  if (item.kind !== "Document") return item.kind;
+  return item.file ? readFileKind(item.file) : "Text";
+}
+
+/** What a document's file is, which its page shows it by: a picture, a PDF, or a text file. */
+export function readFileKind(file: Pick<DocumentFile, "contentType">) {
+  if (file.contentType.startsWith("image/")) return "Picture";
+  return file.contentType === "application/pdf" ? "Pdf" : "Text";
 }
 
 /**
@@ -220,21 +242,43 @@ export function readSeatNames(players: readonly CampaignPlayer[]) {
   return { playerNames: new Map(seats.filter((seat) => seat.userId).map(named)), seatNames: new Map(seats.map(named)) };
 }
 
-/** A new item's form's values as its create sends them: seats only for a Selected setting, a document's text. */
-export function toDocumentBody(data: DocumentFormData, kind: CampaignDocument["kind"]) {
+/**
+ * The type a file picked for a document is stored as, as far as the browser tells: plain text for one named as a text
+ * file, whatever the browser calls it.
+ */
+export function toContentType(file: Pick<File, "name" | "type">) {
+  return isNamedAsText(file.name) ? "text/plain" : file.type;
+}
+
+/** A new folder's or note's form's values as its create sends them: seats only for a Selected setting, a note's text. */
+export function toDocumentBody(data: DocumentFormData, kind: "Folder" | "Note") {
   const readerIds = data.visibility === "Selected" ? data.readerIds : [];
-  return { name: data.name, visibility: data.visibility, readerIds, ...(kind === "Document" && { body: data.body }) };
+  return { kind, name: data.name, visibility: data.visibility, readerIds, ...(kind === "Note" && { body: data.body }) };
 }
 
 /**
  * An edit's values as it sends them (`data`, from what it opened on, `opened`): its name; whom it admits only when
- * that changed, so a rename keeps the seats it names, even none left; and a document's text where its form shows it
+ * that changed, so a rename keeps the seats it names, even none left; and a note's text where its form shows it
  * (`withText`: an edit from the tab, which hasn't read it, leaves it as it is).
  */
 export function toDocumentEdit(data: DocumentFormData, opened: DocumentFormData, withText: boolean) {
   const readerIds = data.visibility === "Selected" ? data.readerIds : [];
   const audience = isAudienceChanged(data, opened) && { visibility: data.visibility, readerIds };
   return { name: data.name, ...audience, ...(withText && { body: data.body }) };
+}
+
+/** The name a document takes from its file's, until its Game Master names it: without its extension, cut to fit. */
+export function toDocumentName(filename: string) {
+  return (filename.replace(/\.[^.]+$/, "") || filename).slice(0, MAX_DOCUMENT_NAME_LENGTH);
+}
+
+/**
+ * A new document's form's values as its upload sends them, a form's fields: its file (`file`), its name, its folder
+ * (`parentId`, none at the top), and seats only for a Selected setting.
+ */
+export function toDocumentUpload(data: DocumentFormData, file: File, parentId: string | null) {
+  const readerIds = data.visibility === "Selected" ? data.readerIds : [];
+  return { file, name: data.name, visibility: data.visibility, readerIds, ...(parentId && { parentId }) };
 }
 
 /**
