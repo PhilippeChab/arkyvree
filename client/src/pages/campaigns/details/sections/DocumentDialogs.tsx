@@ -5,11 +5,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormHelperText,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
@@ -171,44 +170,53 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
       : describeDocumentFile(shown);
 
   return (
-    <Stack spacing={0.5}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0 }}>
-        <Button
-          ref={ref}
-          variant="outlined"
-          startIcon={<UploadFileIcon />}
-          onClick={() => fileInput?.click()}
-          disabled={disabled}
-          sx={{ flexShrink: 0 }}
-        >
-          {shown ? "Replace File" : "Choose File"}
-        </Button>
-        {shown && (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-            <ShownIcon fontSize="small" sx={{ color: "text.secondary" }} />
-            <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>
-              {shown.name}
-            </Typography>
-          </Stack>
-        )}
-      </Stack>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <FormHelperText error={!!fieldState.error} sx={{ mt: 0 }}>
-          {fieldState.error?.message ?? said}
-        </FormHelperText>
-        {picked && current && (
-          <Button
-            size="small"
-            disabled={disabled}
-            onClick={() => {
-              setPicked(null);
-              form.clearErrors("file");
-            }}
-          >
-            Undo
-          </Button>
-        )}
-      </Stack>
+    <>
+      {/* A field as the form's others are: its file's icon and name, and what picks another at its end */}
+      <TextField
+        fullWidth
+        label="File"
+        value={shown?.name ?? ""}
+        placeholder="No file chosen"
+        inputRef={ref}
+        disabled={disabled}
+        error={!!fieldState.error}
+        helperText={fieldState.error?.message ?? said}
+        slotProps={{
+          inputLabel: { shrink: true },
+          input: {
+            readOnly: true,
+            startAdornment: shown && (
+              <InputAdornment position="start">
+                <ShownIcon fontSize="small" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                {picked && current && (
+                  <Button
+                    size="small"
+                    disabled={disabled}
+                    onClick={() => {
+                      setPicked(null);
+                      form.clearErrors("file");
+                    }}
+                  >
+                    Undo
+                  </Button>
+                )}
+                <Button
+                  size="small"
+                  startIcon={<UploadFileIcon />}
+                  disabled={disabled}
+                  onClick={() => fileInput?.click()}
+                >
+                  {shown ? "Replace" : "Choose"}
+                </Button>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
       <input
         ref={setFileInput}
         type="file"
@@ -223,7 +231,7 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
           void form.trigger("file");
         }}
       />
-    </Stack>
+    </>
   );
 }
 
