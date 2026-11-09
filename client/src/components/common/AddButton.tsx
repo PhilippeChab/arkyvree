@@ -1,4 +1,5 @@
 import { Button, type ButtonProps } from "@mui/material";
+import type { MouseEvent } from "react";
 
 import { AddIcon } from "@/client/src/components/icons/index.ts";
 
@@ -7,7 +8,8 @@ interface AddButtonProps {
   compact?: boolean;
   disabled?: boolean;
   label: string;
-  onClick: () => void;
+  /** Its click, with its event for one that opens a menu of what it adds, anchored on it. */
+  onClick: (event: MouseEvent<HTMLElement>) => void;
   size?: ButtonProps["size"];
   sx?: ButtonProps["sx"];
   variant?: ButtonProps["variant"];

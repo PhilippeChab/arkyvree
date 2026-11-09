@@ -28,7 +28,8 @@ test.describe("A campaign's documents", () => {
 
       // The Game Master's Public folder, then a letter for the player in it, and their own notes beside it
       await page.goto(`/campaigns/${id}/documents`);
-      await page.getByRole("button", { name: "Add Folder" }).click();
+      await page.getByRole("button", { name: "Add" }).click();
+      await page.getByRole("menuitem", { name: "New Folder" }).click();
       const folderDialog = page.getByRole("dialog", { name: "Create New Folder" });
       await folderDialog.getByLabel("Name").fill("Handouts");
       await selectOption(page, "Visibility", "Public");
@@ -63,7 +64,8 @@ test.describe("A campaign's documents", () => {
       await expect(letterDialog).toBeHidden();
 
       // A note is text typed in the app, with no file
-      await page.getByRole("button", { name: "Add Note" }).click();
+      await page.getByRole("button", { name: "Add" }).click();
+      await page.getByRole("menuitem", { name: "New Note" }).click();
       const notesDialog = page.getByRole("dialog", { name: "Create New Note" });
       await notesDialog.getByLabel("Name").fill("Secret notes");
       await notesDialog.getByLabel("Text").fill("The miller is the cultist.");

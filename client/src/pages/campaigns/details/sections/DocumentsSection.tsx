@@ -1,10 +1,11 @@
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, IconButton, Menu, Stack, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
+import { type DragEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  ActionMenuItem,
   AddButton,
   BlankState,
   CLICKABLE_ROW_SX,
@@ -29,12 +30,14 @@ import {
   DeleteIcon,
   DocumentIcon,
   EditIcon,
+  FolderIcon,
   MoveIcon,
+  NoteIcon,
   UploadFileIcon,
   VisibilityIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState, useFormWith, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useDialogState, useFormWith, useSearchParam } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { type CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import {
@@ -89,6 +92,12 @@ interface OpenedEdit {
   opened: DocumentFormData;
 }
 
+/** The list, which takes a dropped file: the outline it shows while one is held over it. */
+const DROP_ZONE_SX = { borderRadius: 2, outline: "2px dashed transparent", outlineOffset: 4 } as const;
+
+/** The list while a file is held over it. */
+const DROPPING_SX = { outlineColor: "primary.main", bgcolor: "action.hover" } as const;
+
 /** A button as wide as the toolbar on a phone, as wide as its words from `sm` up. */
 const FULL_ON_PHONE_SX = { width: { xs: "100%", sm: "auto" } };
 
@@ -126,6 +135,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
 
   // The hidden file input Upload File opens, in state: its buttons hand their click on to it
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
+  const [dropping, setDropping] = useState(false);
+  const addMenu = useAnchorMenu();
   const createDialog = useDialogState<NewItem>();
   const editDialog = useDialogState<OpenedEdit>();
   const moveDialog = useDialogState<CampaignDocument>();
@@ -213,6 +224,27 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
     createDialog.openWith({ kind, parentId: folderId });
   };
 
+  // A file dropped on the list is uploaded as one picked is: one at a time
+  const dropProps = canManageDocuments
+    ? {
+        onDragOver: (event: DragEvent) => {
+          if (!event.dataTransfer.types.includes("Files")) return;
+          event.preventDefault();
+          setDropping(true);
+        },
+        onDragLeave: (event: DragEvent) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false);
+        },
+        onDrop: (event: DragEvent) => {
+          event.preventDefault();
+          setDropping(false);
+          const [file, ...others] = event.dataTransfer.files;
+          if (others.length > 0) return snackbar.warning("Drop one file at a time");
+          if (file) handleUpload(file);
+        },
+      }
+    : {};
+
   // A document starts from its file: picked first, checked, then named after it in its dialog
   const handleUpload = (file: File) => {
     const refusal = describeFileRefusal(file);
@@ -250,124 +282,121 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
       </Box>
     </Stack>
   );
-  // A folder can't stand deeper than its depth allows: Add Folder says why it's off there
-  const addFolder = (
-    <AddButton label="Add Folder" onClick={() => handleAdd("Folder")} disabled={!canAddFolder} sx={FULL_ON_PHONE_SX} />
-  );
-  const addActions = canManageDocuments && (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={FULL_ON_PHONE_SX}>
-      {canAddFolder ? (
-        addFolder
-      ) : (
-        <Tooltip title={`Folders Nest ${MAX_DOCUMENT_DEPTH} Deep at Most`}>
-          <Box component="span" sx={FULL_ON_PHONE_SX}>
-            {addFolder}
-          </Box>
-        </Tooltip>
-      )}
-      <AddButton label="Add Note" onClick={() => handleAdd("Note")} sx={FULL_ON_PHONE_SX} />
-      <Button
-        variant="contained"
-        startIcon={<UploadFileIcon />}
-        onClick={() => fileInput?.click()}
-        sx={FULL_ON_PHONE_SX}
-      >
-        Upload File
-      </Button>
-    </Stack>
-  );
+  // One button for what a Game Master adds here: a file first, then a note or a folder
+  const addActions = canManageDocuments && <AddButton label="Add" onClick={addMenu.openMenu} sx={FULL_ON_PHONE_SX} />;
 
   return (
     <SectionContent>
       <Stack spacing={3}>
         {(folderHeading || addActions) && <ListToolbar actions={addActions}>{folderHeading}</ListToolbar>}
 
-        {documents.isLoading ? (
-          <TableSkeleton columns={columns} />
-        ) : !documents.data ? (
-          <LoadError what="Documents" error={documents.error} onRetry={() => documents.refetch()} />
-        ) : shown.length === 0 ? (
-          <BlankState
-            icon={DocumentIcon}
-            title={folder ? "This folder is empty" : "No documents yet"}
-            description={
-              isGameMaster
-                ? "Keep your maps, handouts and notes here, and choose what each player sees"
-                : "Your Game Masters haven't shared anything with you here yet"
-            }
-            action={
-              canManageDocuments && !folder ? (
-                <Button
-                  variant="outlined"
-                  size="large"
-                  startIcon={<UploadFileIcon />}
-                  onClick={() => fileInput?.click()}
-                >
-                  Upload Your First Document
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <DataTable framed columns={columns} sx={{ width: "100%" }}>
-            {shown.map((item) => {
-              const KindIcon = DOCUMENT_ICONS[readDocumentIconKind(item)];
-              return (
-                <DataRow
-                  key={item.id}
-                  {...clickableProps(() => handleOpen(item))}
-                  aria-label={`Open ${item.name}`}
-                  sx={{ ...CLICKABLE_ROW_SX, ...ROW_ACTIONS_HOVER_SX }}
-                >
-                  <DataCell slot="primary">
-                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                      <KindIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {item.name}
-                        </Typography>
-                        {item.audience && (
-                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {describeAudience(item.audience, audienceNames)}
+        <Box {...dropProps} sx={[DROP_ZONE_SX, dropping && DROPPING_SX]}>
+          {documents.isLoading ? (
+            <TableSkeleton columns={columns} />
+          ) : !documents.data ? (
+            <LoadError what="Documents" error={documents.error} onRetry={() => documents.refetch()} />
+          ) : shown.length === 0 ? (
+            <BlankState
+              icon={DocumentIcon}
+              title={folder ? "This folder is empty" : "No documents yet"}
+              description={
+                isGameMaster
+                  ? canManageDocuments
+                    ? "Upload your maps and handouts, or drop a file here, and choose what each player sees"
+                    : "Nothing was kept here"
+                  : "Your Game Masters haven't shared anything with you here yet"
+              }
+              action={
+                canManageDocuments && !folder ? (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<UploadFileIcon />}
+                    onClick={() => fileInput?.click()}
+                  >
+                    Upload Your First Document
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <DataTable framed columns={columns} sx={{ width: "100%" }}>
+              {shown.map((item) => {
+                const KindIcon = DOCUMENT_ICONS[readDocumentIconKind(item)];
+                return (
+                  <DataRow
+                    key={item.id}
+                    {...clickableProps(() => handleOpen(item))}
+                    aria-label={`Open ${item.name}`}
+                    sx={{ ...CLICKABLE_ROW_SX, ...ROW_ACTIONS_HOVER_SX }}
+                  >
+                    <DataCell slot="primary">
+                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                        <KindIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {item.name}
                           </Typography>
+                          {item.audience && (
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {describeAudience(item.audience, audienceNames)}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Stack>
+                    </DataCell>
+                    {isGameMaster && (
+                      <DataCell slot="inline">
+                        {item.visibility ? (
+                          <StatusChip icon={<VisibilityIcon />} label={item.visibility} />
+                        ) : (
+                          <EmptyValue />
                         )}
-                      </Box>
-                    </Stack>
-                  </DataCell>
-                  {isGameMaster && (
-                    <DataCell slot="inline">
-                      {item.visibility ? (
-                        <StatusChip icon={<VisibilityIcon />} label={item.visibility} />
-                      ) : (
-                        <EmptyValue />
-                      )}
+                      </DataCell>
+                    )}
+                    <DataCell slot="hidden">
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        {formatDate(item.updatedAt)}
+                      </Typography>
                     </DataCell>
-                  )}
-                  <DataCell slot="hidden">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {formatDate(item.updatedAt)}
-                    </Typography>
-                  </DataCell>
-                  {isGameMaster && canManageDocuments && (
-                    <DataCell slot="trailing" align="right">
-                      <RowActions>
-                        <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(item)} />
-                        <RowAction icon={MoveIcon} label="Move" onClick={() => moveDialog.openWith(item)} />
-                        <RowAction
-                          icon={DeleteIcon}
-                          label="Delete"
-                          intent="destructive"
-                          onClick={() => deleteDialog.openWith(item)}
-                        />
-                      </RowActions>
-                    </DataCell>
-                  )}
-                </DataRow>
-              );
-            })}
-          </DataTable>
-        )}
+                    {isGameMaster && canManageDocuments && (
+                      <DataCell slot="trailing" align="right">
+                        <RowActions>
+                          <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(item)} />
+                          <RowAction icon={MoveIcon} label="Move" onClick={() => moveDialog.openWith(item)} />
+                          <RowAction
+                            icon={DeleteIcon}
+                            label="Delete"
+                            intent="destructive"
+                            onClick={() => deleteDialog.openWith(item)}
+                          />
+                        </RowActions>
+                      </DataCell>
+                    )}
+                  </DataRow>
+                );
+              })}
+            </DataTable>
+          )}
+        </Box>
       </Stack>
+
+      <Menu anchorEl={addMenu.anchorEl} open={addMenu.open} onClose={addMenu.closeMenu}>
+        <ActionMenuItem
+          icon={UploadFileIcon}
+          label="Upload File"
+          onClick={addMenu.closeMenuAnd(() => fileInput?.click())}
+        />
+        <ActionMenuItem icon={NoteIcon} label="New Note" onClick={addMenu.closeMenuAnd(() => handleAdd("Note"))} />
+        {/* A folder can't stand deeper than its depth allows: its item says why it's off there */}
+        <ActionMenuItem
+          icon={FolderIcon}
+          label="New Folder"
+          disabled={!canAddFolder}
+          reason={`Folders nest ${MAX_DOCUMENT_DEPTH} deep at most`}
+          onClick={addMenu.closeMenuAnd(() => handleAdd("Folder"))}
+        />
+      </Menu>
 
       {canManageDocuments && (
         <input

@@ -6,6 +6,8 @@ import { DiceSpinner } from "./DiceSpinner.tsx";
 import { type Intent, INTENT_COLORS } from "./intent.ts";
 
 interface ActionMenuItemProps {
+  /** It can't be taken now, for the reason under its label (`reason`). */
+  disabled?: boolean;
   /** An outside page it opens, in a new tab (Help). */
   href?: string;
   icon: ElementType;
@@ -15,6 +17,8 @@ interface ActionMenuItemProps {
   onClick: () => void;
   /** The request it started is running: it waits, a spinner for its icon (a menu kept open until it's done). */
   pending?: boolean;
+  /** Why it can't be taken now, under its label. */
+  reason?: string;
   /** A page of the app it opens: a link, as everything that only navigates is. */
   to?: string;
 }
@@ -26,7 +30,9 @@ export function ActionMenuItem({
   intent = "default",
   onClick,
   href,
+  disabled = false,
   pending = false,
+  reason,
   to,
 }: ActionMenuItemProps) {
   const palette = INTENT_COLORS[intent];
@@ -37,11 +43,11 @@ export function ActionMenuItem({
       ? { component: Link, to }
       : {};
   return (
-    <MenuItem {...link} onClick={onClick} disabled={pending} sx={{ color }}>
+    <MenuItem {...link} onClick={onClick} disabled={pending || disabled} sx={{ color }}>
       <ListItemIcon sx={{ color: color && "inherit" }}>
         {pending ? <DiceSpinner size="small" /> : <Icon fontSize="small" />}
       </ListItemIcon>
-      <ListItemText primary={label} />
+      <ListItemText primary={label} secondary={disabled ? reason : undefined} />
     </MenuItem>
   );
 }

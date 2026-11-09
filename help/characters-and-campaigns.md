@@ -87,10 +87,10 @@ Independent of campaign visibility, a character's owner can share it with a publ
 
 A campaign's **Documents** tab holds what its Game Masters keep for the campaign, in folders: their maps and prep, and the handouts they give their players. It holds two kinds of things:
 
-- A **document** is a file a Game Master uploads: a picture (PNG, JPEG, WebP or GIF), a PDF or a text file (.txt or .md), 10 MB at most. **Upload File** picks it, then asks for its name (the file's, until changed) and who sees it. Opening a document shows a picture or a text file on its page, and a PDF opens in its own tab with **Open PDF**. **Edit** replaces its file with another.
-- A **note** is text typed in the app, with no file: **Add Note** creates one, and its **⋮** menu edits its text.
+- A **document** is a file a Game Master uploads: a picture (PNG, JPEG, WebP or GIF), a PDF or a text file (.txt or .md), 10 MB at most. **Add → Upload File** picks it, or drop the file on the list; either then asks for its name (the file's, until changed) and who sees it. Opening a document shows a picture or a text file on its page, and a PDF opens in its own tab with **Open PDF**. **Edit** replaces its file with another.
+- A **note** is text typed in the app, with no file: **Add → New Note** creates one, and its **⋮** menu edits its text.
 
-**Add Folder** adds a folder; folders nest 5 deep at most. Each item changes from its row: **Edit** (its name and who sees it), **Move** (into another folder, or to the top) and **Delete**.
+**Add → New Folder** adds a folder; folders nest 5 deep at most. Each item changes from its row: **Edit** (its name and who sees it), **Move** (into another folder, or to the top) and **Delete**.
 
 Each folder, document and note has a visibility:
 
