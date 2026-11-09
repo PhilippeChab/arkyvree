@@ -356,7 +356,7 @@ export function DocumentFormDialog({
       form={form}
       onSubmit={onSubmit}
       pending={pending}
-      submitLabel={uploads ? "Upload" : undefined}
+      {...(uploads && { submitLabel: "Upload" })}
     >
       <AudienceNote
         change={change}
