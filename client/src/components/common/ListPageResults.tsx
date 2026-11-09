@@ -18,6 +18,8 @@ interface ListPageResultsProps {
   emptySx?: SxProps<Theme>;
   /** The page's query (`useListPageQuery`). */
   list: ListPageQuery;
+  /** Its list loads its next page at its own end (the Party View's row, sideways): no Load More under it. */
+  loadsMore?: boolean;
   /** The search that runs, if any: when it found nothing, a `NoMatchesState`. */
   search: string;
   /** A section's table's first load, its `TableSkeleton`, in place of the section's spinner. */
@@ -43,6 +45,7 @@ export function ListPageResults({
   empty,
   emptySx,
   list,
+  loadsMore = false,
   search,
   skeleton,
   variant = "page",
@@ -51,6 +54,7 @@ export function ListPageResults({
   if (list.isLoading) return variant === "page" ? <PageLoader /> : (skeleton ?? <DiceSpinner sx={{ py: 4 }} />);
   if (list.error && list.items.length === 0) return <LoadError what={what} error={list.error} />;
   if (list.items.length === 0) return <Box sx={emptySx}>{search ? <NoMatchesState search={search} /> : empty}</Box>;
+  if (loadsMore) return children;
   return (
     // With nothing more to load, the page ends three units below the list
     <Stack spacing={2} sx={{ pb: list.hasNextPage ? 0 : 3 }}>

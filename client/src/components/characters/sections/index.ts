@@ -1,3 +1,4 @@
+export { CompactSheet } from "./CompactSheet.tsx";
 export { DiagnosticsSection } from "./DiagnosticsSection.tsx";
 export { FieldsSection, PARTIAL_IDENTITY_NOTE } from "./FieldsSection.tsx";
 export { GroupedRow, GroupedRows } from "./GroupedRows.tsx";

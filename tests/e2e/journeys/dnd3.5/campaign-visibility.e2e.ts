@@ -142,6 +142,70 @@ test.describe("A campaign character", () => {
     }
   });
 
+  test("shows in the Party View its sheet in brief, as its visibility lets the reader see it", async ({
+    page,
+    browser,
+    ownerUser,
+    inviteeUser,
+    user,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const { id, characters } = await setUpCampaign(page, browser, inviteeUser, user);
+
+    // The Game Master opens it over the page: every character's build, side by side, a column at a time
+    await page.goto(`/campaigns/${id}/characters`);
+    await page.getByRole("button", { name: "Party View" }).click();
+    const dialog = page.getByRole("dialog", { name: /Party View$/ });
+    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/characterView=party/);
+    const party = dialog.getByRole("region", { name: "Party", exact: true });
+    await expect(party.getByRole("heading", { name: "Ability Scores" })).toHaveCount(3, { timeout: 15_000 });
+    await expect(party.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(0);
+    const previous = dialog.getByRole("button", { name: "Previous Characters" });
+    await expect(previous).toBeDisabled();
+    await dialog.getByRole("button", { name: "Next Characters" }).click();
+    await expect(previous).toBeEnabled();
+
+    // Its X closes it, the address as it was
+    await dialog.getByRole("button", { name: "Close Party View" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page).not.toHaveURL(/characterView/);
+
+    // A card opens the character's sheet, and Back the Party View again
+    await page.getByRole("button", { name: "Party View" }).click();
+    await party.getByText(characters.Public.name, { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/campaigns/${id}/characters/${characters.Public.id}$`));
+    await expect(page.getByRole("heading", { level: 1, name: characters.Public.name })).toBeVisible();
+    await page.goBack();
+    await expect(dialog).toBeVisible();
+
+    // Another player: a public character's build, a partial one's identity alone, and no private one
+    const other = await signedInPage(browser, user);
+    try {
+      // A screen tall enough for a column to show a short card and the next under it
+      await other.setViewportSize({ width: 1366, height: 1000 });
+      await other.goto(`/campaigns/${id}/characters?characterView=party`);
+      const otherParty = other.getByRole("region", { name: "Party", exact: true });
+      await expect(otherParty.getByText(characters.Public.name, { exact: true })).toBeVisible({ timeout: 15_000 });
+      await expect(otherParty.getByText(characters.Partial.name, { exact: true })).toBeVisible();
+      // Both sheets in: each card's identity names its race
+      await expect(otherParty.getByText("Race", { exact: true })).toHaveCount(2);
+      await expect(otherParty.getByRole("heading", { name: "Ability Scores" })).toHaveCount(1);
+      await expect(otherParty.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(1);
+      await expect(otherParty.getByText(characters.Private.name, { exact: true })).toHaveCount(0);
+
+      // The partial card, short, leaves the rest of its column to the public one under it, which scrolls within it
+      const partialName = await otherParty.getByText(characters.Partial.name, { exact: true }).boundingBox();
+      const publicName = await otherParty.getByText(characters.Public.name, { exact: true }).boundingBox();
+      expect(publicName?.x).toBeCloseTo(partialName?.x ?? Number.NaN, 0);
+      expect(publicName?.y).toBeGreaterThan(partialName?.y ?? Number.POSITIVE_INFINITY);
+      const publicDetails = otherParty.getByRole("group", { name: `${characters.Public.name} Details` });
+      expect(await publicDetails.evaluate((details) => details.scrollHeight > details.clientHeight)).toBe(true);
+    } finally {
+      await other.context().close();
+    }
+  });
+
   test("offers a demo player its editing, but not its PDF, which a demo doesn't export", async ({
     page,
     browser,
