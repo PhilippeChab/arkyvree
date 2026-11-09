@@ -1,9 +1,15 @@
-/** The image type an upload's bytes say it is, which its declared type can't change. */
+/** The type an upload's bytes say it is (an image, a document's file), which its declared type can't change. */
 
-import type { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
+import type { ALLOWED_DOCUMENT_FILE_TYPES, ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
+
+/** A type a campaign's document's file may be. */
+type AllowedDocumentFileType = (typeof ALLOWED_DOCUMENT_FILE_TYPES)[number];
 
 /** An image type an upload may be. */
 type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
+
+/** The bytes a PDF opens with: `%PDF-`. */
+const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d];
 
 /**
  * Each allowed image type by the bytes its files hold, each run at its offset: a WebP is a RIFF file whose form is
@@ -18,6 +24,12 @@ const SIGNATURES: Record<AllowedImageType, readonly (readonly [offset: number, b
     [8, [0x57, 0x45, 0x42, 0x50]],
   ],
 };
+
+/** The type a campaign's document's file's bytes open with (an image's, or a PDF's), or null for any other file. */
+export function detectDocumentFileType(data: Uint8Array): AllowedDocumentFileType | null {
+  if (PDF_SIGNATURE.every((byte, i) => data[i] === byte)) return "application/pdf";
+  return detectImageType(data);
+}
 
 /** The image type a file's bytes open with (PNG, JPEG, GIF, WebP), or null for any other file. */
 export function detectImageType(data: Uint8Array): AllowedImageType | null {

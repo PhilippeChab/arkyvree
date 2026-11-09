@@ -52,6 +52,16 @@ test.describe("A campaign's documents", () => {
       await page.getByRole("button", { name: "Add Document" }).click();
       const notesDialog = page.getByRole("dialog", { name: "Create New Document" });
       await notesDialog.getByLabel("Name").fill("Secret notes");
+      // A file is checked as it's picked: a page posing as a picture is refused, a picture taken, then removed. The
+      // tests' storage takes none, so the notes go without one
+      const fileInput = notesDialog.locator('input[type="file"]');
+      await fileInput.setInputFiles({ name: "map.html", mimeType: "text/html", buffer: Buffer.from("<html></html>") });
+      await expect(notesDialog.getByText("Pick a picture (PNG, JPEG, WebP, GIF) or a PDF")).toBeVisible();
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      await fileInput.setInputFiles({ name: "map.png", mimeType: "image/png", buffer: png });
+      await expect(notesDialog.getByText("Picture · 1 KB · uploaded when saved")).toBeVisible();
+      await notesDialog.getByRole("button", { name: "Remove File" }).click();
+      await expect(notesDialog.getByText("A picture (PNG, JPEG, WebP, GIF) or a PDF, 10 MB at most")).toBeVisible();
       await notesDialog.getByRole("button", { name: "Create" }).click();
       await expect(notesDialog).toBeHidden();
       await expect(page.getByRole("row", { name: "Open A letter" })).toContainText(`Seen by ${inviteeUser.username}`);

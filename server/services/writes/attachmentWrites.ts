@@ -1,13 +1,13 @@
 import type { Db } from "@/drizzle/database.ts";
 import { blobsInStorage } from "@/drizzle/schema.ts";
 import { withWrite } from "@/server/database/index.ts";
-import { UnauthorizedError } from "@/server/errors/index.ts";
-import { isVisible, Locks, Visibility } from "@/server/repositories/index.ts";
-import { ATTACHMENT_SLOTS } from "@/shared/attachments.ts";
+import { NotFoundError, UnauthorizedError } from "@/server/errors/index.ts";
+import { Documents, isVisible, Locks, Visibility } from "@/server/repositories/index.ts";
+import { ATTACHMENT_SLOTS, DOCUMENT_FILE_SLOT } from "@/shared/attachments.ts";
 
 import { lockNamedCharacter } from "./characterWrites.ts";
 
-/** The record an attachment is of (`recordType`: a user's avatar, a character's portrait). */
+/** The record an attachment is of (`recordType`: a user's avatar, a character's portrait, a campaign document's file). */
 interface AttachedRecord {
   recordId: string;
   recordType: string;
@@ -17,14 +17,28 @@ interface AttachedRecord {
 const BUSY_ATTACHMENT_MESSAGE = "The image is being changed by another save; try again";
 
 /**
+ * Locks the campaign a document (`documentId`) is in, as its documents' writes lock it (`withCampaignWrite`): a
+ * document's campaign never changes, so it's read before the lock; an unknown document is refused as not found.
+ */
+async function lockDocumentCampaign(tx: Db, documentId: string) {
+  const document = await Documents.findOne(tx, { id: documentId });
+  const locked = document && (await Locks.lockCampaigns(tx, { ids: [document.campaignId] }, "no key update"));
+  if (!locked || locked.length === 0) throw new NotFoundError("Document not found in this campaign");
+}
+
+/**
  * Locks the record an attachment is of (`record`), as its own writes lock it: a user's row (refused as its session is,
- * 401, once it's gone), a character's after its master's (`lockNamedCharacter`; an unknown one refused as not found,
- * an archived one locked, which its policy refuses).
+ * 401, once it's gone), a campaign document's campaign (`lockDocumentCampaign`), a character's after its master's
+ * (`lockNamedCharacter`; an unknown one refused as not found, an archived one locked, which its policy refuses).
  */
 async function lockRecord(tx: Db, record: AttachedRecord) {
   if (record.recordType === ATTACHMENT_SLOTS.avatar.recordType) {
     const locked = await Locks.lockUser(tx, record.recordId, "no key update");
     if (!isVisible(locked, Visibility.UnarchivedOnly)) throw new UnauthorizedError("Invalid session");
+    return;
+  }
+  if (record.recordType === DOCUMENT_FILE_SLOT.recordType) {
+    await lockDocumentCampaign(tx, record.recordId);
     return;
   }
   await lockNamedCharacter(tx, record.recordId);

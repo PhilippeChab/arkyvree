@@ -53,7 +53,12 @@ class AttachmentsRepository extends BaseRepository<typeof attachmentsInStorage> 
 
   async findOneWithBlob(db: Db, where: { name: string; recordId: string; recordType: string }) {
     const rows = await db
-      .select({ id: this.table.id, key: blobsInStorage.key })
+      .select({
+        id: this.table.id,
+        key: blobsInStorage.key,
+        contentType: blobsInStorage.contentType,
+        filename: blobsInStorage.filename,
+      })
       .from(this.table)
       .innerJoin(blobsInStorage, eq(blobsInStorage.id, this.table.blobId))
       .where(

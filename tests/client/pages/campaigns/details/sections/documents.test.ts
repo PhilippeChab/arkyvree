@@ -5,14 +5,19 @@ import {
   type CampaignDocument,
   describeAudience,
   describeContents,
+  describeDocumentFile,
+  describeFileRefusal,
+  EMPTY_DOCUMENT_FORM,
   findMoveTargets,
   isAudienceChanged,
   listFolder,
   previewAudience,
+  readDocumentIconKind,
   toDocumentBody,
   toDocumentEdit,
   toEditForm,
 } from "@/client/src/pages/campaigns/details/sections/documents.ts";
+import { MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
 import { readDocumentAudience } from "@/shared/campaignDocuments.ts";
 
 type Item = Pick<CampaignDocument, "id" | "kind" | "name" | "parentId"> &
@@ -110,7 +115,13 @@ describe("the Documents tab", () => {
   });
 
   test("creates with a Selected setting's seats alone, and a document's text", () => {
-    const form = { body: "Hi", name: "Map", readerIds: ["rogue"], visibility: "Public" as const };
+    const form = {
+      ...EMPTY_DOCUMENT_FORM,
+      body: "Hi",
+      name: "Map",
+      readerIds: ["rogue"],
+      visibility: "Public" as const,
+    };
     expect(toDocumentBody(form, "Document")).toEqual({ name: "Map", visibility: "Public", readerIds: [], body: "Hi" });
     expect(toDocumentBody({ ...form, visibility: "Selected" }, "Folder")).toEqual({
       name: "Map",
@@ -122,7 +133,7 @@ describe("the Documents tab", () => {
   test("edits whom an item admits only when that changed, so a rename keeps its seats, even none left", () => {
     const opened = toEditForm({ name: "Letter", readerIds: ["rogue", "gone"], visibility: "Selected" }, SEATS);
     // A seat that's no longer the campaign's isn't sent back
-    expect(opened).toEqual({ body: "", name: "Letter", readerIds: ["rogue"], visibility: "Selected" });
+    expect(opened).toEqual({ ...EMPTY_DOCUMENT_FORM, name: "Letter", readerIds: ["rogue"], visibility: "Selected" });
     expect(toEditForm({ name: "Letter", readerIds: ["gone"], visibility: "Selected" }, undefined).readerIds).toEqual([
       "gone",
     ]);
@@ -140,5 +151,26 @@ describe("the Documents tab", () => {
       body: "Hi",
     });
     expect(isAudienceChanged({ ...opened, readerIds: ["rogue"] }, opened)).toBe(false);
+    // A file picked or removed goes by its own request
+    const picked = new File(["%PDF-"], "map.pdf", { type: "application/pdf" });
+    expect(toDocumentEdit({ ...opened, file: picked, removeFile: true }, opened, false)).toEqual({ name: "Letter" });
+  });
+
+  test("says what a document's file is, its icon, and why a pick is refused", () => {
+    const picture = { byteSize: 840_000, contentType: "image/png" };
+    const pdf = { byteSize: 2_500_000, contentType: "application/pdf" };
+    expect([describeDocumentFile(picture), describeDocumentFile(pdf)]).toEqual(["Picture · 820 KB", "PDF · 2.4 MB"]);
+    expect(describeDocumentFile({ byteSize: 12, contentType: "image/gif" })).toBe("Picture · 1 KB");
+
+    expect(readDocumentIconKind({ kind: "Folder", file: null })).toBe("Folder");
+    expect(readDocumentIconKind({ kind: "Document", file: null })).toBe("Document");
+    expect(readDocumentIconKind({ kind: "Document", file: picture })).toBe("Picture");
+    expect(readDocumentIconKind({ kind: "Document", file: pdf })).toBe("Pdf");
+
+    expect(describeFileRefusal({ size: 10, type: "application/pdf" })).toBeNull();
+    expect(describeFileRefusal({ size: 10, type: "text/html" })).toBe("Pick a picture (PNG, JPEG, WebP, GIF) or a PDF");
+    expect(describeFileRefusal({ size: MAX_DOCUMENT_FILE_BYTES + 1, type: "image/png" })).toBe(
+      "Pick a file of 10 MB at most",
+    );
   });
 });

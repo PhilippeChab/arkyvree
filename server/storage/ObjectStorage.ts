@@ -10,6 +10,8 @@ export interface StorageBackend {
   publicUrl(key: string): string;
   /** Stores an object the server holds whole: a file uploaded through it rather than straight to the storage. */
   putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void>;
+  /** An object's bytes, which the server hands on itself (a private file), or `null` when there's none. */
+  readObject(key: string): Promise<Uint8Array<ArrayBuffer> | null>;
 }
 
 /**
@@ -69,6 +71,15 @@ class S3StorageBackend implements StorageBackend {
 
   async putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void> {
     await Bun.s3.write(key, data, { type: opts.contentType });
+  }
+
+  async readObject(key: string): Promise<Uint8Array<ArrayBuffer> | null> {
+    try {
+      return new Uint8Array(await Bun.s3.file(key).arrayBuffer());
+    } catch (error) {
+      if (isNotFound(error)) return null;
+      throw error;
+    }
   }
 }
 

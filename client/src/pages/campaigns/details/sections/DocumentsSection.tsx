@@ -50,15 +50,17 @@ import {
 } from "@/shared/campaignDocuments.ts";
 
 import { DeleteDocumentDialog, DocumentFormDialog, MoveDocumentDialog } from "./DocumentDialogs.tsx";
+import { describeFileSave, saveDocumentFileFn } from "./documentFiles.ts";
 import {
   buildTree,
   type CampaignDocument,
   describeAudience,
-  DOCUMENT_KIND_ICONS,
+  DOCUMENT_ICONS,
   type DocumentEdit,
   type DocumentFormData,
   EMPTY_DOCUMENT_FORM,
   listFolder,
+  readDocumentIconKind,
   readSeatNames,
   toDocumentBody,
   toDocumentEdit,
@@ -134,32 +136,51 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const columns = !isGameMaster ? PLAYER_COLUMNS : canManageDocuments ? MASTER_COLUMNS : READER_COLUMNS;
   const newItem = createDialog.target;
 
+  // A document's file goes once it's created: its failure leaves it created, and says so
   const createMutation = useMutation({
-    mutationFn: ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) =>
-      parseResponse(
+    mutationFn: async ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) => {
+      const created = await parseResponse(
         rpc.api.campaigns[":id"].documents.$post({
           param: { id: campaign.id },
           json: { kind, parentId, ...toDocumentBody(data, kind) },
         }),
-      ),
-    onSuccess: (created) => {
-      snackbar.success(`${created.kind} created`);
+      );
+      return { created, fileError: await saveDocumentFileFn(campaign.id, created.id, data) };
+    },
+    onSuccess: ({ created, fileError }) => {
+      const { message, severity } = describeFileSave(`${created.kind} created`, fileError);
+      snackbar[severity](message);
       invalidateCampaignDocuments(queryClient, campaign.id);
       createDialog.close();
     },
     onError: (error, { kind }) => snackbar.error(error, `Failed to create ${kind.toLowerCase()}`),
   });
 
+  // An edit's file goes once the rest is saved, a version another Game Master changed meanwhile refused first
   const updateMutation = useMutation({
-    mutationFn: ({ item, json }: { item: CampaignDocument; json: DocumentEdit }) =>
-      parseResponse(
+    mutationFn: async ({
+      item,
+      json,
+      file,
+    }: {
+      file?: DocumentFormData;
+      item: CampaignDocument;
+      json: DocumentEdit;
+    }) => {
+      const updated = await parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaign.id, documentId: item.id },
           json: { ...json, updatedAt: item.updatedAt },
         }),
-      ),
-    onSuccess: (updated, { json }) => {
-      snackbar.success(`${updated.kind} ${"parentId" in json ? "moved" : "updated"}`);
+      );
+      return { updated, fileError: file ? await saveDocumentFileFn(campaign.id, item.id, file) : null };
+    },
+    onSuccess: ({ updated, fileError }, { json }) => {
+      const { message, severity } = describeFileSave(
+        `${updated.kind} ${"parentId" in json ? "moved" : "updated"}`,
+        fileError,
+      );
+      snackbar[severity](message);
       invalidateCampaignDocuments(queryClient, campaign.id);
       editDialog.close();
       moveDialog.close();
@@ -265,7 +286,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         ) : (
           <DataTable framed columns={columns} sx={{ width: "100%" }}>
             {shown.map((item) => {
-              const KindIcon = DOCUMENT_KIND_ICONS[item.kind];
+              const KindIcon = DOCUMENT_ICONS[readDocumentIconKind(item)];
               return (
                 <DataRow
                   key={item.id}
@@ -350,7 +371,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         withText={false}
         onSubmit={(data) => {
           const target = editDialog.target;
-          if (target) updateMutation.mutate({ item: target.item, json: toDocumentEdit(data, target.opened, false) });
+          if (target)
+            updateMutation.mutate({ item: target.item, json: toDocumentEdit(data, target.opened, false), file: data });
         }}
         pending={updateMutation.isPending}
       />

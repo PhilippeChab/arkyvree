@@ -2,9 +2,10 @@
 
 import type { InferRequestType, InferResponseType } from "hono/client";
 
-import { DocumentIcon, FolderIcon } from "@/client/src/components/icons/index.ts";
+import { DocumentIcon, FolderIcon, ImageOutlinedIcon, PdfIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { ALLOWED_DOCUMENT_FILE_TYPES, MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
 import {
   countDocumentDepth,
   countFolderHeight,
@@ -28,11 +29,16 @@ export interface AudienceChange {
   lost: string[];
 }
 
-/** The Create and Edit dialogs' form: a name, a document's text, and whom it admits. */
+/**
+ * The Create and Edit dialogs' form: a name, a document's text and file, and whom it admits. Its file is one picked to
+ * upload (`file`), or none; an edit removes the one it held (`removeFile`) or keeps it.
+ */
 export interface DocumentFormData {
   body: string;
+  file: File | null;
   name: string;
   readerIds: string[];
+  removeFile: boolean;
   visibility: DocumentVisibility;
 }
 
@@ -42,11 +48,29 @@ export type CampaignDocument = InferResponseType<DocumentsApi["$get"], 200>["ite
 /** An edit of a folder or a document, as its request takes it: what it changes, and the version it read. */
 export type DocumentEdit = InferRequestType<DocumentsApi[":documentId"]["$put"]>["json"];
 
-/** A folder's or a document's icon, wherever its kind shows. */
-export const DOCUMENT_KIND_ICONS = { Document: DocumentIcon, Folder: FolderIcon } as const;
+/** A document's file, as its tree says: its name, its type, its size and when it was uploaded. */
+export type DocumentFile = NonNullable<CampaignDocument["file"]>;
+
+/** The files a document takes, as a file input's `accept` lists them. */
+export const DOCUMENT_FILE_ACCEPT = ALLOWED_DOCUMENT_FILE_TYPES.join(",");
+
+/** Each kind of item's icon (`readDocumentIconKind`): a folder's, a written document's, a picture's and a PDF's. */
+export const DOCUMENT_ICONS = {
+  Document: DocumentIcon,
+  Folder: FolderIcon,
+  Pdf: PdfIcon,
+  Picture: ImageOutlinedIcon,
+} as const;
 
 /** A new item's form: Private, as the server stores one, until its Game Master shows it. */
-export const EMPTY_DOCUMENT_FORM: DocumentFormData = { body: "", name: "", readerIds: [], visibility: "Private" };
+export const EMPTY_DOCUMENT_FORM: DocumentFormData = {
+  body: "",
+  file: null,
+  name: "",
+  readerIds: [],
+  removeFile: false,
+  visibility: "Private",
+};
 
 /** What a setting means, under its choice in the dialogs. */
 export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
@@ -54,6 +78,12 @@ export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
   Public: "Every player, where its folders show it",
   Selected: "The players picked, where its folders show it",
 };
+
+/** A file's size, in the unit that reads best: "820 KB", "2.4 MB", "10 MB". */
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
+}
 
 /** Whether two lists of seats name the same seats, in any order. */
 function isSameSeats(a: readonly string[], b: readonly string[]) {
@@ -91,6 +121,22 @@ export function describeContents(items: readonly CampaignDocument[], folderId: s
   return parts.filter(Boolean).join(" and ");
 }
 
+/** What a document's file is, in words, under its name: "PDF · 2.4 MB", "Picture · 820 KB". */
+export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "contentType">) {
+  return `${isPictureFile(file) ? "Picture" : "PDF"} · ${formatFileSize(file.byteSize)}`;
+}
+
+/**
+ * Why a document can't take a file picked for it, which the server would refuse: its type (by what the browser says
+ * of it: the server reads its bytes) or its size; none when it can.
+ */
+export function describeFileRefusal(file: Pick<File, "size" | "type">) {
+  if (!(ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type))
+    return "Pick a picture (PNG, JPEG, WebP, GIF) or a PDF";
+  if (file.size > MAX_DOCUMENT_FILE_BYTES) return `Pick a file of ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;
+  return null;
+}
+
 /**
  * The folders an item (`item`, none for a new one of `kind`) can go in, the top among them (`null`): not itself nor one
  * of its own, and none that would stand a folder deeper than `MAX_DOCUMENT_DEPTH`.
@@ -109,6 +155,11 @@ export function findMoveTargets(items: readonly CampaignDocument[], item: Pick<C
 /** Whether an edit changes whom an item admits (`data`, from what it opened on, `opened`): its setting or its seats. */
 export function isAudienceChanged(data: DocumentFormData, opened: DocumentFormData) {
   return data.visibility !== opened.visibility || !isSameSeats(data.readerIds, opened.readerIds);
+}
+
+/** Whether a document's file is a picture, shown on its page, rather than a PDF, opened in its own tab. */
+export function isPictureFile(file: Pick<DocumentFile, "contentType">) {
+  return file.contentType.startsWith("image/");
 }
 
 /** What a folder (`folderId`, none for the top) holds, its folders first, each by name. */
@@ -143,6 +194,14 @@ export function previewAudience(
     gained: seats.filter((seat) => sees(after, seat) && !sees(before, seat)).map(named),
     lost: seats.filter((seat) => sees(before, seat) && !sees(after, seat)).map(named),
   };
+}
+
+/** Which icon an item shows (`DOCUMENT_ICONS`): a folder's, its file's (a picture's, a PDF's), or a written one's. */
+export function readDocumentIconKind(
+  item: Pick<CampaignDocument, "kind"> & { file: Pick<DocumentFile, "contentType"> | null },
+) {
+  if (!item.file) return item.kind;
+  return isPictureFile(item.file) ? "Picture" : "Pdf";
 }
 
 /**
@@ -187,5 +246,11 @@ export function toEditForm(
   seatNames: ReadonlyMap<string, string> | undefined,
 ): DocumentFormData {
   const readerIds = (item.readerIds ?? []).filter((id) => !seatNames || seatNames.has(id));
-  return { body: item.body ?? "", name: item.name, readerIds, visibility: item.visibility ?? "Private" };
+  return {
+    ...EMPTY_DOCUMENT_FORM,
+    body: item.body ?? "",
+    name: item.name,
+    readerIds,
+    visibility: item.visibility ?? "Private",
+  };
 }

@@ -1,10 +1,17 @@
 import { and, eq, getTableColumns, type InferInsertModel, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { documentReadersInCampaign, documentsInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
+import {
+  attachmentsInStorage,
+  blobsInStorage,
+  documentReadersInCampaign,
+  documentsInCampaign,
+  playersInCampaign,
+} from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { DOCUMENT_FILE_SLOT } from "@/shared/attachments.ts";
 import type { DocumentKind, DocumentVisibility } from "@/shared/campaignDocuments.ts";
 
 /** A document's row, its kind and visibility ones their columns' checks hold. */
@@ -50,8 +57,9 @@ class DocumentsRepository extends include(BaseRepository<typeof documentsInCampa
 
   /**
    * A campaign's whole tree, each by its name, then its id, with the live seats it names (`readerIds`, sorted: a seat
-   * archived with its user's account names no one), in one statement, so a write committing meanwhile is read whole or
-   * not at all. Its documents' text is left out but one's (`textOf`), which an item's read shows.
+   * archived with its user's account names no one) and a document's file (its name, size and type, none without one),
+   * in one statement, so a write committing meanwhile is read whole or not at all. Its documents' text is left out but
+   * one's (`textOf`), which an item's read shows.
    */
   async findTree(db: Db, where: { campaignId: string }, textOf?: string) {
     const readers = documentReadersInCampaign;
@@ -63,13 +71,29 @@ class DocumentsRepository extends include(BaseRepository<typeof documentsInCampa
     const body = textOf
       ? sql<string | null>`CASE WHEN ${this.table.id} = ${textOf} THEN ${this.table.body} END`
       : sql<null>`NULL`;
+    // Its file, a document's one attachment, which its slot's unique index keeps to one
+    const file = {
+      fileName: blobsInStorage.filename,
+      fileSize: blobsInStorage.byteSize,
+      fileType: blobsInStorage.contentType,
+      fileUploadedAt: blobsInStorage.createdAt,
+    };
     const rows = await db
-      .select({ ...TREE_COLUMNS, body, readerIds })
+      .select({ ...TREE_COLUMNS, body, readerIds, ...file })
       .from(this.table)
       .leftJoin(readers, eq(readers.documentId, this.table.id))
       .leftJoin(seat, and(eq(seat.id, readers.playerId), isNull(seat.deletedAt)))
+      .leftJoin(
+        attachmentsInStorage,
+        and(
+          eq(attachmentsInStorage.recordType, DOCUMENT_FILE_SLOT.recordType),
+          eq(attachmentsInStorage.recordId, this.table.id),
+          eq(attachmentsInStorage.name, DOCUMENT_FILE_SLOT.name),
+        ),
+      )
+      .leftJoin(blobsInStorage, eq(blobsInStorage.id, attachmentsInStorage.blobId))
       .where(eq(this.table.campaignId, where.campaignId))
-      .groupBy(this.table.id)
+      .groupBy(this.table.id, blobsInStorage.id)
       .orderBy(this.orderBy(this.table.name), this.orderBy(this.table.id));
     return rows.map(toDocument);
   }

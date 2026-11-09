@@ -40,7 +40,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors`, a ruleset's and a character's (Pending/Active/Rejected/Revoked enum: a revoked one stays, by its status) |
 | Account credentials | `ApiKeys` (a revoked key: nothing names it, and its token must stop working at once; an expired one, which the sign-in refuses, once `runCleanup.ts` reaps it) |
-| A campaign's documents | `Documents` (a folder's delete takes what it holds, by cascade, never moving it up to its folder, where a Private folder's contents would show), `DocumentReaders` (the seats a Selected item names: a link, rewritten with its item's setting; a seat archived with its user's account keeps its rows, which name no one: the tree reads live seats alone, and its item's next save of its seats drops them) |
+| A campaign's documents | `Documents` (a folder's delete takes what it holds, by cascade, never moving it up to its folder, where a Private folder's contents would show; a document's file, an `Attachments` row, goes by the trigger, see *Polymorphic rows*), `DocumentReaders` (the seats a Selected item names: a link, rewritten with its item's setting; a seat archived with its user's account keeps its rows, which name no one: the tree reads live seats alone, and its item's next save of its seats drops them) |
 
 A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 
@@ -118,7 +118,7 @@ These are intentionally archived. Don't flip them — the restore-by-recreate be
 Customizations (`Modifiers`, `Requirements`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a demo account's purge deletes its rulesets, their entities and its characters).
 
 - **Customizations:** a trigger on each table a customization can belong to (`delete_customizations`, `drizzle/0000_baseline.sql`; an entity's, on `rules.entities`, runs `rules.delete_entity_customizations`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/dnd3.5/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
-- **Attachments:** a trigger on users and characters (`delete_attachments`, `drizzle/0000_baseline.sql`); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user, purges its avatar itself (`purgeAttachmentsForRecords`), and the characters it deletes lose theirs by the trigger, those it hands on keeping them.
+- **Attachments:** a trigger on users and characters (`delete_attachments`, `drizzle/0000_baseline.sql`) and on campaign documents (`drizzle/0005_document_attachments.sql`: a folder's delete takes its documents by cascade, whose rows the trigger sees too); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user, purges its avatar itself (`purgeAttachmentsForRecords`), and the characters it deletes lose theirs by the trigger, those it hands on keeping them.
 
 Others name their row the same way, and stay when it's deleted, on purpose:
 

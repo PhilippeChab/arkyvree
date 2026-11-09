@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Campaign documents: a Game Master's folders and documents, each Private, Public or shown to selected players
+- A campaign document holds a picture or a PDF, which only the players who see the document can open
 - A campaign's Game Masters edit its characters
 - The characters list shows each character's ruleset, and filters by ruleset
 - Pathfinder 1: a new game system with the Core Rulebook's races, classes, feats, spells and items, as the ruleset "Core PSD 1"

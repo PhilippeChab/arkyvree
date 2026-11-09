@@ -84,15 +84,19 @@ class CampaignDocumentsService {
   }
 
   /**
-   * An item as the session reads it (`policy`): what it is, where it stands (`path`, the folders above it) and when it
-   * changed; its Game Master also reads whom it admits, by its own setting (`visibility`, `readerIds`) and in effect
+   * An item as the session reads it (`policy`): what it is, where it stands (`path`, the folders above it), its file
+   * (none without one) and when it changed; its Game Master also reads whom it admits, by its own setting (`visibility`, `readerIds`) and in effect
    * (`audience`), which a player doesn't, so a Selected item doesn't tell them who else sees it. Its text is its read's.
    */
   private describe(item: TreeItem, tree: Tree, policy: CampaignsPolicy) {
-    const { body: _body, readerIds, visibility, ...shown } = item;
-    const path = findDocumentPath(tree, item.id);
-    if (!policy.isGameMaster()) return { ...shown, path, audience: null, readerIds: null, visibility: null };
-    return { ...shown, path, audience: readDocumentAudience(tree, item.id), readerIds: [...readerIds], visibility };
+    const { body: _body, fileName, fileSize, fileType, fileUploadedAt, readerIds, visibility, ...stored } = item;
+    const file =
+      fileName && fileType && fileSize !== null && fileUploadedAt
+        ? { name: fileName, contentType: fileType, byteSize: fileSize, uploadedAt: fileUploadedAt }
+        : null;
+    const shown = { ...stored, file, path: findDocumentPath(tree, item.id) };
+    if (!policy.isGameMaster()) return { ...shown, audience: null, readerIds: null, visibility: null };
+    return { ...shown, audience: readDocumentAudience(tree, item.id), readerIds: [...readerIds], visibility };
   }
 
   /**
@@ -176,7 +180,8 @@ class CampaignDocumentsService {
       if (!row) throw new InternalError("Failed to create the document");
       await DocumentReaders.create(tx, { documentId: row.id, playerIds: readerIds });
 
-      const item = { ...row, readerIds };
+      // A new document holds no file yet
+      const item = { ...row, readerIds, fileName: null, fileSize: null, fileType: null, fileUploadedAt: null };
       const after = new Map(tree).set(item.id, item);
       await this.recordWrite(tx, session, campaign, seats, "createCampaignDocument", item, { after });
       return { ...this.describe(item, after, policy), body: item.body };
@@ -263,7 +268,8 @@ class CampaignDocumentsService {
         await DocumentReaders.create(tx, { documentId, playerIds: readerIds });
       }
 
-      const item = { ...row, readerIds };
+      const { fileName, fileSize, fileType, fileUploadedAt } = current;
+      const item = { ...row, readerIds, fileName, fileSize, fileType, fileUploadedAt };
       const after = new Map(tree).set(item.id, item);
       await this.recordWrite(tx, session, campaign, seats, "updateCampaignDocument", item, { before: tree, after });
       return { ...this.describe(item, after, policy), body: item.body };

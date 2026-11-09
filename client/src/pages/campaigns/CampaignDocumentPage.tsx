@@ -1,4 +1,4 @@
-import { Container, Menu, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Menu, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -13,7 +13,7 @@ import {
   Panel,
   StatusChip,
 } from "@/client/src/components/common/index.ts";
-import { DeleteIcon, EditIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
+import { DeleteIcon, EditIcon, OpenInNewIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -25,14 +25,90 @@ import { campaignDocumentsQuery, campaignSeatsQuery, invalidateCampaignDocuments
 import {
   DeleteDocumentDialog,
   describeAudience,
+  describeDocumentFile,
+  describeFileSave,
+  DOCUMENT_ICONS,
+  type DocumentFile,
   type DocumentFormData,
   DocumentFormDialog,
   EMPTY_DOCUMENT_FORM,
+  isPictureFile,
+  readDocumentIconKind,
   readSeatNames,
+  saveDocumentFileFn,
   toDocumentEdit,
+  toDocumentFileUrl,
   toEditForm,
 } from "./details/sections/index.ts";
 import { useCampaignPermissions } from "./hooks/index.ts";
+
+interface DocumentFilePanelProps {
+  file: DocumentFile;
+  /** Its document's name, a picture's alternative text. */
+  name: string;
+  /** Where its bytes are read, through the server. */
+  url: string;
+}
+
+/** A picture's height at most, so its page's text stays in reach under it. */
+const PICTURE_MAX_HEIGHT = "60vh";
+
+/**
+ * A document's file: a picture shown whole, a PDF opened in its own tab, the browser's reader; either opens there, at
+ * its full size, with its name, type and size beside.
+ */
+function DocumentFilePanel({ file, name, url }: DocumentFilePanelProps) {
+  const FileIcon = DOCUMENT_ICONS[readDocumentIconKind({ kind: "Document", file })];
+  const picture = isPictureFile(file);
+  return (
+    <Panel>
+      <Stack spacing={2}>
+        {picture && (
+          <Box
+            component="img"
+            src={url}
+            alt={name}
+            sx={{
+              display: "block",
+              maxWidth: "100%",
+              maxHeight: PICTURE_MAX_HEIGHT,
+              mx: "auto",
+              borderRadius: 1,
+              objectFit: "contain",
+            }}
+          />
+        )}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
+        >
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, maxWidth: "100%" }}>
+            <FileIcon sx={{ color: "text.secondary" }} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
+                {file.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                {describeDocumentFile(file)}
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            variant={picture ? "text" : "outlined"}
+            startIcon={<OpenInNewIcon />}
+            href={url}
+            target="_blank"
+            rel="noopener"
+            sx={{ flexShrink: 0 }}
+          >
+            {picture ? "Open Full Size" : "Open PDF"}
+          </Button>
+        </Stack>
+      </Stack>
+    </Panel>
+  );
+}
 
 /** The Documents tab, open at a folder (`folderId`), or at its top. */
 function documentsTab(campaignId: string, folderId: string | null) {
@@ -61,7 +137,8 @@ export default function CampaignDocumentPage() {
   usePageTitle(data?.name);
 
   const updateMutation = useMutation({
-    mutationFn: ({
+    // Its file goes once the rest is saved, a version another Game Master changed meanwhile refused first
+    mutationFn: async ({
       form,
       opened,
       updatedAt,
@@ -69,15 +146,18 @@ export default function CampaignDocumentPage() {
       form: DocumentFormData;
       opened: DocumentFormData;
       updatedAt: string;
-    }) =>
-      parseResponse(
+    }) => {
+      await parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaignId, documentId },
           json: { ...toDocumentEdit(form, opened, true), updatedAt },
         }),
-      ),
-    onSuccess: () => {
-      snackbar.success("Document updated");
+      );
+      return await saveDocumentFileFn(campaignId, documentId, form);
+    },
+    onSuccess: (fileError) => {
+      const { message, severity } = describeFileSave("Document updated", fileError);
+      snackbar[severity](message);
       invalidateCampaignDocuments(queryClient, campaignId);
       editDialog.close();
     },
@@ -165,15 +245,25 @@ export default function CampaignDocumentPage() {
                 : `In ${where}`
             }
           />
-          <Panel>
-            {data.body ? (
-              <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                {data.body}
-              </Typography>
-            ) : (
-              <BlankNote>This document has no text yet</BlankNote>
-            )}
-          </Panel>
+          {data.file && (
+            <DocumentFilePanel
+              file={data.file}
+              name={data.name}
+              url={toDocumentFileUrl(campaignId, documentId, data.file)}
+            />
+          )}
+          {/* A file says what a document is: its text, when it has none, goes unsaid */}
+          {(data.body || !data.file) && (
+            <Panel>
+              {data.body ? (
+                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                  {data.body}
+                </Typography>
+              ) : (
+                <BlankNote>This document has no text yet</BlankNote>
+              )}
+            </Panel>
+          )}
         </Stack>
 
         <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
