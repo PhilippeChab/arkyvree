@@ -55,6 +55,11 @@ export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
   Selected: "The players picked, where its folders show it",
 };
 
+/** Whether two lists of seats name the same seats, in any order. */
+function isSameSeats(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((seat) => b.includes(seat));
+}
+
 /** An item as the shared tree's rules read it: a Game Master's answer, which says whom it admits. */
 function toNode(item: CampaignDocument): DocumentNode {
   return { ...item, readerIds: item.readerIds ?? [], visibility: item.visibility ?? "Private" };
@@ -65,11 +70,16 @@ export function buildTree(items: readonly CampaignDocument[]) {
   return new Map(items.map((item) => [item.id, toNode(item)]));
 }
 
-/** Who sees an item, in words: every player, the seats' names (`seatNames`), or none. */
-export function describeAudience(audience: DocumentAudience, seatNames: ReadonlyMap<string, string>) {
+/**
+ * Who sees an item, in words: every player, the seats' names (`seatNames`), or none; how many while their names
+ * haven't loaded (`seatNames` none), so a list of seats never reads as no one.
+ */
+export function describeAudience(audience: DocumentAudience, seatNames: ReadonlyMap<string, string> | undefined) {
   if (audience.everyone) return "Seen by every player";
-  const names = audience.playerIds.flatMap((id) => seatNames.get(id) ?? []);
-  return names.length > 0 ? `Seen by ${names.join(", ")}` : "Seen by no player";
+  if (audience.playerIds.length === 0) return "Seen by no player";
+  const names = audience.playerIds.map((id) => seatNames?.get(id));
+  if (names.some((name) => name === undefined)) return `Seen by ${formatCount(audience.playerIds.length, "player")}`;
+  return `Seen by ${names.join(", ")}`;
 }
 
 /** What a folder holds, in words, for its delete's confirmation: "2 folders and 9 documents", or none. */
@@ -79,11 +89,6 @@ export function describeContents(items: readonly CampaignDocument[], folderId: s
   const documents = held.length - folders;
   const parts = [folders > 0 && formatCount(folders, "folder"), documents > 0 && formatCount(documents, "document")];
   return parts.filter(Boolean).join(" and ");
-}
-
-/** The items a player's seat (`playerId`) sees, as their Game Master previews it: those its audience admits. */
-export function filterSeenBy(items: readonly CampaignDocument[], playerId: string) {
-  return items.filter((item) => !item.audience || isInDocumentAudience(item.audience, playerId));
 }
 
 /**
@@ -99,6 +104,11 @@ export function findMoveTargets(items: readonly CampaignDocument[], item: Pick<C
       !isWithinDocument(tree, folder.id, item.id) && countDocumentDepth(tree, folder.id) + height <= MAX_DOCUMENT_DEPTH,
   );
   return new Set<string | null>([null, ...fits.map(({ id }) => id)]);
+}
+
+/** Whether an edit changes whom an item admits (`data`, from what it opened on, `opened`): its setting or its seats. */
+export function isAudienceChanged(data: DocumentFormData, opened: DocumentFormData) {
+  return data.visibility !== opened.visibility || !isSameSeats(data.readerIds, opened.readerIds);
 }
 
 /** What a folder (`folderId`, none for the top) holds, its folders first, each by name. */
@@ -137,20 +147,45 @@ export function previewAudience(
 
 /**
  * The campaign's players' seats by their names (`players`, every seat it lists): every live player's seat, a Selected
- * item's choices, an empty one among them (`seatNames`), and those a user holds, whom a change shows or hides an item
- * from (`playerNames`).
+ * item's choices, an empty one among them, numbered where there are several (`seatNames`), and those a user holds, whom
+ * a change shows or hides an item from (`playerNames`).
  */
 export function readSeatNames(players: readonly CampaignPlayer[]) {
   const seats = players.filter((player) => player.role === "Player Character" && !player.deletedAt);
-  const named = (seat: CampaignPlayer) => [seat.id, getPlayerSlot(seat).name] as const;
+  const empty = seats.filter((seat) => getPlayerSlot(seat).state === "unassigned");
+  const nameOf = (seat: CampaignPlayer) => {
+    const { name } = getPlayerSlot(seat);
+    return empty.length > 1 && empty.includes(seat) ? `${name} ${empty.indexOf(seat) + 1}` : name;
+  };
+  const named = (seat: CampaignPlayer) => [seat.id, nameOf(seat)] as const;
   return { playerNames: new Map(seats.filter((seat) => seat.userId).map(named)), seatNames: new Map(seats.map(named)) };
 }
 
-/**
- * A form's values as a create or an edit sends them: seats only for a Selected setting, and a document's text where its
- * form shows it (`withText`: an edit from the tab, which hasn't read it, leaves it as it is).
- */
-export function toDocumentBody(data: DocumentFormData, withText: boolean) {
+/** A new item's form's values as its create sends them: seats only for a Selected setting, a document's text. */
+export function toDocumentBody(data: DocumentFormData, kind: CampaignDocument["kind"]) {
   const readerIds = data.visibility === "Selected" ? data.readerIds : [];
-  return { name: data.name, visibility: data.visibility, readerIds, ...(withText && { body: data.body }) };
+  return { name: data.name, visibility: data.visibility, readerIds, ...(kind === "Document" && { body: data.body }) };
+}
+
+/**
+ * An edit's values as it sends them (`data`, from what it opened on, `opened`): its name; whom it admits only when
+ * that changed, so a rename keeps the seats it names, even none left; and a document's text where its form shows it
+ * (`withText`: an edit from the tab, which hasn't read it, leaves it as it is).
+ */
+export function toDocumentEdit(data: DocumentFormData, opened: DocumentFormData, withText: boolean) {
+  const readerIds = data.visibility === "Selected" ? data.readerIds : [];
+  const audience = isAudienceChanged(data, opened) && { visibility: data.visibility, readerIds };
+  return { name: data.name, ...audience, ...(withText && { body: data.body }) };
+}
+
+/**
+ * An item's edit form (`item`, with its text where it was read, `body`): the seats it names that are still the
+ * campaign's players' (`seatNames`, once they've loaded), so one removed since isn't sent back.
+ */
+export function toEditForm(
+  item: Pick<CampaignDocument, "name" | "readerIds" | "visibility"> & { body?: string | null },
+  seatNames: ReadonlyMap<string, string> | undefined,
+): DocumentFormData {
+  const readerIds = (item.readerIds ?? []).filter((id) => !seatNames || seatNames.has(id));
+  return { body: item.body ?? "", name: item.name, readerIds, visibility: item.visibility ?? "Private" };
 }

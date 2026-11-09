@@ -5,11 +5,13 @@ import {
   type CampaignDocument,
   describeAudience,
   describeContents,
-  filterSeenBy,
   findMoveTargets,
+  isAudienceChanged,
   listFolder,
   previewAudience,
   toDocumentBody,
+  toDocumentEdit,
+  toEditForm,
 } from "@/client/src/pages/campaigns/details/sections/documents.ts";
 import { readDocumentAudience } from "@/shared/campaignDocuments.ts";
 
@@ -51,9 +53,7 @@ describe("the Documents tab", () => {
     expect(listFolder(TREE, null).map(({ name }) => name)).toEqual(["Act 3", "Notes"]);
   });
 
-  test("previews what a player sees, and says who sees an item", () => {
-    expect(filterSeenBy(TREE, "bard").map(({ id }) => id)).toEqual(["act", "map"]);
-    expect(filterSeenBy(TREE, "rogue").map(({ id }) => id)).toEqual(["act", "map", "letter"]);
+  test("says who sees an item: by name once the players have loaded, by how many until then", () => {
     const audiences = TREE.map((item) => describeAudience(item.audience!, SEATS));
     expect(audiences).toEqual([
       "Seen by every player",
@@ -63,6 +63,8 @@ describe("the Documents tab", () => {
       "Seen by no player",
       "Seen by no player",
     ]);
+    expect(describeAudience(TREE[2].audience!, undefined)).toBe("Seen by 1 player");
+    expect(describeAudience(TREE[2].audience!, new Map())).toBe("Seen by 1 player");
   });
 
   test("offers the folders an item can move to: never itself or its own, never past 5 deep", () => {
@@ -107,13 +109,36 @@ describe("the Documents tab", () => {
     expect(describeContents(TREE, "notes")).toBe("");
   });
 
-  test("sends a Selected setting's seats alone, and a document's text where its form shows it", () => {
+  test("creates with a Selected setting's seats alone, and a document's text", () => {
     const form = { body: "Hi", name: "Map", readerIds: ["rogue"], visibility: "Public" as const };
-    expect(toDocumentBody(form, true)).toEqual({ name: "Map", visibility: "Public", readerIds: [], body: "Hi" });
-    expect(toDocumentBody({ ...form, visibility: "Selected" }, false)).toEqual({
+    expect(toDocumentBody(form, "Document")).toEqual({ name: "Map", visibility: "Public", readerIds: [], body: "Hi" });
+    expect(toDocumentBody({ ...form, visibility: "Selected" }, "Folder")).toEqual({
       name: "Map",
       visibility: "Selected",
       readerIds: ["rogue"],
     });
+  });
+
+  test("edits whom an item admits only when that changed, so a rename keeps its seats, even none left", () => {
+    const opened = toEditForm({ name: "Letter", readerIds: ["rogue", "gone"], visibility: "Selected" }, SEATS);
+    // A seat that's no longer the campaign's isn't sent back
+    expect(opened).toEqual({ body: "", name: "Letter", readerIds: ["rogue"], visibility: "Selected" });
+    expect(toEditForm({ name: "Letter", readerIds: ["gone"], visibility: "Selected" }, undefined).readerIds).toEqual([
+      "gone",
+    ]);
+
+    expect(toDocumentEdit({ ...opened, name: "Note" }, opened, false)).toEqual({ name: "Note" });
+    expect(toDocumentEdit({ ...opened, readerIds: ["bard", "rogue"] }, opened, false)).toEqual({
+      name: "Letter",
+      visibility: "Selected",
+      readerIds: ["bard", "rogue"],
+    });
+    expect(toDocumentEdit({ ...opened, visibility: "Public", body: "Hi" }, opened, true)).toEqual({
+      name: "Letter",
+      visibility: "Public",
+      readerIds: [],
+      body: "Hi",
+    });
+    expect(isAudienceChanged({ ...opened, readerIds: ["rogue"] }, opened)).toBe(false);
   });
 });

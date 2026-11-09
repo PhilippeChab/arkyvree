@@ -5,7 +5,8 @@ export {
   type DocumentFormData,
   EMPTY_DOCUMENT_FORM,
   readSeatNames,
-  toDocumentBody,
+  toDocumentEdit,
+  toEditForm,
 } from "./documents.ts";
 export { DocumentsSection } from "./DocumentsSection.tsx";
 export { PlayersSection } from "./PlayersSection.tsx";

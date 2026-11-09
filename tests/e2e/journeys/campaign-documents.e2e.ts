@@ -15,13 +15,13 @@ test.describe("A campaign's documents", () => {
     page,
     browser,
     ownerUser,
-    user,
+    inviteeUser,
   }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const id = await createCampaign(page, uniqueName("Documents Campaign"));
-    const player = await signedInPage(browser, user);
+    const player = await signedInPage(browser, inviteeUser);
     try {
-      const invite = await postPlayerInvite(page, id, user.email);
+      const invite = await postPlayerInvite(page, id, inviteeUser.email);
       await parseResponse(
         apiOf(player).api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: invite.id } }),
       );
@@ -35,7 +35,7 @@ test.describe("A campaign's documents", () => {
       await folderDialog.getByRole("button", { name: "Create" }).click();
       await expect(folderDialog).toBeHidden();
       await page.getByRole("row", { name: "Open Handouts" }).click();
-      await expect(page.getByRole("navigation", { name: "Folders" })).toContainText("Handouts");
+      await expect(page.getByRole("heading", { name: "Handouts" })).toBeVisible();
 
       await page.getByRole("button", { name: "Add Document" }).click();
       const letterDialog = page.getByRole("dialog", { name: "Create New Document" });
@@ -43,9 +43,9 @@ test.describe("A campaign's documents", () => {
       await letterDialog.getByLabel("Text").fill("Meet me at the old mill.");
       await selectOption(page, "Visibility", "Selected");
       await letterDialog.getByRole("combobox", { name: "Players" }).click();
-      await page.getByRole("option", { name: user.username }).click();
+      await page.getByRole("option", { name: inviteeUser.username }).click();
       await page.keyboard.press("Escape");
-      await expect(letterDialog.getByText(`Creating it shows it to ${user.username}`)).toBeVisible();
+      await expect(letterDialog.getByText(`Creating it shows it to ${inviteeUser.username}`)).toBeVisible();
       await letterDialog.getByRole("button", { name: "Create" }).click();
       await expect(letterDialog).toBeHidden();
 
@@ -54,7 +54,7 @@ test.describe("A campaign's documents", () => {
       await notesDialog.getByLabel("Name").fill("Secret notes");
       await notesDialog.getByRole("button", { name: "Create" }).click();
       await expect(notesDialog).toBeHidden();
-      await expect(page.getByRole("row", { name: "Open A letter" })).toContainText(`Seen by ${user.username}`);
+      await expect(page.getByRole("row", { name: "Open A letter" })).toContainText(`Seen by ${inviteeUser.username}`);
       await expect(page.getByRole("row", { name: "Open Secret notes" })).toContainText("Seen by no player");
 
       // The player's tab: the folder and their letter, never the notes; the letter reads as written

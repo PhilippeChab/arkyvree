@@ -97,7 +97,7 @@ Each folder and document has a visibility:
 
 A player sees a folder or a document only when it **and every folder above it** let them: a Private folder hides everything in it, names included. So a Game Master can prepare a reveal: mark the handouts in a Private folder Public, then make the folder Public when the moment comes, and they all appear at once.
 
-Each row tells the Game Masters who sees it (**Seen by every player**, the players' names, or **Seen by no player**), and an edit or a move says who it would show the item to or hide it from before it's saved. **View As**, above the list, shows the tab as one player sees it.
+Each row tells the Game Masters who sees it (**Seen by every player**, the players' names, or **Seen by no player**), and an edit or a move says at the top of its dialog who it would show the item to or hide it from before it's saved. Opening a folder shows what's in it under its name; the arrow beside the name goes back up.
 
 A player is notified when a folder or a document is shared with them, once for the folder revealed rather than for each document in it, and their tab refreshes on its own. Deleting a folder deletes everything in it. A player removed from the campaign leaves every list they were on.
 

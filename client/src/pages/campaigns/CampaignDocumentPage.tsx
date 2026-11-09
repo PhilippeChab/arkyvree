@@ -29,7 +29,8 @@ import {
   DocumentFormDialog,
   EMPTY_DOCUMENT_FORM,
   readSeatNames,
-  toDocumentBody,
+  toDocumentEdit,
+  toEditForm,
 } from "./details/sections/index.ts";
 import { useCampaignPermissions } from "./hooks/index.ts";
 
@@ -44,7 +45,8 @@ export default function CampaignDocumentPage() {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const menu = useAnchorMenu();
-  const editDialog = useDialogState();
+  // The edit keeps the version and the form it opened on: another Game Master's save meanwhile is refused, not lost
+  const editDialog = useDialogState<{ opened: DocumentFormData; updatedAt: string }>();
   const deleteDialog = useDialogState();
   const editForm = useFormWith<DocumentFormData>(EMPTY_DOCUMENT_FORM);
 
@@ -59,11 +61,19 @@ export default function CampaignDocumentPage() {
   usePageTitle(data?.name);
 
   const updateMutation = useMutation({
-    mutationFn: (form: DocumentFormData) =>
+    mutationFn: ({
+      form,
+      opened,
+      updatedAt,
+    }: {
+      form: DocumentFormData;
+      opened: DocumentFormData;
+      updatedAt: string;
+    }) =>
       parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaignId, documentId },
-          json: { ...toDocumentBody(form, true), updatedAt: data?.updatedAt },
+          json: { ...toDocumentEdit(form, opened, true), updatedAt },
         }),
       ),
     onSuccess: () => {
@@ -123,13 +133,9 @@ export default function CampaignDocumentPage() {
         icon={EditIcon}
         label="Edit"
         onClick={menu.closeMenuAnd(() => {
-          editForm.reset({
-            body: data.body ?? "",
-            name: data.name,
-            readerIds: data.readerIds ?? [],
-            visibility: data.visibility ?? "Private",
-          });
-          editDialog.openWith(true);
+          const opened = toEditForm(data, seats.data ? seatNames : undefined);
+          editForm.reset(opened);
+          editDialog.openWith({ opened, updatedAt: data.updatedAt });
         })}
       />
     ),
@@ -153,7 +159,11 @@ export default function CampaignDocumentPage() {
             backTo={backTo}
             onMenuOpen={menuItems.some(Boolean) ? menu.openMenu : undefined}
             chips={data.visibility && <StatusChip icon={<VisibilityIcon />} label={data.visibility} />}
-            description={data.audience ? `In ${where} · ${describeAudience(data.audience, seatNames)}` : `In ${where}`}
+            description={
+              data.audience
+                ? `In ${where} · ${describeAudience(data.audience, seats.data ? seatNames : undefined)}`
+                : `In ${where}`
+            }
           />
           <Panel>
             {data.body ? (
@@ -182,7 +192,7 @@ export default function CampaignDocumentPage() {
           seatsError={seats.error}
           treeError={tree.error}
           withText
-          onSubmit={(form) => updateMutation.mutate(form)}
+          onSubmit={(form) => editDialog.target && updateMutation.mutate({ form, ...editDialog.target })}
           pending={updateMutation.isPending}
         />
         <DeleteDocumentDialog

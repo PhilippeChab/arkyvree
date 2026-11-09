@@ -18,6 +18,8 @@ import {
   DeleteDialog,
   DialogFooter,
   EditDialog,
+  ExpandArrow,
+  LoadError,
   Modal,
   NameField,
   SelectField,
@@ -25,11 +27,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { FolderIcon, MoveIcon } from "@/client/src/components/icons/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import {
-  DOCUMENT_VISIBILITY_OPTIONS,
-  type DocumentKind,
-  MAX_DOCUMENT_NAME_LENGTH,
-} from "@/shared/campaignDocuments.ts";
+import { DOCUMENT_VISIBILITY_OPTIONS, MAX_DOCUMENT_NAME_LENGTH } from "@/shared/campaignDocuments.ts";
 
 import {
   type AudienceChange,
@@ -37,6 +35,7 @@ import {
   describeContents,
   type DocumentFormData,
   findMoveTargets,
+  isAudienceChanged,
   listFolder,
   previewAudience,
   VISIBILITY_DESCRIPTIONS,
@@ -46,6 +45,8 @@ interface AudienceNoteProps {
   change: AudienceChange;
   /** What the dialog does: "Creating", "Saving", "Moving". */
   doing: string;
+  /** Why the tree it's worked out of didn't load, said in its place. */
+  loadError?: unknown;
 }
 
 interface DeleteDocumentDialogProps {
@@ -73,7 +74,7 @@ interface DocumentFormDialogProps {
   seatNames: ReadonlyMap<string, string>;
   /** Why the campaign's seats didn't load, which its players' choice says. */
   seatsError: unknown;
-  /** Why the campaign's tree didn't load, which its visibility says, what the change shows it to unknown. */
+  /** Why the campaign's tree didn't load, said in place of whom the change shows it to. */
   treeError?: unknown;
   /** Whether its form shows a document's text: an edit from the tab, which hasn't read it, doesn't. */
   withText: boolean;
@@ -83,6 +84,10 @@ interface FolderBranchProps {
   folderId: string | null;
   items: readonly CampaignDocument[];
   targets: ReadonlySet<string | null>;
+}
+
+interface FolderLabelProps {
+  name: string;
 }
 
 interface MoveDocumentDialogProps {
@@ -105,14 +110,15 @@ interface ReaderSelectProps {
   seatNames: ReadonlyMap<string, string>;
 }
 
-/** Each kind's words in its dialogs. */
-const KIND_WORDS: Record<DocumentKind, string> = { Document: "Document", Folder: "Folder" };
-
 /** The tree's top, as the move's tree names it: the Documents tab's own level. */
 const TOP = "top";
 
-/** Who a change shows an item to and hides it from, before it's saved; nothing when it changes neither. */
-function AudienceNote({ change, doing }: AudienceNoteProps) {
+/**
+ * Who a change shows an item to and hides it from, before it's saved; nothing when it changes neither, and why it
+ * can't say when the tree didn't load (`loadError`).
+ */
+function AudienceNote({ change, doing, loadError }: AudienceNoteProps) {
+  if (loadError) return <LoadError what="Documents" error={loadError} />;
   const { gained, lost } = change;
   if (gained.length === 0 && lost.length === 0) return null;
   const shows = gained.length > 0 && `shows it to ${gained.join(", ")}`;
@@ -124,18 +130,38 @@ function AudienceNote({ change, doing }: AudienceNoteProps) {
   );
 }
 
-/** A folder's branch of the move's tree: its folders, each one it can take enabled. */
+/** A folder's branch of the move's tree: its folders, each one it can take enabled, and theirs where they have some. */
 function FolderBranch({ folderId, items, targets }: FolderBranchProps) {
   return listFolder(items, folderId)
     .filter((item) => item.kind === "Folder")
     .map((folder) => (
-      <TreeItem key={folder.id} itemId={folder.id} label={folder.name} disabled={!targets.has(folder.id)}>
-        <FolderBranch folderId={folder.id} items={items} targets={targets} />
+      <TreeItem
+        key={folder.id}
+        itemId={folder.id}
+        label={<FolderLabel name={folder.name} />}
+        disabled={!targets.has(folder.id)}
+      >
+        {items.some((item) => item.parentId === folder.id && item.kind === "Folder") && (
+          <FolderBranch folderId={folder.id} items={items} targets={targets} />
+        )}
       </TreeItem>
     ));
 }
 
-/** The seats a Selected item admits, picked among the campaign's players. */
+/** A folder of the move's tree: its icon before its name. */
+function FolderLabel({ name }: FolderLabelProps) {
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+      <FolderIcon fontSize="small" sx={{ color: "text.secondary" }} />
+      {name}
+    </Stack>
+  );
+}
+
+/**
+ * The seats a Selected item admits, picked among the campaign's players: one at least once whom it admits changes, so
+ * an edit that leaves them alone saves, even with none left.
+ */
 function ReaderSelect({ form, seatNames, disabled, loadError }: ReaderSelectProps) {
   const {
     field: { ref, value, onChange, onBlur, name },
@@ -144,7 +170,11 @@ function ReaderSelect({ form, seatNames, disabled, loadError }: ReaderSelectProp
     control: form.control,
     name: "readerIds",
     rules: {
-      validate: (ids) => form.getValues("visibility") !== "Selected" || ids.length > 0 || "Pick a player at least",
+      validate: (ids, data) =>
+        data.visibility !== "Selected" ||
+        ids.length > 0 ||
+        !isAudienceChanged(data, { ...data, ...form.formState.defaultValues } as DocumentFormData) ||
+        "Pick at least one player",
     },
   });
   return (
@@ -167,10 +197,10 @@ function ReaderSelect({ form, seatNames, disabled, loadError }: ReaderSelectProp
         },
       }}
     >
-      {[...seatNames].map(([id, name]) => (
+      {[...seatNames].map(([id, seatName]) => (
         <MenuItem key={id} value={id}>
           <Checkbox checked={value.includes(id)} size="small" sx={{ py: 0 }} />
-          {name}
+          {seatName}
         </MenuItem>
       ))}
     </TextField>
@@ -183,14 +213,14 @@ function ReaderSelect({ form, seatNames, disabled, loadError }: ReaderSelectProp
  */
 export function DeleteDocumentDialog({ item, items, open, onClose, onConfirm, pending }: DeleteDocumentDialogProps) {
   const contents = item?.kind === "Folder" ? describeContents(items, item.id) : "";
-  const goes = contents ? ` Its ${contents} go with it.` : "";
+  const goes = contents ? ` Everything in it is deleted too: ${contents}.` : "";
   return (
     <DeleteDialog
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
       pending={pending}
-      title={`Delete ${item ? KIND_WORDS[item.kind] : "Document"}`}
+      title={`Delete ${item?.kind ?? "Document"}`}
       message={`Are you sure you want to delete ${item?.name ?? "it"}?${goes} This action cannot be undone.`}
     />
   );
@@ -198,7 +228,7 @@ export function DeleteDocumentDialog({ item, items, open, onClose, onConfirm, pe
 
 /**
  * Creates or edits a folder or a document: its name, a document's text, and whom it admits, a Selected one's players
- * picked; what the change shows it to or hides it from is said before it's saved (`previewAudience`).
+ * picked. What the change shows it to or hides it from is said at its top before it's saved (`previewAudience`).
  */
 export function DocumentFormDialog({
   form,
@@ -217,18 +247,17 @@ export function DocumentFormDialog({
 }: DocumentFormDialogProps) {
   const [visibility, readerIds] = form.watch(["visibility", "readerIds"]);
   const change = previewAudience(items, item, { parentId: item.parentId, visibility, readerIds }, playerNames);
-  const kind = KIND_WORDS[item.kind];
   const Wrapper = mode === "create" ? CreateDialog : EditDialog;
   return (
     <Wrapper
       open={open}
       onClose={onClose}
-      title={mode === "create" ? `Create New ${kind}` : `Edit ${kind}`}
+      title={mode === "create" ? `Create New ${item.kind}` : `Edit ${item.kind}`}
       form={form}
       onSubmit={onSubmit}
       pending={pending}
-      maxWidth={withText ? "md" : "sm"}
     >
+      <AudienceNote change={change} doing={mode === "create" ? "Creating" : "Saving"} loadError={treeError} />
       <NameField control={form.control} name="name" max={MAX_DOCUMENT_NAME_LENGTH} autoFocus disabled={pending} />
       {withText && <TextAreaField control={form.control} name="body" label="Text" rows={8} disabled={pending} />}
       <SelectField
@@ -237,20 +266,19 @@ export function DocumentFormDialog({
         label="Visibility"
         disabled={pending}
         helperText={VISIBILITY_DESCRIPTIONS[visibility]}
-        loadError={treeError}
         options={DOCUMENT_VISIBILITY_OPTIONS}
       />
       {visibility === "Selected" && (
         <ReaderSelect form={form} seatNames={seatNames} disabled={pending} loadError={seatsError} />
       )}
-      {!treeError && <AudienceNote change={change} doing={mode === "create" ? "Creating" : "Saving"} />}
     </Wrapper>
   );
 }
 
 /**
  * Moves a folder or a document into another folder, or to the top: the folders it can't go in (itself, one of its own,
- * one too deep for what it holds) are shown but disabled. Mounted while it's open, its pick its own.
+ * one too deep for what it holds) are shown but disabled, and who the move shows it to or hides it from is said at its
+ * top. Mounted while it's open, its pick its own.
  */
 export function MoveDocumentDialog({
   item,
@@ -268,22 +296,26 @@ export function MoveDocumentDialog({
   const change = previewAudience(items, item, { parentId }, playerNames);
   const expanded = items.filter((folder) => folder.kind === "Folder").map(({ id }) => id);
   return (
-    <Modal open={open} onClose={onClose} slotProps={{ transition: { onExited } }}>
-      <DialogTitle>Move {KIND_WORDS[item.kind]}</DialogTitle>
+    <Modal open={open} onClose={pending ? undefined : onClose} slotProps={{ transition: { onExited } }}>
+      <DialogTitle>Move {item.kind}</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ pt: 1 }}>
+          <AudienceNote change={change} doing="Moving" />
           <DialogContentText>Pick the folder {item.name} goes in.</DialogContentText>
           <SimpleTreeView
             aria-label="Folders"
+            slots={{
+              collapseIcon: () => <ExpandArrow open />,
+              expandIcon: () => <ExpandArrow open={false} />,
+            }}
             defaultExpandedItems={[TOP, ...expanded]}
             selectedItems={picked}
             onSelectedItemsChange={(_event, id) => id && setPicked(id)}
           >
-            <TreeItem itemId={TOP} label="Documents" slots={{ icon: FolderIcon }}>
+            <TreeItem itemId={TOP} label={<FolderLabel name="Top Level" />}>
               <FolderBranch folderId={null} items={items} targets={targets} />
             </TreeItem>
           </SimpleTreeView>
-          <AudienceNote change={change} doing="Moving" />
         </Stack>
       </DialogContent>
       <DialogFooter

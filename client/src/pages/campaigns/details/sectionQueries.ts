@@ -79,12 +79,15 @@ export function invalidateCampaignDocuments(queryClient: QueryClient, campaignId
 }
 
 /**
- * After a player is added, edited or removed: the campaign itself (its header counts its players), its Players tab and
- * the campaign lists, whose cards count them too. A removal unlinks the player's characters: its Characters tab with it.
+ * After a player is added, edited or removed: the campaign itself (its header counts its players), its Players tab,
+ * its seats and its Documents tab (who a document names, and whom a Game Master's role shows everything to), and the
+ * campaign lists, whose cards count them too. A removal unlinks the player's characters: its Characters tab with it.
  */
 export function invalidateCampaignPlayers(queryClient: QueryClient, campaignId: string, removed = false) {
   void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaignId), exact: true });
   void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "players") });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.seats(campaignId) });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "documents") });
   if (removed) void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters") });
   void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
 }

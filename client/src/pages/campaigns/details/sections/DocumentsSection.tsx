@@ -1,7 +1,6 @@
-import { Box, Breadcrumbs, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -13,7 +12,6 @@ import {
   DataRow,
   DataTable,
   EmptyValue,
-  LinkButton,
   ListToolbar,
   LoadError,
   ROW_ACTIONS_HOVER_SX,
@@ -21,13 +19,20 @@ import {
   RowActions,
   SectionContent,
   StatusChip,
+  SubsectionTitle,
   type TableColumn,
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
-import { DeleteIcon, DocumentIcon, EditIcon, MoveIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
+import {
+  ArrowBackIcon,
+  DeleteIcon,
+  DocumentIcon,
+  EditIcon,
+  MoveIcon,
+  VisibilityIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useSearchParam } from "@/client/src/hooks/index.ts";
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { type CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import {
@@ -53,10 +58,11 @@ import {
   type DocumentEdit,
   type DocumentFormData,
   EMPTY_DOCUMENT_FORM,
-  filterSeenBy,
   listFolder,
   readSeatNames,
   toDocumentBody,
+  toDocumentEdit,
+  toEditForm,
 } from "./documents.ts";
 
 interface DocumentsSectionProps {
@@ -69,10 +75,16 @@ interface NewItem {
   parentId: string | null;
 }
 
+/** An edit opened from a row: the item, and the form it opened on, which says what the edit changed. */
+interface OpenedEdit {
+  item: CampaignDocument;
+  opened: DocumentFormData;
+}
+
 /** A button as wide as the toolbar on a phone, as wide as its words from `sm` up. */
 const FULL_ON_PHONE_SX = { width: { xs: "100%", sm: "auto" } };
 
-/** Its Game Masters' table: whom each item admits, and its actions. */
+/** A Game Master's table where they keep the documents: whom each item admits, and its actions. */
 const MASTER_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "50%" },
   { key: "visibility", label: "Visibility", width: "20%" },
@@ -80,14 +92,14 @@ const MASTER_COLUMNS: TableColumn[] = [
   { align: "right", key: "actions", label: "Actions", width: "10%" },
 ];
 
-/** The name of the item a new one goes in, as the Add buttons name it */
-const NEW_ITEM_IDS: Record<DocumentKind, string> = { Document: "new-document", Folder: "new-folder" };
-
 /** A player's table: what each item is, and when it changed. */
 const PLAYER_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name", width: "70%" },
   { key: "updated", label: "Updated", width: "30%" },
 ];
+
+/** A Game Master's table where they can't change anything (an archived campaign's): whom each item admits. */
+const READER_COLUMNS: TableColumn[] = MASTER_COLUMNS.filter(({ key }) => key !== "actions");
 
 export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const queryClient = useQueryClient();
@@ -95,17 +107,17 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const navigate = useNavigate();
   const { canManageDocuments } = useCampaignPermissions(campaign);
   const { value: folderParam, setValue: setFolder } = useSearchParam("folder");
-  const { value: viewAs, setValue: setViewAs } = useSearchParam("viewAs");
   const documents = useQuery(campaignDocumentsQuery(campaign.id));
   const items = documents.data?.items ?? [];
-  // Its Game Masters read whom each item admits; a player reads none of it
-  const isGameMaster = canManageDocuments || items.some((item) => item.audience);
+  // Its Game Masters read whom each item admits, an archived campaign's too; a player reads none of it
+  const isGameMaster = !!documents.data?.isGameMaster;
   const seats = useQuery(campaignSeatsQuery(isGameMaster ? campaign.id : null));
   const { playerNames, seatNames } = readSeatNames(seats.data?.items ?? []);
+  // Who sees each item, by name once the players have loaded, by how many until then
+  const audienceNames = seats.data ? seatNames : undefined;
 
-  const [newItem, setNewItem] = useState<NewItem>({ kind: "Document", parentId: null });
-  const [createOpen, setCreateOpen] = useState(false);
-  const editDialog = useDialogState<CampaignDocument>();
+  const createDialog = useDialogState<NewItem>();
+  const editDialog = useDialogState<OpenedEdit>();
   const moveDialog = useDialogState<CampaignDocument>();
   const deleteDialog = useDialogState<CampaignDocument>();
   const createForm = useFormWith<DocumentFormData>(EMPTY_DOCUMENT_FORM);
@@ -113,33 +125,29 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
 
   // A folder that's gone, or hidden from the session, opens the top
   const tree = buildTree(items);
-  const folderId = tree.get(folderParam)?.kind === "Folder" ? folderParam : null;
-  const seen = isGameMaster && viewAs ? filterSeenBy(items, viewAs) : items;
-  const shown = folderId && !seen.some((item) => item.id === folderId) ? [] : listFolder(seen, folderId);
-  const path = folderId
-    ? [...findDocumentPath(tree, folderId), { id: folderId, name: tree.get(folderId)?.name ?? "" }]
-    : [];
+  const folder = tree.get(folderParam)?.kind === "Folder" ? tree.get(folderParam) : undefined;
+  const folderId = folder?.id ?? null;
+  const shown = listFolder(items, folderId);
+  const path = folder ? findDocumentPath(tree, folder.id) : [];
+  const parent = path.at(-1);
   const canAddFolder = countDocumentDepth(tree, folderId) < MAX_DOCUMENT_DEPTH;
-  const manages = canManageDocuments && !viewAs;
+  const columns = !isGameMaster ? PLAYER_COLUMNS : canManageDocuments ? MASTER_COLUMNS : READER_COLUMNS;
+  const newItem = createDialog.target;
 
   const createMutation = useMutation({
-    mutationFn: (data: DocumentFormData) =>
+    mutationFn: ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) =>
       parseResponse(
         rpc.api.campaigns[":id"].documents.$post({
           param: { id: campaign.id },
-          json: {
-            kind: newItem.kind,
-            parentId: newItem.parentId,
-            ...toDocumentBody(data, newItem.kind === "Document"),
-          },
+          json: { kind, parentId, ...toDocumentBody(data, kind) },
         }),
       ),
     onSuccess: (created) => {
       snackbar.success(`${created.kind} created`);
       invalidateCampaignDocuments(queryClient, campaign.id);
-      setCreateOpen(false);
+      createDialog.close();
     },
-    onError: (error) => snackbar.error(error, `Failed to create ${newItem.kind.toLowerCase()}`),
+    onError: (error, { kind }) => snackbar.error(error, `Failed to create ${kind.toLowerCase()}`),
   });
 
   const updateMutation = useMutation({
@@ -173,19 +181,14 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   });
 
   const handleAdd = (kind: DocumentKind) => {
-    setNewItem({ kind, parentId: folderId });
     createForm.reset(EMPTY_DOCUMENT_FORM);
-    setCreateOpen(true);
+    createDialog.openWith({ kind, parentId: folderId });
   };
 
   const handleEdit = (item: CampaignDocument) => {
-    editForm.reset({
-      body: "",
-      name: item.name,
-      readerIds: item.readerIds ?? [],
-      visibility: item.visibility ?? "Private",
-    });
-    editDialog.openWith(item);
+    const opened = toEditForm(item, seats.data ? seatNames : undefined);
+    editForm.reset(opened);
+    editDialog.openWith({ item, opened });
   };
 
   const handleOpen = (item: CampaignDocument) => {
@@ -193,16 +196,39 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
     else navigate(`/campaigns/${campaign.id}/documents/${item.id}`);
   };
 
-  const columns = isGameMaster ? MASTER_COLUMNS : PLAYER_COLUMNS;
-  // On a phone, under what narrows the list, a line each
-  const addActions = manages && (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
-      <AddButton
-        label="Add Folder"
-        onClick={() => handleAdd("Folder")}
-        disabled={!canAddFolder}
-        sx={FULL_ON_PHONE_SX}
-      />
+  // Inside a folder, the way up and its name; deeper in, the folders above it under its name
+  const folderHeading = folder && (
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+      <Tooltip title={`Back to ${parent?.name ?? "Documents"}`}>
+        <IconButton aria-label={`Back to ${parent?.name ?? "Documents"}`} onClick={() => setFolder(parent?.id ?? "")}>
+          <ArrowBackIcon />
+        </IconButton>
+      </Tooltip>
+      <Box sx={{ minWidth: 0 }}>
+        <SubsectionTitle>{folder.name}</SubsectionTitle>
+        {path.length > 0 && (
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            In {path.map(({ name }) => name).join(" › ")}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+  );
+  // A folder can't stand deeper than its depth allows: Add Folder says why it's off there
+  const addFolder = (
+    <AddButton label="Add Folder" onClick={() => handleAdd("Folder")} disabled={!canAddFolder} sx={FULL_ON_PHONE_SX} />
+  );
+  const addActions = canManageDocuments && (
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={FULL_ON_PHONE_SX}>
+      {canAddFolder ? (
+        addFolder
+      ) : (
+        <Tooltip title={`Folders Nest ${MAX_DOCUMENT_DEPTH} Deep at Most`}>
+          <Box component="span" sx={FULL_ON_PHONE_SX}>
+            {addFolder}
+          </Box>
+        </Tooltip>
+      )}
       <AddButton label="Add Document" onClick={() => handleAdd("Document")} sx={FULL_ON_PHONE_SX} />
     </Stack>
   );
@@ -210,45 +236,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <ListToolbar actions={addActions}>
-          <Breadcrumbs aria-label="Folders">
-            {path.length > 0 ? (
-              <LinkButton onClick={() => setFolder("")}>Documents</LinkButton>
-            ) : (
-              <Typography sx={{ fontWeight: 500 }}>Documents</Typography>
-            )}
-            {path.map((folder, index) =>
-              index < path.length - 1 ? (
-                <LinkButton key={folder.id} onClick={() => setFolder(folder.id)}>
-                  {folder.name}
-                </LinkButton>
-              ) : (
-                <Typography key={folder.id} sx={{ fontWeight: 500 }}>
-                  {folder.name}
-                </Typography>
-              ),
-            )}
-          </Breadcrumbs>
-          {isGameMaster && (
-            <TextField
-              select
-              size="small"
-              label="View As"
-              value={viewAs}
-              onChange={(event) => setViewAs(event.target.value)}
-              error={!!seats.error}
-              helperText={seats.error ? loadFailureMessage("Players", seats.error) : undefined}
-              sx={{ minWidth: 180 }}
-            >
-              <MenuItem value="">Game Master</MenuItem>
-              {[...seatNames].map(([id, name]) => (
-                <MenuItem key={id} value={id}>
-                  {name}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        </ListToolbar>
+        {(folderHeading || addActions) && <ListToolbar actions={addActions}>{folderHeading}</ListToolbar>}
 
         {documents.isLoading ? (
           <TableSkeleton columns={columns} />
@@ -257,18 +245,18 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         ) : shown.length === 0 ? (
           <BlankState
             icon={DocumentIcon}
-            title={folderId ? "This folder is empty" : "No documents yet"}
+            title={folder ? "This folder is empty" : "No documents yet"}
             description={
               isGameMaster
                 ? "Keep your notes here, and choose what each player sees"
                 : "Your Game Masters haven't shared anything with you here yet"
             }
             action={
-              manages ? (
+              canManageDocuments && !folder ? (
                 <AddButton
                   variant="outlined"
                   size="large"
-                  label="Add a Document"
+                  label="Add Your First Document"
                   onClick={() => handleAdd("Document")}
                 />
               ) : undefined
@@ -294,7 +282,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
                         </Typography>
                         {item.audience && (
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {describeAudience(item.audience, seatNames)}
+                            {describeAudience(item.audience, audienceNames)}
                           </Typography>
                         )}
                       </Box>
@@ -314,20 +302,18 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
                       {formatDate(item.updatedAt)}
                     </Typography>
                   </DataCell>
-                  {isGameMaster && (
-                    <DataCell slot={manages ? "trailing" : "hidden"} align="right">
-                      {manages && (
-                        <RowActions>
-                          <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(item)} />
-                          <RowAction icon={MoveIcon} label="Move" onClick={() => moveDialog.openWith(item)} />
-                          <RowAction
-                            icon={DeleteIcon}
-                            label="Delete"
-                            intent="destructive"
-                            onClick={() => deleteDialog.openWith(item)}
-                          />
-                        </RowActions>
-                      )}
+                  {isGameMaster && canManageDocuments && (
+                    <DataCell slot="trailing" align="right">
+                      <RowActions>
+                        <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(item)} />
+                        <RowAction icon={MoveIcon} label="Move" onClick={() => moveDialog.openWith(item)} />
+                        <RowAction
+                          icon={DeleteIcon}
+                          label="Delete"
+                          intent="destructive"
+                          onClick={() => deleteDialog.openWith(item)}
+                        />
+                      </RowActions>
                     </DataCell>
                   )}
                 </DataRow>
@@ -339,16 +325,16 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
 
       <DocumentFormDialog
         mode="create"
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        open={createDialog.open}
+        onClose={createDialog.close}
         form={createForm}
-        item={{ id: NEW_ITEM_IDS[newItem.kind], kind: newItem.kind, name: "", parentId: newItem.parentId }}
+        item={{ id: "new", kind: newItem?.kind ?? "Document", name: "", parentId: newItem?.parentId ?? null }}
         items={items}
         playerNames={playerNames}
         seatNames={seatNames}
         seatsError={seats.error}
-        withText={newItem.kind === "Document"}
-        onSubmit={(data) => createMutation.mutate(data)}
+        withText={newItem?.kind === "Document"}
+        onSubmit={(data) => newItem && createMutation.mutate({ ...newItem, data })}
         pending={createMutation.isPending}
       />
       <DocumentFormDialog
@@ -356,14 +342,15 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         open={editDialog.open}
         onClose={editDialog.close}
         form={editForm}
-        item={editDialog.target ?? { id: "", kind: "Document", name: "", parentId: null }}
+        item={editDialog.target?.item ?? { id: "", kind: "Document", name: "", parentId: null }}
         items={items}
         playerNames={playerNames}
         seatNames={seatNames}
         seatsError={seats.error}
         withText={false}
         onSubmit={(data) => {
-          if (editDialog.target) updateMutation.mutate({ item: editDialog.target, json: toDocumentBody(data, false) });
+          const target = editDialog.target;
+          if (target) updateMutation.mutate({ item: target.item, json: toDocumentEdit(data, target.opened, false) });
         }}
         pending={updateMutation.isPending}
       />
@@ -385,7 +372,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
       <DeleteDocumentDialog
         open={deleteDialog.open}
         onClose={deleteDialog.close}
-        item={deleteDialog.target ?? null}
+        item={deleteDialog.target}
         items={items}
         onConfirm={() => deleteDialog.target && deleteMutation.mutate(deleteDialog.target)}
         pending={deleteMutation.isPending}
