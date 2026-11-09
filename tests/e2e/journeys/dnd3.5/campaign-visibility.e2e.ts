@@ -152,24 +152,32 @@ test.describe("A campaign character", () => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const { id, characters } = await setUpCampaign(page, browser, inviteeUser, user);
 
-    // The Game Master turns it on: every character's build, side by side, a card at a time
+    // The Game Master opens it over the page: every character's build, side by side, a column at a time
     await page.goto(`/campaigns/${id}/characters`);
-    const partyView = page.getByRole("button", { name: "Party View" });
-    await partyView.click();
-    await expect(partyView).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Party View" }).click();
+    const dialog = page.getByRole("dialog", { name: /Party View$/ });
+    await expect(dialog).toBeVisible();
     await expect(page).toHaveURL(/characterView=party/);
-    const party = page.getByRole("region", { name: "Party", exact: true });
+    const party = dialog.getByRole("region", { name: "Party", exact: true });
     await expect(party.getByRole("heading", { name: "Ability Scores" })).toHaveCount(3, { timeout: 15_000 });
     await expect(party.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(0);
-    const previous = page.getByRole("button", { name: "Previous Characters" });
+    const previous = dialog.getByRole("button", { name: "Previous Characters" });
     await expect(previous).toBeDisabled();
-    await page.getByRole("button", { name: "Next Characters" }).click();
+    await dialog.getByRole("button", { name: "Next Characters" }).click();
     await expect(previous).toBeEnabled();
 
-    // A card opens the character's sheet
+    // Its X closes it, the address as it was
+    await dialog.getByRole("button", { name: "Close Party View" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page).not.toHaveURL(/characterView/);
+
+    // A card opens the character's sheet, and Back the Party View again
+    await page.getByRole("button", { name: "Party View" }).click();
     await party.getByText(characters.Public.name, { exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/campaigns/${id}/characters/${characters.Public.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: characters.Public.name })).toBeVisible();
+    await page.goBack();
+    await expect(dialog).toBeVisible();
 
     // Another player: a public character's build, a partial one's identity alone, and no private one
     const other = await signedInPage(browser, user);
