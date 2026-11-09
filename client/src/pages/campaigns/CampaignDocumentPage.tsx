@@ -56,16 +56,15 @@ interface DocumentFilePanelProps {
 const PICTURE_MAX_HEIGHT = "60vh";
 
 /**
- * A document's file, by what it is. A picture is shown whole and opens at its full size when it's clicked; a text
- * file's words are shown (one too large to show opens in its own tab alone); either has its file's name, kind and size
- * in a line under it. A PDF is its file's line and what opens it in its own tab, the browser's reader.
+ * A document's file, by what it is. A picture is shown whole, alone, and opens at its full size when it's clicked; a
+ * text file's words are shown, over the link that opens it in its own tab (one too large to show has the link alone).
+ * A PDF is its file's name, kind and size, and what opens it in its own tab, the browser's reader.
  */
 function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFilePanelProps) {
   const kind = readFileKind(file);
   const FileIcon = DOCUMENT_ICONS[kind];
   const url = toDocumentFileUrl(campaignId, documentId, file);
   const text = useQuery(campaignDocumentTextQuery(campaignId, documentId, file));
-  const caption = `${file.name} · ${describeDocumentFile(file)}`;
 
   if (kind === "Pdf") {
     return (
@@ -104,7 +103,7 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
   if (kind === "Picture") {
     return (
       <Panel>
-        <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+        <Stack sx={{ alignItems: "center" }}>
           <Tooltip title="Open Full Size">
             <Box
               component="a"
@@ -122,9 +121,6 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
               />
             </Box>
           </Tooltip>
-          <Typography variant="caption" sx={{ color: "text.secondary", overflowWrap: "anywhere", textAlign: "center" }}>
-            {caption}
-          </Typography>
         </Stack>
       </Panel>
     );
@@ -141,8 +137,7 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
         {file.byteSize > MAX_SHOWN_TEXT_BYTES && <BlankNote>This file is too large to show here</BlankNote>}
         {text.isLoading && <DiceSpinner />}
         {text.error && <LoadError what="Text" error={text.error} onRetry={() => text.refetch()} />}
-        <Typography variant="caption" sx={{ color: "text.secondary", overflowWrap: "anywhere" }}>
-          {caption} ·{" "}
+        <Typography variant="caption">
           <MuiLink href={url} target="_blank" rel="noopener" underline="hover">
             Open Text File
           </MuiLink>
