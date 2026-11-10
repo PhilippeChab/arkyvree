@@ -251,7 +251,8 @@ export function Layout() {
                   }
             }
           >
-            <AppBrand />
+            {/* Beside a rail its name is centered on the window, over the page's titles; a phone has no room to spare */}
+            <AppBrand balanced={!isMobile} />
           </Typography>
 
           <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", flexShrink: 0 }}>
