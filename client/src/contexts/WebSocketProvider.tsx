@@ -15,6 +15,7 @@ interface WebSocketProviderProps {
 /** The queries each of the server's events changes, which it refreshes; a new event's keys go here. */
 const EVENT_INVALIDATION_MAP: Record<Exclude<WsEvent["type"], "app:version">, readonly (readonly string[])[]> = {
   "activities:updated": [QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
+  "campaign-documents:updated": [QUERY_KEYS.campaigns.details],
   "notifications:updated": [QUERY_KEYS.notifications.all, QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
 };
 

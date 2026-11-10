@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { EntityFieldValues, EntityLinkValues, StepPayload } from "@/engine/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
+import { MAX_DOCUMENT_NAME_LENGTH } from "@/shared/campaignDocuments.ts";
 import { MAX_CAMPAIGN_NAME_LENGTH } from "@/shared/campaigns.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_ITEM_CHARGES, MAX_ITEM_QUANTITY } from "@/shared/characters.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -36,6 +37,9 @@ export const idParam = z.object({ id: z.string().uuid() });
 
 /** A contributor route's `:id` (the ruleset or character) and `:contributorId` */
 export const contributorParams = idParam.extend({ contributorId: z.string().uuid() });
+
+/** A campaign's folder's or document's name, sanitized as it's stored (`sanitizedName`): not empty once it is, within its bound. */
+export const documentName = sanitizedName.min(1).max(MAX_DOCUMENT_NAME_LENGTH);
 
 /**
  * An entity's fields, as a body carries them for its ruleset's rules (`fields`), a ruleset's Settings' too: any object,

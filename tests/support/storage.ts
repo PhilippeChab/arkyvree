@@ -1,7 +1,7 @@
 import type { StorageBackend } from "@/server/storage/ObjectStorage.ts";
 
 /**
- * An in-memory storage backend: every object exists and reports 1 KiB.
+ * An in-memory storage backend: every object exists and reports 1 KiB, and reads as none.
  * `tests/setup.ts` installs one before each test; pass `overrides` to
  * `ObjectStorage.setForTest(fakeStorage({ ... }))` to observe or fail calls.
  */
@@ -16,6 +16,9 @@ export function fakeStorage(overrides: Partial<StorageBackend> = {}): StorageBac
     },
     async objectStats() {
       return { size: 1024, etag: "fake" };
+    },
+    async readObject() {
+      return null;
     },
     ...overrides,
   };

@@ -13,6 +13,8 @@ export function useCampaignPermissions(campaign: Pick<CampaignDetail, "permissio
     canHardDelete: !!permissions?.canHardDelete,
     /** Link its own characters (each roster row's `canSetVisibility` answers its visibility select). */
     canLinkCharacters: !!permissions?.canLinkCharacters,
+    /** Add, edit, move and delete its folders and documents, and choose whom each admits, while it's live. */
+    canManageDocuments: !!permissions?.canManageDocuments,
     canManagePlayers: !!permissions?.canManagePlayers,
     /** Unarchive it, once it's archived. */
     canUnarchive: !!permissions?.canUnarchive,

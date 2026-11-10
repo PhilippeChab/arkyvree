@@ -47,6 +47,10 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   // Campaign seats: an account's deletion left the campaign to this player, and names no one
   promoteCampaignPlayer: (_actor, d) => `You're now the Game Master of ${d.campaignName || "a campaign"}`,
 
+  // Campaign documents: a folder or a document a Game Master's change shows a player
+  shareCampaignDocument: (actor, d) =>
+    `${actor} shared ${d.entityName || "a document"} with you in ${d.campaignName || "a campaign"}`,
+
   // Contributor invites
   inviteContributor: (actor, d) =>
     `${actor} invited you to contribute to ${d.rulesetName || "a ruleset"} as ${d.role || "Editor"}`,

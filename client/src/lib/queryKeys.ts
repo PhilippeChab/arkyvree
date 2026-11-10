@@ -95,6 +95,11 @@ export const QUERY_KEYS = {
     section: (id: string, section: string) => ["campaigns", "detail", id, section] as const,
     characterDetail: (campaignId: string, characterId: string) =>
       ["campaigns", "detail", campaignId, "character", characterId] as const,
+    /** A folder or a document: nested in the Documents tab, which a save refreshes. */
+    documentDetail: (campaignId: string, documentId: string) =>
+      ["campaigns", "detail", campaignId, "documents", documentId] as const,
+    /** Every seat, which a Selected item's players are picked from: beside the Players tab's searches, never one of them. */
+    seats: (campaignId: string) => ["campaigns", "detail", campaignId, "seats"] as const,
   },
   characters: {
     lists: ["characters", "list"] as const,

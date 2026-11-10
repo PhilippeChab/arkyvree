@@ -51,6 +51,7 @@ A campaign holds:
 
 - **Players** — its slots: an active player, an unassigned slot, or an invite waiting for an answer (**Invite Pending**, which a Game Master can revoke with **Revoke Invite**). A slot whose player deleted their account stays listed, as **Deleted Account**, and their character in the campaign passes to its longest-seated Game Master, with its notes, portrait and contributors.
 - **Characters** — linked by their owner from the campaign's **Characters** tab (**Link Character**), each with its own [visibility setting](#what-is-character-visibility). A character can be in one campaign at a time.
+- **Documents** — the Game Masters' folders and documents, in the **Documents** tab, each shown to the players it's [visible to](#what-are-campaign-documents).
 
 A campaign is tied to one ruleset. Every linked character must be built on that exact ruleset, not a fork or parent.
 
@@ -58,7 +59,7 @@ If you have house rules, fork the SRD ruleset and point the campaign at your for
 
 Roles:
 
-- **Game Master** — every player with that role: adds, invites and removes players, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. While the campaign isn't archived, a Game Master also edits every linked character as its contributors do (**Edit Character** on its campaign page); its archive, its portrait (a bonded creature's aside, as for contributors), its share link and its contributors stay its owner's, and a character its owner archives is out of their reach. A campaign keeps at least one Game Master: the last one can't be removed, leave or be made a Player Character, so their row offers neither **Edit** nor **Leave**. If the last one deletes their account, the longest-seated player takes over and is told so; with nobody else seated, the campaign is archived.
+- **Game Master** — every player with that role: adds, invites and removes players, keeps the campaign's documents and chooses who sees each, sees every linked character's full sheet regardless of visibility and can download its PDF, edits the campaign's name and description (**Edit**, in the campaign's **⋮** menu), and archives it. While the campaign isn't archived, a Game Master also edits every linked character as its contributors do (**Edit Character** on its campaign page); its archive, its portrait (a bonded creature's aside, as for contributors), its share link and its contributors stay its owner's, and a character its owner archives is out of their reach. A campaign keeps at least one Game Master: the last one can't be removed, leave or be made a Player Character, so their row offers neither **Edit** nor **Leave**. If the last one deletes their account, the longest-seated player takes over and is told so; with nobody else seated, the campaign is archived.
 - **Player Character** — sees other characters according to each character's visibility; edits their own characters; can **Leave** at any time.
 
 Campaigns are a character / ruleset organization layer. They aren't a virtual tabletop — no initiative tracker, dice roller, combat state, maps, or in-app chat.
@@ -81,6 +82,31 @@ Each character has two notes fields, under its description:
 - **Private Notes** — seen only by the character's owner, its contributors (invited from the character page's **⋮** menu → **Contributors**), and the Game Masters of its campaign. The owner, its contributors and the Game Masters write them on the character's page. Other players never see them, whatever the visibility, and a share link leaves them out.
 
 Independent of campaign visibility, a character's owner can share it with a public link: **⋮** → **Share**, then **Generate Link**. Anyone with the link sees the full sheet in a browser, without its private notes, and can download its PDF, no account required. **Revoke Link**, in the same dialog, turns it off.
+
+## What are campaign documents?
+
+A campaign's **Documents** tab holds what its Game Masters keep for the campaign, in folders: their maps and prep, and the handouts they give their players. It holds two kinds of things:
+
+- A **document** is a file a Game Master uploads: a picture (PNG, JPEG, WebP or GIF), a PDF or a text file (.txt or .md), 10 MB at most. **Add → Upload File** picks it, or drop the file on the list; either then asks for its name (the file's, until changed) and who sees it. Opening a document shows a picture or a text file on its page, and a PDF opens in its own tab with **Open PDF**. **Replace File**, on its row and in its **⋮** menu, swaps its file for another once confirmed: the file it held is deleted, and the document keeps its name and who sees it.
+- A **note** is text typed in the app, with no file: **Add → New Note** creates one, and its **⋮** menu edits its text.
+
+**Add → New Folder** adds a folder; folders nest 5 deep at most. Each item changes from its row: **Edit** (its name and who sees it), **Move** (into another folder, or to the top) and **Delete**.
+
+Each folder, document and note has a visibility:
+
+| Visibility | Who sees it |
+|---|---|
+| **Private** | The Game Masters alone. A new folder, document or note starts Private. |
+| **Public** | Every player. |
+| **Selected** | The players picked, an unassigned slot among them, for the player who takes it. |
+
+A player sees a folder, a document or a note only when it **and every folder above it** let them: a Private folder hides everything in it, names included. So a Game Master can prepare a reveal: mark the handouts in a Private folder Public, then make the folder Public when the moment comes, and they all appear at once.
+
+A document's file follows its visibility: only those who see the document can open it, and it never has a public link.
+
+Each row tells the Game Masters who sees it (**Seen by every player**, the players' names, or **Seen by no player**), and an edit or a move says at the top of its dialog who it would show the item to or hide it from before it's saved. Opening a folder shows what's in it under its name; the arrow beside the name goes back up.
+
+A player is notified when a folder, a document or a note is shared with them, once for the folder revealed rather than for each document in it, and their tab refreshes on its own. Deleting a folder deletes everything in it. A player removed from the campaign leaves every list they were on.
 
 ## What is the Party View?
 

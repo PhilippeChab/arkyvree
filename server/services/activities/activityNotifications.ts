@@ -72,19 +72,20 @@ async function findGameMasters(db: Db, inviteId: string) {
 }
 
 /**
- * The users an activity notifies (`RECIPIENTS`, or a change to a ruleset's content, `changed`, its stakeholders), but
- * its actor.
+ * The users an activity notifies (`RECIPIENTS`, or a change to a ruleset's content, `changed`, its stakeholders, and
+ * those its write names, `named`), but its actor.
  */
 async function findRecipientIds(
   db: Db,
   activity: ActivityValues,
   data: Record<string, unknown>,
   changed: Ruleset | undefined,
+  named: readonly string[],
 ) {
   const recipient = RECIPIENTS.get(activity.type) ?? (changed ? "rulesetStakeholders" : undefined);
   const userIds = recipient ? await findRecipients(db, recipient, activity, data, changed) : [];
   const recipientIds = new Set<string>();
-  for (const userId of userIds) if (userId && userId !== activity.userId) recipientIds.add(userId);
+  for (const userId of [...userIds, ...named]) if (userId && userId !== activity.userId) recipientIds.add(userId);
   return [...recipientIds];
 }
 
@@ -136,17 +137,25 @@ async function findRulesetStakeholders(db: Db, ruleset: Ruleset) {
  * Records an activity (`values`), and notifies the users it concerns, but its actor: a notification each, carrying the
  * activity's data and the actor's name, which their pages hear of once the request is answered. A change to a ruleset's
  * content names the ruleset its write changed (`changed`), whose owner and active contributors hear of it, and records
- * its base rules with it, whose words name what it changed ("created spell Fireball").
+ * its base rules with it, whose words name what it changed ("created spell Fireball"). A write that decides who hears of
+ * it names them (`named`).
  */
-async function recordActivity(tx: Db, changed: Ruleset | undefined, values: ActivityValues) {
+async function recordActivity(
+  tx: Db,
+  changed: Ruleset | undefined,
+  values: ActivityValues,
+  named: readonly string[] = [],
+) {
   const given = isRecord(values.data) ? values.data : {};
   const data = changed ? { ...given, baseRules: changed.baseRules } : given;
   const [activity] = await Activities.create(tx, changed ? { ...values, data } : values);
-  const recipientIds = await findRecipientIds(tx, values, data, changed);
+  const recipientIds = await findRecipientIds(tx, values, data, changed, named);
   if (recipientIds.length === 0) return;
 
   const actor = await Users.findOne(tx, { id: values.userId });
-  const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
+  // Those a write names (a campaign's players) may not read the actor's address: they read its username alone, if any
+  const actorName =
+    named.length > 0 ? (actor?.username ?? null) : (actor?.username ?? actor?.emailAddress ?? "Unknown");
   const { targetId, targetType, type, userId: actorId } = values;
   await Notifications.createMany(
     tx,
@@ -165,10 +174,16 @@ async function recordActivity(tx: Db, changed: Ruleset | undefined, values: Acti
 }
 
 /**
- * Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns.
+ * Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns:
+ * those its type reaches (`RECIPIENTS`), and those its write names (`recipientIds`: the players a campaign's document
+ * was shared with).
  */
-export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
-  await recordActivity(tx, undefined, values);
+export async function createActivityWithNotifications(
+  tx: Db,
+  values: ActivityValues,
+  recipientIds: readonly string[] = [],
+) {
+  await recordActivity(tx, undefined, values, recipientIds);
 }
 
 /**

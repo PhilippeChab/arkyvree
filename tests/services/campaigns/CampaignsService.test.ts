@@ -128,6 +128,7 @@ describe("CampaignsService", () => {
         canHardDelete: false,
         canLeave: false,
         canLinkCharacters: true,
+        canManageDocuments: true,
         canManagePlayers: true,
         canRevokeInvites: true,
         canUnarchive: false,
@@ -145,6 +146,7 @@ describe("CampaignsService", () => {
         canHardDelete: false,
         canLeave: true,
         canLinkCharacters: true,
+        canManageDocuments: false,
         canManagePlayers: false,
         canRevokeInvites: false,
         canUnarchive: false,
@@ -167,6 +169,7 @@ describe("CampaignsService", () => {
         canHardDelete: true,
         canLeave: false,
         canLinkCharacters: false,
+        canManageDocuments: false,
         canManagePlayers: false,
         canUnarchive: true,
       });

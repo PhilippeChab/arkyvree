@@ -6,19 +6,42 @@ import { db, withUniqueRefusal } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
+import { getFileEditableDocument, getFileReadableDocument } from "@/server/services/campaigns/documents/index.ts";
 import { getPortraitEditableCharacter } from "@/server/services/characters/index.ts";
 import { withAttachmentWrite, withBlobDeletion, withNewBlob } from "@/server/services/writes/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
-import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
+import {
+  ALLOWED_DOCUMENT_FILE_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  ATTACHMENT_SLOTS,
+  DOCUMENT_FILE_SLOT,
+  MAX_DOCUMENT_FILE_BYTES,
+  MAX_UPLOAD_BYTES,
+} from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { getAvatarEditableUser } from "./editableUser.ts";
-import { detectImageType } from "./imageTypes.ts";
+import { detectDocumentFileType, detectImageType } from "./imageTypes.ts";
 
 interface AttachableConfig {
   canAttach: AttachRight;
+  /**
+   * Who reads its files, for a record type whose files are private (a campaign document's): read through its own
+   * route, its bytes handed on by the server (`getAttachmentFile`), never a public URL. None for a display asset, whose
+   * public URL any signed-in session reads.
+   */
+  canRead?: AttachRight;
+  /**
+   * The type a file's bytes say it is (and its name, `filename`, for a text file, whose bytes have no signature), of
+   * those its record type takes, or null for any other: what it's stored as.
+   */
+  detect: (data: Uint8Array, filename: string) => string | null;
+  /** Whether a file goes straight to the storage (`createDirectUpload`), unread, or through the server alone. */
+  directUpload: boolean;
   names: readonly string[];
   policy: UploadPolicy;
+  /** What a file it refuses isn't, in a refusal's words: "a PNG, JPEG, WebP or GIF image". */
+  takes: string;
 }
 interface SignedTokenPayload {
   blobId: string;
@@ -44,9 +67,18 @@ const imagePolicy: UploadPolicy = {
   contentTypes: [...ALLOWED_IMAGE_TYPES],
 };
 
+/** An image's: what it is, how it's read off its bytes, and that it may go straight to the storage. */
+const image = {
+  detect: detectImageType,
+  directUpload: true,
+  policy: imagePolicy,
+  takes: "a PNG, JPEG, WebP or GIF image",
+};
+
 /**
- * The records that take attachments: who may attach to one, what they take, under which names. Any signed-in session
- * reads their attachments: avatars and portraits are display assets, and a URL adds no exposure beyond its page.
+ * The records that take attachments: who may attach to one, what they take, under which names, and who reads them. Any
+ * signed-in session reads an avatar's or a portrait's: display assets, whose URL adds no exposure beyond its page. A
+ * campaign document's file is private: read through its document's route by whoever sees the document.
  */
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   [
@@ -55,7 +87,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       // The account's own, which a demo's doesn't take: it stores no file, as its records' policies refuse one. Its
       // policy refuses anyone else (a 403)
       canAttach: getAvatarEditableUser,
-      policy: imagePolicy,
+      ...image,
       names: [ATTACHMENT_SLOTS.avatar.name],
     },
   ],
@@ -65,15 +97,53 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       // A player character's is its owner's alone; a child's (3.5's bonded creature), whoever edits its parent: its
       // policy refuses anyone else, with its own status (the 404 an unknown character gets, an archived one's 409)
       canAttach: getPortraitEditableCharacter,
-      policy: imagePolicy,
+      ...image,
       names: [ATTACHMENT_SLOTS.portrait.name],
+    },
+  ],
+  [
+    DOCUMENT_FILE_SLOT.recordType,
+    {
+      // Its campaign's Game Masters change it; whoever sees the document reads it, through the server, its bytes read
+      // first, so a file goes through it, never straight to the storage
+      canAttach: getFileEditableDocument,
+      canRead: getFileReadableDocument,
+      detect: detectDocumentFileType,
+      directUpload: false,
+      names: [DOCUMENT_FILE_SLOT.name],
+      policy: { maxBytes: MAX_DOCUMENT_FILE_BYTES, contentTypes: [...ALLOWED_DOCUMENT_FILE_TYPES] },
+      takes: "a picture, a PDF or a text file (.txt or .md, saved as UTF-8)",
     },
   ],
 ]);
 
+/** The longest name a file is stored under, as most file systems take. */
+const MAX_FILENAME_LENGTH = 255;
+
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 class AttachmentsService {
+  /** Refuses a record type whose files go through the server alone (`directUpload`: a campaign document's). */
+  private assertDirectUpload(recordType: string) {
+    if (!this.getAttachableConfig(recordType).directUpload)
+      throw new BadRequestError(`${recordType} files are uploaded through their own route`);
+  }
+
+  /** Refuses a record type whose files aren't private (`canRead`) to the private files' methods, as one that takes none. */
+  private assertPrivateType(recordType: string) {
+    if (!this.getAttachableConfig(recordType).canRead)
+      throw new BadRequestError(`Unsupported record type: ${recordType}`);
+  }
+
+  /**
+   * Refuses a record type whose files are private (a campaign document's, `canRead`) to the generic attachment routes,
+   * as one that takes none: its own routes read and change it, and refresh whoever sees it.
+   */
+  private assertPublicType(recordType: string) {
+    if (this.getAttachableConfig(recordType).canRead)
+      throw new BadRequestError(`Unsupported record type: ${recordType}`);
+  }
+
   private assertValidName(recordType: string, name: string): void {
     const { names } = this.getAttachableConfig(recordType);
     if (!names.includes(name)) throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
@@ -90,6 +160,21 @@ class AttachmentsService {
   private buildKey(blobId: string, filename: string): string {
     const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
     return `blobs/${blobId}/${safe}`;
+  }
+
+  /**
+   * The name a file is stored and shown under (a document's file's, to its players too): without control characters
+   * nor the marks that reverse its text ("map\u202Egnp.exe"), at most `MAX_FILENAME_LENGTH` characters, "file" if none
+   * is left.
+   */
+  private cleanFilename(name: string): string {
+    const cleaned = name.replace(/[\p{Cc}\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu, "").trim();
+    return cleaned.slice(0, MAX_FILENAME_LENGTH) || "file";
+  }
+
+  /** What a private file's slot holds, as its record's answers say it: its name, type, size and upload time. */
+  private describeFile(blob: { byteSize: number; contentType: string; createdAt: string; filename: string }) {
+    return { name: blob.filename, contentType: blob.contentType, byteSize: blob.byteSize, uploadedAt: blob.createdAt };
   }
 
   private getAttachableConfig(recordType: string): AttachableConfig {
@@ -155,38 +240,54 @@ class AttachmentsService {
       slot,
       async (tx: Db) => {
         await this.assertCanAttach(tx, session, slot.recordType, slot.recordId);
-        const blob = await Blobs.findOne(tx, { id: blobId });
-        if (!blob) throw new NotFoundError("Blob not found");
-        if (blob.attachedAt) throw new ConflictError("Blob is already attached");
-
-        const existing = await Attachments.findOne(tx, {
-          recordType: slot.recordType,
-          recordId: slot.recordId,
-          name: slot.name,
-        });
-        if (existing) await Attachments.delete(tx, { id: existing.id });
-
-        const [attachment] = await withUniqueRefusal(
-          () =>
-            Attachments.create(tx, {
-              recordType: slot.recordType,
-              recordId: slot.recordId,
-              name: slot.name,
-              blobId: blob.id,
-            }),
-          () => new ConflictError("Slot is already attached by a concurrent request"),
-        );
-        if (!attachment) throw new InternalError("Failed to create attachment");
-
-        const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
-        const attachedBlob = updated[0] ?? blob;
-
-        const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
-
-        return { attachment, blob: attachedBlob, orphan };
+        return await this.fillSlot(tx, slot, blobId);
       },
       blobId,
     );
+  }
+
+  /**
+   * Deletes an attachment the session may change (`found`, read before the lock: its record never changes), asked again
+   * under its record's lock, and its blob's file when nothing else holds it.
+   */
+  private async deleteAttachment(session: Session, found: { id: string; recordId: string; recordType: string }) {
+    await this.assertCanAttach(db, session, found.recordType, found.recordId);
+    const result = await withAttachmentWrite(found, async (tx: Db) => {
+      await this.assertCanAttach(tx, session, found.recordType, found.recordId);
+      const attachment = await Attachments.findOne(tx, { id: found.id });
+      if (!attachment) throw new NotFoundError("Attachment not found");
+
+      await Attachments.delete(tx, { id: attachment.id });
+      const orphan = await this.findOrphanedBlob(tx, attachment.blobId);
+      return { id: attachment.id, orphan };
+    });
+
+    await this.purgeOrphan(result.orphan);
+    return { id: result.id };
+  }
+
+  /**
+   * Puts a stored blob (`blobId`) in its slot, replacing the attachment there, in a write that holds its record's lock
+   * and the blob's, and marks it attached. Answers the old attachment's blob when nothing else holds it.
+   */
+  private async fillSlot(tx: Db, slot: { name: string; recordId: string; recordType: string }, blobId: string) {
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) throw new NotFoundError("Blob not found");
+    if (blob.attachedAt) throw new ConflictError("Blob is already attached");
+
+    const where = { recordType: slot.recordType, recordId: slot.recordId, name: slot.name };
+    const existing = await Attachments.findOne(tx, where);
+    if (existing) await Attachments.delete(tx, { id: existing.id });
+
+    const [attachment] = await withUniqueRefusal(
+      () => Attachments.create(tx, { ...where, blobId: blob.id }),
+      () => new ConflictError("Slot is already attached by a concurrent request"),
+    );
+    if (!attachment) throw new InternalError("Failed to create attachment");
+
+    const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
+    const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
+    return { attachment, blob: updated[0] ?? blob, orphan };
   }
 
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
@@ -209,8 +310,54 @@ class AttachmentsService {
     }
   }
 
+  /**
+   * Stores a file a record type takes (`recordType`), ahead of its attach: its type read from its bytes (and its name,
+   * for one with no signature), within its record type's policy, as a pending blob first, so one a crash leaves
+   * unattached is swept with its row, then put in storage. A failed write deletes what it stored. Answers its blob.
+   */
+  private async storeFile(recordType: string, file: File) {
+    const data = new Uint8Array(await file.arrayBuffer());
+    const config = this.getAttachableConfig(recordType);
+    const filename = this.cleanFilename(file.name);
+    const contentType = config.detect(data, filename);
+    if (!contentType) throw new BadRequestError(`The file isn't ${config.takes}`);
+    this.assertWithinPolicy(recordType, data.byteLength, contentType);
+
+    const id = randomUUID();
+    const key = this.buildKey(id, filename);
+    await withNewBlob((tx) => Blobs.create(tx, { id, key, filename, contentType, byteSize: data.byteLength }));
+    try {
+      await ObjectStorage.get().putObject(key, data, { contentType });
+    } catch (error) {
+      await this.purgeOrphan({ id, key });
+      throw error;
+    }
+    return { id, key };
+  }
+
+  /**
+   * Uploads a file through the server into its slot, at once: stored (`storeFile`), then attached. A failed attach
+   * deletes what it stored. Answers the attachment and its blob.
+   */
+  private async uploadFile(session: Session, slot: { name: string; recordId: string; recordType: string }, file: File) {
+    await this.assertCanAttach(db, session, slot.recordType, slot.recordId);
+    this.assertValidName(slot.recordType, slot.name);
+    const stored = await this.storeFile(slot.recordType, file);
+
+    let result;
+    try {
+      result = await this.attachBlob(session, slot, stored.id);
+    } catch (error) {
+      await this.purgeOrphan(stored);
+      throw error;
+    }
+    await this.purgeOrphan(result.orphan);
+    return result;
+  }
+
   async attach(session: Session, signedId: string) {
     const payload = this.verifyToken(signedId);
+    this.assertDirectUpload(payload.recordType);
     await this.assertCanAttach(db, session, payload.recordType, payload.recordId);
     this.assertValidName(payload.recordType, payload.name);
 
@@ -236,6 +383,22 @@ class AttachmentsService {
     return { attachment: result.attachment, blob: result.blob };
   }
 
+  /**
+   * Puts a private file stored ahead of its record (`pending`, `createPendingFile`) in the record's slot, in the write
+   * that creates the record (`tx`), which holds the record's lock and the blob's and has asked its policy: the record
+   * and its file are stored together, or neither. Answers what the slot holds: its name, type, size and upload time.
+   */
+  async attachPendingFile(
+    tx: Db,
+    slot: { name: string; recordId: string; recordType: string },
+    pending: { id: string },
+  ) {
+    this.assertPrivateType(slot.recordType);
+    this.assertValidName(slot.recordType, slot.name);
+    const { blob } = await this.fillSlot(tx, slot, pending.id);
+    return this.describeFile(blob);
+  }
+
   async createDirectUpload(
     session: Session,
     params: {
@@ -247,6 +410,9 @@ class AttachmentsService {
       recordType: string;
     },
   ) {
+    // A record type whose files go through the server is refused before anything is read of its record: its answer
+    // would say whether the record exists
+    this.assertDirectUpload(params.recordType);
     await this.assertCanAttach(db, session, params.recordType, params.recordId);
     this.assertValidName(params.recordType, params.name);
     this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
@@ -284,28 +450,25 @@ class AttachmentsService {
     };
   }
 
+  /**
+   * Stores a private file (a campaign document's) ahead of the record it's for, which its write then attaches
+   * (`attachPendingFile`) or, failing, removes (`removePendingFile`). Its caller has asked who may. Answers its blob.
+   */
+  async createPendingFile(recordType: string, file: File) {
+    this.assertPrivateType(recordType);
+    return await this.storeFile(recordType, file);
+  }
+
+  /** Removes a display asset (an avatar, a portrait): a private file's attachment is answered as an unknown one. */
   async detach(session: Session, attachmentId: string) {
-    // Its record never changes, so it's read before the lock, and again under it, with the session's right on it
     const found = await Attachments.findOne(db, { id: attachmentId });
-    if (!found) throw new NotFoundError("Attachment not found");
-    await this.assertCanAttach(db, session, found.recordType, found.recordId);
-    const result = await withAttachmentWrite(found, async (tx: Db) => {
-      await this.assertCanAttach(tx, session, found.recordType, found.recordId);
-      const attachment = await Attachments.findOne(tx, { id: attachmentId });
-      if (!attachment) throw new NotFoundError("Attachment not found");
-
-      await Attachments.delete(tx, { id: attachment.id });
-      const orphan = await this.findOrphanedBlob(tx, attachment.blobId);
-      return { id: attachment.id, orphan };
-    });
-
-    await this.purgeOrphan(result.orphan);
-    return { id: result.id };
+    if (!found || this.getAttachableConfig(found.recordType).canRead) throw new NotFoundError("Attachment not found");
+    return await this.deleteAttachment(session, found);
   }
 
   async getAttachment(params: { name: string; recordId: string; recordType: string }) {
-    // A record type that takes no attachments is refused, as a write's is
-    this.getAttachableConfig(params.recordType);
+    // A record type that takes no attachments is refused, as a write's is, and so is a private one's, whose route reads it
+    this.assertPublicType(params.recordType);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,
       recordId: params.recordId,
@@ -316,36 +479,48 @@ class AttachmentsService {
   }
 
   /**
-   * Uploads an image through the server into its slot, at once: its type read from its bytes, stored as a pending blob
-   * first, so one a crash leaves unattached is swept with its row, then put in storage and attached. A failed write or
-   * attach deletes what it stored. Answers the attachment as its read does: its id and its image's URL.
+   * A private file's bytes (a campaign document's), for whoever may read its record (`canRead`), its type and name with
+   * them: the server hands them on, so no URL to it ever leaves it. One its record type keeps public is refused, as an
+   * empty slot is not found.
+   */
+  async getAttachmentFile(session: Session, params: { name: string; recordId: string; recordType: string }) {
+    this.assertPrivateType(params.recordType);
+    await this.getAttachableConfig(params.recordType).canRead?.(db, session, params.recordId);
+    this.assertValidName(params.recordType, params.name);
+    const row = await Attachments.findOneWithBlob(db, params);
+    const data = row && (await ObjectStorage.get().readObject(row.key));
+    if (!row || !data) throw new NotFoundError("File not found");
+    return { contentType: row.contentType, data, filename: row.filename };
+  }
+
+  /**
+   * Removes a private file stored ahead of its record (`createPendingFile`) that its record's write failed to attach:
+   * its stored file, and its row.
+   */
+  async removePendingFile(pending: { id: string; key: string }) {
+    // A write that failed after its commit went through left the file attached: it stays its record's
+    const held = await Attachments.findMany(db, { blobIds: [pending.id] });
+    if (held.length === 0) await this.purgeOrphan(pending);
+  }
+
+  /**
+   * Uploads a display asset (an avatar, a portrait) through the server into its slot (`uploadFile`), replacing the one
+   * there. Answers the attachment as its read does: its id and its image's URL.
    */
   async setAttachment(session: Session, recordType: string, recordId: string, name: string, file: File) {
-    const slot = { name, recordId, recordType };
-    await this.assertCanAttach(db, session, slot.recordType, slot.recordId);
-    this.assertValidName(slot.recordType, slot.name);
-
-    const data = new Uint8Array(await file.arrayBuffer());
-    const contentType = detectImageType(data);
-    if (!contentType) throw new BadRequestError("The file isn't a PNG, JPEG, WebP or GIF image");
-    this.assertWithinPolicy(slot.recordType, data.byteLength, contentType);
-
-    const blobId = randomUUID();
-    const key = this.buildKey(blobId, file.name);
-    await withNewBlob((tx) =>
-      Blobs.create(tx, { id: blobId, key, filename: file.name || "file", contentType, byteSize: data.byteLength }),
-    );
-
-    let result;
-    try {
-      await ObjectStorage.get().putObject(key, data, { contentType });
-      result = await this.attachBlob(session, slot, blobId);
-    } catch (error) {
-      await this.purgeOrphan({ id: blobId, key });
-      throw error;
-    }
-    await this.purgeOrphan(result.orphan);
+    this.assertPublicType(recordType);
+    const result = await this.uploadFile(session, { name, recordId, recordType }, file);
     return { id: result.attachment.id, url: ObjectStorage.findPublicUrl(result.blob.key) };
+  }
+
+  /**
+   * Uploads a private file (a campaign document's) into its slot (`uploadFile`), replacing the one there. Answers what
+   * the slot now holds, its name, type, size and upload time: no URL to it, whose bytes its record's route hands on.
+   */
+  async setAttachmentFile(session: Session, slot: { name: string; recordId: string; recordType: string }, file: File) {
+    this.assertPrivateType(slot.recordType);
+    const { blob } = await this.uploadFile(session, slot, file);
+    return this.describeFile(blob);
   }
 }
 

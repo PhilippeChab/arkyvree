@@ -15,6 +15,7 @@ import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 const ActivitiesPage = lazy(() => import("./pages/activities/ActivitiesPage.tsx"));
 const CampaignCharacterPage = lazy(() => import("./pages/campaigns/CampaignCharacterPage.tsx"));
 const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/CampaignDetailsPage.tsx"));
+const CampaignDocumentPage = lazy(() => import("./pages/campaigns/CampaignDocumentPage.tsx"));
 const CampaignsPage = lazy(() => import("./pages/campaigns/CampaignsPage.tsx"));
 const CharacterDetailsPage = lazy(() => import("./pages/characters/details/CharacterDetailsPage.tsx"));
 const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"));
@@ -75,6 +76,7 @@ const router = createBrowserRouter(
           <Route path="campaigns/:id" element={<CampaignDetailsPage />} />
           <Route path="campaigns/:id/:section" element={<CampaignDetailsPage />} />
           <Route path="campaigns/:id/characters/:characterId" element={<CampaignCharacterPage />} />
+          <Route path="campaigns/:id/documents/:documentId" element={<CampaignDocumentPage />} />
           <Route path="characters" element={<CharactersPage />} />
           <Route path="characters/:id" element={<CharacterDetailsPage />} />
           <Route path="activities" element={<ActivitiesPage />} />
