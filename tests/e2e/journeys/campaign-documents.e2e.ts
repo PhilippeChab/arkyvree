@@ -54,7 +54,7 @@ test.describe("A campaign's documents", () => {
       await fileInput.setInputFiles({ name: "A letter.txt", mimeType: "text/plain", buffer: letter });
       const letterDialog = page.getByRole("dialog", { name: "Upload Document" });
       await expect(letterDialog.getByLabel("Name")).toHaveValue("A letter");
-      await expect(letterDialog.getByText("Text file · 1 KB · uploaded when saved")).toBeVisible();
+      await expect(letterDialog.getByText("Text file · 1 KB")).toBeVisible();
       await selectOption(page, "Visibility", "Selected");
       await letterDialog.getByRole("combobox", { name: "Players" }).click();
       await page.getByRole("option", { name: inviteeUser.username }).click();
