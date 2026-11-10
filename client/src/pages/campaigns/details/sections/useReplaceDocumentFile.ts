@@ -8,14 +8,16 @@ import { invalidateCampaignDocuments } from "@/client/src/pages/campaigns/detail
 import { replaceDocumentFileFn } from "./documentFiles.ts";
 import { type CampaignDocument, describeFileRefusal, DOCUMENT_FILE_ACCEPT, type DocumentFile } from "./documents.ts";
 
+/** A document whose file is replaced, as its confirmation names it: its name, and its file's. */
+interface ReplacedDocument extends Pick<CampaignDocument, "id" | "name"> {
+  file: Pick<DocumentFile, "name"> | null;
+}
+
 /** A replacement waiting on its confirmation: the document, and the file picked for it. */
 export interface FileReplacement {
   document: ReplacedDocument;
   file: File;
 }
-
-/** A document whose file is replaced, as its confirmation names it: its name, and its file's. */
-export type ReplacedDocument = Pick<CampaignDocument, "id" | "name"> & { file: Pick<DocumentFile, "name"> | null };
 
 /**
  * Replaces a document's file, of a campaign (`campaignId`), as its own action: `start` opens the file picker for a
@@ -39,14 +41,19 @@ export function useReplaceDocumentFile(campaignId: string) {
       invalidateCampaignDocuments(queryClient, campaignId);
       dialog.close();
     },
-    onError: (error) => snackbar.error(error, "Failed to replace file"),
+    onError: (error) => {
+      snackbar.error(error, "Failed to replace file");
+      // The document may be gone, deleted meanwhile: the list says so
+      invalidateCampaignDocuments(queryClient, campaignId);
+    },
   });
 
   return {
     dialogProps: {
       open: dialog.open,
       onClose: dialog.close,
-      onConfirm: () => dialog.target && mutation.mutate(dialog.target),
+      // Once, while it's open: a second click as it closes sends no second upload
+      onConfirm: () => dialog.open && dialog.target && mutation.mutate(dialog.target),
       pending: mutation.isPending,
       replacement: dialog.target,
     },

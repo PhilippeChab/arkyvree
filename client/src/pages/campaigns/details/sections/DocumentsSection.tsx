@@ -210,11 +210,14 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
     createDialog.openWith({ kind, parentId: folderId });
   };
 
-  // A file dropped beside the list isn't the browser's to open, which would leave the app: nothing takes it there
+  // A file dropped anywhere on the campaign's page but the list isn't the browser's to open, which would leave the
+  // app: nothing takes it there, which its cursor says. The list's own handlers ran first, and keep their drop
   useEffect(() => {
     if (!canManageDocuments) return undefined;
     const ignore = (event: globalThis.DragEvent) => {
-      if (event.dataTransfer?.types.includes("Files")) event.preventDefault();
+      if (!event.dataTransfer?.types.includes("Files") || event.defaultPrevented) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "none";
     };
     window.addEventListener("dragover", ignore);
     window.addEventListener("drop", ignore);

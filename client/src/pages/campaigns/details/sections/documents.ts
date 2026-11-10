@@ -35,8 +35,9 @@ export interface AudienceChange {
 }
 
 /**
- * The Create and Edit dialogs' form: a name, a note's text, a document's file, and whom it admits. Its file is the one
- * picked to upload (`file`): a new document's, or the one that replaces an edited document's, none to keep it.
+ * The Create and Edit dialogs' form: a name, a note's text, a new document's file, and whom it admits. Its file is the
+ * one picked to upload (`file`), a new document's alone: an edit carries none, and a document's file is replaced by its
+ * own action.
  */
 export interface DocumentFormData {
   body: string;

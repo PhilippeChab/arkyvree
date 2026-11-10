@@ -4,6 +4,7 @@ import { Documents } from "@/server/repositories/index.ts";
 import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import { CampaignDocumentsService, noteDocumentChanged } from "@/server/services/campaigns/documents/index.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
+import { withCampaignWrite } from "@/server/services/writes/index.ts";
 import { DOCUMENT_FILE_SLOT } from "@/shared/attachments.ts";
 import type { DocumentVisibility } from "@/shared/campaignDocuments.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -66,15 +67,17 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Puts another file in a document (a picture, a PDF or a text file), replacing the one it held: its
-   * campaign's Game Master's, who asks first, then the document; whoever sees it has their page refreshed. Answers what
-   * the document now holds: its file's name, type, size and upload time.
+   * Puts another file in a document (a picture, a PDF or a text file), replacing the one it held: its campaign's Game
+   * Master's, who asks first, then the document, which is marked changed; whoever sees it has their page refreshed.
+   * Answers what the document now holds: its file's name, type, size and upload time.
    */
   async setDocumentFile(session: Session, campaignId: string, documentId: string, file: File) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canUpdate();
     await this.assertInCampaign(campaignId, documentId);
     const stored = await AttachmentsService.setAttachmentFile(session, this.slotOf(documentId), file);
+    // The document changed, which its list's Updated says: none when it was deleted meanwhile
+    await withCampaignWrite(session, campaignId, (tx) => Documents.update(tx, {}, { id: documentId }));
     await noteDocumentChanged(db, session, campaignId, documentId);
     return stored;
   }

@@ -151,8 +151,11 @@ describe("CampaignDocumentFilesService", () => {
         uploadedAt: expect.any(String),
       });
     });
-    // Whoever sees it has their page refreshed
+    // Whoever sees it has their page refreshed, and its list says it changed
     expect([...noted.campaignDocuments]).toEqual([playerUser.id]);
+    const { items } = await CampaignDocumentsService.getDocuments(gm, campaign.id);
+    const changed = items.find(({ id }) => id === map.id)!.updatedAt;
+    expect(new Date(changed).getTime()).toBeGreaterThan(new Date(map.updatedAt).getTime());
     const read = await CampaignDocumentFilesService.getDocumentFile(player, campaign.id, map.id);
     expect([read.contentType, read.filename]).toEqual(["application/pdf", "map.pdf"]);
     expect(stored.size).toBe(1);
