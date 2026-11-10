@@ -6,7 +6,7 @@ import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
 import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
-import { fakeStorage } from "@/tests/support/storage.ts";
+import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
 
 const documents = api.api.campaigns[":id"].documents;
 const document = documents[":documentId"];
@@ -101,7 +101,7 @@ describe("campaign documents", () => {
     ObjectStorage.setForTest(
       fakeStorage({
         putObject: async (key, data) => void stored.set(key, data),
-        readObject: async (key) => (stored.has(key) ? new Uint8Array(stored.get(key)!) : null),
+        streamObject: async (key) => streamOf(stored.get(key)),
         deleteObject: async (key) => void stored.delete(key),
       }),
     );

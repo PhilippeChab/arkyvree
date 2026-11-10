@@ -10,8 +10,17 @@ export interface StorageBackend {
   publicUrl(key: string): string;
   /** Stores an object the server holds whole: a file uploaded through it rather than straight to the storage. */
   putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void>;
-  /** An object's bytes, which the server hands on itself (a private file), or `null` when there's none. */
-  readObject(key: string): Promise<Uint8Array<ArrayBuffer> | null>;
+  /**
+   * An object's bytes as they come from the storage, with how many there are, or `null` when there's none: the server
+   * hands a private file on as it reads it, never holding it whole.
+   */
+  streamObject(key: string): Promise<StoredStream | null>;
+}
+
+/** An object being read: its bytes as they come, and how many there are in all. */
+export interface StoredStream {
+  size: number;
+  stream: ReadableStream<Uint8Array>;
 }
 
 /**
@@ -73,13 +82,10 @@ class S3StorageBackend implements StorageBackend {
     await Bun.s3.write(key, data, { type: opts.contentType });
   }
 
-  async readObject(key: string): Promise<Uint8Array<ArrayBuffer> | null> {
-    try {
-      return new Uint8Array(await Bun.s3.file(key).arrayBuffer());
-    } catch (error) {
-      if (isNotFound(error)) return null;
-      throw error;
-    }
+  async streamObject(key: string): Promise<StoredStream | null> {
+    // Its size first, which also says whether it's there: a stream only fails once it's read
+    const stats = await this.objectStats(key);
+    return stats && { size: stats.size, stream: Bun.s3.file(key).stream() };
   }
 }
 

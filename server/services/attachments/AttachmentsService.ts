@@ -479,18 +479,18 @@ class AttachmentsService {
   }
 
   /**
-   * A private file's bytes (a campaign document's), for whoever may read its record (`canRead`), its type and name with
-   * them: the server hands them on, so no URL to it ever leaves it. One its record type keeps public is refused, as an
-   * empty slot is not found.
+   * A private file (a campaign document's), for whoever may read its record (`canRead`): its bytes as they come from
+   * the storage (`stream`, never held whole), with how many there are, its type and its name. The server hands them on,
+   * so no URL to it ever leaves it. One its record type keeps public is refused, as an empty slot is not found.
    */
   async getAttachmentFile(session: Session, params: { name: string; recordId: string; recordType: string }) {
     this.assertPrivateType(params.recordType);
     await this.getAttachableConfig(params.recordType).canRead?.(db, session, params.recordId);
     this.assertValidName(params.recordType, params.name);
     const row = await Attachments.findOneWithBlob(db, params);
-    const data = row && (await ObjectStorage.get().readObject(row.key));
-    if (!row || !data) throw new NotFoundError("File not found");
-    return { contentType: row.contentType, data, filename: row.filename };
+    const stored = row && (await ObjectStorage.get().streamObject(row.key));
+    if (!row || !stored) throw new NotFoundError("File not found");
+    return { byteSize: stored.size, contentType: row.contentType, filename: row.filename, stream: stored.stream };
   }
 
   /**
