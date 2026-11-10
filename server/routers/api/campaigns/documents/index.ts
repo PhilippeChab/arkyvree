@@ -62,10 +62,8 @@ export default new Hono<SessionContext>()
   .get("/:id/documents/:documentId/file", validate("param", documentParams), async (c) => {
     const { id, documentId } = c.req.valid("param");
     const file = await CampaignDocumentFilesService.getDocumentFile(c.var.requestSession, id, documentId);
-    // Handed on as the storage sends it: the server holds a chunk at a time, never the file whole
-    return c.body(file.stream, 200, {
+    const headers = {
       "Cache-Control": "private, no-store",
-      "Content-Length": String(file.byteSize),
       "Content-Disposition": toInlineDisposition(file.filename),
       // A text file's bytes are UTF-8 (its upload's check)
       "Content-Type": file.contentType === "text/plain" ? "text/plain; charset=utf-8" : file.contentType,
@@ -74,7 +72,14 @@ export default new Hono<SessionContext>()
       // policy would strip. A PDF's reader, the browser's, takes none
       ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "sandbox" }),
       "X-Content-Type-Options": "nosniff",
-    });
+    };
+    // A HEAD asks for the headers alone: the storage's read is let go, not left open behind a body nobody reads
+    if (c.req.method === "HEAD") {
+      await file.stream.cancel();
+      return c.body(null, 200, headers);
+    }
+    // Handed on as the storage sends it, in chunks: the server holds one at a time, never the file whole
+    return c.body(file.stream, 200, headers);
   })
   .post(
     "/:id/documents",

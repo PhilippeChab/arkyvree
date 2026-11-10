@@ -134,7 +134,6 @@ describe("campaign documents", () => {
     expect(read.status).toBe(200);
     expect(Object.fromEntries(read.headers)).toMatchObject({
       "cache-control": "private, no-store",
-      "content-length": "64",
       // Its name escaped as RFC 5987 takes it, past what `encodeURIComponent` escapes (a quote mark among them, which a
       // browser reads as its syntax), and an ASCII one for the browsers that read no other
       "content-disposition": `inline; filename="Bob's map.png"; filename*=UTF-8''Bob%27s%20map.png`,
