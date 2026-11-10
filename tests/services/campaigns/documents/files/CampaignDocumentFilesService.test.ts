@@ -13,7 +13,7 @@ import { DOCUMENT_FILE_SLOT, MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachment
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { fakeStorage } from "@/tests/support/storage.ts";
+import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** An HTML page, which no document is. */
@@ -59,9 +59,8 @@ describe("CampaignDocumentFilesService", () => {
         async putObject(key, data) {
           stored.set(key, data);
         },
-        async readObject(key) {
-          const data = stored.get(key);
-          return data ? new Uint8Array(data) : null;
+        async streamObject(key) {
+          return streamOf(stored.get(key));
         },
         async deleteObject(key) {
           stored.delete(key);
@@ -84,7 +83,10 @@ describe("CampaignDocumentFilesService", () => {
 
       for (const session of [gm, player]) {
         const read = await CampaignDocumentFilesService.getDocumentFile(session, campaign.id, map.id);
-        expect(read).toEqual({ contentType: "image/png", data: PNG, filename: "keep.png" });
+        // Its bytes as they come from the storage, which a response reads to the end
+        const { stream, ...described } = read;
+        expect(described).toEqual({ byteSize: PNG.byteLength, contentType: "image/png", filename: "keep.png" });
+        expect(new Uint8Array(await new Response(stream).arrayBuffer())).toEqual(PNG);
       }
       const { items } = await CampaignDocumentsService.getDocuments(player, campaign.id);
       expect(items.map(({ id, file: held }) => [id, held])).toEqual([[map.id, file]]);

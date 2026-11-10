@@ -1,4 +1,4 @@
-import type { StorageBackend } from "@/server/storage/ObjectStorage.ts";
+import type { StorageBackend, StoredStream } from "@/server/storage/ObjectStorage.ts";
 
 /**
  * An in-memory storage backend: every object exists and reports 1 KiB, and reads as none.
@@ -17,9 +17,15 @@ export function fakeStorage(overrides: Partial<StorageBackend> = {}): StorageBac
     async objectStats() {
       return { size: 1024, etag: "fake" };
     },
-    async readObject() {
+    async streamObject() {
       return null;
     },
     ...overrides,
   };
+}
+
+/** An object's read, as the storage answers it, of bytes a test holds (`data`), none without them. */
+export function streamOf(data: Uint8Array | undefined): StoredStream | null {
+  if (!data) return null;
+  return { size: data.byteLength, stream: new Response(new Uint8Array(data)).body! };
 }

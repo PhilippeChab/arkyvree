@@ -57,8 +57,9 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * A document's file (`documentId`, of `campaignId`), its bytes with its type and name, for whoever sees the document
-   * (`getFileReadableDocument`): a hidden or unknown document's, or one that holds none, refused as not found.
+   * A document's file (`documentId`, of `campaignId`), its bytes as they come from the storage, with its type and name,
+   * for whoever sees the document (`getFileReadableDocument`): a hidden or unknown document's, or one that holds none,
+   * refused as not found.
    */
   async getDocumentFile(session: Session, campaignId: string, documentId: string) {
     await getReadableCampaign(db, session, campaignId);
