@@ -1,6 +1,6 @@
 export { CharactersSection } from "./CharactersSection.tsx";
-export { DeleteDocumentDialog, DocumentFormDialog } from "./DocumentDialogs.tsx";
-export { describeFileSave, saveDocumentFileFn, toDocumentFileUrl } from "./documentFiles.ts";
+export { DeleteDocumentDialog, DocumentFormDialog, ReplaceFileDialog } from "./DocumentDialogs.tsx";
+export { toDocumentFileUrl } from "./documentFiles.ts";
 export {
   describeAudience,
   describeDocumentFile,
@@ -17,3 +17,4 @@ export {
 } from "./documents.ts";
 export { DocumentsSection } from "./DocumentsSection.tsx";
 export { PlayersSection } from "./PlayersSection.tsx";
+export { useReplaceDocumentFile } from "./useReplaceDocumentFile.ts";

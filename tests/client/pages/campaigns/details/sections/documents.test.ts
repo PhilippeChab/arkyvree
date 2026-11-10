@@ -184,9 +184,6 @@ describe("the Documents tab", () => {
       body: "Hi",
     });
     expect(isAudienceChanged({ ...opened, readerIds: ["rogue"] }, opened)).toBe(false);
-    // A file picked to replace a document's goes by its own request
-    const picked = new File(["%PDF-"], "map.pdf", { type: "application/pdf" });
-    expect(toDocumentEdit({ ...opened, file: picked }, opened, false)).toEqual({ name: "Letter" });
   });
 
   test("says what a document's file is, its icon, and why a pick is refused", () => {

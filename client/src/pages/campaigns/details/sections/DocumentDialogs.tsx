@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useController, type UseFormReturn } from "react-hook-form";
 
 import {
+  ConfirmDialog,
   CreateDialog,
   DeleteDialog,
   DialogFooter,
@@ -39,7 +40,6 @@ import {
   describeFileRefusal,
   DOCUMENT_FILE_ACCEPT,
   DOCUMENT_ICONS,
-  type DocumentFile,
   type DocumentFormData,
   findMoveTargets,
   isAudienceChanged,
@@ -49,6 +49,7 @@ import {
   toContentType,
   VISIBILITY_DESCRIPTIONS,
 } from "./documents.ts";
+import type { FileReplacement } from "./useReplaceDocumentFile.ts";
 
 interface AudienceNoteProps {
   change: AudienceChange;
@@ -68,16 +69,14 @@ interface DeleteDocumentDialogProps {
 }
 
 interface DocumentFileFieldProps {
-  /** The file the document holds, which an edit keeps unless another is picked; none for a new document. */
-  current: DocumentFile | null;
   disabled: boolean;
   form: UseFormReturn<DocumentFormData>;
 }
 
 interface DocumentFormDialogProps {
   form: UseFormReturn<DocumentFormData>;
-  /** The item it edits (none for a new one), the file it holds, and where a new one goes. */
-  item: Pick<CampaignDocument, "id" | "kind" | "name"> & { file?: DocumentFile | null; parentId: string | null };
+  /** The item it edits (none for a new one), and where a new one goes. */
+  item: Pick<CampaignDocument, "id" | "kind" | "name"> & { parentId: string | null };
   items: readonly CampaignDocument[];
   mode: "create" | "edit";
   onClose: () => void;
@@ -126,6 +125,15 @@ interface ReaderSelectProps {
   seatNames: ReadonlyMap<string, string>;
 }
 
+interface ReplaceFileDialogProps {
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  pending: boolean;
+  /** The document and the file picked for it, none once its dialog has closed. */
+  replacement: FileReplacement | null;
+}
+
 /** The tree's top, as the move's tree names it: the Documents tab's own level. */
 const TOP = "top";
 
@@ -147,11 +155,10 @@ function AudienceNote({ change, doing, loadError }: AudienceNoteProps) {
 }
 
 /**
- * A document's file (a picture, a PDF or a text file), checked as it's picked: a new document's, picked before its
- * dialog opened; an edited one's, kept unless another is picked to replace it once the form is saved, which Undo lets
- * go. A document always holds one.
+ * A new document's file (a picture, a PDF or a text file), picked before its dialog opened and checked as it's picked:
+ * a field as the form's others are, its icon and name, what picks another at its end, and its kind and size under it.
  */
-function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) {
+function DocumentFileField({ disabled, form }: DocumentFileFieldProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
   const {
     field: { ref, value: picked, onChange: setPicked },
@@ -159,19 +166,16 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
   } = useController({
     control: form.control,
     name: "file",
-    rules: { validate: (file) => (file ? describeFileRefusal(file) : !current && "Pick a file") || true },
+    rules: { validate: (file) => (file ? describeFileRefusal(file) : "Pick a file") || true },
   });
-  const shown = picked ? { name: picked.name, byteSize: picked.size, contentType: toContentType(picked) } : current;
+  const shown = picked && { name: picked.name, byteSize: picked.size, contentType: toContentType(picked) };
   const ShownIcon = DOCUMENT_ICONS[readDocumentIconKind({ kind: "Document", file: shown })];
-  const said = !shown
-    ? "A picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md), 10 MB at most"
-    : picked
-      ? `${describeDocumentFile(shown)} · ${current ? `replaces ${current.name} when saved` : "uploaded when saved"}`
-      : describeDocumentFile(shown);
+  const said = shown
+    ? describeDocumentFile(shown)
+    : "A picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md), 10 MB at most";
 
   return (
     <>
-      {/* A field as the form's others are: its file's icon and name, and what picks another at its end */}
       <TextField
         fullWidth
         label="File"
@@ -191,26 +195,14 @@ function DocumentFileField({ current, disabled, form }: DocumentFileFieldProps) 
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position="end" sx={{ gap: 0.5 }}>
-                {picked && current && (
-                  <Button
-                    size="small"
-                    disabled={disabled}
-                    onClick={() => {
-                      setPicked(null);
-                      form.clearErrors("file");
-                    }}
-                  >
-                    Undo
-                  </Button>
-                )}
+              <InputAdornment position="end">
                 <Button
                   size="small"
                   startIcon={<UploadFileIcon />}
                   disabled={disabled}
                   onClick={() => fileInput?.click()}
                 >
-                  {shown ? "Replace" : "Choose"}
+                  {shown ? "Change" : "Choose"}
                 </Button>
               </InputAdornment>
             ),
@@ -332,8 +324,9 @@ export function DeleteDocumentDialog({ item, items, open, onClose, onConfirm, pe
 }
 
 /**
- * Creates or edits a folder, a document or a note: its name, a note's text, a document's file, and whom it admits, a
- * Selected one's players picked. A new document is uploaded: its file is picked before its dialog opens. What the
+ * Creates or edits a folder, a document or a note: its name, a note's text, and whom it admits, a Selected one's
+ * players picked. A new document is uploaded, with its file, picked before its dialog opens; an edit leaves a
+ * document's file alone, which its own action replaces (`ReplaceFileDialog`). What the
  * change shows it to or hides it from is said at its top before it's saved (`previewAudience`).
  */
 export function DocumentFormDialog({
@@ -375,7 +368,7 @@ export function DocumentFormDialog({
       {item.kind === "Note" && withText && (
         <TextAreaField control={form.control} name="body" label="Text" rows={8} disabled={pending} />
       )}
-      {item.kind === "Document" && <DocumentFileField current={item.file ?? null} disabled={pending} form={form} />}
+      {uploads && <DocumentFileField disabled={pending} form={form} />}
       <SelectField
         control={form.control}
         name="visibility"
@@ -445,5 +438,26 @@ export function MoveDocumentDialog({
         }}
       />
     </Modal>
+  );
+}
+
+/**
+ * Confirms a document's file's replacement by the one picked for it: the file it holds is deleted, kept nowhere.
+ */
+export function ReplaceFileDialog({ open, onClose, onConfirm, pending, replacement }: ReplaceFileDialogProps) {
+  const held = replacement?.document.file?.name ?? "its file";
+  const picked = replacement?.file.name ?? "the file picked";
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      pending={pending}
+      title="Replace File"
+      confirmLabel="Replace File"
+      confirmIcon={<UploadFileIcon />}
+      intent="caution"
+      message={`Are you sure you want to replace ${held} with ${picked}? The current file is deleted. This action cannot be undone.`}
+    />
   );
 }

@@ -15,7 +15,13 @@ import {
   Panel,
   StatusChip,
 } from "@/client/src/components/common/index.ts";
-import { DeleteIcon, EditIcon, OpenInNewIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
+import {
+  DeleteIcon,
+  EditIcon,
+  OpenInNewIcon,
+  UploadFileIcon,
+  VisibilityIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
@@ -28,7 +34,6 @@ import {
   DeleteDocumentDialog,
   describeAudience,
   describeDocumentFile,
-  describeFileSave,
   DOCUMENT_ICONS,
   type DocumentFile,
   type DocumentFormData,
@@ -37,10 +42,11 @@ import {
   MAX_SHOWN_TEXT_BYTES,
   readFileKind,
   readSeatNames,
-  saveDocumentFileFn,
+  ReplaceFileDialog,
   toDocumentEdit,
   toDocumentFileUrl,
   toEditForm,
+  useReplaceDocumentFile,
 } from "./details/sections/index.ts";
 import { useCampaignPermissions } from "./hooks/index.ts";
 
@@ -162,6 +168,7 @@ export default function CampaignDocumentPage() {
   const editDialog = useDialogState<{ opened: DocumentFormData; updatedAt: string }>();
   const deleteDialog = useDialogState();
   const editForm = useFormWith<DocumentFormData>(EMPTY_DOCUMENT_FORM);
+  const replace = useReplaceDocumentFile(campaignId);
 
   const { data, isLoading, error: documentError } = useQuery(campaignDocumentQuery(campaignId, documentId));
   const { data: campaign, error: campaignError } = useQuery(campaignDetailQuery(campaignId));
@@ -174,8 +181,7 @@ export default function CampaignDocumentPage() {
   usePageTitle(data?.name);
 
   const updateMutation = useMutation({
-    // Its file goes once the rest is saved, a version another Game Master changed meanwhile refused first
-    mutationFn: async ({
+    mutationFn: ({
       form,
       opened,
       updatedAt,
@@ -183,19 +189,16 @@ export default function CampaignDocumentPage() {
       form: DocumentFormData;
       opened: DocumentFormData;
       updatedAt: string;
-    }) => {
-      await parseResponse(
+    }) =>
+      parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaignId, documentId },
           // A note's text alone: a document is its file, and a body sent for one is refused
           json: { ...toDocumentEdit(form, opened, data?.kind === "Note"), updatedAt },
         }),
-      );
-      return await saveDocumentFileFn(campaignId, documentId, form);
-    },
-    onSuccess: (fileError) => {
-      const { message, severity } = describeFileSave(`${data?.kind ?? "Document"} updated`, fileError);
-      snackbar[severity](message);
+      ),
+    onSuccess: (updated) => {
+      snackbar.success(`${updated.kind} updated`);
       invalidateCampaignDocuments(queryClient, campaignId);
       editDialog.close();
     },
@@ -255,6 +258,14 @@ export default function CampaignDocumentPage() {
           editForm.reset(opened);
           editDialog.openWith({ opened, updatedAt: data.updatedAt });
         })}
+      />
+    ),
+    canManageDocuments && data.kind === "Document" && (
+      <ActionMenuItem
+        key="replace"
+        icon={UploadFileIcon}
+        label="Replace File"
+        onClick={menu.closeMenuAnd(() => replace.start(data))}
       />
     ),
     canManageDocuments && (
@@ -318,6 +329,8 @@ export default function CampaignDocumentPage() {
           onSubmit={(form) => editDialog.target && updateMutation.mutate({ form, ...editDialog.target })}
           pending={updateMutation.isPending}
         />
+        {canManageDocuments && <input {...replace.inputProps} />}
+        <ReplaceFileDialog {...replace.dialogProps} />
         <DeleteDocumentDialog
           open={deleteDialog.open}
           onClose={deleteDialog.close}

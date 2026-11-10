@@ -40,7 +40,7 @@ test.describe("A campaign's documents", () => {
 
       // A document is a file: a page posing as one is refused as it's picked, a text file opens its dialog, named
       // after it
-      const fileInput = page.locator('input[type="file"]');
+      const fileInput = page.locator('input[aria-label="Upload File"]');
       await fileInput.setInputFiles({
         name: "letter.html",
         mimeType: "text/html",
@@ -84,6 +84,20 @@ test.describe("A campaign's documents", () => {
       await expect(player.getByText("Meet me at the old mill.")).toBeVisible();
       await expect(player.getByRole("link", { name: "Open Text File" })).toBeVisible();
 
+      // The Game Master replaces the letter's file from its row, once confirmed; its name and its player stay
+      await page.getByRole("row", { name: "Open A letter" }).getByRole("button", { name: "Replace File" }).click();
+      const rewritten = Buffer.from("Meet me at the old mill, at midnight.");
+      await page
+        .locator('input[aria-label="Replace File"]')
+        .setInputFiles({ name: "letter-v2.txt", mimeType: "text/plain", buffer: rewritten });
+      const replaceDialog = page.getByRole("dialog", { name: "Replace File" });
+      await expect(replaceDialog.getByText(/replace A letter\.txt with letter-v2\.txt/)).toBeVisible();
+      await replaceDialog.getByRole("button", { name: "Replace File" }).click();
+      await expect(replaceDialog).toBeHidden();
+      await expect(page.getByRole("row", { name: "Open A letter" })).toContainText(`Seen by ${inviteeUser.username}`);
+      await player.reload();
+      await expect(player.getByText("Meet me at the old mill, at midnight.")).toBeVisible();
+
       // The Game Master renames the letter from its own page, which keeps its file
       await page.getByRole("row", { name: "Open A letter" }).click();
       await page.getByRole("button", { name: "More Actions" }).click();
@@ -93,7 +107,7 @@ test.describe("A campaign's documents", () => {
       await editDialog.getByRole("button", { name: "Update" }).click();
       await expect(editDialog).toBeHidden();
       await expect(page.getByRole("heading", { name: "A sealed letter" })).toBeVisible();
-      await expect(page.getByText("Meet me at the old mill.")).toBeVisible();
+      await expect(page.getByText("Meet me at the old mill, at midnight.")).toBeVisible();
     } finally {
       await player.context().close();
     }

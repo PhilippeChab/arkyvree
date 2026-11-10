@@ -54,8 +54,7 @@ import {
   MAX_DOCUMENT_DEPTH,
 } from "@/shared/campaignDocuments.ts";
 
-import { DeleteDocumentDialog, DocumentFormDialog, MoveDocumentDialog } from "./DocumentDialogs.tsx";
-import { describeFileSave, saveDocumentFileFn } from "./documentFiles.ts";
+import { DeleteDocumentDialog, DocumentFormDialog, MoveDocumentDialog, ReplaceFileDialog } from "./DocumentDialogs.tsx";
 import {
   buildTree,
   type CampaignDocument,
@@ -75,6 +74,7 @@ import {
   toDocumentUpload,
   toEditForm,
 } from "./documents.ts";
+import { useReplaceDocumentFile } from "./useReplaceDocumentFile.ts";
 
 interface DocumentsSectionProps {
   campaign: CampaignDetail;
@@ -137,6 +137,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
   const [dropping, setDropping] = useState(false);
   const addMenu = useAnchorMenu();
+  const replace = useReplaceDocumentFile(campaign.id);
   const createDialog = useDialogState<NewItem>();
   const editDialog = useDialogState<OpenedEdit>();
   const moveDialog = useDialogState<CampaignDocument>();
@@ -174,31 +175,16 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
       snackbar.error(error, `Failed to ${kind === "Document" ? "upload document" : `create ${kind.toLowerCase()}`}`),
   });
 
-  // An edit's file goes once the rest is saved, a version another Game Master changed meanwhile refused first
   const updateMutation = useMutation({
-    mutationFn: async ({
-      item,
-      json,
-      file,
-    }: {
-      file?: DocumentFormData;
-      item: CampaignDocument;
-      json: DocumentEdit;
-    }) => {
-      const updated = await parseResponse(
+    mutationFn: ({ item, json }: { item: CampaignDocument; json: DocumentEdit }) =>
+      parseResponse(
         rpc.api.campaigns[":id"].documents[":documentId"].$put({
           param: { id: campaign.id, documentId: item.id },
           json: { ...json, updatedAt: item.updatedAt },
         }),
-      );
-      return { updated, fileError: file ? await saveDocumentFileFn(campaign.id, item.id, file) : null };
-    },
-    onSuccess: ({ updated, fileError }, { json }) => {
-      const { message, severity } = describeFileSave(
-        `${updated.kind} ${"parentId" in json ? "moved" : "updated"}`,
-        fileError,
-      );
-      snackbar[severity](message);
+      ),
+    onSuccess: (updated, { json }) => {
+      snackbar.success(`${updated.kind} ${"parentId" in json ? "moved" : "updated"}`);
       invalidateCampaignDocuments(queryClient, campaign.id);
       editDialog.close();
       moveDialog.close();
@@ -377,6 +363,9 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
                       <DataCell slot="trailing" align="right">
                         <RowActions>
                           <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(item)} />
+                          {item.kind === "Document" && (
+                            <RowAction icon={UploadFileIcon} label="Replace File" onClick={() => replace.start(item)} />
+                          )}
                           <RowAction icon={MoveIcon} label="Move" onClick={() => moveDialog.openWith(item)} />
                           <RowAction
                             icon={DeleteIcon}
@@ -415,6 +404,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
       {canManageDocuments && (
         <input
           ref={setFileInput}
+          aria-label="Upload File"
           type="file"
           accept={DOCUMENT_FILE_ACCEPT}
           hidden
@@ -426,6 +416,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
           }}
         />
       )}
+      {canManageDocuments && <input {...replace.inputProps} />}
+      <ReplaceFileDialog {...replace.dialogProps} />
       <DocumentFormDialog
         mode="create"
         open={createDialog.open}
@@ -453,8 +445,7 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
         withText={false}
         onSubmit={(data) => {
           const target = editDialog.target;
-          if (target)
-            updateMutation.mutate({ item: target.item, json: toDocumentEdit(data, target.opened, false), file: data });
+          if (target) updateMutation.mutate({ item: target.item, json: toDocumentEdit(data, target.opened, false) });
         }}
         pending={updateMutation.isPending}
       />
