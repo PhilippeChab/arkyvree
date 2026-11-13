@@ -209,6 +209,18 @@ class RulesetViews {
     return entry.value;
   }
 
+  /**
+   * A ruleset's view with what a write has written so far (`tx`, its transaction, under the ruleset's lock): its own
+   * rows and its copy-on-write data read again through the transaction, uncached, over its chain's rows as the cache
+   * keeps them (the write holds them shared: they're unchanged). What a write binds the rows it made by.
+   */
+  async getWrittenData(tx: Db, ruleset: RulesetSources): Promise<RulesetData> {
+    const cowData = await CowDataReader.read(tx, ruleset);
+    const chain = [(await RawDataReader.read(ruleset.id, tx)).data];
+    for (const id of cowData.sourceChain) chain.push(await this.getRawData(id, RulesetViews.rowWritersOf(id, ruleset)));
+    return Engine.forRules(ruleset.baseRules).copyOnWrite().buildView(chain, cowData);
+  }
+
   /** Loads the system rulesets' rows (the bases and the extensions), at boot: the first user doesn't wait for them. */
   async warm(): Promise<void> {
     const systemRulesets = await Rulesets.findMany(db, { system: true });

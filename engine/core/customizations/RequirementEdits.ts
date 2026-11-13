@@ -50,12 +50,22 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /** The entity's requirements of its type, as the view composes them, labeled as its page shows them. */
   describeAll(catalog: TargetPathCatalog) {
-    return TargetLabels.describe(catalog, this.rowsOf(this.entity.id));
+    // A row as stored: what the view marks it with to evaluate it (a value whose entity is gone) is the engine's own
+    const rows = this.rowsOf(this.entity.id).map((row): Requirement => {
+      if (!("valueGone" in row)) return row;
+      const { valueGone: _valueGone, ...stored } = row;
+      return stored;
+    });
+    return TargetLabels.describe(catalog, rows);
   }
 
   /** A new requirement on the entity: the entity as the view has it, and the row it stores. */
   planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: RequirementBody) {
-    return { entity: this.entity, row: this.toRow(targetPaths, catalogs, body) };
+    const row = this.toRow(targetPaths, catalogs, body);
+    const { entity } = this;
+    // The levels its page lists: a level a condition the view leaves out holds is one the client can't see
+    const levels = this.rowsOf(entity.id).map((requirement) => requirement.level);
+    return { bindings: this.bind(targetPaths, row), entity, levels, row };
   }
 
   /** Deleting one of the entity's requirements: the entity and the requirement, as the view has them. */
@@ -66,7 +76,22 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /** An edit of one of the entity's requirements: the entity and the requirement, and the row it stores. */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
-    const plan = this.planDelete(requirementId);
-    return { ...plan, row: this.toRow(targetPaths, catalogs, body, plan.requirement) };
+    // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
+    const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
+    const plan = { ...this.planDelete(requirementId), levels };
+    const sent = this.toRow(targetPaths, catalogs, body, plan.requirement);
+    // A value it keeps is stored as the view reads it, the text its names are read from
+    const kept = sent.target !== undefined && sent.value === undefined ? plan.requirement.value : undefined;
+    const row = kept === undefined || kept === null ? sent : { ...sent, value: kept };
+    // The row stores the text it's sent, the view's: its names are read anew with it, so text and meaning agree.
+    // A value it keeps is read with it
+    // A save that sends no target (its level alone) changes no text: what its names mean stays as it is
+    if (row.target === undefined && plan.requirement.target !== null) return { ...plan, bindings: null, row };
+    const bound = {
+      operator: row.operator ?? plan.requirement.operator,
+      target: row.target,
+      value: row.value ?? plan.requirement.value,
+    };
+    return { ...plan, bindings: this.bind(targetPaths, bound), row };
   }
 }

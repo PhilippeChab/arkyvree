@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type EntityCustomizations } from "@/engine/index.ts";
-import { Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Modifiers, NameBindings, Requirements } from "@/server/repositories/index.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -35,6 +35,40 @@ export default class CustomizationCopies {
   }
 
   /**
+   * Gives each copy (`copies`, target-major, paired with `rows` by position) what its source's names mean: a copy
+   * means what its source meant, whatever its ruleset calls it.
+   */
+  private static async copyBindings(
+    tx: Db,
+    rows: { id: string }[],
+    copies: { id: string }[],
+    of: "modifierId" | "requirementId",
+  ) {
+    const ids = rows.map((row) => row.id);
+    const bindings = await NameBindings.findMany(
+      tx,
+      of === "modifierId" ? { modifierIds: ids, requirementIds: [] } : { modifierIds: [], requirementIds: ids },
+    );
+    if (bindings.length === 0) return;
+    const indexOf = new Map(ids.map((id, index) => [id, index]));
+    const copied = copies.flatMap((copy, position) =>
+      bindings
+        .filter((binding) => indexOf.get(binding[of]!) === position % rows.length)
+        .map(({ entityId, entityType, field, kind, name, path, segment }) => ({
+          entityId,
+          entityType,
+          field: field === "value" ? ("value" as const) : ("target" as const),
+          kind: kind === "group" ? ("group" as const) : ("entity" as const),
+          name,
+          path,
+          segment,
+          ...(of === "modifierId" ? { modifierId: copy.id } : { requirementId: copy.id }),
+        })),
+    );
+    await NameBindings.createMany(tx, copied);
+  }
+
+  /**
    * Inserts one copy of each row per target in a single batch, target-major, with `owner` repointing each copy. Copies
    * pair with their sources by position, and the first target's copies are recorded in `copiedIds`: equal values do
    * not imply the same row (a modifier's requirements may differ).
@@ -45,7 +79,8 @@ export default class CustomizationCopies {
     rows: R[],
     targetEntityIds: string[],
     owner: (row: R, targetId: string, targetIndex: number) => Partial<R>,
-    copiedIds?: Map<string, string>,
+    copiedIds: Map<string, string> | undefined,
+    of: "modifierId" | "requirementId",
   ): Promise<{ id: string }[]> {
     if (rows.length === 0) return [];
     const copies = await repo.createMany(
@@ -55,6 +90,7 @@ export default class CustomizationCopies {
       ),
     );
     for (let i = 0; i < rows.length; i++) copiedIds?.set(rows[i].id, copies[i].id);
+    await CustomizationCopies.copyBindings(tx, rows, copies, of);
 
     return copies;
   }
@@ -107,6 +143,7 @@ export default class CustomizationCopies {
       targetEntityIds,
       (_, targetId) => ({ sourceId: targetId }),
       copiedIds,
+      "modifierId",
     );
     await CustomizationCopies.copyRows(
       tx,
@@ -115,6 +152,7 @@ export default class CustomizationCopies {
       targetEntityIds,
       (_, targetId) => ({ entityId: targetId }),
       copiedIds,
+      "requirementId",
     );
     // A modifier requirement belongs to the copy of its modifier made for the same target.
     const modifierIndex = new Map(modifiers.map((m, i) => [m.id, i]));
@@ -127,6 +165,7 @@ export default class CustomizationCopies {
         entityId: newModifiers[targetIndex * modifiers.length + modifierIndex.get(r.entityId)!].id,
       }),
       copiedIds,
+      "requirementId",
     );
   }
 

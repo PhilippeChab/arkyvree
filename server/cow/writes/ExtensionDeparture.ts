@@ -6,6 +6,7 @@ import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   EntityReferences,
+  NameBindings,
   type ReferencedType,
   RulesetEntities,
   type RulesetEntityType,
@@ -196,10 +197,25 @@ export default class ExtensionDeparture {
       [...fallbacks].filter(([, fallbackId]) => fallbackId).map(([id]) => id),
     );
     const named = new Set(await EntityReferences.findIds(tx, { entityIds: replaced, rulesetId }));
+    const bound = new Set(await NameBindings.findNamed(tx, { entityIds: replaced, rulesetId }));
+    const leaving = new Set([
+      ...[...this.departures.values()].flatMap((fallbacks) => [...fallbacks.keys()]),
+      ...this.copyIds,
+    ]);
     for (const fallbacks of this.departures.values()) {
       for (const [entityId, fallbackId] of fallbacks) {
         if (fallbackId && named.has(entityId))
           await EntityReferences.update(tx, { entityId: fallbackId }, { entityId, rulesetId });
+        // What the ruleset's modifiers and requirements name by their paths follows too: to what stays of the
+        // entities that stood as one with it (another book's printing, the ruleset's own of its name), each by the
+        // original it copies: never a copy, which a restore deletes. With none staying, the name is read as gone
+        const staying = bound.has(entityId)
+          ? this.scope.rulesetData.cow
+              .getEquivalentIds(entityId)
+              .map((id) => this.scope.rulesetData.cow.originalOf(id))
+              .find((id) => !leaving.has(id))
+          : undefined;
+        if (staying) await NameBindings.update(tx, { entityId: staying }, { entityId, rulesetId });
       }
     }
   }

@@ -14,6 +14,22 @@ interface CategoryLabelNames {
 type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
 /**
+ * A segment of a path that names an entity: its place, its entities' kind, and how their name is written there when
+ * not as its plain slug (a spell list's short name).
+ */
+export interface NamedSegment {
+  entityType: string;
+  segment: number;
+  slugOf?(name: string): string;
+}
+
+/** What a value names: its entities' kind, and their partition when the kind has several (a race's). */
+export interface NamedValue {
+  entityType: string;
+  partition?: string;
+}
+
+/**
  * A category of target paths (`abilities`, `skills`…): its names, and how a path in it reaches its data in the
  * components `C`.
  */
@@ -45,6 +61,17 @@ export interface PathCategory<C = Components> {
   /** A path's first element */
   name: string;
   /**
+   * The kind of the entities its paths' second segment names (`feats.<feat>.possessed`: `feats`): a save keeps which
+   * entity each such name means, beside the path's text (`NameBinder`), but for the words its paths use there themselves
+   * (`fixed`: a skill's `budget`), which name none. None for a category that names none there
+   */
+  names?: { entityType: string; fixed?: readonly string[] };
+  /**
+   * Which of a path's segments (`segments`) name entities, for a category whose paths name more than one or spell a
+   * name its own way (a spell's: the spell, and the list it's known on, by the list's short name), in place of `names`
+   */
+  nameSegments?(segments: readonly string[]): NamedSegment[];
+  /**
    * Whether its paths name an entity under their group (`items.weapons.<item>.…`): a path's description and its group's
    * template skip the entity's segment
    */
@@ -61,6 +88,11 @@ export interface PathCategory<C = Components> {
     traverser: PathTraverser,
     context?: PathContext,
   ): TraversePathResult[] | null;
+  /**
+   * The kind of entity a value on one of its paths names (`path`: a race's name, of the player's races or a bonded
+   * kind's), which a save keeps as it keeps a path's names. None for a path whose value names none
+   */
+  valueNames?(path: string): NamedValue | undefined;
 }
 
 /**

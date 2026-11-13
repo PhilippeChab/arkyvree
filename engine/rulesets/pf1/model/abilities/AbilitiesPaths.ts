@@ -62,6 +62,9 @@ export default class AbilitiesPaths implements PathCategory<Pf1Components> {
 
   readonly name = "abilities";
 
+  /** Its paths name a ability by their second segment. */
+  readonly names = { entityType: "abilities" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return AbilitiesPaths.generateAbilityPaths(Pf1View.of(rulesetData).abilities, kind);
   }

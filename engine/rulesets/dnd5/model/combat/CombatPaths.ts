@@ -1,4 +1,4 @@
-import type { GetterOf, PathCategory, PathContext } from "@/engine/core/paths/PathCategory.ts";
+import type { GetterOf, NamedSegment, PathCategory, PathContext } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd5Components } from "@/engine/rulesets/dnd5/model/CharacterComponents.ts";
@@ -276,6 +276,12 @@ export default class CombatPaths implements PathCategory<Dnd5Components> {
       ...deriveSegmentLabels(COMBAT_PATHS, COMBAT_LABELS),
       ...deriveSegmentLabels(SET_ARMOR_CLASS_PATHS, COMBAT_LABELS),
     };
+  }
+
+  /** An ability's Unarmored Defense names the ability (`combat.ac.unarmored.<ability>`): no other path names one. */
+  nameSegments(segments: readonly string[]): NamedSegment[] {
+    const unarmored = segments.length === 4 && segments[1] === "ac" && segments[2] === "unarmored";
+    return unarmored ? [{ entityType: "abilities", segment: 3 }] : [];
   }
 
   /**

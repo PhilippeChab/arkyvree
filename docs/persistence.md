@@ -57,7 +57,7 @@ User-initiated deletion of a ruleset entity in a draft hard-deletes the row. Its
 
 Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
 
-Skill renames delete the old generated feat with its modifiers (and modifier requirements), requirements, fields, and links before generating its replacement. Generated feat names cannot be edited directly. Group membership does not own the group's feats: removing a spell or weapon does not delete the school's or weapon type's feats. Ordinary override restoration remains an explicit per-entity action; this adds no automatic restoration or dependency metadata.
+A skill's rename renames its generated feat in place: the feat keeps its row (an inherited one's copy, made then), so who picked it and what names it follow; it's removed only where a feat made by hand holds its new name. A skill's restore takes its feats with it (see [A skill's own feats](./customization.md#a-skills-own-feats)). Generated feat names cannot be edited directly. Group membership does not own the group's feats: removing a spell or weapon does not delete the school's or weapon type's feats. Any other override's restoration remains an explicit per-entity action.
 
 ## Archive — load-bearing
 

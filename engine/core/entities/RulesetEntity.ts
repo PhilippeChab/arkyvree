@@ -180,6 +180,12 @@ export default abstract class RulesetEntity<
   protected abstract readonly fields: FieldCodec<S>;
 
   /**
+   * Whether a restore of one of its entities writes beside it (`restoredWritesOf`: a skill's feats go with it): the
+   * server reads the view a restore leaves only for a kind whose restores do.
+   */
+  readonly restoresBeside: boolean = false;
+
+  /**
    * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
    * its mark), which the server then reads for `planCreate`.
    */
@@ -425,6 +431,14 @@ export default abstract class RulesetEntity<
     throw this.rulesetData.notFound(type, { where: "in this ruleset" });
   }
 
+  /**
+   * What an entity's restore writes with it (`_entity`, as the view the restore leaves has it: its source, showing
+   * again; `_deleted`: whether the ruleset had deleted it): nothing, unless its kind's rules say (`restoresBeside`).
+   */
+  protected restoredWritesOf(_entity: V[K], _deleted: boolean): EntityWrites | undefined {
+    return undefined;
+  }
+
   /** The ruleset's view, as its rules read it. */
   protected get rulesetData(): RulesetData {
     return this.view.rulesetData;
@@ -557,6 +571,16 @@ export default abstract class RulesetEntity<
     return { ...plan, changes: changes.compare(entity, plan.row, plan.links), entity };
   }
 
+  /**
+   * What the restore of an inherited entity (`id`) writes beside it, planned in the view the restore leaves, where its
+   * source shows again (`deleted`: whether the ruleset had deleted it, the view before the restore showing none): for
+   * a kind whose restores write beside them (`restoresBeside`).
+   */
+  planRestored(id: string, deleted: boolean): EntityWrites | undefined {
+    const entity = new DeclaredRows<V>(this.rulesetData).find(this.type, id);
+    return entity && this.restoredWritesOf(entity, deleted);
+  }
+
   /** Copies of an entity (`sourceId`), each its own name and description: none, unless its kind makes copies. */
   planVariants(_sourceId: string, _variants: { description?: string | null; name: string }[]): EntityCopiesPlan {
     return this.refuseAction("variants");
@@ -569,5 +593,10 @@ export default abstract class RulesetEntity<
    */
   get searchFields(): readonly string[] {
     return this.kind.families ? [this.kind.families.field] : [];
+  }
+
+  /** Whether the view shows an entity of the kind (`id`): one the ruleset deleted, it doesn't. */
+  shows(id: string): boolean {
+    return new DeclaredRows<V>(this.rulesetData).find(this.type, id) !== undefined;
   }
 }

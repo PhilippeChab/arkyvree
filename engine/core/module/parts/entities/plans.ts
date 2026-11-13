@@ -116,12 +116,48 @@ export interface EntityRemoval {
 }
 
 /**
- * What an entity's form writes beside its row, as its ruleset's rules say: the entities it makes and removes with it
- * (`made`, `removed`). The server writes each by its type.
+ * An entity a plan renames with another (`id`, of `type`, as the view has it: a skill's generated feat, with its
+ * skill): its new name and description. It keeps its identity, so what names it and who picked it follow.
+ */
+export interface EntityRename {
+  description: string;
+  id: string;
+  name: string;
+  /** The description it had under its old name: one its author rewrote since is kept */
+  previousDescription: string;
+  /**
+   * Whether its entity's restore renames it: the ruleset's copy of an inherited entity of that very name is then
+   * restored with it, in place of a copy renamed back to its source's name
+   */
+  restoring?: boolean;
+  type: string;
+}
+
+/**
+ * Inherited entities a plan shows again with the one it restores (of `type`): those the ruleset deleted whose name
+ * starts as the set's do (`prefix`: "Skill Focus: ") and whose rules name the restored entity (`ownerId`), each
+ * restored as its own restore does. None there, nothing is restored.
+ */
+export interface EntityRevival {
+  /** What the restored entity brings it as ("Skill Focus: Climb"): one of that name is its own, whatever else it names */
+  name: string;
+  ownerId: string;
+  /** The restored entity's kind, as the rules' paths name it (`skills`) */
+  ownerType: string;
+  prefix: string;
+  type: string;
+}
+
+/**
+ * What an entity's form, or its restore, writes beside its row, as its ruleset's rules say: the entities it makes,
+ * renames and removes with it (`made`, `renamed`, `removed`), and the deleted ones a restore shows again with it
+ * (`restored`). The server writes each by its type.
  */
 export interface EntityWrites {
   made?: MadeEntity[];
   removed?: EntityRemoval[];
+  renamed?: EntityRename[];
+  restored?: EntityRevival[];
 }
 
 /**
@@ -218,6 +254,11 @@ export interface MadeEntity {
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   requirements: RequirementWrite[];
   row: EntityWrite & { description: string; name: string };
+  /**
+   * Whether it stands for no inherited entity the ruleset deleted under its name: one made for an entity that takes a
+   * name (a renamed skill's feat) isn't the deleted one of that name, which was another entity's
+   */
+  standalone?: boolean;
   type: string;
 }
 

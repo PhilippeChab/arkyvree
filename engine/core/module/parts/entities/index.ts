@@ -8,6 +8,8 @@ export type {
   EntityFilters,
   EntityGroupMember,
   EntityRemoval,
+  EntityRename,
+  EntityRevival,
   EntityWrites,
   FeatureCreatePlan,
   LinkAddPlan,

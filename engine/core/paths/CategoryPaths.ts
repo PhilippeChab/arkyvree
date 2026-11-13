@@ -9,7 +9,7 @@ import type {
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type { PathCategory, PathContext } from "./PathCategory.ts";
+import type { NamedSegment, NamedValue, PathCategory, PathContext } from "./PathCategory.ts";
 import PathChecks, { type TargetCheck } from "./PathChecks.ts";
 import PathCompletions, { type PathQuery } from "./PathCompletions.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "./PathTraverser.ts";
@@ -37,8 +37,12 @@ export interface TargetPaths extends TargetPathsTraverser {
   getGroupDescriptionTemplates(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
   list(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
+  /** The segments of a path that name entities, each with its entities' kind (`PathCategory.names`). */
+  nameSegments(path: string): NamedSegment[];
   /** A target path validated like a language server, among a catalog's paths. */
   validate(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult;
+  /** The kind of entity a value on a path names (`PathCategory.valueNames`): none for a path whose value names none. */
+  valueNames(path: string): NamedValue | undefined;
 }
 
 export interface TargetPathsTraverser {
@@ -222,6 +226,14 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     };
   }
 
+  nameSegments(path: string): NamedSegment[] {
+    const segments = path.split(".");
+    const category = this.byName.get(segments[0]);
+    if (category?.nameSegments) return category.nameSegments(segments);
+    if (!category?.names || category.names.fixed?.includes(segments[1])) return [];
+    return [{ entityType: category.names.entityType, segment: 1 }];
+  }
+
   /** Whether a target reads its source itself, not the sheet: its category says. */
   readsSource(target: string): boolean {
     const [category] = target.split(".");
@@ -249,5 +261,9 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
    */
   validate(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult {
     return new PathChecks(this.getCategories(), CategoryPaths.pathsFor(catalog, entityType)).validate(path);
+  }
+
+  valueNames(path: string): NamedValue | undefined {
+    return this.byName.get(path.split(".")[0])?.valueNames?.(path);
   }
 }

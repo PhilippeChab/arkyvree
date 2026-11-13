@@ -1,8 +1,9 @@
 import { Engine } from "@/engine/index.ts";
-import { EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
+import { EntityNames, EntityRevert, readWrittenScope, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import { EntityWriter } from "@/server/services/rulesets/entities/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -55,7 +56,17 @@ class RulesetChangesService {
 
       // The parent's entity shows again: under a name its view shows no other entity of
       const names = new EntityNames(scope);
+      const kind = Engine.for(scope).entities(entityType);
+      const deleted = kind.restoresBeside && !kind.shows(entityId);
       await EntityRevert.revert(tx, entityType, entityId, scope, names);
+      // What goes with it, as its kind's rules plan it in the view the restore leaves: a skill's own feats take its
+      // name again, or show again with a skill that was deleted; a skill's feat restored by itself keeps its
+      // skill's name
+      if (kind.restoresBeside) {
+        const restored = await readWrittenScope(tx, scope);
+        const writes = Engine.for(restored).entities(entityType).planRestored(entityId, deleted);
+        if (writes) await EntityWriter.updateBeside(tx, restored, policy, writes);
+      }
       // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension. Their
       // writes hold it shared, so none ran meanwhile, and its bumped version tells their views from their rows
       return await Rulesets.findMany(tx, { subscribedTo: rulesetId });

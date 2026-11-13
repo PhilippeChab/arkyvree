@@ -134,6 +134,8 @@ export {
   type EntityGroupMember,
   type EntityKindsContract,
   type EntityRemoval,
+  type EntityRename,
+  type EntityRevival,
   type EntityWrites,
   type FeatureCreatePlan,
   type LinkAddPlan,

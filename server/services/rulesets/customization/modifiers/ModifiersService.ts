@@ -2,7 +2,7 @@ import { Engine } from "@/engine/index.ts";
 import { CustomizationCopies, CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Modifiers } from "@/server/repositories/index.ts";
+import { Modifiers, NameBindings } from "@/server/repositories/index.ts";
 import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
@@ -31,13 +31,17 @@ class ModifiersService {
 
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-      const { entity, row } = modifiers.planCreate(catalogs, body, sourceModifierId);
+      const { bindings, entity, row } = modifiers.planCreate(catalogs, body, sourceModifierId);
 
       const edit = new CustomizationEdit(scope);
       const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
 
       const rows = await Modifiers.create(tx, { sourceId: resolvedEntityId, sourceType: entityType, ...row });
       const modifier = rows[0];
+      await NameBindings.createMany(
+        tx,
+        bindings.map((binding) => ({ ...binding, modifierId: modifier.id })),
+      );
 
       if (sourceModifierId) {
         const modifierType = CUSTOMIZATION_TYPES.modifier;
@@ -151,7 +155,7 @@ class ModifiersService {
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const { updatedAt, ...fields } = body;
       const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-      const { entity, row } = modifiers.planEdit(catalogs, modifierId, fields);
+      const { bindings, entity, row } = modifiers.planEdit(catalogs, modifierId, fields);
 
       // COW the owning entity if this modifier is inherited
       const edit = new CustomizationEdit(scope);
@@ -168,6 +172,12 @@ class ModifiersService {
       if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedModifier = rows[0];
+      // Its names are kept anew, with the text it now stores
+      await NameBindings.delete(tx, { modifierId: updatedModifier.id });
+      await NameBindings.createMany(
+        tx,
+        bindings.map((binding) => ({ ...binding, modifierId: updatedModifier.id })),
+      );
 
       await createContentActivityWithNotifications(tx, scope.ruleset, {
         userId: session.userId,

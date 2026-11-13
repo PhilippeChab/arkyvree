@@ -3,7 +3,7 @@ import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Requirements } from "@/server/repositories/index.ts";
+import { NameBindings, Requirements } from "@/server/repositories/index.ts";
 import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
@@ -28,6 +28,26 @@ function conditionOf(requirement: { operator?: string | null; target?: string | 
 }
 
 class RequirementsService {
+  /**
+   * The level a new or an edited requirement takes: the one asked for, unless a condition its page doesn't list holds it (one the
+   * view leaves out because what it names is gone, which the client couldn't see: `listed` is what the page lists), in
+   * which case the next one free beside it.
+   */
+  private async pickFreeLevel(tx: Db, entityType: string, entityId: string, level: string, listed: string[]) {
+    if (listed.includes(level)) return level;
+    const stored = (await Requirements.findMany(tx, { entityIds: [entityId], entityType })).map((r) => r.level);
+    const prefix = level.slice(0, level.lastIndexOf(".") + 1);
+    // Inside a group its page doesn't list, however deep, nothing is free to the client: any level there is refused
+    // as taken
+    const parts = level.split(".");
+    const ancestors = parts.slice(1).map((_, index) => parts.slice(0, index + 1).join("."));
+    if (ancestors.some((ancestor) => stored.includes(ancestor) && !listed.includes(ancestor)))
+      throw new ConflictError("A requirement at this level already exists");
+    if (!stored.includes(level)) return level;
+    const beside = stored.filter((other) => other.startsWith(prefix) && !other.slice(prefix.length).includes("."));
+    return `${prefix}${Math.max(...beside.map((other) => Number(other.slice(prefix.length)) || 0)) + 1}`;
+  }
+
   /**
    * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at: the
    * database keeps one per level. An edit (`edited`: the requirement it moves, and the version it started from) keeps
@@ -61,15 +81,21 @@ class RequirementsService {
         policy.canUpdateEntity();
 
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
-        const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
+        const requirements = Engine.for(scope).requirements(entityType, entityId);
+        const { bindings, entity, levels, row } = requirements.planCreate(catalogs, body);
 
         const edit = new CustomizationEdit(scope);
         const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
-        await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
+        const level = await this.pickFreeLevel(tx, entityType, resolvedEntityId, row.level, levels);
+        await this.refuseTakenLevel(tx, entityType, resolvedEntityId, level);
 
-        const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
+        const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row, level });
         const requirement = rows[0];
         if (!requirement) throw new InternalError("Failed to create requirement");
+        await NameBindings.createMany(
+          tx,
+          bindings.map((binding) => ({ ...binding, requirementId: requirement.id })),
+        );
 
         await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
@@ -151,7 +177,7 @@ class RequirementsService {
 
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
         const requirements = Engine.for(scope).requirements(entityType, entityId);
-        const { entity, row } = requirements.planEdit(catalogs, requirementId, body);
+        const { bindings, entity, levels, row: sent } = requirements.planEdit(catalogs, requirementId, body);
 
         // COW the owning entity if this requirement is inherited
         const edit = new CustomizationEdit(scope);
@@ -164,6 +190,8 @@ class RequirementsService {
         );
 
         const expectedUpdatedAt = customization.expected(body.updatedAt);
+        // A level a condition its page doesn't list holds is free to the client: the edit takes the next one beside it
+        const row = { ...sent, level: await this.pickFreeLevel(tx, entityType, resolvedEntityId, sent.level, levels) };
         await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
           id: customization.id,
           expectedUpdatedAt,
@@ -174,6 +202,14 @@ class RequirementsService {
 
         const updatedRequirement = rows[0];
         if (!updatedRequirement) throw new InternalError("Failed to update requirement");
+        // Its names are kept anew, with the text it now stores; a save that changed no text keeps them
+        if (bindings) {
+          await NameBindings.delete(tx, { requirementId: updatedRequirement.id });
+          await NameBindings.createMany(
+            tx,
+            bindings.map((binding) => ({ ...binding, requirementId: updatedRequirement.id })),
+          );
+        }
 
         await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,

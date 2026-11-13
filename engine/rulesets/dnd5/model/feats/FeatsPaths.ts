@@ -132,6 +132,9 @@ export default class FeatsPaths implements PathCategory<Dnd5Components> {
   readonly label = "Feats";
   readonly name = "feats";
 
+  /** Its paths name a feat by their second segment. */
+  readonly names = { entityType: "feats" } as const;
+
   /** Every family the rules know, a feat of the ruleset in it or not (an extension's checks of another book's), by its slug. */
   private familyLabels(rulesetData: RulesetData) {
     const featGroupingLabels = { ...KNOWN_FAMILY_LABELS };

@@ -62,6 +62,9 @@ export default class AbilitiesPaths implements PathCategory<Dnd5Components> {
 
   readonly name = "abilities";
 
+  /** Its paths name a ability by their second segment. */
+  readonly names = { entityType: "abilities" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return AbilitiesPaths.generateAbilityPaths(Dnd5View.of(rulesetData).abilities, kind);
   }

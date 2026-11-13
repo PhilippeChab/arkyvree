@@ -1,8 +1,10 @@
+import { NameBinder } from "@/engine/core/bindings/index.ts";
 import { ModifierEdits, TargetLabels } from "@/engine/core/customizations/index.ts";
 import type { TargetCatalogs } from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathQuery } from "@/engine/core/paths/PathCompletions.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
+import type { NameBinding } from "@/shared/relations.ts";
 
 import type { Module } from "./Modules.ts";
 
@@ -23,8 +25,13 @@ export default class TargetPathsEngine {
    * Modifiers as a list shows them, an entity's or a character's: their target's segments' labels, and their value's
    * name when their path names its values, among the catalog of a modifier's paths.
    */
-  describeModifiers<T extends { target: string; value: string }>(catalog: TargetPathCatalog, modifiers: T[]) {
-    return TargetLabels.describe(catalog, modifiers);
+  describeModifiers<T extends { id: string; target: string; value: string }>(
+    catalog: TargetPathCatalog,
+    modifiers: T[],
+    bindings: readonly NameBinding[] = [],
+  ) {
+    // Read by what their names mean, as a sheet reads them: a list shows each under the view's names, a gone one too
+    return TargetLabels.describe(catalog, this.view.rulesetData.readRows(modifiers, bindings, true));
   }
 
   /** The completions of a partial path among a catalog's paths of `kind` (those an entity type takes), unpaged. */
@@ -43,7 +50,8 @@ export default class TargetPathsEngine {
    * of a modifier's paths (`paths`) and a template's (`templatePaths`). Refused as invalid with what's wrong.
    */
   planModifier(catalogs: TargetCatalogs, sourceType: string, body: ModifierBody) {
-    return ModifierEdits.rowOf(this.module.targetPaths, catalogs, sourceType, body);
+    const row = ModifierEdits.rowOf(this.module.targetPaths, catalogs, sourceType, body);
+    return { bindings: new NameBinder(this.view.rulesetData, this.module.targetPaths).bind(row), row };
   }
 
   /** A target path validated like a language server, among a catalog's paths (those an entity type takes). */

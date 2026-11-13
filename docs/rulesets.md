@@ -256,7 +256,10 @@ its route and Local Changes read): `EntityRevert` (`server/cow/writes/`),
 `EntityCopy`'s inverse, refused while the fork's view shows another entity of the
 source's name (`EntityNames.assertRestoreAvailable`, see
 [Names of entities](#names-of-entities)). Every row naming the copy names the source
-instead, which the views show in the copy's place once it's gone. A copy whose source is
+instead, which the views show in the copy's place once it's gone. A kind whose restores
+write beside them says what, in the view the restore leaves (`planRestored`): a skill's
+own feats take its name back or show again with it, and a skill's feat restored by itself
+keeps its skill's name (see [A skill's own feats](./customization.md#a-skills-own-feats)). A copy whose source is
 gone (its extension deleted it) is no override: the fork's own, which no restore brings
 back, its source kept until a restore ends. What a fork's snapshots stand for is
 `RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy of a live

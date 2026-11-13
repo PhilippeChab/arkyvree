@@ -19,6 +19,7 @@ import {
 } from "@/server/repositories/index.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
+import EntityNames from "./EntityNames.ts";
 
 /**
  * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
@@ -113,7 +114,9 @@ export default class EntityCopy {
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
     // (its row's, its links' and its owned entities') are remapped by
     const cow = await CowDataReader.read(tx, this.ruleset);
-    const siblingIds = cow.getSiblings(this.entityId);
+    // Its sibling printings, as the view merges them: never one another copy already stands for, whose rows the view
+    // leaves out (a book's feat renamed in place, another feat of the book taking its old name)
+    const siblingIds = cow.getSiblings(this.entityId).filter((id) => !cow.isOverridden(id));
 
     // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
     // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
@@ -121,12 +124,15 @@ export default class EntityCopy {
     const merged = await this.mergeValues(tx, parentEntity, siblingIds, cow);
     const [{ description, fields, links, name, partition }] = cow.resolveLinks([{ ...parentEntity, ...merged }]);
     // Its rows as they're stored, its source's: a copy keeps them as they are
-    const [newEntity] = await Entities.create(
-      tx,
-      this.ruleset.baseRules,
-      entityType,
-      { rulesetId: childRulesetId, name: name!, description, partition, fields, links },
-      true,
+    // (refused as a taken name is where the ruleset's own entity already has it: two of a name in its view)
+    const [newEntity] = await EntityNames.withNameRefusal(name!, () =>
+      Entities.create(
+        tx,
+        this.ruleset.baseRules,
+        entityType,
+        { rulesetId: childRulesetId, name: name!, description, partition, fields, links },
+        true,
+      ),
     );
 
     // 3. Copy customizations

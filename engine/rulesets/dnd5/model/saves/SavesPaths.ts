@@ -72,6 +72,9 @@ export default class SavesPaths implements PathCategory<Dnd5Components> {
 
   readonly name = "saves";
 
+  /** Its paths name a save by their second segment. */
+  readonly names = { entityType: "saves" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return SavesPaths.generateSavePaths(Dnd5View.of(rulesetData).saves, kind);
   }

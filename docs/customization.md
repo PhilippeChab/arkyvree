@@ -44,7 +44,49 @@ On a value that keeps the best of its sources (`BestOfSources`, `engine/core/mod
 
 A requirement is met when what its path reaches satisfies it: any of it, for a wildcard. A path that resolves to nothing, a wildcard over an empty group (`spells.groups.evocation.*.dc.total` for a character without evocation spells), isn't met. A path that names nothing (`feats.weaponfocus.possessed`, a family by its own name) is invalid: the requirement is reported, and a character never meets it (what it gates never applies). Its group counts it as met wherever it sits, in an `or` too, so only what's read leaves a group unmet: the new character form's race picker reads only what the form says (an alignment, a gender), and a race's condition on what it doesn't say counts as met.
 
+### What a rule's names mean
+
+A modifier or a requirement names entities in its paths (`feats.dodge.possessed`, `skills.climb.misc`, a spell and the
+list it's known on, the paths of a formula, bracketed or bare) and in some values (a race's, a species' or a
+background's name, a bonded creature's race, a 5e list's casting ability). Its text alone would mean whatever entity
+has that name when it's read. Each row therefore stores, beside its text, the entity each of its names means
+(`customization.name_bindings`, one per place: the field, the path in it, the segment; `NameBinder`,
+`engine/core/bindings/`), always the original entity's id, never a ruleset's copy of it.
+
+- **Saved**: a row's names are read in the view its write leaves (`NameBindingFill.fillWritten`, under every ruleset
+  write), so one that names an entity the same write made is bound to it. An edit binds anew; a save that sends no
+  path keeps what the row meant.
+- **Read**: a view reads each row through its bindings (`NameBindingReader`, in `RulesetComposition`) and writes its
+  text with the name the entity has there: a rule follows its entity through a rename, in the ruleset that renamed it
+  and in those built on it, and a name another entity takes later is that other entity's, not the rule's.
+- **Gone**: a row whose entity the view has none of (deleted, or its book unsubscribed) is switched off: left out of
+  the view (`RulesetData.switchedOff` lists them), and back in force when its entity is. A condition that names one
+  is settled as its place says (`GoneConditions`): a requirement of an entity drops it, and a group it empties; a
+  modifier's own condition is read as unmet, so "while not having the feat" keeps applying. A value that names a gone
+  entity is read as nobody's name.
+- **Copied**: a copy's rows take their source rows' bindings (`CustomizationCopies`); an unsubscribe moves a binding
+  to the original of what stays in its entity's place (another book's printing), when something does
+  (`ExtensionDeparture`).
+- **Printed twice**: a binding to a book's entity that is no longer in the chain pairs, by name, with an entity of
+  that name in the chain, for the kinds books reprint (feats, spells, pools): a rule on one book's printing applies
+  to another's.
+- **Filled**: a row written past a save has no binding yet, and is read by its text until it's given one
+  (`writeNameBindings`, `database/packages/nameBindings.ts`): each ruleset after its sources, a copy's rows taking
+  what their source rows meant, any other read by its text in its ruleset's view. It leaves a bound row as it is, and
+  bumps the content version of a ruleset whose bindings it changed. The packages' runner runs it on the system
+  rulesets once it has installed or updated a package (`applyPackages`), so a seeded database's rules have theirs. A
+  database whose rules were saved before their names were kept runs it once on every ruleset, by hand, after the
+  migration that makes the table (`scripts/db/fill-name-bindings.ts`), as it does after SQL that writes rules.
+
+A category declares the names its paths carry (`PathCategory.names`, `nameSegments`, `valueNames`); a word the paths
+use themselves (`skills.budget`, `languages.extrapicks`) names none.
+
 ### Hierarchical Levels
+
+A level a condition the view leaves out holds (its entity gone) is one its page can't show: a new or an edited
+condition asked there takes the next free level beside it, and any level inside a group the page doesn't list is
+refused as taken (`RequirementsService`).
+
 
 Requirements use a dotted level numbering system for hierarchy:
 
@@ -126,7 +168,7 @@ Some entities get fields, requirements, or feats generated; this section's are 3
 Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/module/parts/entities/plans.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`EntityWriter.setParts`, `server/services/rulesets/entities/EntityWriter.ts`).
 
 - `made` gives the entities the plan makes with it, each by its type (`type`), its record's write (`EntityWrite`: its name, description and fields), its links by role (`links`, each a `LinkSet`: a role, its targets' kind, and each link's target, `toId`, and its tier, pool, amount or flag where it holds one: a feat's `listedIn` links to its pools) and its customizations, and `removed` the ones that go with it, each by its type and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`GeneratedFeats`, `engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each as its kind's entity (`Entities.create`, by its type), reading of the view only its copy-on-write data.
-- A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
+- A feat that's one entity's own (a skill's Skill Focus) is made, renamed (`renamed`: it keeps its identity) and deleted with it, and restored with it (`restored`, a restore's plan): a new skill brings its own, even in a fork that deleted the one it inherited ([A skill's own feats](#a-skills-own-feats)).
 - A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
 
 ### Weapons (type = "Weapon")
@@ -244,15 +286,44 @@ Fields written from the skill form by `entities("skills").planCreate` and `planE
 Feat auto-generated per skill by `entities("skills").planCreate` and `planEdit` (their `made`):
 
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
-- Deleted on skill delete (`entities("skills").planDelete`'s `removed`, refused while a character picked it), regenerated on skill rename
+- Deleted on skill delete (`entities("skills").planDelete`'s `removed`, refused while a character picked it), renamed with its skill (`renamed`), and restored with it ([A skill's own feats](#a-skills-own-feats))
 
 Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
 for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
 families, the per-weapon proficiencies, Favored Enemy per creature type, Deity's Weapon, War Domain Weapon) and by the
 app (a skill's Skill Focus, a school's Spell Focus). A fork's copy keeps it. The engine refuses a new name for one
 (`entities("feats").planEdit`, `feats/FeatEntity.ts`) before any COW copy or write; descriptions and customizations remain editable.
-A feat merely named like one (a class feature's `Terrain Mastery: …` option, a user's own) can be renamed. Renaming a
-skill deletes its old generated feat and its customizations, then creates the replacement in the same transaction.
+A feat merely named like one (a class feature's `Terrain Mastery: …` option, a user's own) can be renamed.
+
+#### A skill's own feats
+
+A skill's Skill Focus (5e: its Skill Proficiency and its Expertise) keeps its identity while its skill is renamed: the
+feat is renamed in place, in the same transaction, so who picked it and the rules that name it follow. The app tells a
+skill's feat by its name's kind (`Skill Focus: …`, which its author can't change) and the skill its rules give to,
+never by the rest of its name (`GeneratedFeats`, each ruleset's `entities/feats/`): a feat made by hand under such a
+name, another kind's generated feat, and one whose author made it give to several skills without naming it after one of
+them are nobody's, and left as they are.
+
+- **Rename**: the skill's feat takes the new name, and its description when its author hasn't rewritten it. A feat the
+  skill lacks (deleted by hand) is made again. Where another feat holds the new name: another skill's feat standing
+  under a name that isn't its skill's gives it up (renamed to its own skill's, the two swapping names in one write
+  when each holds the other's; removed when it's still as the app made it and its own name is taken); a feat whose
+  rules all name a skill that is gone is removed; a feat made by hand keeps the name, and the skill's own feat is
+  removed. A removal is refused while a character picked the feat.
+- **Delete**: the skill's own feats go with it, and no other.
+- **Restore** (`RulesetChangesService.revertOverride`, planned in the view the restore leaves, `planRestored`): a
+  renamed skill's feat takes its name back, and is restored with it when it's the ruleset's untouched copy of the feat
+  of that name (nothing is left in Local Changes); a deleted skill's feats, deleted with it, show again, told by what
+  their rules name; a feat its author deleted by hand stays deleted. A restore removes nothing and takes no name
+  another feat holds.
+- **A feat restored by itself** keeps its skill's current name. It's refused when its skill has another such feat
+  already, or when its skill is gone and another skill has its name.
+- **A new skill named as one the ruleset deleted** stands for it: that skill's feat, restored without it, is its own
+  again.
+
+Two books that both carry a skill's feat (Complete Adventurer copies the core Skill Focus feats) agree on its name by
+the first subscribed, as for any entity: a rename one of them makes of its skill shows in a subscriber of both under
+the other's name, the feat still giving to the renamed skill.
 
 ### Races
 

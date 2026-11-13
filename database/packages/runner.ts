@@ -4,6 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { RULESET_LOCK_ORDER } from "@/drizzle/lockOrder.ts";
 import { contentPackagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 
+import { writeNameBindings } from "./nameBindings.ts";
 import { CONTENT_PACKAGES } from "./registry.ts";
 import type { ContentPackage } from "./types.ts";
 
@@ -64,7 +65,10 @@ export function planPackages(packages: ContentPackage[], applied: Map<string, nu
   return { plans, problems };
 }
 
-/** Installs the packages missing from the database, and brings the others up to date, or applies none (`planPackages`). */
+/**
+ * Installs the packages missing from the database, and brings the others up to date, or applies none
+ * (`planPackages`). What it wrote then gets what its rules' names mean (`writeNameBindings`).
+ */
 export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT_PACKAGES) {
   const applied = new Map(
     (
@@ -85,6 +89,7 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT
     );
   }
 
+  let wrote = false;
   for (const { pkg, updates, version } of plans) {
     const from = applied.get(pkg.name);
 
@@ -124,6 +129,7 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT
       }
     });
 
+    wrote = true;
     if (from === undefined) {
       console.log(`  ✓ ${pkg.name} v${version} installed`);
     } else {
@@ -131,4 +137,7 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT
       console.log(`    ⚠ Restart any running server: in-memory ruleset cache is stale until reboot.`);
     }
   }
+  // The rules a package wrote name entities by their paths' text: each is given what its names mean, once every
+  // package is in, a book's rules naming the core's entities
+  if (wrote) console.log(`  ✓ ${await writeNameBindings(db, "system")} rules given what their paths name`);
 }

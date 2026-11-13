@@ -11,6 +11,7 @@ import type {
   inventoryInCharacter,
   invitesInCampaign,
   modifiersInCustomization,
+  nameBindingsInCustomization,
   playersInCampaign,
   requirementsInCustomization,
   rulesetsInRules,
@@ -44,6 +45,11 @@ export type CharacterFieldValue = boolean | number | string | readonly (boolean 
 export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "baseRules" | "itemType">;
 export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;
+/**
+ * What a name in a modifier's or a requirement's path means, as stored beside its text: the entity it names (the
+ * original, never a ruleset's copy of it), or a group that isn't an entity (a feat family).
+ */
+export type NameBinding = typeof nameBindingsInCustomization.$inferSelect;
 export type Player = typeof playersInCampaign.$inferSelect;
 export type Requirement = typeof requirementsInCustomization.$inferSelect;
 /**

@@ -1464,6 +1464,96 @@ export const modifiersInCustomization = customization.table(
   ],
 );
 
+export const requirementsInCustomization = customization.table(
+  "requirements",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    entityId: uuid("entity_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    level: text().notNull(),
+    target: text(),
+    value: text(),
+    valueType: text("value_type"),
+    operator: text(),
+    chainingOperator: text("chaining_operator"),
+  },
+  (table) => [
+    unique("requirements_entity_id_entity_type_level_key").on(table.entityId, table.entityType, table.level),
+    check(
+      "requirements_value_type_check",
+      sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`,
+    ),
+    check(
+      "requirements_operator_check",
+      sql`operator = ANY (ARRAY['equal'::text, 'not_equal'::text, 'greater_than'::text, 'less_than'::text, 'greater_than_or_equal'::text, 'less_than_or_equal'::text, 'contains'::text, 'not_contains'::text, 'starts_with'::text, 'ends_with'::text, 'matches_regex'::text, 'not_matches_regex'::text, 'is_empty'::text, 'not_empty'::text])`,
+    ),
+    check(
+      "requirements_check",
+      sql`(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`,
+    ),
+  ],
+);
+
+export const nameBindingsInCustomization = customization.table(
+  "name_bindings",
+  {
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    modifierId: uuid("modifier_id"),
+    requirementId: uuid("requirement_id"),
+    field: text().notNull(),
+    path: integer().notNull(),
+    segment: integer().notNull(),
+    kind: text().notNull(),
+    entityId: uuid("entity_id"),
+    entityType: text("entity_type").notNull(),
+    rulesetId: uuid("ruleset_id"),
+    name: text().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.modifierId],
+      foreignColumns: [modifiersInCustomization.id],
+      name: "name_bindings_modifier_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.requirementId],
+      foreignColumns: [requirementsInCustomization.id],
+      name: "name_bindings_requirement_id_fkey",
+    }).onDelete("cascade"),
+    uniqueIndex("name_bindings_modifier_place_idx")
+      .using(
+        "btree",
+        table.modifierId.asc().nullsLast(),
+        table.field.asc().nullsLast(),
+        table.path.asc().nullsLast(),
+        table.segment.asc().nullsLast(),
+      )
+      .where(sql`(modifier_id IS NOT NULL)`),
+    uniqueIndex("name_bindings_requirement_place_idx")
+      .using(
+        "btree",
+        table.requirementId.asc().nullsLast(),
+        table.field.asc().nullsLast(),
+        table.path.asc().nullsLast(),
+        table.segment.asc().nullsLast(),
+      )
+      .where(sql`(requirement_id IS NOT NULL)`),
+    index("name_bindings_entity_id_idx").using("btree", table.entityId.asc().nullsLast()),
+    check("name_bindings_owner_check", sql`(modifier_id IS NULL) <> (requirement_id IS NULL)`),
+    check("name_bindings_field_check", sql`field = ANY (ARRAY['target'::text, 'value'::text])`),
+    check("name_bindings_kind_check", sql`kind = ANY (ARRAY['entity'::text, 'group'::text])`),
+    check("name_bindings_entity_check", sql`(kind = 'entity'::text) = (entity_id IS NOT NULL)`),
+  ],
+);
+
 export const notificationsInAccount = account.table(
   "notifications",
   {
@@ -1718,41 +1808,6 @@ export const playerCharactersInCampaign = campaign.table(
     check(
       "player_characters_visibility_check",
       sql`visibility = ANY (ARRAY['Private'::text, 'Public'::text, 'Partial'::text])`,
-    ),
-  ],
-);
-
-export const requirementsInCustomization = customization.table(
-  "requirements",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    entityId: uuid("entity_id").notNull(),
-    entityType: text("entity_type").notNull(),
-    level: text().notNull(),
-    target: text(),
-    value: text(),
-    valueType: text("value_type"),
-    operator: text(),
-    chainingOperator: text("chaining_operator"),
-  },
-  (table) => [
-    unique("requirements_entity_id_entity_type_level_key").on(table.entityId, table.entityType, table.level),
-    check(
-      "requirements_value_type_check",
-      sql`value_type = ANY (ARRAY['number'::text, 'string'::text, 'boolean'::text])`,
-    ),
-    check(
-      "requirements_operator_check",
-      sql`operator = ANY (ARRAY['equal'::text, 'not_equal'::text, 'greater_than'::text, 'less_than'::text, 'greater_than_or_equal'::text, 'less_than_or_equal'::text, 'contains'::text, 'not_contains'::text, 'starts_with'::text, 'ends_with'::text, 'matches_regex'::text, 'not_matches_regex'::text, 'is_empty'::text, 'not_empty'::text])`,
-    ),
-    check(
-      "requirements_check",
-      sql`(chaining_operator = ANY (ARRAY['and'::text, 'or'::text])) AND (((chaining_operator IS NULL) AND (operator IS NOT NULL) AND (value IS NOT NULL) AND (value_type IS NOT NULL) AND (target IS NOT NULL)) OR ((chaining_operator IS NOT NULL) AND (operator IS NULL) AND (value IS NULL) AND (value_type IS NULL) AND (target IS NULL)))`,
     ),
   ],
 );

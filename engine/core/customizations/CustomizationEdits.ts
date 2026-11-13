@@ -1,3 +1,5 @@
+import { NameBinder } from "@/engine/core/bindings/index.ts";
+import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { CustomizationType } from "@/shared/customization/customizationTypes.ts";
@@ -24,6 +26,14 @@ export default abstract class CustomizationEdits<Row extends { id: string }> {
 
   /** The kind's rows on the entity (its id in the view), as its page lists them. */
   protected abstract rowsOf(entityId: string): Row[];
+
+  /** What each name in a row's paths means in the view (`NameBinder`), which its save keeps beside its text. */
+  protected bind(
+    targetPaths: TargetPaths,
+    row: { operator?: string | null; target?: string | null; value?: string | null },
+  ) {
+    return new NameBinder(this.view.rulesetData, targetPaths).bind(row);
+  }
 
   /** The entity, as the view has it: its id there, and its name. Refused as not found. */
   protected get entity() {

@@ -18,6 +18,7 @@ export { default as RulesetChanges } from "./views/RulesetChanges.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
 export {
   type LockedRulesetScope,
+  readWrittenScope,
   type RulesetScope,
   type SharedRulesetScope,
   withLockedRulesetScope,
@@ -34,4 +35,5 @@ export { default as EntityNames } from "./writes/EntityNames.ts";
 export { default as EntityRevert } from "./writes/EntityRevert.ts";
 export { default as EntityUses } from "./writes/EntityUses.ts";
 export { default as ExtensionDeparture } from "./writes/ExtensionDeparture.ts";
+export { default as NameBindingFill } from "./writes/NameBindingFill.ts";
 export { findOwnedPairs } from "./writes/ownedPairs.ts";

@@ -1,8 +1,9 @@
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { NamedValue, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type OperatorKind, type TargetPath } from "@/shared/customization/target.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 const NAVIGATABLE_BACKGROUND_PATHS = [{ path: "notes", description: "Public notes", type: "string" as const }];
 
@@ -109,5 +110,12 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
       ],
       { physiology: "Physiology", beliefs: "Beliefs", background: "Background", meta: "Meta", ...SEGMENT_LABELS },
     );
+  }
+
+  /** A character's race's name is a player's race's. */
+  valueNames(path: string): NamedValue | undefined {
+    return path === "identity.physiology.race.name"
+      ? { entityType: "races", partition: PLAYER_CHARACTER_KIND }
+      : undefined;
   }
 }

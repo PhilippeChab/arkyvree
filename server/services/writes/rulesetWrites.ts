@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type LockedRulesetScope, RulesetViews, withLockedRulesetScope } from "@/server/cow/index.ts";
+import { type LockedRulesetScope, NameBindingFill, RulesetViews, withLockedRulesetScope } from "@/server/cow/index.ts";
 import { withWrite } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Contributors, Locks } from "@/server/repositories/index.ts";
@@ -119,11 +119,21 @@ export async function withRulesetWrite<T>(
 ): Promise<T> {
   const result = await withWrite(
     async (tx) =>
-      await withLockedRulesetScope(tx, rulesetId, async (scope, policy) => await write(tx, scope, policy), {
-        // The session's access, under the ruleset's lock, before its chain's locks and its view
-        before: async () => (await getReadableRuleset(tx, session, rulesetId)).policy,
-        reads,
-      }),
+      await withLockedRulesetScope(
+        tx,
+        rulesetId,
+        async (scope, policy) => {
+          const result = await write(tx, scope, policy);
+          // Whatever the write made (an entity's own rows, a class's levels' modifiers) is given what its names mean
+          await NameBindingFill.fillWritten(tx, scope);
+          return result;
+        },
+        {
+          // The session's access, under the ruleset's lock, before its chain's locks and its view
+          before: async () => (await getReadableRuleset(tx, session, rulesetId)).policy,
+          reads,
+        },
+      ),
     BUSY_RULESET_MESSAGE,
   );
   if (drops === "entities") RulesetViews.invalidateEntities(rulesetId);

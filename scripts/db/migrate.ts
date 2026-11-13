@@ -41,3 +41,6 @@ async function main() {
 }
 
 await main();
+// A package's install reads views through the server's own pool, which stays open: the run ends here, not when it
+// idles out
+process.exit(0);

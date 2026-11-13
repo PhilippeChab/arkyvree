@@ -44,6 +44,15 @@ async function readRulesetScope(tx: Db, rulesetId: string): Promise<RulesetScope
 }
 
 /**
+ * A write's scope (`scope`, under its ruleset's lock) with what the write has written so far (`tx`, its transaction):
+ * the ruleset's view read again through it (`RulesetViews.getWrittenData`), which the engine binds the rows the write
+ * made by.
+ */
+export async function readWrittenScope(tx: Db, scope: LockedRulesetScope): Promise<LockedRulesetScope> {
+  return { ...scope, rulesetData: await RulesetViews.getWrittenData(tx, scope.sources) };
+}
+
+/**
  * Runs `fn` in a ruleset's scope as a write holds it (`LockedRulesetScope`), in the write's transaction (`tx`), its
  * locks taken before it reads anything of the ruleset: the ruleset's row first, its content version bumped
  * (`Locks.lockRulesetContent`), then its row, its sources and its source chain's rows, shared, in the order every lock of
