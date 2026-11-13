@@ -3,8 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import { DND35_COMPLETE_ARCANE_NAME, DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { writeNameBindings } from "@/database/packages/nameBindings.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import fillNameBindings from "@/scripts/db/fillNameBindings.ts";
 import { NameBindingFill, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -774,7 +774,7 @@ describe("what a fourth independent review found", () => {
     const versions = async () => await Rulesets.findVersions(db, { ids: [fork.id, other.id] });
     const before = await versions();
 
-    await fillNameBindings(db);
+    await writeNameBindings(db, "all");
 
     const after = await versions();
     expect(Number(after.get(fork.id)) - Number(before.get(fork.id))).toBe(1);

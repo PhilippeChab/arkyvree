@@ -236,6 +236,11 @@ const ROOT_FOLDERS = {
         why: "a seeder writes an entity's rows, its joins and its fields as the server does: the generic tables, by what each module declares",
       },
       {
+        from: "database/packages/nameBindings.ts",
+        to: "server/cow/index.ts",
+        why: "the rules a package writes get what their names mean, read in their rulesets' views, as a save's do",
+      },
+      {
         from: "database/seeders/*/characters/",
         to: "content/*/testData/",
         why: "a ruleset's test characters' seeding writes its test data",
@@ -707,11 +712,10 @@ function createRootFolders(context) {
   return onImports((node, spec, types) => {
     const target = targetOf(file, spec);
     if (!target || target.split("/")[0] === root) return;
-    // An edge `from` a folder of the box is that folder's alone, a ruleset's where it says `*`, never the core's
-    const named = box.imports.filter(
-      ({ from, to }) =>
-        (!from || (isNamedBy(file, from) && !isNamedBy(file, from.replace("*", "core")))) && isNamedBy(target, to),
-    );
+    // An edge `from` a folder or a module of the box is its alone, a ruleset's where it says `*`, never the core's
+    const isFrom = (from) =>
+      isNamedBy(file, from) && !(from.includes("*") && isNamedBy(file, from.replace("*", "core")));
+    const named = box.imports.filter(({ from, to }) => (!from || isFrom(from)) && isNamedBy(target, to));
     if (named.some((entry) => !entry.types || types)) return;
     if (named.length > 0) {
       context.report({

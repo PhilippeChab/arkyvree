@@ -5,16 +5,18 @@ import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { NameBindingFill } from "@/server/cow/index.ts";
 
 /**
- * Gives every modifier and requirement that has none what the names in its paths mean (`NameBindingFill`): each
- * ruleset in turn, a ruleset's sources before it (the bases, then the books, then the rest), each in a transaction of
- * its own. A row that has its bindings is left as it is, so it runs after every seed, package update and migration.
- * A ruleset whose bindings changed has its content version bumped with them, so a running server reads its view anew
- * rather than serve one composed before. How many rows it bound.
+ * Gives every modifier and requirement that has none what the names in its paths mean (`NameBindingFill`), in the
+ * system rulesets, which the content packages write (`system`), or in every ruleset (`all`: a database whose rules were
+ * saved before their names were kept): each ruleset in turn, a ruleset's sources before it (the bases, then the books,
+ * then the rest), each in a transaction of its own. A row that has its bindings is left as it is, so it runs again
+ * without harm. A ruleset whose bindings changed has its content version bumped with them, so a running server reads
+ * its view anew rather than serve one composed before. How many rows it bound.
  */
-export default async function fillNameBindings(db: Db): Promise<number> {
+export async function writeNameBindings(db: Db, which: "all" | "system"): Promise<number> {
   const rulesets = await db
     .select({ id: rulesetsInRules.id })
     .from(rulesetsInRules)
+    .where(which === "system" ? eq(rulesetsInRules.system, true) : undefined)
     .orderBy(
       sql`CASE WHEN ${rulesetsInRules.rulesetId} IS NULL THEN 0 WHEN ${rulesetsInRules.kind} = 'extension' THEN 1 ELSE 2 END`,
       rulesetsInRules.createdAt,

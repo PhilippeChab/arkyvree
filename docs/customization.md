@@ -70,10 +70,13 @@ has that name when it's read. Each row therefore stores, beside its text, the en
 - **Printed twice**: a binding to a book's entity that is no longer in the chain pairs, by name, with an entity of
   that name in the chain, for the kinds books reprint (feats, spells, pools): a rule on one book's printing applies
   to another's.
-- **Filled**: rows saved before their names were kept are bound by `scripts/db/fillNameBindings.ts`, which a
-  migration, a seed and a package update run: each ruleset after its sources, a copy's rows taking what their source
-  rows meant, any other read by its text in its ruleset's view. It leaves a bound row as it is, and bumps the content
-  version of a ruleset whose bindings it changed.
+- **Filled**: a row written past a save has no binding yet, and is read by its text until it's given one
+  (`writeNameBindings`, `database/packages/nameBindings.ts`): each ruleset after its sources, a copy's rows taking
+  what their source rows meant, any other read by its text in its ruleset's view. It leaves a bound row as it is, and
+  bumps the content version of a ruleset whose bindings it changed. The packages' runner runs it on the system
+  rulesets once it has installed or updated a package (`applyPackages`), so a seeded database's rules have theirs. A
+  database whose rules were saved before their names were kept runs it once on every ruleset, by hand, after the
+  migration that makes the table (`scripts/db/fill-name-bindings.ts`), as it does after SQL that writes rules.
 
 A category declares the names its paths carry (`PathCategory.names`, `nameSegments`, `valueNames`); a word the paths
 use themselves (`skills.budget`, `languages.extrapicks`) names none.
