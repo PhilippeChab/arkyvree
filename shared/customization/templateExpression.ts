@@ -21,6 +21,14 @@ type Token =
   | { type: "PATH"; value: string }
   | { type: "PUNC"; value: "(" | ")" | "," | "+" | "-" | "*" | "/" };
 
+/** A path in an expression's text: where it stands (a bracketed one's brackets included), and whether it's bracketed. */
+export interface TemplatePathSpan {
+  bracketed: boolean;
+  end: number;
+  path: string;
+  start: number;
+}
+
 export type TemplateNode =
   | { type: "number"; value: number }
   | { type: "path"; value: string }
@@ -206,22 +214,14 @@ class Parser {
   }
 }
 
-/** Pull every referenced path out of a template value. Compound expressions
- *  like `{{ floor([classes.ranger.level] / 2) }}` yield each bracketed path;
- *  legacy bare-path values like `{{ x.y.z }}` yield the single path. Used for
- *  write→read chain detection. */
+/**
+ * Every path a template value reads, in its order (`findTemplatePaths`): each bracketed path of a compound expression
+ * like `{{ floor([classes.ranger.level] / 2) }}`, and each bare one (`{{ x.y.z }}`, or one inside an expression). Used
+ * for write→read chain detection, a path's labels, and what a value's names mean.
+ */
 export function extractReferencedPaths(value: string): string[] {
   const inner = extractTemplateExpression(value);
-  if (!inner) return [];
-  const bracketed: string[] = [];
-  inner.replace(/\[([^\]]+)\]/g, (_, group: string) => {
-    bracketed.push(group.trim());
-    return "";
-  });
-  if (bracketed.length > 0) return bracketed;
-  // No brackets — treat the whole inner as a bare path only if it looks like
-  // one. Allow leading `_` to match the tokenizer's IDENT character class.
-  return /^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(inner) ? [inner] : [];
+  return inner ? findTemplatePaths(inner).map(({ path }) => path) : [];
 }
 
 /** Strip the leading `{{` and trailing `}}` and return the inner expression. */
@@ -266,6 +266,35 @@ export function findTemplateError(
   }
   if (targetType !== "number") return `An expression computes a number, not a ${targetType}`;
   return numericError(node, readable);
+}
+
+/**
+ * Every path an expression (a template's inner text) reads, in its order, as the parser reads them: a bracketed one
+ * (`[classes.ranger.level]`), or a bare one (`classes.ranger.level`), anywhere in it. A name before a parenthesis is
+ * a function's, never a path.
+ */
+export function findTemplatePaths(expression: string): TemplatePathSpan[] {
+  const spans: TemplatePathSpan[] = [];
+  let pos = 0;
+  while (pos < expression.length) {
+    const ch = expression[pos];
+    if (ch === "[") {
+      const close = expression.indexOf("]", pos + 1);
+      if (close === -1) break;
+      const path = expression.slice(pos + 1, close).trim();
+      if (path) spans.push({ bracketed: true, end: close + 1, path, start: pos });
+      pos = close + 1;
+    } else if (/[a-zA-Z_]/.test(ch)) {
+      let end = pos + 1;
+      while (end < expression.length && /[a-zA-Z0-9_.]/.test(expression[end])) end++;
+      if (!/^\s*\(/.test(expression.slice(end)))
+        spans.push({ bracketed: false, end, path: expression.slice(pos, end), start: pos });
+      pos = end;
+    } else {
+      pos++;
+    }
+  }
+  return spans;
 }
 
 /**

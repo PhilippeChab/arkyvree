@@ -63,6 +63,9 @@ export default class LanguagesPaths implements PathCategory<Dnd5Components> {
   readonly label = "Languages";
   readonly name = "languages";
 
+  /** Its paths name a language by their second segment. */
+  readonly names = { entityType: "languages", fixed: ["extrapicks"] } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return LanguagesPaths.generateLanguagePaths(Dnd5View.of(rulesetData).languages, kind);
   }

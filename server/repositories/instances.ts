@@ -30,6 +30,7 @@ import ContributorsRepository from "./rulesets/ContributorsRepository.ts";
 import EntityReferencesRepository from "./rulesets/EntityReferencesRepository.ts";
 import EntitySnapshotsRepository from "./rulesets/EntitySnapshotsRepository.ts";
 import ModifiersRepository from "./rulesets/ModifiersRepository.ts";
+import NameBindingsRepository from "./rulesets/NameBindingsRepository.ts";
 import RequirementsRepository from "./rulesets/RequirementsRepository.ts";
 import RulesetEntitiesRepository from "./rulesets/RulesetEntitiesRepository.ts";
 import RulesetExtensionsRepository from "./rulesets/RulesetExtensionsRepository.ts";
@@ -66,6 +67,7 @@ export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySna
 export const Exports = withRequestCache("Exports", new ExportsRepository());
 export const Invites = withRequestCache("Invites", new InvitesRepository());
 export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
+export const NameBindings = withRequestCache("NameBindings", new NameBindingsRepository());
 export const Notifications = withRequestCache("Notifications", new NotificationsRepository());
 export const OauthAccounts = withRequestCache("OauthAccounts", new OauthAccountsRepository());
 export const OAuthAuthorizations = withRequestCache("OAuthAuthorizations", new OAuthAuthorizationsRepository());

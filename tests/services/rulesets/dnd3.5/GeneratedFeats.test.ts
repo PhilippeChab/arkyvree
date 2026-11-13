@@ -340,10 +340,13 @@ describe("Skill Focus", () => {
 
     await EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, skill(strength.id, "Athletics"));
     expect(await featNames(ruleset.id)).toEqual(["Skill Focus: Athletics"]);
+    // The same feat, renamed with its skill: what named it and who picked it follow. Its modifier reads its skill's
+    // name as the view has it
     const renamed = await findFeat(ruleset.id, "Skill Focus: Athletics");
-    expect(await Modifiers.findMany(db, { sourceIds: [renamed.id], sourceType: "feats" })).toMatchObject([
-      { target: "skills.athletics.misc" },
-    ]);
+    expect(renamed.id).toBe(feat.id);
+    await withRulesetScope(db, ruleset.id, async ({ rulesetData }) => {
+      expect(rulesetData.modifiersBySource.get(renamed.id)).toMatchObject([{ target: "skills.athletics.misc" }]);
+    });
 
     await EntitiesService.deleteEntity(session, ruleset.id, "skills", climb.id);
     expect(await featNames(ruleset.id)).toEqual([]);
@@ -426,25 +429,41 @@ describe("an inherited skill's Skill Focus", () => {
     ["rename", "inherited"],
     ["delete", "copied into the fork"],
     ["rename", "copied into the fork"],
-  ] as const)("keeps the skill from being %sd while a character picked it, %s", async (operation, picked) => {
-    const { session, fork, climb, climbBody, feat } = await seededForkWithClimb();
-    const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
-    const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
-    // A pick stays under the ancestor's id after the fork copies the feat.
-    await Picks.createMany(db, DND35_BASE_RULES, [
-      { advancementId: levelId, step: "feats", entityId: feat.id, viaId: ctx.aptMap.General },
-    ]);
-    const copy = picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork);
+  ] as const)(
+    "a skill's %s while a character picked its feat, %s: refused, or the feat renamed with it",
+    async (operation, picked) => {
+      const { session, fork, climb, climbBody, feat } = await seededForkWithClimb();
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
+      const [levelId] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
+      // A pick stays under the ancestor's id after the fork copies the feat.
+      await Picks.createMany(db, DND35_BASE_RULES, [
+        { advancementId: levelId, step: "feats", entityId: feat.id, viaId: ctx.aptMap.General },
+      ]);
+      const copy = picked === "inherited" ? undefined : await copyEntity(db, "feats", feat.id, fork);
 
-    const mutation =
-      operation === "delete"
-        ? EntitiesService.deleteEntity(session, fork.id, "skills", climb.id)
-        : EntitiesService.updateEntity(session, fork.id, "skills", climb.id, { ...climbBody, name: "Mountaineering" });
-    expect(mutation).rejects.toThrow("Skill Focus feat in use");
-    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: copy?.id ?? feat.id })).toBeDefined();
-    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
-  });
+      const mutation =
+        operation === "delete"
+          ? EntitiesService.deleteEntity(session, fork.id, "skills", climb.id)
+          : EntitiesService.updateEntity(session, fork.id, "skills", climb.id, {
+              ...climbBody,
+              name: "Mountaineering",
+            });
+      if (operation === "delete") {
+        expect(mutation).rejects.toThrow("Skill Focus feat in use");
+        expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: copy?.id ?? feat.id })).toBeDefined();
+      } else {
+        // A rename keeps the feat: the fork's copy of it takes the new name, and the pick reads that copy
+        await mutation;
+        await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+          const renamed = Dnd35View.of(rulesetData).feats.find((f) => f.name === "Skill Focus: Mountaineering")!;
+          expect(rulesetData.cow.resolve(feat.id)).toBe(renamed.id);
+          if (copy) expect(renamed.id).toBe(copy.id);
+        });
+      }
+      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
+    },
+  );
 
   test.each(["delete and recreate", "rename and rename back"] as const)(
     "stays single after the fork's skill is %sd, and deleting the skill removes it",
@@ -587,7 +606,7 @@ describe("generated feats", () => {
     });
   });
 
-  test("follow a skill renamed again and again, one at a time, dropping the customizations of a local copy", async () => {
+  test("follow a skill renamed again and again, one at a time, a local copy keeping its customizations", async () => {
     const { session, fork } = await seededFork();
     const climb = (await Entities.findOne<Skill>(db, {
       entityType: "skills",
@@ -628,10 +647,13 @@ describe("generated feats", () => {
         ).toEqual([[`Skill Focus: ${name}`, [`skills.${name.toLowerCase()}.misc`]]]);
       });
     }
-    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: local.id })).toBeUndefined();
-    expect(await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" })).toEqual([]);
-    expect(await Requirements.findMany(db, { entityIds: [local.id, modifier.id] })).toEqual([]);
-    expect(await findFormValues("feats", local.id)).toEqual({ fields: {}, links: {} });
+    // The fork's copy is the feat all along: renamed each time, its own customizations kept
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: local.id })).toMatchObject({
+      description: "Local customization",
+      name: "Skill Focus: Climb",
+    });
+    expect(await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" })).toHaveLength(1);
+    expect(await Requirements.findMany(db, { entityIds: [local.id, modifier.id] })).toHaveLength(2);
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
   });
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
-import type { EntityRecord } from "@/engine/core/module/index.ts";
+import type { EntityRecord, EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import ListedEntity from "@/engine/rulesets/pf1/entities/ListedEntity.ts";
 import ClassOffers from "@/engine/rulesets/pf1/rules/ClassOffers.ts";
@@ -15,6 +15,7 @@ import type { Feat } from "@/engine/rulesets/pf1/view/rows.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/pf1/fields/index.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
+import SkillFocusFeats from "./SkillFocusFeats.ts";
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
@@ -39,6 +40,9 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
 
   /** Its feat pools, its flags, its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
+
+  /** A generated feat's restore leaves it its skill's name. */
+  override readonly restoresBeside = true;
 
   /** A new feat standing in for a generated ancestor is generated. */
   override readonly takesAfterAncestor = true;
@@ -84,6 +88,16 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
         ids: features ? features.ids.filter((id) => !listed || listed.has(id)) : pool,
       },
     };
+  }
+
+  /**
+   * What a feat's restore writes with it (`feat`, as the view the restore leaves has it): a generated one, which
+   * keeps the name its skill brings, takes that name again where the restore gave it its source's (its skill renamed
+   * since).
+   */
+  protected override restoredWritesOf(feat: Feat): EntityWrites | undefined {
+    if (feat.fields[FEAT_GENERATED] !== true) return undefined;
+    return { renamed: [...new SkillFocusFeats(this.view).realign(feat)] };
   }
 
   /**

@@ -1,5 +1,11 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type { CharacterInventory, Character as CharacterRecord, Modifier, Requirement } from "@/shared/relations.ts";
+import type {
+  CharacterInventory,
+  Character as CharacterRecord,
+  Modifier,
+  NameBinding,
+  Requirement,
+} from "@/shared/relations.ts";
 
 import type { StoredAdvancement, StoredCharacterLink, StoredPick } from "./storage.ts";
 
@@ -21,6 +27,8 @@ export interface CharacterInput {
  */
 export interface CharacterRows {
   advancements: StoredAdvancement[];
+  /** What the names in its own modifiers' paths mean, as stored beside them: none read, each read by its text */
+  bindings?: NameBinding[];
   inventory: CharacterInventory[];
   links: CharacterLinks;
   modifiers: Modifier[];

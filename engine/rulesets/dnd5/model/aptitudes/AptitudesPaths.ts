@@ -1,4 +1,4 @@
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { NamedValue, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd5Components } from "@/engine/rulesets/dnd5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd5/rules/SpellLists.ts";
@@ -157,6 +157,9 @@ export default class AptitudesPaths implements PathCategory<Dnd5Components> {
   readonly label = "Aptitudes";
   readonly name = "aptitudes";
 
+  /** Its paths name a pool or list by their second segment. */
+  readonly names = { entityType: "aptitudes" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     const dnd5 = Dnd5View.of(rulesetData);
     return AptitudesPaths.generateAptitudePaths(
@@ -177,5 +180,11 @@ export default class AptitudesPaths implements PathCategory<Dnd5Components> {
   /** The ruleset's aptitudes, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
     return { names: deriveNameLabels(Dnd5View.of(rulesetData).aptitudes.map(({ name }) => name)) };
+  }
+
+  /** A list's casting ability is an ability's name (`aptitudes.<list>.ability`). */
+  valueNames(path: string): NamedValue | undefined {
+    const segments = path.split(".");
+    return segments.length === 3 && segments[2] === LIST_ABILITY.path ? { entityType: "abilities" } : undefined;
   }
 }

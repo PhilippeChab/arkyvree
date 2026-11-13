@@ -1,6 +1,7 @@
 import { applyPackages } from "@/database/packages/runner.ts";
 import type { Db } from "@/drizzle/database.ts";
 
+import fillNameBindings from "./fillNameBindings.ts";
 import testSeeds from "./seeds/index.ts";
 
 /** Applies the content packages to `db`, then, when `includeTestSeeds`, the test data's seeds (reset.ts). */
@@ -8,6 +9,7 @@ export default async function seedDatabase(db: Db, includeTestSeeds: boolean) {
   console.log("Applying content packages...");
   await applyPackages(db);
   console.log("✓ Content packages applied");
+  console.log(`✓ ${await fillNameBindings(db)} rows given what their paths name`);
 
   if (includeTestSeeds) {
     console.log("Seeding test data...");

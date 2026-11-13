@@ -136,6 +136,9 @@ export default class AptitudesPaths implements PathCategory<Pf1Components> {
   readonly label = "Aptitudes";
   readonly name = "aptitudes";
 
+  /** Its paths name a pool or list by their second segment. */
+  readonly names = { entityType: "aptitudes" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return AptitudesPaths.generateAptitudePaths(
       Pf1View.of(rulesetData).aptitudes,

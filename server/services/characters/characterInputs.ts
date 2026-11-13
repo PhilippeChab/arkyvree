@@ -6,6 +6,7 @@ import {
   CharacterLinks,
   Characters,
   Modifiers,
+  NameBindings,
   Picks,
   Requirements,
   Visibility,
@@ -25,7 +26,11 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const picks = await Picks.findPerStep(database, baseRules, { advancementIds: advancements.map(({ id }) => id) });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
-  return { links, inventory, advancements, picks, modifiers, requirements };
+  const bindings = await NameBindings.findMany(database, {
+    modifierIds: modifiers.map((modifier) => modifier.id),
+    requirementIds: requirements.map((requirement) => requirement.id),
+  });
+  return { links, inventory, advancements, picks, modifiers, requirements, bindings };
 }
 
 /**

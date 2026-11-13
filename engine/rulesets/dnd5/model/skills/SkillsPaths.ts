@@ -101,6 +101,9 @@ export default class SkillsPaths implements PathCategory<Dnd5Components> {
 
   readonly name = "skills";
 
+  /** Its paths name a skill by their second segment. */
+  readonly names = { entityType: "skills" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return SkillsPaths.generateSkillPaths(Dnd5View.of(rulesetData).skills, kind);
   }

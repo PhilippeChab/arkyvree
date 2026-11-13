@@ -56,6 +56,9 @@ export default class ClassesPaths implements PathCategory<Dnd5Components> {
 
   readonly name = "classes";
 
+  /** Its paths name a class by their second segment. */
+  readonly names = { entityType: "classes" } as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return ClassesPaths.generateClassPaths(Dnd5View.of(rulesetData).classes, kind);
   }

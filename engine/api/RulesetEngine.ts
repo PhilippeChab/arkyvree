@@ -1,3 +1,4 @@
+import { NameBinder, NameBindingReader } from "@/engine/core/bindings/index.ts";
 import type {
   EntityAction,
   EntityLinks,
@@ -10,6 +11,7 @@ import type { CharacterInput, SettingsForm } from "@/engine/core/module/index.ts
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
+import type { NameBinding } from "@/shared/relations.ts";
 
 import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
@@ -107,6 +109,21 @@ export default class RulesetEngine {
   }
 
   /**
+   * The rows whose bindings no longer match their text (`rows`: modifiers or requirements, as stored, each with its
+   * `bindings`), by id: one changed past its bindings, which a fill reads anew.
+   */
+  findStaleNameBindings(
+    rows: { id: string; target: string | null; value: string | null }[],
+    bindings: readonly NameBinding[],
+  ): Set<string> {
+    const byRow = Map.groupBy(bindings, (binding) => (binding.modifierId ?? binding.requirementId)!);
+    const stale = rows.filter((row) =>
+      (byRow.get(row.id) ?? []).some((binding) => NameBindingReader.isStale(row, binding, this.module.targetPaths)),
+    );
+    return new Set(stale.map((row) => row.id));
+  }
+
+  /**
    * An entity's links of the role its page edits one at a time (`type`, `ownerId`: a class's skills): refused for a
    * kind without.
    */
@@ -130,6 +147,15 @@ export default class RulesetEngine {
   /** The entities an entity owns (`type`, `ownerId`: a class's levels): refused for a kind that owns none. */
   owned<K extends EntityType>(type: K, ownerId: string) {
     return this.part(type, "owned", ownerId) as Extract<PartOf<EntityKinds[K], "owned">, OwnedEntities>;
+  }
+
+  /**
+   * What the names in rows' paths mean in the ruleset's view (`rows`: modifiers or requirements, as stored), by the
+   * row's id: what a fill keeps for the rows saved before their names were kept, each read by its text once more.
+   */
+  planNameBindings(rows: { id: string; operator: string | null; target: string | null; value: string | null }[]) {
+    const binder = new NameBinder(this.view.rulesetData, this.module.targetPaths);
+    return new Map(rows.map((row) => [row.id, binder.bind(row)]));
   }
 
   /**

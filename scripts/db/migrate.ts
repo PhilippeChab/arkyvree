@@ -7,6 +7,8 @@ import * as relations from "@/drizzle/relations.ts";
 import * as schema from "@/drizzle/schema.ts";
 import StoredRegistries from "@/server/repositories/stored/StoredRegistries.ts";
 
+import fillNameBindings from "./fillNameBindings.ts";
+
 async function main() {
   const connectionString = process.env.DATABASE_URL;
 
@@ -32,6 +34,9 @@ async function main() {
 
     await applyPackages(db);
     console.log("Content packages applied successfully");
+
+    // A row a package wrote, or one saved before its names were kept, gets what its paths name
+    console.log(`${await fillNameBindings(db)} rows given what their paths name`);
   } catch (error) {
     console.error("Migration failed:", error);
     process.exit(1);
@@ -41,3 +46,5 @@ async function main() {
 }
 
 await main();
+// The fill reads views through the server's own pool, which stays open: the run ends here, not when it idles out
+process.exit(0);

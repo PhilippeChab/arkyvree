@@ -25,6 +25,7 @@ export {
   Exports,
   Invites,
   Modifiers,
+  NameBindings,
   Notifications,
   OauthAccounts,
   OAuthAuthorizations,

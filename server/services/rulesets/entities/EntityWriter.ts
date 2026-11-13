@@ -8,6 +8,8 @@ import {
   type EntityForm,
   type EntityRecord,
   type EntityRemoval,
+  type EntityRename,
+  type EntityRevival,
   type EntityWrite,
   type EntityWrites,
   type LinkSet,
@@ -18,8 +20,10 @@ import {
   type EditTarget,
   EntityEdit,
   EntityNames,
+  EntityRevert,
   EntityUses,
   type LockedRulesetScope,
+  RulesetChanges,
   type RulesetScope,
 } from "@/server/cow/index.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
@@ -28,6 +32,7 @@ import {
   Entities,
   EntityLinks,
   Modifiers,
+  NameBindings,
   type ReferencedType,
   Requirements,
   type RulesetEntityType,
@@ -62,6 +67,16 @@ interface PlannedEntity {
 interface SavedParts {
   links?: LinkSet[];
   writes?: EntityWrites;
+}
+
+/**
+ * What a plan's writes freed so far of the names its later renames may take: the entities it renamed or removed, by
+ * their ids, the names its renames left, and whether it removed any (whose names it doesn't keep).
+ */
+interface Vacated {
+  ids: Set<string>;
+  names: Set<string>;
+  removed: boolean;
 }
 
 /** An entity a write names: its id, of its type. */
@@ -111,7 +126,7 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
  * writes the row copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its
  * first edit; an owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found
  * when its fresh view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its
- * links (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it
+ * links (`setLinks`), then what its plan writes beside it (`updateBeside`: the entities it removes, then those it
  * makes). A delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its
  * action (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it
  * changed; but several entities' edits at once (`updateEntities`: a class's spell list's spells), which write in the
@@ -128,14 +143,48 @@ export default class EntityWriter {
   ) {}
 
   /**
+   * What an entity holds past its name and description, as stored, in one text two entities compare by: its fields,
+   * its links (by the entities they stand for), its modifiers and its requirements, and its modifiers' own. A copy
+   * holds its source's, word for word, until its author changes one.
+   */
+  private static async findContent(
+    tx: Db,
+    { rulesetData: { cow } }: LockedRulesetScope,
+    entity: { fields: Record<string, unknown>; id: string },
+  ) {
+    const modifiers = await Modifiers.findMany(tx, { sourceIds: [entity.id] });
+    const requirements = await Requirements.findMany(tx, {
+      entityIds: [entity.id, ...modifiers.map((modifier) => modifier.id)],
+    });
+    const links = await EntityLinks.findOwn(tx, entity.id);
+    const signOf = new Map(modifiers.map((m) => [m.id, [m.target, m.operator, m.value, m.valueType].join("|")]));
+    const fields = Object.entries(entity.fields).toSorted(([a], [b]) => a.localeCompare(b));
+    return JSON.stringify({
+      fields,
+      // A link by the entity it stands for: a copy's may name the ruleset's copy of a pool its source names itself
+      links: links
+        .map(({ role, tier, toId, viaId }) =>
+          [role, cow.originalOf(toId), viaId ? cow.originalOf(viaId) : null, tier ?? null].join("|"),
+        )
+        .toSorted(),
+      modifiers: [...signOf.values()].toSorted(),
+      requirements: requirements
+        .map((r) =>
+          [signOf.get(r.entityId) ?? "", r.level, r.chainingOperator, r.target, r.operator, r.value].join("|"),
+        )
+        .toSorted(),
+    });
+  }
+
+  /**
    * An entity a plan makes, in the scope's ruleset: its row (its fields and single links among it), taking over the
-   * tombstone of a deleted copy of an ancestor of its name as a create does, its links, its modifiers and its
-   * requirements.
+   * tombstone of a deleted copy of an ancestor of its name as a create does (unless it stands for none,
+   * `standalone`), its links, its modifiers and its requirements.
    */
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
     const type = entityTypeOf(scope.ruleset.baseRules, made.type);
     const names = new EntityNames(scope);
-    const tombstoneAncestorId = await names.findTombstoneAncestor(tx, type, made.row.name);
+    const tombstoneAncestorId = made.standalone ? null : await names.findTombstoneAncestor(tx, type, made.row.name);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
       Entities.create(tx, scope.ruleset.baseRules, type, { ...made.row, rulesetId: scope.ruleset.id }),
     );
@@ -170,6 +219,42 @@ export default class EntityWriter {
     );
     await EntityWriter.setParts(tx, scope, policy, { entityId: row.id, entityType: type }, planned, false);
     return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
+  }
+
+  /**
+   * An entity a plan renames with another (a skill's generated feat), checked before anything of the plan's renames
+   * is written: its new name and description, and the name it leaves; none when it changes nothing. Its description
+   * follows its name, unless its author rewrote it. Its new name is kept free in the view as a rename's is, a name
+   * another entity of the plan gives up being free for it (`vacated`: the plan's entities by their ids, and the names
+   * its renames leave, which it adds its own to). One its entity's restore renames (`restoring`) to the very name of
+   * what it copies, a copy its author left as the app made it, is restored instead, and answers none.
+   */
+  private static async prepareRename(tx: Db, scope: LockedRulesetScope, renamed: EntityRename, vacated: Vacated) {
+    const type = entityTypeOf(scope.ruleset.baseRules, renamed.type);
+    const stored = await Entities.findOne(tx, { entityType: type, id: scope.rulesetData.cow.resolve(renamed.id) });
+    if (!stored) return undefined;
+    const { name } = renamed;
+    const description = stored.description === renamed.previousDescription ? renamed.description : stored.description;
+    // One that changes nothing writes nothing: no copy made of an inherited entity for it
+    if (name === stored.name && description === stored.description) return undefined;
+    const names = new EntityNames(scope);
+    // (unless the same plan freed that name before it: the view read before it still shows it taken)
+    const restoring = renamed.restoring && !vacated.removed && !vacated.names.has(name);
+    const sourceId = restoring ? scope.rulesetData.cow.sourceOf(stored.id) : undefined;
+    const source = sourceId && (await Entities.findOne(tx, { entityType: type, id: sourceId }));
+    const untouched =
+      source &&
+      source.name === name &&
+      stored.rulesetId === scope.ruleset.id &&
+      stored.description === renamed.previousDescription &&
+      (await EntityWriter.findContent(tx, scope, stored)) === (await EntityWriter.findContent(tx, scope, source));
+    if (source && untouched) {
+      await EntityRevert.revert(tx, type, source.id, scope, names);
+      return undefined;
+    }
+    await names.assertRenameAvailable(tx, type, { name: stored.name ?? "" }, name, vacated.ids);
+    if (stored.name) vacated.names.add(stored.name);
+    return { description, from: stored.name, id: renamed.id, name, type };
   }
 
   /**
@@ -211,6 +296,71 @@ export default class EntityWriter {
   }
 
   /**
+   * The entities a plan renames with another (`renames`: a skill's generated feats, and those that give up a name for
+   * them), each the row the view's entity resolves to: the ruleset's own, or its copy, made here. Each keeps its
+   * identity: what names it and who picked it follow. All are checked, then copied under the names they have, before
+   * any takes its new one: two may take each other's names, the first stepping aside under a name of its own.
+   */
+  private static async renameEntities(tx: Db, scope: LockedRulesetScope, renames: EntityRename[], vacated: Vacated) {
+    const { baseRules } = scope.ruleset;
+    const prepared = [];
+    for (const renamed of renames) {
+      const rename = await EntityWriter.prepareRename(tx, scope, renamed, vacated);
+      if (rename) prepared.push(rename);
+    }
+    const edit = new EntityEdit(scope);
+    const targets = [];
+    for (const rename of prepared) {
+      const notFound = EntityWriter.getNotFound(baseRules, rename.type);
+      targets.push({ ...rename, rowId: (await edit.cowById(tx, rename.type, rename.id, notFound)).id });
+    }
+    const taken = new Set(targets.map((target) => target.name));
+    for (const { from, name, rowId, type } of targets) {
+      if (from === name || !from || !taken.has(from)) continue;
+      await Entities.update(tx, baseRules, type, { name: `~${rowId}` }, { id: rowId });
+    }
+    for (const { description, name, rowId, type } of targets) {
+      await EntityNames.withNameRefusal(name, () =>
+        Entities.update(tx, baseRules, type, { description, name }, { id: rowId }),
+      );
+    }
+  }
+
+  /**
+   * The inherited entities a plan shows again (a restored skill's feats, deleted with it): those the ruleset deleted,
+   * named as the set names its own, whose rules name the restored entity (their bindings': an entity's feat is told
+   * by what it gives to, whatever name it had), each restored as its own restore does. One whose name another entity
+   * holds stays deleted: a restore takes no name.
+   */
+  private static async reviveEntities(tx: Db, scope: LockedRulesetScope, revived: EntityRevival) {
+    const type = entityTypeOf(scope.ruleset.baseRules, revived.type);
+    const original = (id: string) => scope.rulesetData.cow.originalOf(id);
+    const ownerId = original(revived.ownerId);
+    const { deleted } = await RulesetChanges.read(tx, scope.ruleset);
+    const names = new EntityNames(scope);
+    for (const candidate of deleted) {
+      if (candidate.entityType !== type || !candidate.name.startsWith(revived.prefix)) continue;
+      const modifiers = await Modifiers.findMany(tx, { sourceIds: [candidate.sourceEntityId] });
+      const bindings = await NameBindings.findMany(tx, {
+        modifierIds: modifiers.map((modifier) => modifier.id),
+        requirementIds: [],
+      });
+      // Its own: one whose rules name this entity, and no other of its kind unless it's named after this one (one its
+      // author had name two is the one's it's named after, as the engine tells a view's)
+      const named = bindings.flatMap((binding) =>
+        binding.entityId !== null && binding.entityType === revived.ownerType ? original(binding.entityId) : [],
+      );
+      const alone = named.every((id) => id === ownerId);
+      if (!named.includes(ownerId) || (!alone && candidate.name !== revived.name)) continue;
+      try {
+        await EntityRevert.revert(tx, type, candidate.sourceEntityId, scope, names);
+      } catch (error) {
+        if (!(error instanceof ConflictError)) throw error;
+      }
+    }
+  }
+
+  /**
    * Updates the row a write targets (`target`) to the plan's (`row`, of `type`, of `baseRules`): refused as stale when
    * the client's token (`updatedAt`) is behind, a copy's never being checked (its token is its source's).
    */
@@ -226,12 +376,6 @@ export default class EntityWriter {
     const rows = await Entities.update<Row>(tx, baseRules, type, row, { id: target.id, expectedUpdatedAt });
     if (rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     return rows[0];
-  }
-
-  /** Writes what a plan writes beside an entity (`writes`): the entities it removes, then those it makes. */
-  private static async writeBeside(tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy, writes: EntityWrites) {
-    for (const removal of writes.removed ?? []) await EntityWriter.removeEntity(tx, scope, policy, removal);
-    for (const made of writes.made ?? []) await EntityWriter.makeEntity(tx, scope, made);
   }
 
   /**
@@ -280,7 +424,28 @@ export default class EntityWriter {
     replacing: boolean,
   ) {
     await EntityWriter.setLinks(tx, scope.ruleset.baseRules, entity, parts.links, replacing);
-    if (parts.writes) await EntityWriter.writeBeside(tx, scope, policy, parts.writes);
+    if (parts.writes) await EntityWriter.updateBeside(tx, scope, policy, parts.writes);
+  }
+
+  /**
+   * Writes what a plan writes beside an entity (`writes`): the entities it removes, those it shows again, those it
+   * renames, then those it makes. An entity's write writes its own; a restore, which writes no row of the kind's, writes these alone.
+   */
+  static async updateBeside(tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy, writes: EntityWrites) {
+    for (const revived of writes.restored ?? []) await EntityWriter.reviveEntities(tx, scope, revived);
+    // A rename may take the name another of the plan gives up: one removed, or one renamed (before or after it:
+    // two that take each other's names)
+    const vacated: Vacated = {
+      ids: new Set((writes.renamed ?? []).map((renamed) => renamed.id)),
+      names: new Set(),
+      removed: (writes.removed ?? []).length > 0,
+    };
+    for (const removal of writes.removed ?? []) {
+      await EntityWriter.removeEntity(tx, scope, policy, removal);
+      vacated.ids.add(removal.id);
+    }
+    await EntityWriter.renameEntities(tx, scope, writes.renamed ?? [], vacated);
+    for (const made of writes.made ?? []) await EntityWriter.makeEntity(tx, scope, made);
   }
 
   /**
@@ -298,7 +463,7 @@ export default class EntityWriter {
     plans: readonly EntityEditPlan<PlannedEntity>[],
     before?: EntityWrites,
   ) {
-    if (before) await EntityWriter.writeBeside(tx, scope, policy, before);
+    if (before) await EntityWriter.updateBeside(tx, scope, policy, before);
     const entityType = entityTypeOf(scope.ruleset.baseRules, type);
     const edit = new EntityEdit(scope);
     const written = [];
@@ -483,7 +648,7 @@ export default class EntityWriter {
 
       const planned = await plan(scope, { tx });
       const targetId = (await new EntityEdit(scope).cowToEdit(tx, this.type, planned.entity)).id;
-      if (planned.writes) await EntityWriter.writeBeside(tx, scope, policy, planned.writes);
+      if (planned.writes) await EntityWriter.updateBeside(tx, scope, policy, planned.writes);
 
       // The database deletes its links and customizations with it.
       const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
@@ -520,7 +685,7 @@ export default class EntityWriter {
       const notFound = EntityWriter.getNotFound(ruleset.baseRules, type);
       const edit = new EntityEdit(scope);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
-      if (planned.writes) await EntityWriter.writeBeside(tx, scope, policy, planned.writes);
+      if (planned.writes) await EntityWriter.updateBeside(tx, scope, policy, planned.writes);
 
       // The database deletes its links and its customizations with it
       const [row] = await Entities.delete<Row>(tx, { entityType: type, id: target.id });

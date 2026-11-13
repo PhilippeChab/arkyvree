@@ -11,6 +11,9 @@ import GeneratedFeats, { type GeneratedFeat } from "./GeneratedFeats.ts";
  * feat's modifier), and which a delete or a rename removes.
  */
 export default class ExpertiseFeats extends GeneratedFeats {
+  /** What a removal is refused with while a character picked the feat. */
+  private static readonly IN_USE = "Cannot remove an Expertise feat in use by a character in this ruleset";
+
   /** The skill's Expertise, of its family, requiring the character's proficiency in it (`skills.<skill>.proficient`). */
   static describe(skillName: string): GeneratedFeat[] {
     return [
@@ -46,11 +49,26 @@ export default class ExpertiseFeats extends GeneratedFeats {
     return ExpertiseFeats.describe(skillName);
   }
 
+  /** The skills' names: each brings its own. */
+  protected override ownerNames() {
+    return this.view.rulesetData.rows("skills").map(({ name }) => name);
+  }
+
+  /**
+   * What frees the names a skill's feats take, for a new skill (`GeneratedFeats.free`): one that stands for a skill the
+   * ruleset deleted (`standsIn`) keeps that skill's feats, restored without it.
+   */
+  freeFor(skillName: string, standsIn: boolean) {
+    return this.free(skillName, ExpertiseFeats.IN_USE, undefined, standsIn);
+  }
+
   /** The skill's Expertise a delete or a rename removes with its name, unless a character picked it. */
   remove(skillName: string) {
-    return this.removeFeat(
-      ExpertiseFeats.nameOf(skillName),
-      "Cannot remove an Expertise feat in use by a character in this ruleset",
-    );
+    return this.removeOf(skillName, ExpertiseFeats.IN_USE);
+  }
+
+  /** The skill's feats, as its new name brings them (`GeneratedFeats.rename`). */
+  renameWith(skillName: string, newName: string) {
+    return this.rename(skillName, newName, ExpertiseFeats.IN_USE);
   }
 }

@@ -14,6 +14,9 @@ interface RequirementResults {
   unmetRequirementGroups: Requirement[][];
 }
 
+/** What starts a value that is nobody's name: a character no name is written with, so no entity's name equals it. */
+const NOBODY = "\uE000";
+
 export default class RequirementEvaluator {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
@@ -216,6 +219,8 @@ export default class RequirementEvaluator {
    */
   private resolveRequirementValue(requirement: Requirement, components: Components): number | string | boolean | null {
     const { value, valueType } = requirement;
+    // A value that was the name of an entity now gone (the view marks it) is nobody's name: no name equals it
+    if ("valueGone" in requirement && requirement.valueGone === true) return `${NOBODY}${value ?? ""}`;
     if (typeof value === "string" && isTemplateValue(value)) {
       return TemplateExpression.resolve(value, components, this.targetPaths, (warning) =>
         this.warn(requirement, warning),

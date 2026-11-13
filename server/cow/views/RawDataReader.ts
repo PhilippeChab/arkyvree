@@ -1,7 +1,14 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type RulesetRawData } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Modifiers, Requirements, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
+import {
+  Entities,
+  Modifiers,
+  NameBindings,
+  Requirements,
+  Rulesets,
+  RulesetSettings,
+} from "@/server/repositories/index.ts";
 
 /**
  * A ruleset's own rows, none of its ancestors', which the cache keeps one entry of per ruleset
@@ -24,7 +31,13 @@ export default class RawDataReader {
     const requirements = await Requirements.findMany(database, {
       entityIds: [...ids, ...modifiers.map((modifier) => modifier.id)],
     });
+    const bindings = await NameBindings.findMany(database, {
+      modifierIds: modifiers.map((modifier) => modifier.id),
+      requirementIds: requirements.map((requirement) => requirement.id),
+    });
     const data = Engine.forRules(ruleset.baseRules).copyOnWrite().buildRawData({
+      bindings,
+      rulesetId,
       entities,
       tierListIds,
       modifiers,

@@ -1,4 +1,4 @@
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { NamedValue, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators, LEVEL_MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
@@ -48,5 +48,11 @@ export default class BondedPaths implements PathCategory<Dnd35Components> {
       level: "Effective level",
       ...Object.fromEntries(BONDED_KINDS.map((bond) => [bond.slug, bond.label])),
     });
+  }
+
+  /** A bonded kind's race (`bonded.<kind>.race`) is one of that kind's races. */
+  valueNames(path: string): NamedValue | undefined {
+    const [, kind, leaf] = path.split(".");
+    return leaf === "race" ? { entityType: "races", partition: kind } : undefined;
   }
 }

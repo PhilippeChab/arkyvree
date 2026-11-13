@@ -200,15 +200,19 @@ export default class EntityNames {
    * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows, as a create's is: the name it
    * keeps is its own, whoever else has it (an inherited entity's first edit copies it under its name). A renamed entity
    * takes over no tombstone: the copy it may be keeps its own snapshot, and the hidden ancestor of its new name stays
-   * hidden.
+   * hidden. An inherited entity the same write renamed before (`vacated`, by its id) no longer shows its name: the copy
+   * the write made of it hides it, which the view read before the write doesn't know yet.
    */
   async assertRenameAvailable(
     tx: Db,
     entityType: RulesetEntityType,
     entity: { name: string },
     name: string,
+    vacated: ReadonlySet<string> = new Set(),
   ): Promise<void> {
-    if (name !== entity.name) this.refuseShown(await this.findNamed(tx, entityType, [name]));
+    if (name === entity.name) return;
+    const named = await this.findNamed(tx, entityType, [name]);
+    this.refuseShown(named.filter((other) => !vacated.has(other.id)));
   }
 
   /**

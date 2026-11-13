@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
-import type { EntityRecord } from "@/engine/core/module/index.ts";
+import type { EntityRecord, EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import ListedEntity from "@/engine/rulesets/dnd5/entities/ListedEntity.ts";
 import ClassOffers from "@/engine/rulesets/dnd5/rules/ClassOffers.ts";
@@ -14,7 +14,9 @@ import Dnd5View from "@/engine/rulesets/dnd5/view/Dnd5View.ts";
 import type { Feat } from "@/engine/rulesets/dnd5/view/rows.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd5/fields/index.ts";
 
+import ExpertiseFeats from "./ExpertiseFeats.ts";
 import { FEAT_FIELDS } from "./fields.ts";
+import SkillProficiencyFeats from "./SkillProficiencyFeats.ts";
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
@@ -39,6 +41,9 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
 
   /** Its feat pools, its flags, its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
+
+  /** A generated feat's restore leaves it its skill's name. */
+  override readonly restoresBeside = true;
 
   /** A new feat standing in for a generated ancestor is generated. */
   override readonly takesAfterAncestor = true;
@@ -83,6 +88,18 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
         firstIds: features?.ownIds,
         ids: features ? features.ids.filter((id) => !listed || listed.has(id)) : pool,
       },
+    };
+  }
+
+  /**
+   * What a feat's restore writes with it (`feat`, as the view the restore leaves has it): a generated one, which
+   * keeps the name its skill brings, takes that name again where the restore gave it its source's (its skill renamed
+   * since).
+   */
+  protected override restoredWritesOf(feat: Feat): EntityWrites | undefined {
+    if (feat.fields[FEAT_GENERATED] !== true) return undefined;
+    return {
+      renamed: [...new SkillProficiencyFeats(this.view).realign(feat), ...new ExpertiseFeats(this.view).realign(feat)],
     };
   }
 

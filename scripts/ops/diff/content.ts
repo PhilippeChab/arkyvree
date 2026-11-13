@@ -97,6 +97,8 @@ export const UNCOMPARED_COLUMNS: Record<string, string> = {
 
 /** The tables nothing compares, and why. */
 export const UNCOMPARED_TABLES: Record<string, string> = {
+  "customization.name_bindings":
+    "what the names in a row's paths mean, which a fill derives from the row's text after every seed and update: the text is compared",
   "rules.content_packages": "its versions are compared as the package drift",
   "rules.contributors": "who edits a ruleset is user data, which no seed writes",
   "rules.entity_types": REGISTRY,

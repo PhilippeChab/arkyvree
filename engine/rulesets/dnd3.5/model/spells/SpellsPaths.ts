@@ -1,5 +1,5 @@
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { NamedSegment, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
@@ -196,6 +196,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
       ...deriveSegmentLabels(NAVIGATABLE_SPELL_DC_PATHS, { dc: "DC", groups: "Schools" }),
     };
   }
+
   /**
    * The ruleset's spells, labeled by their names; and, where no other label names them, each list's possession slug
    * ("wizard" for Wizard Spells, which a spell's `known` path names), the fields its spells' values are read
@@ -212,5 +213,17 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }
     return { fallbacks, names: deriveNameLabels(dnd35.spells.map(({ name }) => name)) };
+  }
+  /**
+   * The names of a spell's path: the spell, and the list it's known on or cast from (`spells.<spell>.<list>.known`,
+   * `spells.<spell>.dc.<list>.misc`), by the list's short name. A grouping's path (`spells.groups.…`) names a school
+   * or a descriptor, no entity.
+   */
+  nameSegments(segments: readonly string[]): NamedSegment[] {
+    if (segments[1] === "groups") return [];
+    const spell = { entityType: "spells", segment: 1 };
+    if (segments[2] === "fields") return [spell];
+    const list = { entityType: "aptitudes", slugOf: SpellLists.toSpellPossessionSlug };
+    return [spell, { ...list, segment: segments[2] === "dc" ? 3 : 2 }];
   }
 }

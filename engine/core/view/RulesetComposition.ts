@@ -1,18 +1,32 @@
+import { GoneConditions, NameBindingReader } from "@/engine/core/bindings/index.ts";
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { RulesDescription } from "@/engine/core/module/index.ts";
+import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
-import type { Modifier, Requirement } from "@/shared/relations.ts";
+import type { Modifier, NameBinding, Requirement } from "@/shared/relations.ts";
 
 import type { ViewEntity, ViewLink } from "./rows.ts";
-import RulesetData, { type KindValue, type RulesetLists } from "./RulesetData.ts";
+import RulesetData, { type BoundRow, type KindValue, type RulesetLists, type SwitchedOffRow } from "./RulesetData.ts";
 import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
+
+/** The chain's rows' bindings, by the row's id, and the reader that follows them in the view. */
+interface BoundRows {
+  bindings: ReadonlyMap<string, readonly NameBinding[]>;
+  reader: NameBindingReader;
+}
 
 /** An entity's links of the roles it holds many of, in their order, and its kind (`type`). */
 interface HeldLinks {
   links: readonly ViewLink[];
   type: string;
+}
+
+/** A modifier's own conditions once those naming something gone are settled, and what its gate failed for, if it did. */
+interface SettledGate {
+  failed?: NameBinding;
+  rows: Requirement[];
 }
 
 /** What merging sibling copies made: what each loser gave its winner (`taken`), each winner's values (`merged`). */
@@ -23,6 +37,11 @@ interface SiblingMerges {
 
 /** A ruleset's own rows, none of its sources': what the server fetches for each ruleset of a chain to compose. */
 export interface RulesetRawData {
+  /**
+   * What the names in its modifiers' and requirements' paths mean, by the row's id: none for a row saved before its
+   * names were kept, which is read by its text
+   */
+  bindings?: ReadonlyMap<string, readonly NameBinding[]>;
   /** Each kind's entities as stored, by its type, an owned kind's by position and owner */
   entities: Record<string, ViewEntity[]>;
   /**
@@ -36,6 +55,8 @@ export interface RulesetRawData {
   modifiers: Modifier[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
+  /** Its id: a binding to an entity of a ruleset the chain doesn't hold pairs by name, as a reprint does */
+  rulesetId?: string;
   /** Its own Settings (its fields and its links), by its id: none for a ruleset that holds none */
   settings?: { rulesetId: string; values: StoredValues };
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list at a level) */
@@ -67,6 +88,9 @@ export interface ViewSchema {
   unionLinks: { fromType: string; role: string; toType: string }[];
 }
 
+/** No modifier's gate settled: no row of the chain has a binding. */
+const NO_GATES: ReadonlyMap<string, SettledGate> = new Map();
+
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
  * data. The copies' and siblings' exclusions apply, a sibling loser's fields, single links and customizations merge
@@ -85,7 +109,11 @@ export default class RulesetComposition {
     declared: DeclaredFields,
     schema: ViewSchema,
     words: RulesDescription["words"],
+    paired: readonly string[] = [],
+    paths?: Pick<TargetPaths, "nameSegments">,
   ) {
+    this.paired = new Set(paired);
+    this.paths = paths;
     this.words = words;
     this.chain = chain;
     this.cow = cow;
@@ -101,7 +129,16 @@ export default class RulesetComposition {
   /** The fields its modules declare: their order, and how sibling copies merge them */
   private readonly declared: DeclaredFields;
 
+  /** The kinds a name pairs across books (a feat two books print): a binding out of the chain pairs so too. */
+  private readonly paired: ReadonlySet<string>;
+
+  /** How its rules' paths write an entity's name, segment by segment: a binding is read back the same way. */
+  private readonly paths?: Pick<TargetPaths, "nameSegments">;
+
   private readonly schema: ViewSchema;
+
+  /** The modifiers and requirements the view leaves out because what they name is gone, each with what it named. */
+  private readonly switchedOff: SwitchedOffRow[] = [];
 
   /** The links whose sibling copies' merge into their winner's, each by its kind, its role and its target's kind. */
   private readonly unionLinks: ReadonlySet<string>;
@@ -223,14 +260,17 @@ export default class RulesetComposition {
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
     const { entities, leftOut, merged, taken } = this.composeEntities();
-    const { modifiers, excludedModifierIds } = this.composeModifiers(leftOut);
+    const bound = this.readBindings(entities);
+    const { modifiers, excludedModifierIds, gates } = this.composeModifiers(leftOut, bound);
     return {
       entities,
       kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, { merged, taken }),
       linksOf: (entityId: string) => this.composeLinks(entityId),
       tierListIds: this.composeTierListIds(),
       modifiers,
-      requirements: this.composeRequirements(leftOut, excludedModifierIds),
+      requirements: this.composeRequirements(leftOut, excludedModifierIds, bound, gates),
+      readRows: (rows, bindings, keepGone) => this.readOwnRows(rows, bindings, entities, keepGone),
+      switchedOff: this.switchedOff,
       settings: new Map(
         this.chain.flatMap(({ settings }) => (settings ? [[settings.rulesetId, settings.values]] : [])),
       ),
@@ -242,13 +282,15 @@ export default class RulesetComposition {
    * loser's the merge leaves out (`SiblingMerge.mergeModifiers`); the rest of a loser's move to its winner. Every
    * modifier left out is excluded, its requirements with it.
    */
-  private composeModifiers(leftOut: ReadonlySet<string>) {
+  private composeModifiers(leftOut: ReadonlySet<string>, bound: BoundRows | null) {
     const siblingRows = new SiblingRows<Modifier>(this.cow);
     const excludedModifierIds = new Set<string>();
+    const gates = bound ? this.settleGates(bound) : NO_GATES;
     for (const raw of this.chain) {
       for (const m of raw.modifiers) {
         const isVisible = !this.cow.isOverridden(m.sourceId) && !leftOut.has(m.sourceId);
-        if (isVisible) siblingRows.add(m, m.sourceId);
+        const read = isVisible ? this.readRow(m, "modifier", m.sourceId, bound, gates.get(m.id)?.failed) : null;
+        if (read) siblingRows.add(read, m.sourceId);
         else excludedModifierIds.add(m.id);
       }
     }
@@ -256,7 +298,11 @@ export default class RulesetComposition {
     const taken = new Set(groups.flatMap(({ own, siblings }) => SiblingMerge.mergeModifiers(own, siblings)));
     for (const m of groups.flatMap(({ siblings }) => siblings.flat())) if (!taken.has(m)) excludedModifierIds.add(m.id);
 
-    return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
+    return {
+      excludedModifierIds,
+      gates,
+      modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })),
+    };
   }
 
   /**
@@ -264,16 +310,20 @@ export default class RulesetComposition {
    * copied entity and an owned entity the view leaves out; a sibling loser's merge into its winner's as trees
    * (`SiblingMerge.mergeRequirements`, which `EntityCopy` writes the same way), after the rest.
    */
-  private composeRequirements(leftOut: ReadonlySet<string>, excludedModifierIds: Set<string>): Requirement[] {
+  private composeRequirements(
+    leftOut: ReadonlySet<string>,
+    excludedModifierIds: Set<string>,
+    bound: BoundRows | null,
+    gates: ReadonlyMap<string, SettledGate>,
+  ): Requirement[] {
     const siblingRows = new SiblingRows<Requirement>(this.cow);
     for (const raw of this.chain) {
-      for (const r of raw.requirements) {
-        const isVisible =
-          r.entityType === CUSTOMIZATION_TYPES.modifier
-            ? !excludedModifierIds.has(r.entityId)
-            : !this.cow.isOverridden(r.entityId) && !leftOut.has(r.entityId);
-        if (isVisible) siblingRows.add(r, r.entityId);
-      }
+      const visible = raw.requirements.filter((r) =>
+        r.entityType === CUSTOMIZATION_TYPES.modifier
+          ? !excludedModifierIds.has(r.entityId)
+          : !this.cow.isOverridden(r.entityId) && !leftOut.has(r.entityId),
+      );
+      for (const r of this.readRequirements(visible, bound, gates)) siblingRows.add(r, r.entityId);
     }
     return siblingRows.withMerged(
       siblingRows
@@ -344,6 +394,120 @@ export default class RulesetComposition {
       merged.set(row.id, merging.values);
       return { ...row, ...merging.values };
     });
+  }
+
+  /**
+   * What reading the chain's rows by their bindings takes: every row's bindings by its id, and their reader over the
+   * entities the view shows. None when no row of the chain has a binding: each is then read by its text, as stored.
+   */
+  private readBindings(entities: ReadonlyMap<string, readonly ViewEntity[]>): BoundRows | null {
+    const bindings = new Map(this.chain.flatMap((raw) => [...(raw.bindings ?? [])]));
+    return bindings.size === 0 ? null : { bindings, reader: this.readerOver(entities) };
+  }
+
+  /** A reader of bindings over the entities the view shows (`entities`, by kind). */
+  private readerOver(entities: ReadonlyMap<string, readonly ViewEntity[]>): NameBindingReader {
+    const names = new Map<string, Map<string, string>>();
+    for (const [type, rows] of entities) names.set(type, new Map(rows.map((row) => [row.id, row.name])));
+    const chain = new Set([...this.cow.sourceChain, ...this.chain.flatMap((raw) => raw.rulesetId ?? [])]);
+    return new NameBindingReader(this.cow, { chain, names, paired: this.paired, paths: this.paths });
+  }
+
+  /**
+   * Rows the view doesn't hold (`rows`: a character's own modifiers, with their `bindings`) read as its own are: their
+   * text in the view's names, one whose entity is gone left out, or kept as stored (`keepGone`).
+   */
+  private readOwnRows<R extends BoundRow>(
+    rows: R[],
+    bindings: readonly NameBinding[],
+    entities: ReadonlyMap<string, readonly ViewEntity[]>,
+    keepGone: boolean,
+  ): R[] {
+    if (bindings.length === 0) return rows;
+    const reader = this.readerOver(entities);
+    const byRow = Map.groupBy(bindings, (binding) => (binding.modifierId ?? binding.requirementId)!);
+    return rows.flatMap((row) => {
+      const read = reader.read(row, byRow.get(row.id));
+      if (!read.gone) return [read.row];
+      return keepGone ? [row] : [];
+    });
+  }
+
+  /**
+   * The requirements the view shows of one ruleset (`rows`) read by their bindings, owner by owner: an entity's
+   * conditions that name something gone are dropped (`GoneConditions`, what it needs), each recorded; a modifier's own
+   * are those its gate was settled to (`gates`).
+   */
+  private readRequirements(
+    rows: Requirement[],
+    bound: BoundRows | null,
+    gates: ReadonlyMap<string, SettledGate>,
+  ): Requirement[] {
+    if (!bound) return rows;
+    return [...Map.groupBy(rows, (r) => r.entityId)].flatMap(([ownerId, own]) => {
+      const gate = own[0].entityType === CUSTOMIZATION_TYPES.modifier ? gates.get(ownerId) : undefined;
+      return gate ? gate.rows : this.settleConditions(own, "need", bound).rows;
+    });
+  }
+
+  /**
+   * A modifier read by its bindings: its text in the view's names, or null for one whose entity is gone (or whose
+   * gate fails for what's gone, `gate`), which is recorded and left out. One whose value names an entity that is gone
+   * is read by its text, as it was: leaving it out would undo what it set.
+   */
+  private readRow<R extends Modifier | Requirement>(
+    row: R,
+    of: SwitchedOffRow["of"],
+    ownerId: string,
+    bound: BoundRows | null,
+    gate?: NameBinding,
+  ): R | null {
+    if (!bound) return row;
+    const read = bound.reader.read(row, bound.bindings.get(row.id));
+    const gone = gate ?? read.gone;
+    if (!gone) return read.row;
+    this.switchedOff.push({ id: row.id, named: gone, of, ownerId });
+    return null;
+  }
+
+  /**
+   * One owner's conditions (`rows`) read by their bindings, those that name something gone settled as its mode says
+   * (`GoneConditions`): what's left of them, and the binding the gate fails for, when it does. A condition whose value
+   * is the name of an entity that is gone stays, marked so (`valueGone`): it's evaluated as of a name nobody has, and
+   * shown and saved with the value it stores.
+   */
+  private settleConditions(rows: Requirement[], mode: "gate" | "need", bound: BoundRows): SettledGate {
+    const gone: Requirement[] = [];
+    let named: NameBinding | undefined;
+    const read = rows.map((r) => {
+      const result = bound.reader.read(r, bound.bindings.get(r.id));
+      const off = result.gone ?? result.goneValue;
+      if (!off) return result.row;
+      this.switchedOff.push({ id: r.id, named: off, of: "requirement", ownerId: r.entityId });
+      if (!result.gone) return { ...result.row, valueGone: true };
+      gone.push(r);
+      named ??= result.gone;
+      return r;
+    });
+    if (gone.length === 0) return { rows: read };
+    const settled = new GoneConditions(read, mode).settle(gone);
+    return { ...(settled.failed && { failed: named }), rows: settled.rows };
+  }
+
+  /**
+   * The modifiers' own conditions that name something gone, settled (`GoneConditions`, when a bonus applies), by the
+   * modifier: what's left of its conditions, and, when its gate fails, what it failed for.
+   */
+  private settleGates(bound: BoundRows): Map<string, SettledGate> {
+    const gates = new Map<string, SettledGate>();
+    for (const raw of this.chain) {
+      const own = raw.requirements.filter((r) => r.entityType === CUSTOMIZATION_TYPES.modifier);
+      for (const [modifierId, rows] of Map.groupBy(own, (r) => r.entityId)) {
+        if (rows.some((r) => bound.bindings.has(r.id)))
+          gates.set(modifierId, this.settleConditions(rows, "gate", bound));
+      }
+    }
+    return gates;
   }
 
   build(): RulesetData {

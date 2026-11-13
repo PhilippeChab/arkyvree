@@ -19,13 +19,15 @@ import {
   type ViewLink,
 } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import type { Modifier, Requirement } from "@/shared/relations.ts";
+import type { Modifier, NameBinding, Requirement } from "@/shared/relations.ts";
 
 import Modules from "./Modules.ts";
 import StorageEngine from "./StorageEngine.ts";
 
 /** A ruleset's own stored rows, as the server reads them for its view (`buildRawData`). */
 export interface StoredRulesetRows {
+  /** What the names in its modifiers' and requirements' paths mean, as stored beside them: none read, none kept */
+  bindings?: NameBinding[];
   /** Its live entities, every kind's, by name then id */
   entities: StoredEntity[];
   /** Every modifier whose source is one of its entities, every requirement of them or of those modifiers */
@@ -33,6 +35,8 @@ export interface StoredRulesetRows {
   requirements: Requirement[];
   /** Its own settings, none when it holds none */
   ruleset?: StoredRuleset;
+  /** Its id */
+  rulesetId?: string;
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list's at a level) */
   tierListIds: Set<string>;
 }
@@ -98,6 +102,8 @@ export default class CopyOnWriteEngine {
     }
     const { ruleset } = stored;
     return {
+      bindings: Map.groupBy(stored.bindings ?? [], (binding) => (binding.modifierId ?? binding.requirementId)!),
+      ...(stored.rulesetId !== undefined && { rulesetId: stored.rulesetId }),
       entities,
       kindValues: storage.kindValues(stored.entities),
       links,
@@ -126,6 +132,8 @@ export default class CopyOnWriteEngine {
       this.storage.declaredFields(),
       this.storage.viewSchema(),
       Modules.of(this.baseRules).ruleset.describeRules().words,
+      [...this.storage.namesakeKinds("identity"), ...this.storage.namesakeKinds("reprints")],
+      Modules.of(this.baseRules).targetPaths,
     ).build();
   }
 

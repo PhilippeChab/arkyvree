@@ -2,7 +2,7 @@ import { Engine } from "@/engine/index.ts";
 import { RulesetViews, type SharedRulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, Modifiers } from "@/server/repositories/index.ts";
+import { Activities, Modifiers, NameBindings } from "@/server/repositories/index.ts";
 import { getRowReadableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { withCharacterWrite, withLockedCharacter } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -30,10 +30,14 @@ class CharacterModifiersService {
     body: { operator: string; target: string; value: string },
   ) {
     return await withCharacterWrite(session, characterId, async (tx, scope, character) => {
-      const row = await this.planModifier(scope, body);
+      const { bindings, row } = await this.planModifier(scope, body);
 
       const rows = await Modifiers.create(tx, { sourceId: characterId, sourceType: "characters", ...row });
       const modifier = rows[0];
+      await NameBindings.createMany(
+        tx,
+        bindings.map((binding) => ({ ...binding, modifierId: modifier.id })),
+      );
 
       const { operator, target, value } = row;
       await Activities.create(tx, {
@@ -87,7 +91,10 @@ class CharacterModifiersService {
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const modifier = await Modifiers.findOne(db, { id: modifierId, sourceId: characterId, sourceType: "characters" });
       const paths = await RulesetViews.getTargetPaths(scope, "modifier");
-      const [described] = modifier ? Engine.for(scope).targetPaths().describeModifiers(paths, [modifier]) : [];
+      const bindings = await NameBindings.findMany(db, { modifierIds: [modifierId], requirementIds: [] });
+      const [described] = modifier
+        ? Engine.for(scope).targetPaths().describeModifiers(paths, [modifier], bindings)
+        : [];
       if (!described) throw new NotFoundError("Modifier not found");
       return described;
     });
@@ -98,10 +105,14 @@ class CharacterModifiersService {
     const character = await getRowReadableCharacter(db, session, characterId);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
+    const bindings = await NameBindings.findMany(db, {
+      modifierIds: modifiers.map((modifier) => modifier.id),
+      requirementIds: [],
+    });
     return await withRulesetScope(db, character.rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .describeModifiers(await RulesetViews.getTargetPaths(scope, "modifier"), modifiers),
+        .describeModifiers(await RulesetViews.getTargetPaths(scope, "modifier"), modifiers, bindings),
     );
   }
 
@@ -119,12 +130,18 @@ class CharacterModifiersService {
       });
       if (!existing) throw new NotFoundError("Modifier not found");
 
-      const row = await this.planModifier(scope, body);
+      const { bindings, row } = await this.planModifier(scope, body);
 
       const rows = await Modifiers.update(tx, row, { id: modifierId, expectedUpdatedAt: body.updatedAt });
       if (body.updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const modifier = rows[0];
+      // Its names are kept anew, with the text it now stores
+      await NameBindings.delete(tx, { modifierId });
+      await NameBindings.createMany(
+        tx,
+        bindings.map((binding) => ({ ...binding, modifierId })),
+      );
 
       const { operator, target, value } = row;
       await Activities.create(tx, {

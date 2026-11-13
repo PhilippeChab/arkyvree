@@ -176,7 +176,7 @@ describe("TargetPathsService", () => {
       withRulesetScope(db, rulesetId, async (scope) => {
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
         return Engine.for(scope).targetPaths().planModifier(catalogs, "characters", { operator: "add", target, value })
-          .valueType;
+          .row.valueType;
       });
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");

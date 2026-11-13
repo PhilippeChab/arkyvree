@@ -2,7 +2,7 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { OwnerFields, RulesDescription } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
+import type { Modifier, NameBinding, Requirement, Ruleset } from "@/shared/relations.ts";
 import type { RulesWord } from "@/shared/rulesets.ts";
 import { toSentenceCase } from "@/shared/text.ts";
 
@@ -13,6 +13,13 @@ interface Indices {
   modifiersById: Map<string, Modifier>;
   modifiersBySource: Map<string, Modifier[]>;
   requirementsByEntity: Map<string, Requirement[]>;
+}
+
+/** A row read by its bindings: its id, and the text its names sit in. */
+export interface BoundRow {
+  id: string;
+  target: string | null;
+  value: string | null;
 }
 
 /**
@@ -34,9 +41,16 @@ export interface RulesetLists {
   /** An entity's links (`entityId`, one the view shows), as the view composes them: built when they're first read */
   linksOf(entityId: string): readonly ViewLink[];
   modifiers: Modifier[];
+  /**
+   * Rows the view doesn't hold (a character's own modifiers), read by their bindings as its own are: their text in
+   * the view's names, one whose entity is gone left out
+   */
+  readRows?<R extends BoundRow>(rows: R[], bindings: readonly NameBinding[], keepGone: boolean): R[];
   requirements: Requirement[];
   /** Each ruleset's of its chain own Settings (its fields and its links), by its id: one that holds none left out */
   settings: ReadonlyMap<string, StoredValues>;
+  /** The modifiers and requirements the view leaves out because what they name is gone */
+  switchedOff?: readonly SwitchedOffRow[];
   /** The entities a link with a tier points at (a spell list at a level) */
   tierListIds: Set<string>;
 }
@@ -45,6 +59,17 @@ export interface RulesetLists {
 export interface RulesetView {
   ruleset: Ruleset;
   rulesetData: RulesetData;
+}
+
+/**
+ * A modifier or a requirement (`id`, on `ownerId`) the view leaves out because the entity one of its names means is
+ * gone (`named`: the binding, with the name it had), which nothing stands for there.
+ */
+export interface SwitchedOffRow {
+  id: string;
+  named: NameBinding;
+  of: "modifier" | "requirement";
+  ownerId: string;
 }
 
 /**
@@ -95,6 +120,8 @@ export default class RulesetData {
     this.requirements = lists.requirements;
     this.tierListIds = lists.tierListIds;
     this.settings = lists.settings;
+    this.switchedOff = lists.switchedOff ?? [];
+    this.readBoundRows = (rows, bindings, keepGone) => lists.readRows?.(rows, bindings, keepGone) ?? rows;
     this.cow = cow;
   }
 
@@ -176,6 +203,13 @@ export default class RulesetData {
 
   private readonly modifiers: Modifier[];
 
+  /** Reads rows the view doesn't hold by their bindings, as the composition reads its own. */
+  private readonly readBoundRows: <R extends BoundRow>(
+    rows: R[],
+    bindings: readonly NameBinding[],
+    keepGone: boolean,
+  ) => R[];
+
   private readonly requirements: Requirement[];
 
   /** Each ruleset's of its chain own Settings, by its id. */
@@ -190,7 +224,9 @@ export default class RulesetData {
    */
   readonly cow: CowData;
 
-  /** The entities a link with a tier points at, from any ruleset (a spell list at a level). */
+  /** The modifiers and requirements the view leaves out because what they name is gone. */
+  readonly switchedOff: readonly SwitchedOffRow[];
+
   readonly tierListIds: Set<string>;
 
   /** A kind's entities by id (`type`): as stored, and resolving a stored id, each built once. */
@@ -388,6 +424,15 @@ export default class RulesetData {
    */
   positionNameOf(type: string, position: number): string {
     return `${RulesetData.positionWordIn(this.words, type).one} ${position}`;
+  }
+
+  /**
+   * Rows the view doesn't hold (a character's own modifiers), read by their bindings as the view's own are: their
+   * text in the view's names, and one whose entity is gone left out, or kept as stored (`keepGone`: a list that shows
+   * every row, so each can still be edited or removed).
+   */
+  readRows<R extends BoundRow>(rows: R[], bindings: readonly NameBinding[], keepGone = false): R[] {
+    return this.readBoundRows(rows, bindings, keepGone);
   }
 
   /** entityId → its requirements (a sibling's merged into its winner's). */

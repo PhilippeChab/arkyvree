@@ -72,7 +72,8 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
     const { entity } = this;
     if (sourceModifierId)
       this.findOwn(entity.id, sourceModifierId, `Source ${this.label.toLowerCase()} not found for this entity`);
-    return { entity, row: ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body) };
+    const row = ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body);
+    return { bindings: this.bind(targetPaths, row), entity, row };
   }
 
   /** Deleting one of the entity's modifiers: the entity and the modifier, as the view has them. */
@@ -84,6 +85,8 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
   /** An edit of one of the entity's modifiers: the entity and the modifier, and the row it stores, checked. */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
     const row = ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body);
-    return { ...this.planDelete(modifierId), row };
+    const plan = this.planDelete(modifierId);
+    // The row stores the text it's sent, the view's: its names are read anew with it, so text and meaning agree
+    return { ...plan, bindings: this.bind(targetPaths, row), row };
   }
 }

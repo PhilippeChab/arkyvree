@@ -73,7 +73,8 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
    * own modifiers' (`rows.requirements`, which the view misses).
    */
   private collectModifiers(rows: CharacterRows, rulesetData: RulesetData, sources: ModifierSource[]) {
-    const modifiers: Modifier[] = [...rows.modifiers];
+    // Its own modifiers, read by what their names mean in the view, as the view's own are
+    const modifiers: Modifier[] = [...rulesetData.readRows(rows.modifiers, rows.bindings ?? [])];
     const requirementGroups: Requirement[][] = [];
     for (const source of sources) {
       modifiers.push(...source.modifiers);

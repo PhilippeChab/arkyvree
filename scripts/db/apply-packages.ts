@@ -8,7 +8,10 @@
 import { applyPackages } from "@/database/packages/runner.ts";
 import { db } from "@/server/database/index.ts";
 
+import fillNameBindings from "./fillNameBindings.ts";
+
 console.log("Applying content packages...");
 await applyPackages(db);
+console.log(`${await fillNameBindings(db)} rows given what their paths name`);
 console.log("Done.");
 process.exit(0);

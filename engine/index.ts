@@ -37,6 +37,8 @@ export type {
   EntityGroupMember,
   EntityRecord,
   EntityRemoval,
+  EntityRename,
+  EntityRevival,
   EntityWrite,
   EntityWrites,
   FieldsRequest,

@@ -1,4 +1,4 @@
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { NamedValue, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd5Components } from "@/engine/rulesets/dnd5/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
@@ -8,6 +8,7 @@ import {
   type OperatorKind,
   type TargetPath,
 } from "@/shared/customization/target.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5/characterKinds.ts";
 
 const NAVIGATABLE_BACKGROUND_PATHS = [
   { path: "name", description: "Background name (e.g., Sage)", type: "string" as const, requirementOnly: true },
@@ -118,5 +119,13 @@ export default class IdentityPaths implements PathCategory<Dnd5Components> {
       ],
       { physiology: "Physiology", beliefs: "Beliefs", background: "Background", meta: "Meta", ...SEGMENT_LABELS },
     );
+  }
+
+  /** A character's species' name is a player's species', and its background's a background's. */
+  valueNames(path: string): NamedValue | undefined {
+    if (path === "identity.background.name") return { entityType: "backgrounds" };
+    return path === "identity.physiology.species.name"
+      ? { entityType: "species", partition: PLAYER_CHARACTER_KIND }
+      : undefined;
   }
 }

@@ -133,6 +133,18 @@ export default class CowData {
     };
   }
 
+  /** The entity an entity stands for: what it copied, and what that copied, to the one that copies none. */
+  originalOf(id: string): string {
+    let original = id;
+    const seen = new Set([id]);
+    for (let source = this.sources.get(original); source !== undefined && !seen.has(source);) {
+      original = source;
+      seen.add(source);
+      source = this.sources.get(original);
+    }
+    return original;
+  }
+
   /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */
   resolve(id: string): string {
     return this.aliases.get(id) ?? id;
