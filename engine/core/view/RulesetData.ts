@@ -433,9 +433,10 @@ export default class RulesetData {
   /**
    * The view's entity the rules' own words name (`name`, of `type`: the skill the rules call "Hide", the pool they
    * call "General"): what stands, in this view, for the entity the base rules made under that name (the ruleset's
-   * copy of it, whatever it renamed it), never another entity the ruleset gave that name since. None when the ruleset
-   * deleted it. A name no ruleset of the chain made is read among the view's own names. Among a partition's entities
-   * when one is given (`partition`: a familiar's race, where a kind's partitions each have one of a name).
+   * copy of it, whatever it renamed it), never another entity the ruleset gave that name since. A name no ruleset of the
+   * chain made, or whose entity the ruleset deleted, is read among the view's own names, by its key: a skill a fork
+   * made again as "Speak language" once it deleted Speak Language stands for it. Among a partition's entities when one
+   * is given (`partition`: a familiar's race, where a kind's partitions each have one of a name).
    */
   named(type: string, name: string, partition?: string): ViewEntity | undefined {
     const slug = stripSeparators(name);
@@ -443,20 +444,21 @@ export default class RulesetData {
     if (this.namedEntities.has(key)) return this.namedEntities.get(key);
     const originalId = this.originalOf(type, slug, partition);
     const entity =
-      originalId === undefined
-        ? this.slugIndexOf(type)
-            .get(slug)
-            ?.find((row) => partition === undefined || row.partition === partition)
-        : this.byId(type).get(originalId);
+      (originalId === undefined ? undefined : this.byId(type).get(originalId)) ??
+      this.slugIndexOf(type)
+        .get(slug)
+        ?.find((row) => partition === undefined || row.partition === partition);
     this.namedEntities.set(key, entity);
     return entity;
   }
 
   /**
    * The view's entity named after another (`owner`, of `ownerType`), its name built from the owner's (`nameOf`: a
-   * class's own feature pool, "Rogue Class Feature"): the one named after the owner's name in the view (`named`, which
-   * finds the pool a page made for a class the ruleset renamed, "Roublard Class Feature"), else the one named after
-   * the name the rules know the owner by (`rulesNameOf`: "Rogue Class Feature", whatever the ruleset calls it now).
+   * class's own feature pool, "Rogue Class Feature"): the one named after the name the rules know the owner by
+   * (`rulesNameOf`: "Rogue Class Feature", whatever the ruleset calls it now), else the one named after its name in the
+   * view (the pool a page made for a class the ruleset renamed, "Roublard Class Feature"). A name a ruleset of the chain
+   * made is its owner's alone, the one the rules know by the name it's built from: a fork that renamed its rogue
+   * "Roublard", then made a class "Rogue", leaves the new class without "Rogue Class Feature", which stays Roublard's.
    */
   namedAfter(
     type: string,
@@ -464,10 +466,13 @@ export default class RulesetData {
     owner: { id: string; name: string },
     nameOf: (ownerName: string) => string,
   ): ViewEntity | undefined {
-    const own = this.named(type, nameOf(owner.name));
-    if (own) return own;
-    const rulesName = this.rulesNameOf(ownerType, owner);
-    return rulesName === owner.name ? undefined : this.named(type, nameOf(rulesName));
+    for (const ownerName of new Set([this.rulesNameOf(ownerType, owner), owner.name])) {
+      const name = nameOf(ownerName);
+      const entity = this.named(type, name);
+      const made = this.originalOf(type, stripSeparators(name)) !== undefined;
+      if (entity && (!made || this.named(ownerType, ownerName)?.id === owner.id)) return entity;
+    }
+    return undefined;
   }
 
   /**

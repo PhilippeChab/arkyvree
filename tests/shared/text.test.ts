@@ -59,6 +59,23 @@ describe("Text", () => {
     expect(stripSeparators("ЛАЗАНИЕ")).toBe(stripSeparators("лазание"));
     expect(stripSeparators("Лазание (Скалы)")).toBe("лазаниескалы");
   });
+
+  test("keeps another script's marks and signs, so names that differ by them have keys of their own", () => {
+    const pairs = [
+      ["कला", "काल"],
+      ["กิน", "กน"],
+      ["ビール", "ビル"],
+    ];
+    for (const [one, other] of pairs) expect(stripSeparators(one)).not.toBe(stripSeparators(other));
+    expect(stripSeparators("ビール")).toBe("ビール");
+    // A Latin letter's mark stays out, as it always did: written apart, its letter stays
+    expect([stripSeparators("Discre\u0301tion"), stripSeparators("Discrétion")]).toEqual(["discretion", "discrtion"]);
+  });
+
+  test("lowercases a word of another script whole: a Greek name's final sigma is one letter, however it's cased", () => {
+    expect(stripSeparators("ΟΔΟΣ")).toBe(stripSeparators("Οδος"));
+    expect(stripSeparators("Οδος Ήλιου")).toBe(stripSeparators("ΟΔΟΣ ΉΛΙΟΥ"));
+  });
 });
 
 describe("A value", () => {

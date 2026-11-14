@@ -267,7 +267,9 @@ Speak Language), 5e's passive Perception, the pools general feats and racial pic
 toward, a familiar's or a companion's stat block (its race, its feats, its skills, its
 saves). The engine finds each by the name it was made under (`RulesetData.named`), never
 by the name the view shows: a ruleset built on the base rules renames its copy of it,
-and the rules keep finding it, as a translation needs. The reverse, the name the rules
+and the rules keep finding it, as a translation needs. Once the ruleset deleted it, the
+rules find the entity the view shows under its key: a fork that deletes Speak Language
+and makes "Speak language" keeps its ranks giving languages. The reverse, the name the rules
 know an entity by (`rulesNameOf`), keys a stat block's table. A ruleset can't rename the
 General pool where it made it (a base rules'), where its name is the rules' own.
 `tests/engine/rulesets/rulesNames.test.ts` renames every entity of each kind in a fork
@@ -277,11 +279,13 @@ The wizard's list a specialist's prohibited schools leave spells out of (3.5's W
 Spells) and 5e's Ability Score Improvement pool are found the same way. A class's own
 feature pool ("Rogue Class Feature", 5e's "Rogue Features") and its own spell list
 ("Wizard Spells") are named after it (`RulesetData.namedAfter`): first the one named
-after the class's name in the view, then the one named after the name the rules know
-the class by. A fork that calls its rogue "Roublard" keeps its "Rogue Class Feature",
-whatever it calls that pool; a pool a page makes for a class the fork made, or renamed
-before the pool existed, takes the class's name ("Witch Class Feature"), which the first
-lookup finds the next time.
+after the name the rules know the class by, then the one named after its name in the
+view. A fork that calls its rogue "Roublard" keeps its "Rogue Class Feature", whatever it
+calls that pool; a pool a page makes for a class the fork made, or renamed before the
+pool existed, takes the class's name ("Witch Class Feature"), which the second lookup
+finds the next time. A pool a ruleset made is the class's the rules know by the name it's
+built from: a fork that renames its rogue "Roublard", then makes a class "Rogue", leaves
+"Rogue Class Feature" to Roublard, and the new rogue has no pool of its own yet.
 
 A skill's subtypes and its family go by every name a skill goes by: its own and the
 rules' (`RulesetData.namesOf`). A class's class skill Craft keeps the "Craft (Alchemy)" a
@@ -297,13 +301,19 @@ Secret one no pick takes, 5e's Rare one only an extra pick takes). Their forms o
 list's values alone, and the API refuses another.
 
 The rules read an entity by its name's key, its slug (`stripSeparators`): its unaccented
-Latin letters and its digits, lowercased, and its letters of another script, lowercased
-too ("Лазание" is `лазание`), so a name in Cyrillic, Greek or Chinese has a key of its
-own, and every key a Latin name had before stays as it was. Two entities of a kind whose
-names share a key would be one to the rules ("dodge" would pass for Dodge), so a create,
-a rename or a restore whose name has the key of another the view shows is refused
-(`EntityNames`), but a new case of an entity's own name ("DODGE"). The paths' grammar
-reads a key's letters of any script (`SLUG_CHARACTER`, a template's bare names).
+Latin letters and its digits, lowercased, and its letters, digits and signs of another
+script with the marks that follow them (a Hindi or Thai vowel sign), each word of them
+lowercased whole ("Лазание" is `лазание`, Greek "ΟΔΟΣ" and "Οδος" are one), so a name in
+Cyrillic, Greek, Hindi or Japanese has a key of its own, and every key a Latin name had
+before stays as it was. Two entities of a kind a path names (an ability, a save, a
+class, a feat, a skill, a language, a pool, a spell: `pathNamedKindsOf`) whose names
+share a key would be one to the rules ("dodge" would pass for Dodge), so a create, a
+rename or a restore whose name has the key of another the view shows, in any partition,
+is refused (`EntityNames`), but a new case of an entity's own name ("DODGE"). No path
+names an item, so two items may differ by a sign alone ("+2" and "-2"). A subscribe or
+an unsubscribe compares exact names only: a book's "dodge" beside a fork's "Dodge" gets
+through. The paths' grammar reads a key's characters of any script (`SLUG_CHARACTER`, a
+template's bare names).
 
 ### Restoring an override
 

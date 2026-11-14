@@ -25,6 +25,7 @@ import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { addCharacterLevel, findClassLevel, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset, ownerSessionOf, readView } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A pool or a list as a progression's answer names it. */
 interface PoolRef {
@@ -157,6 +158,40 @@ describe("a class's own feature pool and spell list", () => {
       ownSpellList: PoolRef;
     };
     expect(progression.ownSpellList).toEqual({ id: aptMap["Wizard Spells"], name: "Wizard Spells" });
+  });
+});
+
+describe("a homebrew class named as one the fork renamed", () => {
+  test("takes neither the renamed class's feature pool nor its spell list", async () => {
+    const { fork, session } = await createFork();
+    const { aptMap, classMap } = await getSeedCtx();
+    const pool = await findNamed(fork.id, "aptitudes", "Rogue Class Feature");
+    await rename(session, fork.id, "classes", classMap.pc["Rogue"], "Roublard");
+    await rename(session, fork.id, "classes", classMap.pc["Wizard"], "Magicien");
+    const create = async (name: string) =>
+      (await EntitiesService.createEntity(session, fork.id, "classes", { name, fields: { [CLASS_HD]: 6 } })).id;
+    const own = async (classId: string) =>
+      (await EntitiesService.getProgression(session, fork.id, "classes", classId)) as {
+        ownFeaturePool: PoolRef;
+        ownSpellList: PoolRef;
+      };
+
+    const rogue = await own(await create("Rogue"));
+    const wizard = await own(await create("Wizard"));
+    expect([rogue.ownFeaturePool.id, wizard.ownSpellList.id]).toEqual([null, null]);
+    // The renamed ones keep theirs
+    expect((await own(classMap.pc["Rogue"])).ownFeaturePool.id).toBe(pool.id);
+    expect((await own(classMap.pc["Wizard"])).ownSpellList.id).toBe(aptMap["Wizard Spells"]);
+  });
+});
+
+describe("a skill the rules name, deleted and made again in a new case", () => {
+  test("is the one the rules find", async () => {
+    const { fork, session } = await createFork();
+    const { skillMap } = await getSeedCtx();
+    await EntitiesService.deleteEntity(session, fork.id, "skills", skillMap["Speak Language"]);
+    const made = await createSkill(session, fork.id, "Speak language");
+    expect((await readView(fork.id)).named("skills", "Speak Language")?.id).toBe(made.id);
   });
 });
 

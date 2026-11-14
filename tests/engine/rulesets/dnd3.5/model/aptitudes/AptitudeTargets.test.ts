@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 describe("the aptitudes' target grammar", () => {
   test("read a list's pool, its spell levels' slots and uses, and its join, by the list's slug", () => {
@@ -29,6 +30,9 @@ describe("the aptitudes' target grammar", () => {
       field: "allowed",
     });
     expect(AptitudeTargets.parseJoin("aptitudes.魔法.joinsclasslist")).toBe("魔法");
+    // A letter no lowercase has, a mark, a sign of the script
+    for (const name of ["ϒ Spells", "कला", "ビール"])
+      expect(AptitudeTargets.parsePool(`aptitudes.${stripSeparators(name)}.allowed`)).toBe(stripSeparators(name));
   });
 
   test("tell the shapes apart: a pool is no spell level, a slot's uses no pool or slot allowed, a join neither", () => {

@@ -452,7 +452,7 @@ test("a name that differs from one the view shows only in case or punctuation is
     EntitiesService.createEntity(session, fork.id, "feats", { name, links: { listedIn: [{ toId: general.id }] } });
   const keyError = (name: string, taken: string) =>
     new ConflictError(
-      `"${name}" differs from "${taken}" only in case, spaces or punctuation: the rules would read them as one name`,
+      `"${name}" and "${taken}" read as one name to the rules: they differ only in case, spaces or signs`,
     );
 
   // A homebrew "dodge" would pass for the core Dodge, Mobility's prerequisite
@@ -488,7 +488,14 @@ test("restoring a copy whose source's name another feat now has under its key is
 
   expect(RulesetChangesService.revertOverride(session, fork.id, "feats", source.id)).rejects.toEqual(
     new ConflictError(
-      `"Alertness" differs from "alertness" only in case, spaces or punctuation: the rules would read them as one name`,
+      `"Alertness" and "alertness" read as one name to the rules: they differ only in case, spaces or signs`,
     ),
   );
+});
+
+test("an item's name may differ from another's only in a sign: no rule names an item", async () => {
+  const { session, fork } = await setup();
+  const charm = (name: string) => EntitiesService.createEntity(session, fork.id, "items", { name });
+  expect(await charm("Charm of Gizmos +2")).toMatchObject({ name: "Charm of Gizmos +2" });
+  expect(await charm("Charm of Gizmos -2")).toMatchObject({ name: "Charm of Gizmos -2" });
 });

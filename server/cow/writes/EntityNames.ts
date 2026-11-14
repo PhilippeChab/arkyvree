@@ -22,12 +22,12 @@ interface NamedEntity {
 const NAME_INDEX = "entities_name_unique_idx";
 
 /**
- * The refusal of a name (`name`) whose key (`stripSeparators`) is another's the view shows (`taken`): the rules read
- * both as one name.
+ * The refusal of a name (`name`) whose key (`stripSeparators`) is another's the view shows (`taken`): a path names an
+ * entity by its key, so the rules read both as one name.
  */
 function toKeyError(name: string, taken: string) {
   return new ConflictError(
-    `"${name}" differs from "${taken}" only in case, spaces or punctuation: the rules would read them as one name`,
+    `"${name}" and "${taken}" read as one name to the rules: they differ only in case, spaces or signs`,
   );
 }
 
@@ -44,8 +44,8 @@ function toOwnNameError(name: string) {
  * any partition for a kind a path names by its name alone (a class: `classes.familiar.level` would name two), the
  * ruleset's own or an inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block
  * its name, and one whose local copy was deleted left a tombstone snapshot, which a new entity of its name and
- * partition takes over (`repointTombstone`), so the inherited one stays hidden. Nor does it show two names of one key,
- * which the rules read entities by (`stripSeparators`: "Dodge" and "dodge"), among the same entities. Its instance
+ * partition takes over (`repointTombstone`), so the inherited one stays hidden. Nor does it show two names of one key
+ * of a kind a path names (`stripSeparators`: "Dodge" and "dodge"), which a path reads as one. Its instance
  * methods take the transaction; its static `withNameRefusal` runs a write that takes a name, answering the name index
  * as the checks do.
  */
@@ -200,18 +200,19 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses names (`names`, of `entityType`, in `partition`) whose key (`stripSeparators`: "dodge" for "Dodge" and
-   * "dodge") another entity the view shows has under another name among the entities a name is taken against
-   * (`rivalsOf`), the ruleset's own or a visible inherited one, but those of `ignored` (by id); and two of `names` of
-   * one key. A name of no key (a mark alone) is left to the other checks.
+   * Refuses names (`names`, of `entityType`) whose key (`stripSeparators`: "dodge" for "Dodge" and "dodge") another
+   * entity the view shows has under another name, in any partition, the ruleset's own or a visible inherited one, but
+   * those of `ignored` (by id); and two of `names` of one key. Only of a kind a path names by its name (`isPathNamed`: a
+   * feat, a skill, a class…), whose paths read the key alone, as `rivalsOf` takes a name across its partitions: two
+   * items "+2" and "-2" stay two. A name of no key (a mark alone) is left to the other checks.
    */
   private async refuseKeys(
     tx: Db,
     entityType: RulesetEntityType,
     names: string[],
-    partition: string,
     ignored: ReadonlySet<string> = new Set(),
   ) {
+    if (!this.isPathNamed(entityType)) return;
     const byKey = new Map<string, string>();
     for (const name of names) {
       const key = stripSeparators(name);
@@ -224,7 +225,7 @@ export default class EntityNames {
       entityType,
       rulesetIds: [this.ruleset.id, ...this.cow.sourceChain],
     });
-    for (const entity of this.rivalsOf(entityType, entities, partition)) {
+    for (const entity of entities) {
       if (ignored.has(entity.id) || (entity.rulesetId !== this.ruleset.id && this.cow.isHidden(entity.id))) continue;
       const name = byKey.get(stripSeparators(entity.name));
       if (name !== undefined && name !== entity.name) throw toKeyError(name, entity.name);
@@ -276,7 +277,7 @@ export default class EntityNames {
     if (new Set(names).size !== names.length) throw new ConflictError("A name is given twice in the list");
     const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, names), this.partitionOf(entityType));
     this.refuseShown(named);
-    await this.refuseKeys(tx, entityType, names, this.partitionOf(entityType));
+    await this.refuseKeys(tx, entityType, names);
     return await this.findTombstones(tx, entityType, named);
   }
 
@@ -299,8 +300,7 @@ export default class EntityNames {
     const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, [name]), entity.partition);
     this.refuseShown(named.filter((other) => !vacated.has(other.id)));
     // A new case of its own name keeps its key, whatever else has it
-    if (stripSeparators(name) !== stripSeparators(entity.name))
-      await this.refuseKeys(tx, entityType, [name], entity.partition, vacated);
+    if (stripSeparators(name) !== stripSeparators(entity.name)) await this.refuseKeys(tx, entityType, [name], vacated);
   }
 
   /**
@@ -320,7 +320,7 @@ export default class EntityNames {
     const copy = entities.find((entity) => entity.id === copyId);
     if (!source || copy?.name === source.name) return;
     this.refuseShown(this.rivalsOf(entityType, await this.findNamed(tx, entityType, [source.name]), source.partition));
-    await this.refuseKeys(tx, entityType, [source.name], source.partition, new Set([sourceEntityId, copyId]));
+    await this.refuseKeys(tx, entityType, [source.name], new Set([sourceEntityId, copyId]));
   }
 
   /**
