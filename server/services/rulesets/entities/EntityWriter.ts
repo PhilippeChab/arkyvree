@@ -125,7 +125,8 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
  * A save checks access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and
  * writes the row copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its
  * first edit; an owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found
- * when its fresh view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its
+ * when its fresh view doesn't show it, and as stale when the client's token is behind (a copy's first save checks it
+ * against what it copied). Then its
  * links (`setLinks`), then what its plan writes beside it (`updateBeside`: the entities it removes, then those it
  * makes). A delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its
  * action (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it
@@ -371,7 +372,8 @@ export default class EntityWriter {
 
   /**
    * Updates the row a write targets (`target`) to the plan's (`row`, of `type`, of `baseRules`): refused as stale when
-   * the client's token (`updatedAt`) is behind, a copy's never being checked (its token is its source's).
+   * the client's token (`updatedAt`) is behind: a copy this write made checks it against its source's, which the
+   * client read (`EditTarget.expected`).
    */
   private static async updateRow(
     tx: Db,
@@ -381,7 +383,7 @@ export default class EntityWriter {
     target: EditTarget,
     updatedAt: string | undefined,
   ): Promise<Row> {
-    const expectedUpdatedAt = target.expected(updatedAt);
+    const expectedUpdatedAt = await target.expected(tx, updatedAt);
     const rows = await Entities.update<Row>(tx, baseRules, type, row, { id: target.id, expectedUpdatedAt });
     if (rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     return rows[0];

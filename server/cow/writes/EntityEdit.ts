@@ -29,7 +29,7 @@ export default class EntityEdit {
    */
   private async copy(tx: Db, entityType: RulesetEntityType, entityId: string, namedId: string): Promise<EditTarget> {
     const copy = await EntityCopy.create(tx, entityType, entityId, this.scope);
-    return new EditTarget(copy.entity.id, namedId, copy.copiedIds);
+    return new EditTarget(copy.entity.id, namedId, copy.copiedIds, { entityType, id: entityId });
   }
 
   /**
@@ -83,7 +83,7 @@ export default class EntityEdit {
     const copy = await this.copy(tx, ownerType, owner.id, owner.id);
     const ownedCopyId = (await copy.findOwned(tx, entityType)).get(owned.position);
     if (!ownedCopyId) throw new NotFoundError(notFound);
-    return new EditTarget(ownedCopyId, ownedId, copy.copiedIds);
+    return new EditTarget(ownedCopyId, ownedId, copy.copiedIds, { entityType, id: owned.id });
   }
 
   /**

@@ -189,7 +189,7 @@ class RequirementsService {
           requirementId,
         );
 
-        const expectedUpdatedAt = customization.expected(body.updatedAt);
+        const expectedUpdatedAt = await customization.expected(tx, body.updatedAt);
         // A level a condition its page doesn't list holds is free to the client: the edit takes the next one beside it
         const row = { ...sent, level: await this.pickFreeLevel(tx, entityType, resolvedEntityId, sent.level, levels) };
         await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {

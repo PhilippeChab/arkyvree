@@ -463,7 +463,11 @@ write ends. A modifier or requirement the client names that the view no longer s
 refused as not found (404), for both kinds, and so is a modifier a class's progression save drops
 (`EditTarget.resolveCustomizations`). One of an entity another write copied since the client read it, a copy deleted
 since included, is refused as stale (409): its ids are the source's, which the copy doesn't keep
-(`CustomizationEdit.refuseCopiedSince`). Ordinary reads take no lock, and different rulesets are edited independently.
+(`CustomizationEdit.refuseCopiedSince`). A change that makes the copy itself (the first change of an inherited
+entity's modifier or requirement) is checked against what the page read too: the client's `updatedAt` is the inherited
+row's, which the copy takes its values from, so one that changed since (its book's author edited it) is refused as
+stale, never copied as it is now under the client's change (`EditTarget.expected`). Ordinary reads take no lock, and
+different rulesets are edited independently.
 First COW copies run under the same lock. Modifier
 deletion removes the selected modifiers and batches removal of their requirements
 and activity records.
