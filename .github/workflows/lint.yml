@@ -23,7 +23,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - name: Typecheck
-        run: bunx tsgo --noEmit
+        run: bun check
       - name: Lint
         run: bun run lint
       - name: Format

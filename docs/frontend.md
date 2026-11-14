@@ -6,7 +6,7 @@ Lint holds what it can, with no exception (`bun run lint`: the `arkyvree/*` rule
 
 ## Before finishing
 
-- TypeScript passes: `bunx tsgo --noEmit -p .`
+- TypeScript passes: `bun check`
 - `bun run lint` passes (`bun run lint --fix` writes what it can), and `bun run format:check` (`bunx oxfmt` the changed files, never a directory)
 - The impacted tests pass: `bun run test:changed`, and `tests/client` for the client's pure modules
 - A change users see is looked at: the screens it touches, at a phone's width (375px) and a desktop's, in both themes
