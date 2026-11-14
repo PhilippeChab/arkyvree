@@ -220,6 +220,11 @@ export const v1Character = z
     kind: z.string().meta({
       description: "Its kind, one of the `characterKinds` `GET /v1/rules` lists",
     }),
+    lastAdvancementId: v1Id.nullable().meta({
+      description:
+        "Its last advancement, none before its first: what an advancement's save and its removal send back, refused " +
+        "with a 409 once another has moved it",
+    }),
     name: z.string(),
     ownerId: z.string().nullable(),
     parentCharacterId: z.string().nullable().meta({

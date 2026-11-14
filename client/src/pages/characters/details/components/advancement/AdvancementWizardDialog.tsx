@@ -47,6 +47,11 @@ interface WizardControls extends AdvancementWizard {
  */
 export interface AddAdvancementDialogProps extends AdvancementDialogProps {
   /**
+   * The character's last level as the sheet showed it when the wizard opened (none before its first), which its save
+   * sends: a save sent again, or after another page added or removed a level, is refused as stale
+   */
+  lastAdvancementId: string | null;
+  /**
    * The track it plans for the next advancement as it opens (a class's plus, on the sheet's header), as the track's
    * quick-add button would: none opens an empty plan
    */

@@ -25,12 +25,14 @@ export default class CharacterEngine extends CharacterHandle {
 
   /**
    * A sheet as its module describes it (`sheet`), its summary's words with what an advancement is called
-   * (`advancement`): its module's advancements part's word for one, its one declaration (`advancementWord`: "Level").
+   * (`advancement`): its module's advancements part's word for one, its one declaration (`advancementWord`: "Level");
+   * and the character's last advancement, as its rows hold it (`lastAdvancementId`).
    */
   private withAdvancementWord<S extends { summary: RulesetSummary }>(sheet: S): S & { summary: SheetSummary } {
     const { summary } = sheet;
     const words = { ...summary.words, advancement: this.module.advancements.advancementWord.one };
-    return { ...sheet, summary: { ...summary, words } };
+    const lastAdvancementId = this.input.rows.advancements.at(-1)?.id ?? null;
+    return { ...sheet, summary: { ...summary, lastAdvancementId, words } };
   }
 
   /**

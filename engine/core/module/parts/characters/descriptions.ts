@@ -209,9 +209,11 @@ export interface SheetStat {
 /**
  * A sheet's summary as the engine answers it: its ruleset's (`RulesetSummary`), its words with what an advancement is
  * called (`advancement`, its module's advancements part's word for one, `advancementWord`: "Level"), which names one
- * its edit's wizard failed to load.
+ * its edit's wizard failed to load, and the character's last advancement (`lastAdvancementId`, none without one), which
+ * an add and a removal send back so a page that read another is refused as stale.
  */
 export interface SheetSummary extends RulesetSummary {
+  lastAdvancementId: string | null;
   words: RulesetSummary["words"] & { advancement: string };
 }
 

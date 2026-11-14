@@ -10,10 +10,11 @@ export function AddAdvancementDialog({
   onClose,
   onExited,
   characterId,
+  lastAdvancementId,
   trackId,
   words,
 }: AddAdvancementDialogProps) {
-  const wizard = useAddAdvancementWizard({ open, onClose, characterId, trackId, words });
+  const wizard = useAddAdvancementWizard({ open, onClose, characterId, lastAdvancementId, trackId, words });
 
   return (
     <AdvancementWizardDialog

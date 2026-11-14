@@ -98,6 +98,10 @@ unsubscribing it from an extension answers its extensions.
 - An advancement is saved as the wizard saves one: a plan's steps, the payloads `POST …/advancement-plan` answered;
   `force` saves it past the rules' issues, as the wizard's confirm does. An edit (`PUT …/advancements/{advancementId}`)
   takes the saved plan (`GET …/advancements/{advancementId}/plan`) without its plan step.
+- A character's sheet names its last advancement (`lastAdvancementId`, none before its first). An advancement's save
+  may send it back (`lastAdvancementId`, `null` for none), and its removal name it (`?advancementId=`): either is then
+  refused with a 409 when the character's last advancement is another by then, so a save sent twice adds once and two
+  removals take one advancement. Without it, neither is checked, as before; the app's own API always sends it.
 - A fork's entity restored (`POST …/entities/{kind}/{entityId}/restore`) is named by its parent's id, which its copy
   shows as.
 
