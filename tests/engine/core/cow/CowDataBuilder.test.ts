@@ -58,4 +58,32 @@ describe("A ruleset's copy-on-write data, built by its module's kinds", () => {
     expect(CowDataBuilder.build(host, { ...NO_ROWS, snapshots: [copy, tombstone] }).isHidden("x1")).toBe(true);
     expect(CowDataBuilder.build(host, { ...NO_ROWS, snapshots: [copy] }).isHidden("x1")).toBe(false);
   });
+
+  test("hides an extension's entity behind the ruleset's own of its name in its partition alone", () => {
+    const own = (id: string, rulesetId: string, partition: string) => ({
+      entityType: "kinds",
+      id,
+      name: "Twin",
+      partition,
+      rulesetId,
+    });
+    const cow = CowDataBuilder.build(
+      { ...RULESET, extensionIds: ["book"] },
+      {
+        ...NO_ROWS,
+        ownNamesakes: [own("f1", "fork", "familiar"), own("b1", "book", "familiar"), own("b2", "book", "companion")],
+      },
+    );
+
+    expect(["b1", "b2"].map((id) => cow.isShadowed(id))).toEqual([true, false]);
+    expect(cow.resolve("b1")).toBe("f1");
+
+    // A kind a path names by its name alone: its own hides an extension's of its name whatever its partition
+    const byName = CowDataBuilder.build(
+      { ...RULESET, extensionIds: ["book"] },
+      { ...NO_ROWS, ownNamesakes: [own("f1", "fork", "familiar"), own("b2", "book", "companion")] },
+      ["kinds"],
+    );
+    expect(byName.resolve("b2")).toBe("f1");
+  });
 });

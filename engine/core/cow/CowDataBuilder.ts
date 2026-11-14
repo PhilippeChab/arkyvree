@@ -48,15 +48,19 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  * alias (`override` writes both maps): an id compose skips always resolves.
  */
 export default class CowDataBuilder {
-  constructor(ruleset: RulesetSources) {
+  constructor(ruleset: RulesetSources, pathNamed: readonly string[]) {
+    this.pathNamed = new Set(pathNamed);
     this.rulesetId = ruleset.id;
     this.sourceChain = CowSources.buildSourceChain(ruleset);
     this.extensionIds = ruleset.extensionIds;
   }
 
-  /** A ruleset's `CowData`, from its rows: the stored ids the server reads, copy-on-write resolution off. */
-  static build(ruleset: RulesetSources, rows: CowRows): CowData {
-    const builder = new CowDataBuilder(ruleset);
+  /**
+   * A ruleset's `CowData`, from its rows: the stored ids the server reads, copy-on-write resolution off. `pathNamed`:
+   * the kinds a path names by their name alone (`TargetPaths.namedKinds`), whose names are their own across partitions.
+   */
+  static build(ruleset: RulesetSources, rows: CowRows, pathNamed: readonly string[] = []): CowData {
+    const builder = new CowDataBuilder(ruleset, pathNamed);
     if (builder.sourceChain.length > 0) builder.load(rows);
     if (builder.extensionIds.length > 0) {
       builder.pairIdentities(rows);
@@ -73,6 +77,9 @@ export default class CowDataBuilder {
 
   /** True overrides: compose skips each source, with its customizations. */
   private readonly overrides = new Map<string, string>();
+
+  /** The kinds a path names by their name alone, whose names are their own across partitions. */
+  private readonly pathNamed: ReadonlySet<string>;
 
   private readonly rulesetId: string;
 
@@ -121,17 +128,21 @@ export default class CowDataBuilder {
   }
 
   /**
-   * The ruleset's own entities win over its extensions' of their names, of every type: an extension's entity named as
-   * one of the ruleset's (one its author added or renamed since the ruleset subscribed, which a subscribe refuses) is
-   * overridden by the ruleset's, as a local copy overrides what it copied. Its own rows go with it (its customizations,
-   * its links to lists), never merged: a homebrew entity and a book's of one name may be different things. What stood
-   * for it stands for the ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a
-   * book's class granting it, a character's pick) reads the ruleset's. An extension's entity the view already hides
-   * (one the ruleset copied, a pool paired by name) stays as it is. Of the ruleset's own entities of a name, the first
-   * stands.
+   * The ruleset's own entities win over its extensions' of their names, of every type, each in its partition (a
+   * familiar's Hawk never hides an animal companion's) but of a kind a path names by its name alone, whatever its
+   * partition (a class): an extension's entity named as one of the ruleset's (one its
+   * author added or renamed since the ruleset subscribed, which a subscribe refuses) is overridden by the ruleset's, as
+   * a local copy overrides what it copied. Its own rows go with it (its customizations, its links to lists), never
+   * merged: a homebrew entity and a book's of one name may be different things. What stood for it stands for the
+   * ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a book's class granting it,
+   * a character's pick) reads the ruleset's. An extension's entity the view already hides (one the ruleset copied, a
+   * pool paired by name) stays as it is. Of the ruleset's own entities of a name, the first stands.
    */
   private overrideOwnNamesakes(rows: CowRows) {
-    const key = (row: CowRows["ownNamesakes"][number]) => `${row.entityType}|${row.name}`;
+    const key = (row: CowRows["ownNamesakes"][number]) =>
+      this.pathNamed.has(row.entityType)
+        ? `${row.entityType}|${row.name}`
+        : `${row.entityType}|${row.partition}|${row.name}`;
     const own = new Map<string, string>();
     for (const row of rows.ownNamesakes)
       if (row.rulesetId === this.rulesetId && !own.has(key(row))) own.set(key(row), row.id);

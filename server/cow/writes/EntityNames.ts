@@ -10,10 +10,11 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import type ExtensionDeparture from "./ExtensionDeparture.ts";
 
-/** An entity of a name, as stored: its id and its ruleset. */
+/** An entity of a name, as stored: its id, its partition (what a race or a class is for) and its ruleset. */
 interface NamedEntity {
   id: string;
   name: string;
+  partition: string;
   rulesetId: string;
 }
 
@@ -38,12 +39,15 @@ function toOwnNameError(name: string) {
 /**
  * The names a ruleset's composed view shows (`new EntityNames(scope)`, a write's, under its lock), which no change
  * makes it show twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe
- * shows again take a name only when no other entity of their kind the view shows has it, the ruleset's own or an
- * inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one
- * whose local copy was deleted left a tombstone snapshot, which a new entity of its name takes over
- * (`repointTombstone`), so the inherited one stays hidden. Nor does it show two names of one key, which the rules
- * read entities by (`stripSeparators`: "Dodge" and "dodge"). Its instance methods take the transaction; its static
- * `withNameRefusal` runs a write that takes a name, answering the name index as the checks do.
+ * shows again take a name only when no other entity of their kind the view shows has it in their partition (what a
+ * race or a class is for: a familiar's Hawk and an animal companion's are two, as the name index holds them), or in
+ * any partition for a kind a path names by its name alone (a class: `classes.familiar.level` would name two), the
+ * ruleset's own or an inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block
+ * its name, and one whose local copy was deleted left a tombstone snapshot, which a new entity of its name and
+ * partition takes over (`repointTombstone`), so the inherited one stays hidden. Nor does it show two names of one key,
+ * which the rules read entities by (`stripSeparators`: "Dodge" and "dodge"), among the same entities. Its instance
+ * methods take the transaction; its static `withNameRefusal` runs a write that takes a name, answering the name index
+ * as the checks do.
  */
 export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}
@@ -76,7 +80,28 @@ export default class EntityNames {
     return this.scope.rulesetData.cow;
   }
 
-  /** Refuses the names an entity of the view has (`named`): the ruleset's own, or a visible inherited entity's. */
+  /**
+   * Whether a kind's names are its own across its partitions: a path names its entities by their name alone
+   * (`Engine.rules().pathNamedKindsOf`: a class, never a race, whose name a path holds in a value, with its partition).
+   */
+  private isPathNamed(entityType: RulesetEntityType): boolean {
+    return Engine.rules().pathNamedKindsOf(this.scope.ruleset.baseRules).includes(entityType);
+  }
+
+  /** The key two entities of a kind (`entityType`) share a name by: their name, within their partition (`rivalsOf`). */
+  private keyOf(entityType: RulesetEntityType, entity: { name: string; partition: string }) {
+    return this.isPathNamed(entityType) ? entity.name : `${entity.partition}\u0000${entity.name}`;
+  }
+
+  /** The partition a new entity of a kind takes (`entityType`'s): its base rules' storage's (3.5's race's `pc`). */
+  private partitionOf(entityType: RulesetEntityType): string {
+    return Engine.forRules(this.scope.ruleset.baseRules).storage().partitionOf(entityType);
+  }
+
+  /**
+   * Refuses the names an entity of the view has (`named`, those of the partition the name is taken in): the ruleset's
+   * own, or a visible inherited entity's.
+   */
   private refuseShown(named: NamedEntity[]) {
     const own = named.find((entity) => entity.rulesetId === this.ruleset.id);
     if (own) throw toOwnNameError(own.name);
@@ -89,12 +114,23 @@ export default class EntityNames {
     }
   }
 
+  /**
+   * The entities among `named` (of a kind, `entityType`) a name in a partition (`partition`) is taken against: those
+   * of the partition, or all of them for a kind a path names by its name alone (`isPathNamed`).
+   */
+  private rivalsOf(entityType: RulesetEntityType, named: NamedEntity[], partition: string): NamedEntity[] {
+    return this.isPathNamed(entityType) ? named : named.filter((entity) => entity.partition === partition);
+  }
+
   /** The ruleset and its sources. */
   private get ruleset(): RulesetSources {
     return this.scope.sources;
   }
 
-  /** The entities of a kind named `names`, the ruleset's own and its source chain's (`chain`: its own, unless given). */
+  /**
+   * The entities of a kind named `names`, the ruleset's own and its source chain's (`chain`: its own, unless given), of
+   * every partition.
+   */
   private async findNamed(
     tx: Db,
     entityType: RulesetEntityType,
@@ -105,9 +141,9 @@ export default class EntityNames {
   }
 
   /**
-   * The hidden ancestors among `ancestors` whose local copy was deleted (a tombstone snapshot), by name: of two of a
-   * name, the closer (its ruleset first in the source chain). A live local copy keeps its snapshot even after a rename,
-   * so inherited references keep resolving to it.
+   * The hidden ancestors among `ancestors` (of one partition) whose local copy was deleted (a tombstone snapshot), by
+   * name: of two of a name, the closer (its ruleset first in the source chain). A live local copy keeps its snapshot
+   * even after a rename, so inherited references keep resolving to it.
    */
   private async findTombstones(
     tx: Db,
@@ -132,7 +168,8 @@ export default class EntityNames {
 
   /**
    * Refuses a change to the ruleset's extensions when its view (`after`: its `CowData` once they're changed) would then
-   * show more entities of a kind under one of `names` (by kind) than once, and than it shows now (`refusal` says so).
+   * show more entities of a kind under one of `names` (by kind) in one partition than once, and than it shows now
+   * (`refusal` says so).
    * What the view pairs under one name shows one (a book's copy of an inherited entity, the reprints and the lists the
    * source chain pairs), and a name it already shows twice stays allowed. A book's entity the ruleset's own of its name
    * shadows counts as shown: the ruleset is told of the clash its change makes rather than lose the book's entity.
@@ -151,7 +188,8 @@ export default class EntityNames {
     const chain = [...new Set([...this.cow.sourceChain, ...after.sourceChain])];
     for (const [entityType, typeNames] of names) {
       const named = await this.findNamed(tx, entityType, typeNames, chain);
-      for (const [name, entities] of Map.groupBy(named, (entity) => entity.name)) {
+      for (const entities of Map.groupBy(named, (entity) => this.keyOf(entityType, entity)).values()) {
+        const [{ name }] = entities;
         const shownBefore = entities.filter(({ id, rulesetId }) => before.has(rulesetId) && shown(this.cow, id));
         const shownAfter = entities.filter(
           ({ id, rulesetId }) => remaining.has(rulesetId) && !leaving.has(id) && shown(after, id),
@@ -162,14 +200,16 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses names (`names`, of `entityType`) whose key (`stripSeparators`: "dodge" for "Dodge" and "dodge") another
-   * entity the view shows has under another name, the ruleset's own or a visible inherited one, but those of `ignored`
-   * (by id); and two of `names` of one key. A name of no key (a mark alone) is left to the other checks.
+   * Refuses names (`names`, of `entityType`, in `partition`) whose key (`stripSeparators`: "dodge" for "Dodge" and
+   * "dodge") another entity the view shows has under another name among the entities a name is taken against
+   * (`rivalsOf`), the ruleset's own or a visible inherited one, but those of `ignored` (by id); and two of `names` of
+   * one key. A name of no key (a mark alone) is left to the other checks.
    */
   private async refuseKeys(
     tx: Db,
     entityType: RulesetEntityType,
     names: string[],
+    partition: string,
     ignored: ReadonlySet<string> = new Set(),
   ) {
     const byKey = new Map<string, string>();
@@ -184,7 +224,7 @@ export default class EntityNames {
       entityType,
       rulesetIds: [this.ruleset.id, ...this.cow.sourceChain],
     });
-    for (const entity of entities) {
+    for (const entity of this.rivalsOf(entityType, entities, partition)) {
       if (ignored.has(entity.id) || (entity.rulesetId !== this.ruleset.id && this.cow.isHidden(entity.id))) continue;
       const name = byKey.get(stripSeparators(entity.name));
       if (name !== undefined && name !== entity.name) throw toKeyError(name, entity.name);
@@ -226,44 +266,48 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses new entities' names (`names`): one given twice among them (a list of variants), and one the view shows: one
-   * the ruleset has, or a visible inherited entity has (the source chain's, an ancestor's or a subscribed extension's),
-   * named in the refusal, or under its key (`refuseKeys`). Returns, by name, the closest hidden ancestor whose local copy
-   * was deleted (a tombstone), which a new entity of that name takes over (`repointTombstone`).
+   * Refuses new entities' names (`names`, in the partition a new entity of the kind takes, `partitionOf`): one given
+   * twice among them (a list of variants), and one the view shows there: one the ruleset has, or a visible inherited
+   * entity has (the source chain's, an ancestor's or a subscribed extension's), named in the refusal, or under its key
+   * (`refuseKeys`). Returns, by name, the closest hidden ancestor of the partition whose local copy was deleted (a
+   * tombstone), which a new entity of that name takes over (`repointTombstone`).
    */
   async assertNamesAvailable(tx: Db, entityType: RulesetEntityType, names: string[]): Promise<Map<string, string>> {
     if (new Set(names).size !== names.length) throw new ConflictError("A name is given twice in the list");
-    const named = await this.findNamed(tx, entityType, names);
+    const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, names), this.partitionOf(entityType));
     this.refuseShown(named);
-    await this.refuseKeys(tx, entityType, names);
+    await this.refuseKeys(tx, entityType, names, this.partitionOf(entityType));
     return await this.findTombstones(tx, entityType, named);
   }
 
   /**
-   * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows, or to its key, as a create's is:
-   * the name it keeps is its own, and so is a new case of it ("Dodge" to "DODGE"), whoever else has it (an inherited
-   * entity's first edit copies it under its name). A renamed entity takes over no tombstone: the copy it may be keeps its
-   * own snapshot, and the hidden ancestor of its new name stays hidden. An inherited entity the same write renamed before (`vacated`, by its id) no longer shows its name: the copy
-   * the write made of it hides it, which the view read before the write doesn't know yet.
+   * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows in its partition, or to its key,
+   * as a create's is: the name it keeps is its own, and so is a new case of it ("Dodge" to "DODGE"), whoever else has it
+   * (an inherited entity's first edit copies it under its name). A renamed entity takes over no tombstone: the copy it
+   * may be keeps its own snapshot, and the hidden ancestor of its new name stays hidden. An inherited entity the same
+   * write renamed before (`vacated`, by its id) no longer shows its name: the copy the write made of it hides it, which
+   * the view read before the write doesn't know yet.
    */
   async assertRenameAvailable(
     tx: Db,
     entityType: RulesetEntityType,
-    entity: { name: string },
+    entity: { name: string; partition: string },
     name: string,
     vacated: ReadonlySet<string> = new Set(),
   ): Promise<void> {
     if (name === entity.name) return;
-    const named = await this.findNamed(tx, entityType, [name]);
+    const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, [name]), entity.partition);
     this.refuseShown(named.filter((other) => !vacated.has(other.id)));
     // A new case of its own name keeps its key, whatever else has it
-    if (stripSeparators(name) !== stripSeparators(entity.name)) await this.refuseKeys(tx, entityType, [name], vacated);
+    if (stripSeparators(name) !== stripSeparators(entity.name))
+      await this.refuseKeys(tx, entityType, [name], entity.partition, vacated);
   }
 
   /**
    * Refuses restoring an inherited entity (`sourceEntityId`) in place of the ruleset's copy of it (`copyId`, gone when
-   * the copy was deleted: a tombstone) when the view shows another entity of the source's name or its key: a restore
-   * renames the view's entity back to its source's name, or shows a deleted one again, as a rename or a create would.
+   * the copy was deleted: a tombstone) when the view shows another entity of the source's name, or its key, in its
+   * partition: a restore renames the view's entity back to its source's name, or shows a deleted one again, as a rename
+   * or a create would.
    */
   async assertRestoreAvailable(
     tx: Db,
@@ -275,8 +319,8 @@ export default class EntityNames {
     const source = entities.find((entity) => entity.id === sourceEntityId);
     const copy = entities.find((entity) => entity.id === copyId);
     if (!source || copy?.name === source.name) return;
-    this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
-    await this.refuseKeys(tx, entityType, [source.name], new Set([sourceEntityId, copyId]));
+    this.refuseShown(this.rivalsOf(entityType, await this.findNamed(tx, entityType, [source.name]), source.partition));
+    await this.refuseKeys(tx, entityType, [source.name], source.partition, new Set([sourceEntityId, copyId]));
   }
 
   /**
@@ -305,12 +349,19 @@ export default class EntityNames {
   }
 
   /**
-   * The closest hidden ancestor of a name (`name`, of `entityType`) whose local copy the ruleset deleted (a tombstone),
-   * which an entity a save makes under that name takes over (`repointTombstone`), as a create's does; none without
-   * one. It refuses nothing: what the view shows, the save's plan checked, and the ruleset's own names the index holds.
+   * The closest hidden ancestor of a name (`name`, of `entityType`, in its `partition`: a new one's of the kind, unless
+   * given) whose local copy the ruleset deleted (a tombstone), which an entity a save makes under that name takes over
+   * (`repointTombstone`), as a create's does; none without one. It refuses nothing: what the view shows, the save's
+   * plan checked, and the ruleset's own names the index holds.
    */
-  async findTombstoneAncestor(tx: Db, entityType: RulesetEntityType, name: string): Promise<string | null> {
-    const tombstones = await this.findTombstones(tx, entityType, await this.findNamed(tx, entityType, [name]));
+  async findTombstoneAncestor(
+    tx: Db,
+    entityType: RulesetEntityType,
+    name: string,
+    partition = this.partitionOf(entityType),
+  ): Promise<string | null> {
+    const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, [name]), partition);
+    const tombstones = await this.findTombstones(tx, entityType, named);
     return tombstones.get(name) ?? null;
   }
 

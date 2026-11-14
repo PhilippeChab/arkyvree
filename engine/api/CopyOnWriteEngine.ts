@@ -72,7 +72,7 @@ export default class CopyOnWriteEngine {
   /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedOwnerIds`). */
   buildData(ruleset: RulesetSources, rows: CowRows): CowData {
     this.checkSources(ruleset);
-    return CowDataBuilder.build(ruleset, rows);
+    return CowDataBuilder.build(ruleset, rows, Modules.of(this.baseRules).targetPaths.namedKinds());
   }
 
   /**

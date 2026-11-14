@@ -145,6 +145,9 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
 
   readonly name = "spells";
 
+  /** Its paths name a spell, and the list it's known on (`nameSegments`). */
+  readonly segmentKinds = ["spells", "aptitudes"] as const;
+
   /** Each spell a list has at a level, by its slug: its own DC paths. */
   private leveledSpellNames(dnd35: Dnd35View) {
     return [
