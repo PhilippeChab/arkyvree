@@ -4,13 +4,7 @@ import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import {
-  Entities,
-  EntitySnapshots,
-  RulesetEntities,
-  type RulesetEntityType,
-  Rulesets,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import type ExtensionDeparture from "./ExtensionDeparture.ts";
@@ -21,12 +15,6 @@ interface NamedEntity {
   name: string;
   partition: string;
   rulesetId: string;
-}
-
-/** A name a book's entity takes, and the entity of the book's view it's taken for, if any (`standsFor`). */
-interface TakenName {
-  name: string;
-  standsFor?: string;
 }
 
 /** The unique index that keeps an entity's name its own among its ruleset's entities of its kind (`drizzle/schema.ts`). */
@@ -50,23 +38,6 @@ function toOwnNameError(name: string) {
  */
 export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}
-
-  /**
-   * Whether a subscriber's view (`cow`) would show another entity beside the book's entity under the name it takes
-   * (`taken`), among the entities of that name its view's rulesets hold (`seen`): one the view shows, but what stands
-   * for the book's entity there (the subscriber's copy of it). A book's entity the subscriber's copy stands for takes no
-   * name there: the copy keeps its own, whatever the book's is (a book's entity the subscriber's own of its name hides
-   * still takes its new one).
-   */
-  private static clashesIn(cow: CowData, seen: NamedEntity[], { name, standsFor }: TakenName): boolean {
-    if (standsFor !== undefined && cow.isOverridden(standsFor) && !cow.isShadowed(standsFor)) return false;
-    return seen.some(
-      (entity) =>
-        entity.name === name &&
-        !cow.isHidden(entity.id) &&
-        (standsFor === undefined || cow.resolve(entity.id) !== cow.resolve(standsFor)),
-    );
-  }
 
   /**
    * The names of `entities`, each once, by their type, in the order their base rules' module declares the types
@@ -216,45 +187,6 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses names a book's entities take (`taken`, in `partition`: a create's, a rename's, a restore's) when a ruleset
-   * subscribed to the book shows another entity of one in its view: its own, which would hide the book's there, so that
-   * what names the book's (a character's pick, a class's grant) would read the subscriber's instead; or another book's
-   * or its parent's, which would show beside it or pair with it. One that stands for the book's very entity there (the
-   * subscriber's copy of it: `standsFor`, the entity renamed or restored, or the ancestor whose tombstone a new one takes
-   * over) is none. The refusal names the entity, never the subscriber, another user's ruleset. One read of the names
-   * for every subscriber, and a subscriber's `CowData` only when that read found one in its view; the book's own chain
-   * is left to the book's own check (`refuseShown`), since its subscribers' views hide what the book's hides.
-   */
-  private async refuseSubscribersShown(
-    tx: Db,
-    entityType: RulesetEntityType,
-    partition: string,
-    taken: TakenName[],
-  ): Promise<void> {
-    if (this.scope.ruleset.kind !== "extension") return;
-    const book = new Set([this.ruleset.id, ...this.cow.sourceChain]);
-    const names = taken.map((each) => each.name);
-    const found = await RulesetEntities.findNames(tx, { entityType, names, subscribersOf: this.ruleset.id });
-    const rivals = this.rivalsOf(
-      entityType,
-      found.filter((entity) => !book.has(entity.rulesetId)),
-      partition,
-    );
-    if (rivals.length === 0) return;
-    for (const { id } of await Rulesets.findMany(tx, { subscribedTo: this.ruleset.id })) {
-      const sources = await Rulesets.findSources(tx, { id });
-      if (!sources) continue;
-      const viewed = new Set([id, ...Engine.forRules(sources.baseRules).copyOnWrite().buildSourceChain(sources)]);
-      const seen = rivals.filter((entity) => viewed.has(entity.rulesetId));
-      if (seen.length === 0) continue;
-      const cow = await CowDataReader.read(tx, sources);
-      const clash = taken.find((each) => EntityNames.clashesIn(cow, seen, each));
-      if (clash)
-        throw new ConflictError(`Name already exists in a ruleset subscribed to this extension: ${clash.name}`);
-    }
-  }
-
-  /**
    * Refuses subscribing the ruleset to new extensions (`extensionIds`) when its view would then show more entities of a
    * kind under a name than once, and than it shows now (`refuseChainNames`, with `CowData` read as the view would read
    * it once subscribed): an extension's entity (its own, or its copy of an inherited one, by its name) named as one the
@@ -272,24 +204,6 @@ export default class EntityNames {
       (entityType, name) =>
         `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
     );
-  }
-
-  /**
-   * Refuses the name of an entity a save's plan makes beside the one it writes (`made`, of `entityType`, in its
-   * partition, a new one's of the kind unless given: a skill's feat), which the plan checked against the ruleset's
-   * view, where a subscriber's view shows another entity of it (`refuseSubscribersShown`), as a create's is;
-   * `standsFor`: the ancestor whose tombstone it takes over.
-   */
-  async assertMadeNameAvailable(
-    tx: Db,
-    entityType: RulesetEntityType,
-    made: { name: string; partition?: string },
-    standsFor: string | null,
-  ): Promise<void> {
-    const partition = made.partition ?? this.partitionOf(entityType);
-    await this.refuseSubscribersShown(tx, entityType, partition, [
-      { name: made.name, standsFor: standsFor ?? undefined },
-    ]);
   }
 
   /**
@@ -315,13 +229,9 @@ export default class EntityNames {
    */
   async assertNamesAvailable(tx: Db, entityType: RulesetEntityType, names: string[]): Promise<Map<string, string>> {
     if (new Set(names).size !== names.length) throw new ConflictError("A name is given twice in the list");
-    const partition = this.partitionOf(entityType);
-    const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, names), partition);
+    const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, names), this.partitionOf(entityType));
     this.refuseShown(named);
-    const tombstones = await this.findTombstones(tx, entityType, named);
-    const taken = names.map((name) => ({ name, standsFor: tombstones.get(name) }));
-    await this.refuseSubscribersShown(tx, entityType, partition, taken);
-    return tombstones;
+    return await this.findTombstones(tx, entityType, named);
   }
 
   /**
@@ -334,14 +244,13 @@ export default class EntityNames {
   async assertRenameAvailable(
     tx: Db,
     entityType: RulesetEntityType,
-    entity: { id: string; name: string; partition: string },
+    entity: { name: string; partition: string },
     name: string,
     vacated: ReadonlySet<string> = new Set(),
   ): Promise<void> {
     if (name === entity.name) return;
     const named = this.rivalsOf(entityType, await this.findNamed(tx, entityType, [name]), entity.partition);
     this.refuseShown(named.filter((other) => !vacated.has(other.id)));
-    await this.refuseSubscribersShown(tx, entityType, entity.partition, [{ name, standsFor: entity.id }]);
   }
 
   /**
@@ -361,7 +270,6 @@ export default class EntityNames {
     const copy = entities.find((entity) => entity.id === copyId);
     if (!source || copy?.name === source.name) return;
     this.refuseShown(this.rivalsOf(entityType, await this.findNamed(tx, entityType, [source.name]), source.partition));
-    await this.refuseSubscribersShown(tx, entityType, source.partition, [{ name: source.name, standsFor: copyId }]);
   }
 
   /**

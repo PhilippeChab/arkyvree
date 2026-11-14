@@ -1,4 +1,4 @@
-import { and, type Column, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 
 import { rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 
@@ -24,29 +24,4 @@ export function buildSubscribersCondition(extensionId: string): SQL {
       isNull(rulesetExtensionsInRules.deletedAt),
     )})`,
   );
-}
-
-/**
- * The rulesets (`column`: a row's ruleset id) whose entities `extensionId`'s subscribers' views show beside the
- * extension's: each subscriber itself, the other extensions it subscribes to, and the parent it forks.
- */
-export function buildSubscriberSourcesCondition(column: Column, extensionId: string): SQL {
-  const subscribers = sql`SELECT ${rulesetExtensionsInRules.rulesetId} FROM ${rulesetExtensionsInRules} WHERE ${and(
-    eq(rulesetExtensionsInRules.extensionId, extensionId),
-    isNull(rulesetExtensionsInRules.deletedAt),
-  )}`;
-  return or(
-    inArray(column, sql`(${subscribers})`),
-    inArray(
-      column,
-      sql`(SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules} WHERE ${and(
-        inArray(rulesetExtensionsInRules.rulesetId, sql`(${subscribers})`),
-        isNull(rulesetExtensionsInRules.deletedAt),
-      )})`,
-    ),
-    inArray(
-      column,
-      sql`(SELECT ${rulesetsInRules.rulesetId} FROM ${rulesetsInRules} WHERE ${inArray(rulesetsInRules.id, sql`(${subscribers})`)})`,
-    ),
-  )!;
 }

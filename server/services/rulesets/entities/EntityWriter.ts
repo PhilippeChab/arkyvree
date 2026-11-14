@@ -188,7 +188,6 @@ export default class EntityWriter {
     const tombstoneAncestorId = made.standalone
       ? null
       : await names.findTombstoneAncestor(tx, type, made.row.name, made.row.partition);
-    await names.assertMadeNameAvailable(tx, type, made.row, tombstoneAncestorId);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
       Entities.create(tx, scope.ruleset.baseRules, type, { ...made.row, rulesetId: scope.ruleset.id }),
     );
@@ -259,7 +258,7 @@ export default class EntityWriter {
     await names.assertRenameAvailable(
       tx,
       type,
-      { id: renamed.id, name: stored.name ?? "", partition: stored.partition },
+      { name: stored.name ?? "", partition: stored.partition },
       name,
       vacated.ids,
     );

@@ -46,7 +46,6 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
-import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -1845,7 +1844,7 @@ describe("two extensions overriding the same base entity", () => {
 });
 
 describe("an extension's entity of a name its subscriber's own has", () => {
-  test("is refused to its author, a create's and a rename's, naming the name and not the subscriber; the subscriber's copy of the book's own blocks none", async () => {
+  test("is its author's to add or rename to, and the subscriber's view shows the subscriber's own in its place", async () => {
     const author = await createTestUser();
     const { session, draft } = await setupFork();
     const book = await createExtension(author.user.id);
@@ -1854,100 +1853,33 @@ describe("an extension's entity of a name its subscriber's own has", () => {
       name: "Probe Book Feat",
       ...general,
     });
-    const other = await createExtension((await createTestUser()).user.id);
-    const otherFeat = await EntitiesService.createEntity(await ownerSessionOf(other.id), other.id, "feats", {
-      name: "Other Book Feat",
-      ...general,
-    });
-    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id, other.id]);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
     const own = await EntitiesService.createEntity(session, draft.id, "feats", { name: "Homebrew Feat", ...general });
-    // A ruleset that doesn't subscribe blocks nothing
-    const elsewhere = await forkBase((await createTestUser()).session);
-    await EntitiesService.createEntity(await ownerSessionOf(elsewhere.id), elsewhere.id, "feats", {
-      name: "Elsewhere Feat",
+    const ownRenamed = await EntitiesService.createEntity(session, draft.id, "feats", {
+      name: "Homebrew Renamed",
       ...general,
     });
 
-    const refusal = new ConflictError(`Name already exists in a ruleset subscribed to this extension: ${own.name}`);
-    expect(
-      EntitiesService.createEntity(author.session, book.id, "feats", { name: own.name, ...general }),
-    ).rejects.toEqual(refusal);
-    expect(
-      EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: own.name }),
-    ).rejects.toEqual(refusal);
-    // So does another book the subscriber takes, whose feat its view would show beside the book's
-    expect(
-      EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: otherFeat.name }),
-    ).rejects.toEqual(
-      new ConflictError(`Name already exists in a ruleset subscribed to this extension: ${otherFeat.name}`),
-    );
-    await EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: "Elsewhere Feat" });
+    // The author adds a feat of the subscriber's feat's name, and renames another to the other's: neither is refused
+    const added = await EntitiesService.createEntity(author.session, book.id, "feats", { name: own.name, ...general });
+    await EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: ownRenamed.name });
 
-    // The subscriber's copy of the book's feat, renamed, is the book's feat in its view: its name is free for it
-    const copy = await EntitiesService.updateEntity(session, draft.id, "feats", later.id, { name: "Copied Feat" });
-    await EntitiesService.updateEntity(author.session, book.id, "feats", later.id, { name: copy.name });
-    expect(await featsNamed(draft.id, copy.name)).toMatchObject([{ id: copy.id }]);
     expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: own.id }]);
-  });
-
-  test("keeps a character's pick of the book's feat on it: a rename to the subscriber's own feat's name is refused", async () => {
-    const author = await createTestUser();
-    const { user, session, draft } = await setupFork();
-    const book = await createExtension(author.user.id);
-    const general = (await getSeedCtx()).aptMap["General"];
-    const listed = { links: { listedIn: [{ toId: general }] } };
-    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
-    const tome = await EntitiesService.createEntity(author.session, book.id, "feats", {
-      name: "Tome Strike",
-      ...listed,
-    });
-    await Modifiers.create(db, { ...STRENGTH_BONUS, value: "4", sourceType: "feats", sourceId: tome.id });
-    const lunge = await EntitiesService.createEntity(session, draft.id, "feats", { name: "Power Lunge", ...listed });
-    await Modifiers.create(db, {
-      ...STRENGTH_BONUS,
-      target: "abilities.charisma.misc",
-      value: "6",
-      sourceType: "feats",
-      sourceId: lunge.id,
-    });
-    RulesetViews.invalidate(book.id);
-    RulesetViews.invalidate(draft.id);
-    const character = await createCharacterOn(user.id, draft.id);
-    const { classLevel } = await createTestClassLevel(draft.id);
-    await addCharacterLevel(character.id, classLevel.id, { feats: { [general]: [tome.id] } });
-
-    expect(
-      EntitiesService.updateEntity(author.session, book.id, "feats", tome.id, { name: lunge.name }),
-    ).rejects.toEqual(
-      new ConflictError(`Name already exists in a ruleset subscribed to this extension: ${lunge.name}`),
+    expect(await featsNamed(draft.id, ownRenamed.name)).toMatchObject([{ id: ownRenamed.id }]);
+    const view = await readView(draft.id);
+    const shown = Dnd35View.of(view)
+      .feats.filter((feat) => [own.name, ownRenamed.name].includes(feat.name))
+      .map((feat) => feat.id);
+    expect(shown.toSorted()).toEqual([own.id, ownRenamed.id].toSorted());
+    expect(await featsNamed(book.id, own.name)).toMatchObject([{ id: added.id }]);
+    await expectRefusedWith(
+      EntitiesService.createEntity(session, draft.id, "feats", { name: own.name, ...general }),
+      409,
     );
 
-    const applied = (await buildAs(DetailedCharacter, character)).modifierEvaluator.getModifiers().appliedModifiers;
-    expect(
-      applied
-        .filter((modifier) => modifier.sourceType === "feats")
-        .map(({ sourceId, target, value }) => ({ sourceId, target, value })),
-    ).toEqual([{ sourceId: tome.id, target: STRENGTH_BONUS.target, value: "4" }]);
-  });
-
-  test("is refused to its author's restore, which would show the core entity beside the subscriber's own of its name", async () => {
-    const author = await createTestUser();
-    const { session, draft } = await setupFork();
-    const book = await createExtension(author.user.id);
-    const { featMap } = await getSeedCtx();
-    const toughness = featMap["Toughness"];
-    await EntitiesService.updateEntity(author.session, book.id, "feats", toughness, { name: "Book Toughness" });
-    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
-    // The core feat the book renamed its copy of: hidden in the subscriber's view, so its name is free there
-    const own = await EntitiesService.createEntity(session, draft.id, "feats", {
-      name: "Toughness",
-      links: { listedIn: [{ toId: (await getSeedCtx()).aptMap["General"] }] },
-    });
-
-    expect(RulesetChangesService.revertOverride(author.session, book.id, "feats", toughness)).rejects.toEqual(
-      new ConflictError("Name already exists in a ruleset subscribed to this extension: Toughness"),
-    );
-    expect(await featsNamed(draft.id, "Toughness")).toMatchObject([{ id: own.id }]);
+    // The subscriber's own renamed, the book's shows under its name
+    await EntitiesService.updateEntity(session, draft.id, "feats", own.id, { name: "Homebrew Feat (Mine)" });
+    expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: added.id }]);
   });
 
   test("reads the subscriber's own where the book's class, a pick and the level-up name the book's, not its own rows; an unsubscribe keeps the pick on it", async () => {

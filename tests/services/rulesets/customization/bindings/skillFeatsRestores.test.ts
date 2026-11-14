@@ -7,9 +7,8 @@
 import { describe, expect, test } from "bun:test";
 
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
+import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -534,14 +533,7 @@ describe("what a tenth independent review found", () => {
     const { fork, session } = await forkOf(RULES.dnd35);
     await RulesetExtensionsService.subscribeExtension(session, fork.id, [book.id]);
     await rename(session, fork.id, (await skillNamed(fork.id, "Balance")).id, "Appraise");
-    // The book's restore is refused, since the fork's view would show two skills of the name: a book restored before
-    // that check (its tombstone gone) shows them both
-    expect(await attempt(() => restore(author, book.id, "skills", skillId))).toBe(
-      "Name already exists in a ruleset subscribed to this extension: Appraise",
-    );
-    await EntitySnapshots.delete(db, { rulesetId: book.id, sourceEntityId: skillId });
-    RulesetViews.invalidate(book.id);
-    RulesetViews.invalidate(fork.id);
+    await restore(author, book.id, "skills", skillId);
     const skills = (await readView(fork.id)).rows("skills");
     const inherited = skills.find((skill) => skill.name === "Appraise" && skill.rulesetId !== fork.id)!;
 

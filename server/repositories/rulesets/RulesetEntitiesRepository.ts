@@ -5,20 +5,12 @@ import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 
 import type { RulesetEntityType } from "./entityTypes.ts";
-import { buildSubscriberSourcesCondition } from "./rulesetLineage.ts";
 
 /**
- * The rows `findNames` reads: a ruleset's own, those with these ids, the rows of these rulesets, of these names when
- * it's given them, or those of these names an extension's subscribers' views show beside its own (`subscribersOf`: the
- * subscribers', their other extensions' and their parents'); of one type (`entityType`), where a name is its type's
- * alone, or of every ruleset entity type.
+ * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets, of these names when
+ * it's given them; of one type (`entityType`), where a name is its type's alone, or of every ruleset entity type.
  */
-type NamesWhere = (
-  | { rulesetId: string }
-  | { ids: string[] }
-  | { names?: string[]; rulesetIds: string[] }
-  | { names: string[]; subscribersOf: string }
-) & {
+type NamesWhere = ({ rulesetId: string } | { ids: string[] } | { names?: string[]; rulesetIds: string[] }) & {
   entityType?: RulesetEntityType;
 };
 
@@ -45,12 +37,6 @@ class RulesetEntitiesRepository {
       );
     }
     if ("ids" in where) return inArray(entitiesInRules.id, where.ids);
-    if ("subscribersOf" in where) {
-      return and(
-        buildSubscriberSourcesCondition(entitiesInRules.rulesetId, where.subscribersOf),
-        inArray(entitiesInRules.name, where.names),
-      );
-    }
     return eq(entitiesInRules.rulesetId, where.rulesetId);
   }
 
@@ -58,7 +44,6 @@ class RulesetEntitiesRepository {
   async findNames(db: Db, where: NamesWhere) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
-    if ("subscribersOf" in where && where.names.length === 0) return [];
     // Of a kind, or of every kind no other owns: an entity with no owner
     const kinds = where.entityType ? eq(entitiesInRules.type, where.entityType) : isNull(entitiesInRules.ownerType);
     return await db
