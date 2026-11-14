@@ -11,7 +11,6 @@ export {
 export { BUSY_RULESET_MESSAGE, withContributorsRuleset, withLockedRuleset, withRulesetWrite } from "./rulesetWrites.ts";
 export {
   BUSY_ACCOUNT_MESSAGE,
-  lockAccounts,
   withAccountDeletion,
   withAccountFoundBy,
   withAccountJob,

@@ -52,7 +52,7 @@ export async function lockAccount(tx: Db, account: NamedAccount): Promise<string
  * in a cycle. Their characters are read after the wait on their campaigns: what another account's deletion in one of
  * those campaigns handed them as it held it is theirs by then, and locked with the rest.
  */
-export async function lockAccounts(tx: Db, userIds: string[]) {
+async function lockAccounts(tx: Db, userIds: string[]) {
   await Locks.lockUsers(tx, userIds, "no key update");
   await Locks.lockRulesets(tx, { userIds }, "no key update");
   await Locks.lockCampaigns(tx, { userIds }, "no key update");
