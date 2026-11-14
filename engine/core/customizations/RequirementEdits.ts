@@ -1,5 +1,6 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
@@ -28,7 +29,9 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /**
    * The row a requirement's save stores: a condition's target, operator, value (a number as the sheet reads it: "05" is
-   * "5") and value type, checked against its path, or a group's chaining operator.
+   * "5") and value type, checked against its path, its chaining operator cleared; or a group's chaining operator, its
+   * condition's columns cleared: an edit that turns one into the other leaves nothing of the other (the database holds
+   * a row to one). A save that sends neither (its level alone) changes neither.
    */
   private toRow(
     targetPaths: TargetPaths,
@@ -36,7 +39,11 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     body: RequirementBody,
     kept?: { operator: string | null; value: string | null },
   ) {
-    if (!body.target) return { chainingOperator: body.chainingOperator, level: body.level };
+    if (!body.target) {
+      if (body.chainingOperator === undefined) return { level: body.level };
+      const condition = { operator: null, target: null, value: null, valueType: null };
+      return { chainingOperator: body.chainingOperator, level: body.level, ...condition };
+    }
     // An update without a value keeps the stored one, checked against the target's type all the same
     const valueType = targetPaths.checkValue(catalogs, {
       kind: "requirement",
@@ -45,7 +52,14 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       value: body.value ?? kept?.value ?? undefined,
     });
     const value = body.value === undefined ? undefined : LiteralValue.normalize(body.value, valueType);
-    return { level: body.level, operator: body.operator, target: body.target, value, valueType };
+    return {
+      chainingOperator: null,
+      level: body.level,
+      operator: body.operator,
+      target: body.target,
+      value,
+      valueType,
+    };
   }
 
   /** The entity's requirements of its type, as the view composes them, labeled as its page shows them. */
@@ -74,17 +88,31 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     return { entity, requirement: this.findOwn(entity.id, requirementId) };
   }
 
-  /** An edit of one of the entity's requirements: the entity and the requirement, and the row it stores. */
+  /**
+   * An edit of one of the entity's requirements: the entity and the requirement, and the row it stores, and the names
+   * its text binds (`bindings`: none to change, `null`, when it changes no text; none at all once it's a group). A group
+   * turned into a condition is refused while requirements sit under it, which a condition can't group: the evaluation
+   * would drop them.
+   */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
     // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
     const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
     const plan = { ...this.planDelete(requirementId), levels };
+    const { level } = plan.requirement;
+    if (body.target && plan.requirement.chainingOperator && levels.some((other) => other.startsWith(`${level}.`))) {
+      throw new RulesError(
+        "conflict",
+        "A group with requirements under it can't become a condition: delete the requirements under it first",
+      );
+    }
     const sent = this.toRow(targetPaths, catalogs, body, plan.requirement);
     // A value it keeps is stored as the view reads it, the text its names are read from
     const kept = sent.target !== undefined && sent.value === undefined ? plan.requirement.value : undefined;
     const row = kept === undefined || kept === null ? sent : { ...sent, value: kept };
     // The row stores the text it's sent, the view's: its names are read anew with it, so text and meaning agree.
     // A value it keeps is read with it
+    // A group holds no text: the names its condition read go
+    if (row.target === null) return { ...plan, bindings: [], row };
     // A save that sends no target (its level alone) changes no text: what its names mean stays as it is
     if (row.target === undefined && plan.requirement.target !== null) return { ...plan, bindings: null, row };
     const bound = {

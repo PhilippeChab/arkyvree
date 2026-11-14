@@ -93,6 +93,11 @@ Requirements use a dotted level numbering system for hierarchy:
 - Root conditions: `"1"`, `"2"`, `"3"`
 - Chain node: `"1"` with `chainingOperator: "or"` — children are `"1.1"`, `"1.2"`, etc.
 - This enables OR/AND groups: a chain node groups its children under one logical operator
+- A requirement is a condition (its target, operator, value and value type) or a chain node (its chaining operator),
+  never both (`requirements_check`): an edit may turn one into the other, and stores the new kind's columns with the
+  old kind's cleared, a condition's name bindings going with its text (`RequirementEdits.planEdit`). A chain node with
+  requirements under it is refused (409) as it turns into a condition, which groups nothing: the evaluation would drop
+  them; its children are deleted first
 - An entity holds one requirement per level (`requirements_entity_id_entity_type_level_key`): a requirement created at a level its entity already holds, or edited onto one, is refused with a 409, on the copy an inherited entity's save makes too (`RequirementsService`; an edit started from a stale version is told so first)
 
 ### Requirement Builder Helpers
