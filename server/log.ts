@@ -7,7 +7,7 @@
 
 import { writeSync } from "node:fs";
 
-import { logs, SeverityNumber } from "@opentelemetry/api";
+import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 
 /**
  * requestLogger / slow-query lines embed ANSI color codes for terminal readability. Strip them before sending to OTel
