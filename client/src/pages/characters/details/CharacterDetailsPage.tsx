@@ -31,7 +31,7 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { editConflict, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
@@ -52,7 +52,8 @@ export default function CharacterDetailsPage() {
   const location = useLocation();
   const { id = "" } = useParams<{ id: string }>();
   const menu = useAnchorMenu();
-  const [isRemoveAdvancementOpen, setRemoveAdvancementOpen] = useState(false);
+  // Remove Last Level's confirmation, on the level the sheet showed last as it opened, which its removal names
+  const removeAdvancement = useDialogState<{ advancementId: string }>();
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   // A new character arrives with the Add Level wizard open (`openAddAdvancement`); a track's plus opens it, the track
@@ -96,17 +97,29 @@ export default function CharacterDetailsPage() {
     if (openAddAdvancement) navigate(location.pathname, { replace: true, state: {} });
   };
 
-  // Its toasts in the words of the summary its confirmation was opened from
+  // Its toasts in the words of the summary its confirmation was opened from; it removes the level the page showed last,
+  // refused as stale once another page removed or added one
   const removeAdvancementMutation = useMutation({
-    mutationFn: (_words: SheetSummaryWords) =>
-      parseResponse(rpc.api.characters.advancements[":characterId"].$delete({ param: { characterId: id } })),
-    onSuccess: async (_, words) => {
+    mutationFn: ({ advancementId }: { advancementId: string; words: SheetSummaryWords }) =>
+      parseResponse(
+        rpc.api.characters.advancements[":characterId"][":advancementId"].$delete({
+          param: { characterId: id, advancementId },
+        }),
+      ),
+    onSuccess: async (_, { words }) => {
       snackbar.success(words.removed);
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
-      setRemoveAdvancementOpen(false);
+      removeAdvancement.close();
     },
-    onError: (error, words) => snackbar.error(error, words.removeFailed),
+    onError: (error, { words }) => {
+      snackbar.error(error, words.removeFailed);
+      // Another page added or removed a level since: the sheet is read again, so the next removal names its last level
+      if (editConflict(error)) {
+        removeAdvancement.close();
+        void invalidateCharacter(queryClient, id);
+      }
+    },
   });
 
   const archiveMutation = useMutation({
@@ -157,6 +170,7 @@ export default function CharacterDetailsPage() {
   }
 
   const { parentCharacterId } = character;
+  const { lastAdvancementId } = character.summary;
 
   // Its menu, each item as the server answers it, the character's state with it: an archived one's Unarchive, its
   // Delete Permanently under it, then what it does live
@@ -189,13 +203,15 @@ export default function CharacterDetailsPage() {
         onClick={menu.closeMenuAnd(() => addAdvancement.openWith({}))}
       />
     ),
-    canEditRows && character.summary.tracks.length > 0 && (
+    canEditRows && lastAdvancementId !== null && (
       <ActionMenuItem
         key="remove-advancement"
         icon={DeleteIcon}
         label={character.summary.words.removeLast}
         intent="destructive"
-        onClick={menu.closeMenuAnd(() => setRemoveAdvancementOpen(true))}
+        onClick={menu.closeMenuAnd(
+          () => lastAdvancementId !== null && removeAdvancement.openWith({ advancementId: lastAdvancementId }),
+        )}
       />
     ),
     canEditRows && (
@@ -261,9 +277,15 @@ export default function CharacterDetailsPage() {
           </Menu>
 
           <DeleteDialog
-            open={isRemoveAdvancementOpen}
-            onClose={() => setRemoveAdvancementOpen(false)}
-            onConfirm={() => removeAdvancementMutation.mutate(character.summary.words)}
+            open={removeAdvancement.open}
+            onClose={removeAdvancement.close}
+            onConfirm={() =>
+              removeAdvancement.target &&
+              removeAdvancementMutation.mutate({
+                advancementId: removeAdvancement.target.advancementId,
+                words: character.summary.words,
+              })
+            }
             title={character.summary.words.removeLast}
             message={character.summary.words.removeLastMessage}
             pending={removeAdvancementMutation.isPending}
@@ -326,6 +348,7 @@ export default function CharacterDetailsPage() {
               onClose={closeAddAdvancement}
               onExited={addAdvancement.onExited}
               characterId={id}
+              lastAdvancementId={lastAdvancementId}
               trackId={addAdvancement.target.trackId}
               words={character.summary.words}
             />

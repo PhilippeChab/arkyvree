@@ -8,6 +8,12 @@ import {
 } from "@/shared/customization/customizationTypes.ts";
 
 /**
+ * The row a copy a write made stands for, which the client read: an entity of a type (`entityType`), or a customization
+ * of a kind (`kind`), by its id.
+ */
+type CopiedRow = { entityType: string; id: string } | { id: string; kind: CustomizationKind };
+
+/**
  * Each customization type's repository (the shared types: `CUSTOMIZATION_TYPES`): what a change to an
  * entity's customization reads its rows through.
  */
@@ -19,7 +25,8 @@ const CUSTOMIZATION_REPOS = {
 /**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
  * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids
- * of what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy
+ * of what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'), and the
+ * row the client read in its place (`source`: the inherited entity, owned entity or customization it copied); a copy
  * another write made since the client read the entity holds none, and its token is checked as the ruleset's own row's:
  * stale when the copy's row changed since its source's the client read. What a write needs of a copy it asks the
  * target: the token to check the row by (`expected`), the entities it owns by their places (`findOwned`), a
@@ -30,21 +37,24 @@ export default class EditTarget {
     readonly id: string,
     private readonly namedId: string,
     readonly copiedIds?: ReadonlyMap<string, string>,
+    private readonly source?: CopiedRow,
   ) {}
+
+  /**
+   * Whether the row a copy this call made stands for is still at the version the client read (`updatedAt`): the
+   * inherited row its page showed, which the copy took its values from.
+   */
+  private async isSourceAt(tx: Db, updatedAt: string): Promise<boolean> {
+    const { source } = this;
+    if (!source) return true;
+    if ("entityType" in source) return await Entities.has(tx, { ...source, updatedAt });
+    const repository = CUSTOMIZATION_REPOS[CUSTOMIZATION_TYPES[source.kind]];
+    return (await repository.count(tx, { ids: [source.id], updatedAt })) === 1;
+  }
 
   /** Whether this call made the copy it writes: an inherited entity's first edit. */
   get copied(): boolean {
     return this.copiedIds !== undefined;
-  }
-
-  /**
-   * The token a write checks the row by: the client's (`updatedAt`), or none on a copy this call made, whose token was
-   * its source's. A copy another write made is checked by it: the client's token is its source's, stale when the
-   * copy's row changed since (an entity's copy, stamped as it's made, always; an owned entity's copy, which keeps its
-   * source's times, once it's written).
-   */
-  expected(updatedAt: string | undefined): string | undefined {
-    return this.copied ? undefined : updatedAt;
   }
 
   /**
@@ -53,7 +63,22 @@ export default class EditTarget {
    */
   async customization(tx: Db, kind: CustomizationKind, customizationId: string, gone: string): Promise<EditTarget> {
     const [id] = await this.resolveCustomizations(tx, kind, [customizationId], gone);
-    return new EditTarget(id, customizationId, this.copiedIds);
+    return new EditTarget(id, customizationId, this.copiedIds, { id: customizationId, kind });
+  }
+
+  /**
+   * The token a write checks the row by: the client's (`updatedAt`), or none on a copy this call made, whose token was
+   * its source's: that one is refused as stale here when its source changed since the client read it (an inherited
+   * entity its author renamed, a page showing a copy a restore removed since), the copy having taken the source's
+   * values as they are now. A copy another write made is checked by it: the client's token is its source's, stale when
+   * the copy's row changed since (an entity's copy, stamped as it's made, always; an owned entity's copy, which keeps
+   * its source's times, once it's written).
+   */
+  async expected(tx: Db, updatedAt: string | undefined): Promise<string | undefined> {
+    if (!this.copied) return updatedAt;
+    if (updatedAt !== undefined && !(await this.isSourceAt(tx, updatedAt)))
+      throw new ConflictError(STALE_ENTITY_MESSAGE);
+    return undefined;
   }
 
   /**

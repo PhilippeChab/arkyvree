@@ -22,10 +22,16 @@ abstract class CustomizationRepository<T extends CustomizationTable> extends Cus
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
   declare protected readonly table: T;
 
-  /** How many of the rows `ids` names exist. */
-  async count(db: Db, where: { ids: string[] }) {
+  /** How many of the rows `ids` names exist, at their version (`updatedAt`) when it's given. */
+  async count(db: Db, where: { ids: string[]; updatedAt?: string }) {
     if (where.ids.length === 0) return 0;
-    return await db.$count(this.table, inArray(this.table.id, where.ids));
+    return await db.$count(
+      this.table,
+      this.where([
+        inArray(this.table.id, where.ids),
+        where.updatedAt !== undefined && eq(this.table.updatedAt, where.updatedAt),
+      ]),
+    );
   }
 
   async create(db: Db, values: InferInsertModel<T>) {

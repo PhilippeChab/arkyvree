@@ -393,6 +393,7 @@ describe("characters", () => {
             advancements: [{ id: wizard.levels[0].advancement.id, label: "Level 1", edit: "Edit Wizard Level 1" }],
           },
         ],
+        lastAdvancementId: wizard.levels[0].advancement.id,
         words: LEVEL_WORDS,
       });
       // A new character has no track yet
@@ -400,6 +401,7 @@ describe("characters", () => {
       expect((await expectOk(character.$get({ param: { id } }))).summary).toEqual({
         separator: " · ",
         tracks: [],
+        lastAdvancementId: null,
         words: LEVEL_WORDS,
       });
     });

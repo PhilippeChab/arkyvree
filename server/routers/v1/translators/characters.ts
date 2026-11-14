@@ -47,6 +47,7 @@ export function toV1Character(sheet: Sheet): z.infer<typeof v1Character> {
     archived: sheet.deletedAt !== null,
     id: sheet.id,
     kind: sheet.kind,
+    lastAdvancementId: sheet.summary.lastAdvancementId,
     name: sheet.name,
     ownerId: sheet.userId,
     parentCharacterId: sheet.parentCharacterId,

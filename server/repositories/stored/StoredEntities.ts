@@ -800,12 +800,18 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return new Set(rows.map((row) => row.id));
   }
 
-  /** Whether an entity of a kind has the id. */
-  async has(db: Db, where: { entityType: string; id: string }) {
+  /** Whether an entity of a kind has the id, and, given its version (`updatedAt`), is still at it. */
+  async has(db: Db, where: { entityType: string; id: string; updatedAt?: string }) {
     const [entity] = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(and(eq(entitiesInRules.type, where.entityType), eq(entitiesInRules.id, where.id)))
+      .where(
+        this.where([
+          eq(entitiesInRules.type, where.entityType),
+          eq(entitiesInRules.id, where.id),
+          where.updatedAt !== undefined && eq(entitiesInRules.updatedAt, where.updatedAt),
+        ]),
+      )
       .limit(1);
     return entity !== undefined;
   }

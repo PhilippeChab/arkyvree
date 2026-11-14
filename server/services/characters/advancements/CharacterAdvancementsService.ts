@@ -6,6 +6,7 @@
 
 import { type AdvancementPlanRequest, type AdvancementsEngine, type CharacterInput, Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, CharacterAdvancements } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { withCharacterWrite } from "@/server/services/writes/index.ts";
@@ -17,6 +18,18 @@ import { writeChildren } from "./childWrites.ts";
 import { Plans } from "./concerns/Plans.ts";
 
 class CharacterAdvancementsService extends include(Object, Plans) {
+  /**
+   * Refuses a save from a page that read another last advancement than the character's (`lastAdvancementId`, its id, or
+   * `null` when the page read none) as stale: another tab, or the same save sent again, added or removed a level since,
+   * and the save would add one more or remove one the page never showed. Not given, nothing is checked (`/v1`, whose
+   * callers may send none).
+   */
+  private refuseMovedLast(character: CharacterInput, lastAdvancementId: string | null | undefined) {
+    if (lastAdvancementId === undefined) return;
+    const last = character.rows.advancements.at(-1)?.id ?? null;
+    if (last !== lastAdvancementId) throw new ConflictError(STALE_ENTITY_MESSAGE);
+  }
+
   /**
    * Re-saves a character's advancement as its edit plans it (`planOf`, from the character's advancement flows and its
    * children): its advancement's picks in place of those it had, what its children become, and an activity. Answers the
@@ -51,11 +64,13 @@ class CharacterAdvancementsService extends include(Object, Plans) {
 
   /**
    * Saves the advancements a plan takes (`planOf`, from the character's advancement flows and its children): each
-   * advancement and its picks, what the children become, and an activity. Answers the advancements saved.
+   * advancement and its picks, what the children become, and an activity, refused as stale when the page read another
+   * last advancement (`lastAdvancementId`, `refuseMovedLast`). Answers the advancements saved.
    */
   private async saveAdvancements(
     session: Session,
     characterId: string,
+    lastAdvancementId: string | null | undefined,
     planOf: (
       advancements: AdvancementsEngine,
       children: CharacterInput[],
@@ -63,6 +78,7 @@ class CharacterAdvancementsService extends include(Object, Plans) {
   ) {
     return await withCharacterWrite(session, characterId, async (tx, scope, characterRecord) => {
       const character = await readCharacterInput(tx, characterRecord);
+      this.refuseMovedLast(character, lastAdvancementId);
       const children = await readChildInputs(tx, character);
       const plan = planOf(Engine.for(scope).character(character).advancements(), children);
       const created = [];
@@ -86,26 +102,30 @@ class CharacterAdvancementsService extends include(Object, Plans) {
   /**
    * Saves a plan (`request`): its advancements, its picks spread over them, and what the character's
    * children become. The engine reads the plan by its steps, checks each advancement, and the character with them
-   * unless `force`d, and the save writes what it plans.
+   * unless `force`d, and the save writes what it plans. Refused as stale when the character's last advancement isn't
+   * the one the page read (`lastAdvancementId`: `null` for none), so a save sent twice adds its levels once.
    */
   async addAdvancements(
     session: Session,
     characterId: string,
     request: AdvancementPlanRequest,
     force: boolean = false,
+    lastAdvancementId?: string | null,
   ) {
-    return await this.saveAdvancements(session, characterId, (advancements, children) =>
+    return await this.saveAdvancements(session, characterId, lastAdvancementId, (advancements, children) =>
       advancements.planAddition(children, request, force),
     );
   }
 
   /**
    * Removes the character's most recent advancement, with its picks (the database deletes them with it), and
-   * what its children become without it.
+   * what its children become without it. Refused as stale when it isn't the one the page showed last
+   * (`advancementId`), so two pages' removals take one level.
    */
-  async removeAdvancement(session: Session, characterId: string) {
+  async removeAdvancement(session: Session, characterId: string, advancementId?: string) {
     return await withCharacterWrite(session, characterId, async (tx, scope, characterRecord) => {
       const character = await readCharacterInput(tx, characterRecord);
+      this.refuseMovedLast(character, advancementId);
       const children = await readChildInputs(tx, character);
       const removal = Engine.for(scope).character(character).advancements().planRemoval(children);
       await CharacterAdvancements.delete(tx, { id: removal.advancement.id });

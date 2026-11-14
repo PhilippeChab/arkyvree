@@ -6,7 +6,10 @@ import { addClassLevels, addSpells } from "@/database/seeders/dnd3.5/characters/
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import { STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { CharacterAdvancements } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
+import { findLastAdvancementId } from "@/tests/support/characters.ts";
 import { postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import {
@@ -36,23 +39,6 @@ type StepOptions = InferResponseType<(typeof options)["$post"], 200>;
 const levels = api.api.characters.advancements[":characterId"];
 const level = levels[":advancementId"];
 const options = levels.options[":step"];
-
-/** Saves one level of class `classId`, at `levelNumber` in it, with these picks, returning the raw response. */
-function addLevel(
-  characterId: string,
-  classId: string,
-  levelNumber: number,
-  hp: number,
-  levelPicks: PlanPicks,
-  force = false,
-) {
-  return addLevels(characterId, [{ classId, level: levelNumber, hp }], levelPicks, force);
-}
-
-/** Saves the levels of a level-up's plan, with these picks, returning the raw response. */
-function addLevels(characterId: string, planned: PlannedClassLevel[], levelPicks: PlanPicks, force = false) {
-  return levels.$post({ param: { characterId }, json: { ...levelUpPlan(planned, levelPicks), force } });
-}
 
 /**
  * A human fighter (INT 12): 16 skill points, 2 General feats and a bonus feat at the first level; 4 points and a bonus
@@ -84,6 +70,18 @@ function stepOf<M extends StepAnswer["mechanic"]>(answer: PlanAnswer, name: stri
   return step as Extract<StepAnswer, { mechanic: M }>;
 }
 
+/** Saves one level of class `classId`, at `levelNumber` in it, with these picks, returning the raw response. */
+async function addLevel(
+  characterId: string,
+  classId: string,
+  levelNumber: number,
+  hp: number,
+  levelPicks: PlanPicks,
+  force = false,
+) {
+  return await addLevels(characterId, [{ classId, level: levelNumber, hp }], levelPicks, force);
+}
+
 /** Saves one level and returns it. */
 async function addLevelOk(
   characterId: string,
@@ -94,6 +92,15 @@ async function addLevelOk(
 ) {
   const [created] = await expectOk(addLevel(characterId, classId, levelNumber, hp, levelPicks));
   return created;
+}
+
+/** Saves the levels of a level-up's plan, with these picks, returning the raw response. */
+async function addLevels(characterId: string, planned: PlannedClassLevel[], levelPicks: PlanPicks, force = false) {
+  const lastAdvancementId = await findLastAdvancementId(characterId);
+  return await levels.$post({
+    param: { characterId },
+    json: { ...levelUpPlan(planned, levelPicks), force, lastAdvancementId },
+  });
 }
 
 /** A new human character of the seeded user's (INT 12), on the seeded ruleset unless `rulesetId` says otherwise. */
@@ -566,13 +573,38 @@ describe("character levels", () => {
     });
   });
 
+  describe("a level's add and removal, tied to the last level the page read", () => {
+    test("adds a level sent twice once: the second send, read before the first saved, is stale", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const fighter = ctx.classMap.pc["Fighter"];
+      const json = { ...levelUpPlan([{ classId: fighter, level: 1, hp: 8 }], fighter1(ctx)), lastAdvancementId: null };
+
+      await expectOk(levels.$post({ param: { characterId }, json }));
+      const again = await expectStatus(levels.$post({ param: { characterId }, json }), 409);
+      expect(await again.json()).toMatchObject({ message: STALE_ENTITY_MESSAGE });
+      expect(await CharacterAdvancements.findMany(db, { characterId })).toHaveLength(1);
+    });
+
+    test("removes the last level once from two pages: the second, which read it last too, is stale", async () => {
+      const { characterId, ctx } = await createCharacter();
+      await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 1, 8, fighter1(ctx));
+      const second = await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 2, 6, fighter2(ctx));
+      const param = { characterId, advancementId: second.id };
+
+      await expectOk(level.$delete({ param }));
+      await expectStatus(level.$delete({ param }), 409);
+      expect(await CharacterAdvancements.findMany(db, { characterId })).toHaveLength(1);
+    });
+  });
+
   describe("removing a level", () => {
     test("removes the last level", async () => {
       const { characterId, ctx } = await createCharacter();
       await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 1, 8, fighter1(ctx));
       await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 2, 6, fighter2(ctx));
 
-      expect(await expectOk(levels.$delete({ param: { characterId } }))).toMatchObject({ success: true });
+      const advancementId = (await findLastAdvancementId(characterId))!;
+      expect(await expectOk(level.$delete({ param: { characterId, advancementId } }))).toMatchObject({ success: true });
       const classes = await expectOk(
         options.$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan: { steps: {} } } }),
       );

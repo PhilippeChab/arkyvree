@@ -163,11 +163,27 @@ export default new Hono<ApiKeyContext>()
       summary: "Saves an advancement plan's advancements, answering the character's sheet",
     }),
     validate("param", idParam),
-    validate("json", z.object(advancementSave)),
+    validate(
+      "json",
+      z.object({
+        ...advancementSave,
+        lastAdvancementId: z
+          .string()
+          .uuid()
+          .nullable()
+          .optional()
+          .meta({
+            description:
+              "The character's last advancement as the caller read it (its sheet's `lastAdvancementId`), null for " +
+              "none: the save is refused with a 409 when it isn't the character's last any more, so a save sent " +
+              "twice adds once",
+          }),
+      }),
+    ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { force, steps } = c.req.valid("json");
-      await CharacterAdvancementsService.addAdvancements(c.var.requestSession, id, { steps }, force);
+      const { force, lastAdvancementId, steps } = c.req.valid("json");
+      await CharacterAdvancementsService.addAdvancements(c.var.requestSession, id, { steps }, force, lastAdvancementId);
       return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 201);
     },
   )
@@ -201,9 +217,24 @@ export default new Hono<ApiKeyContext>()
       summary: "Removes a character's last advancement, answering its sheet",
     }),
     validate("param", idParam),
+    validate(
+      "query",
+      z.object({
+        advancementId: z
+          .string()
+          .uuid()
+          .optional()
+          .meta({
+            description:
+              "The advancement the caller read as its last (its sheet's `lastAdvancementId`): the removal is refused " +
+              "with a 409 when it isn't the character's last any more, so two removals take one advancement",
+          }),
+      }),
+    ),
     async (c) => {
       const { id } = c.req.valid("param");
-      await CharacterAdvancementsService.removeAdvancement(c.var.requestSession, id);
+      const { advancementId } = c.req.valid("query");
+      await CharacterAdvancementsService.removeAdvancement(c.var.requestSession, id, advancementId);
       return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 200);
     },
   );

@@ -37,6 +37,8 @@ export async function addFirstLevel(page: Page, characterId: string, klass: stri
       json: {
         steps: { ...planned, hp: [hp.advancements[0].max], abilities: [[]], skills: [], feats: [], spells: [] },
         force: true,
+        // Its first level: the character has none before it
+        lastAdvancementId: null,
       },
     }),
   );
