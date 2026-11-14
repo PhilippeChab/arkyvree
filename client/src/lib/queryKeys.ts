@@ -14,6 +14,14 @@ export const QUERY_KEYS = {
     connectedApps: ["auth", "connectedApps"] as const,
     /** An app's sign-in the consent page answers. */
     oauthAuthorization: (id: string) => ["auth", "oauthAuthorization", id] as const,
+    /** Who may make an account on the instance, which the sign-up and sign-in pages read. */
+    signUpPolicy: ["auth", "signUpPolicy"] as const,
+  },
+  /** What the instance's admins run: its sign-up setting and its accounts. */
+  admin: {
+    settings: ["admin", "settings"] as const,
+    accountLists: ["admin", "accounts"] as const,
+    accounts: (search: string) => ["admin", "accounts", search] as const,
   },
   rulesets: {
     lists: ["rulesets", "list"] as const,

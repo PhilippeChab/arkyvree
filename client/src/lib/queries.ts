@@ -295,3 +295,11 @@ export function rulesQuery() {
     staleTime: FOREVER,
   });
 }
+
+/** Who may make an account on the instance, and whether it has an admin yet (without one, anyone may). */
+export function signUpPolicyQuery() {
+  return queryOptions({
+    queryKey: QUERY_KEYS.auth.signUpPolicy,
+    queryFn: () => parseResponse(rpc.auth["sign-up-policy"].$get()),
+  });
+}

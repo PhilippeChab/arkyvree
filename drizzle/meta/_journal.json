@@ -50,6 +50,13 @@
       "when": 1794696087041,
       "tag": "0006_drop_demo_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794697775582,
+      "tag": "0007_instance_admin",
+      "breakpoints": true
     }
   ]
 }

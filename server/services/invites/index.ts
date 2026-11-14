@@ -13,4 +13,4 @@ export {
   readRulesetInviteAnswers,
   readRulesetInvitePolicies,
 } from "./invitedRecords.ts";
-export { checkNewContributor, getInviteNames, withInviteRefusal } from "./newInvites.ts";
+export { checkInviteeCanSignUp, checkNewContributor, getInviteNames, withInviteRefusal } from "./newInvites.ts";

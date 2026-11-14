@@ -56,6 +56,26 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
     return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
   }
 
+  /**
+   * Whether an address (`pendingEmail`) holds a pending campaign invite no sign-in claimed (the ones `backfillUserId`
+   * gives its account): what lets it make an account on an instance that takes invites alone.
+   */
+  async exists(db: Db, where: { pendingEmail: string }) {
+    const [row] = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(
+        and(
+          eq(this.table.email, where.pendingEmail),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(this.table.deletedAt),
+        ),
+      )
+      .limit(1);
+    return !!row;
+  }
+
   async findMany(
     db: Db,
     where: { userId: string } | { playerId: string },

@@ -52,3 +52,13 @@ In Claude or ChatGPT, add a custom connector with the address `https://rpg.arkyv
 A script or an agent that runs on its own, with no browser to sign in with, sends an API key instead (`Authorization: Bearer <key>`).
 
 Then ask it what you'd ask the app: "what's my character's armor class?", "add a level and take this feat". Arkyvree marks the tool that archives or deletes apart from the others, so your assistant can ask you before it uses it.
+
+## Who can sign up?
+
+Each Arkyvree has admins: the first account made on it is its first admin. An admin opens **Admin** in the sidebar and chooses who can make an account:
+
+- **Open:** anyone who reaches its address.
+- **Invite Only:** someone invited to a campaign, a ruleset or a character, with the address the invite went to. Anyone on it can send that invite.
+- **Closed:** nobody. An invite then goes only to someone who already has an account.
+
+The same page lists the accounts. An admin makes another account an admin, or no longer one (there's always one left), and marks an account's email verified when its code never arrived. They can also deactivate an account: it's signed out everywhere, its API keys and connected apps stop working, and it can't sign in until an admin reactivates it. Its characters, rulesets and campaigns stay as they are.

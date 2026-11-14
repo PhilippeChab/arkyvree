@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- An admin page: who can sign up (anyone, the invited, or nobody), and the instance's accounts, which an admin makes admins, deactivates or marks verified
 - A modifier or a requirement keeps following the feat, skill, class, spell, language or race it names when that's renamed, in the ruleset that renames it and in those built on it
 - Paths, formulas and sheets write a name's accented letters as plain letters: a skill named Discrétion is `skills.discretion`, where it was `skills.discrtion`; the public API and the MCP server read and write the new spelling
 - A skill's Skill Focus (5e: its Skill Proficiency and Expertise) is renamed and restored with its skill, keeping who picked it

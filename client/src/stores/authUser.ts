@@ -7,7 +7,7 @@ type MeResponse = InferResponseType<typeof rpc.auth.me.$get, 200>;
 
 export type AuthUser = Pick<
   MeResponse,
-  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt"
+  "id" | "emailAddress" | "username" | "pendingEmailAddress" | "onboardingCompletedAt" | "isAdmin"
 >;
 
 /** A text field as storage held it: its text, or none. */
@@ -24,6 +24,7 @@ export function readAuthUser(value: unknown): AuthUser | null {
     username: textOrNull(value.username),
     pendingEmailAddress: textOrNull(value.pendingEmailAddress),
     onboardingCompletedAt: textOrNull(value.onboardingCompletedAt),
+    isAdmin: value.isAdmin === true,
   };
 }
 
@@ -34,6 +35,7 @@ export function toAuthUser({
   username,
   pendingEmailAddress,
   onboardingCompletedAt,
+  isAdmin,
 }: AuthUser): AuthUser {
   return {
     id,
@@ -41,5 +43,6 @@ export function toAuthUser({
     username,
     pendingEmailAddress,
     onboardingCompletedAt,
+    isAdmin,
   };
 }

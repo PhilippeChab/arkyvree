@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/server/database/index.ts";
-import { BASE_RULES_OPTIONS, CONTRIBUTOR_ROLES, CONTRIBUTOR_STATUSES } from "@/shared/enums.ts";
+import { BASE_RULES_OPTIONS, CONTRIBUTOR_ROLES, CONTRIBUTOR_STATUSES, SIGN_UP_POLICIES } from "@/shared/enums.ts";
 
 // The base rules are written out so the client doesn't load the schema: they must stay the registered modules'
 test("the base rules are the modules the migrated database registers", async () => {
@@ -25,4 +25,10 @@ test("the contributors' statuses are what their tables' CHECK constraints allow"
   );
   const allowed = live.rows.map((row) => [...row.definition.matchAll(/'(\w+)'/g)].map(([, status]) => status));
   expect(allowed).toEqual([[...CONTRIBUTOR_STATUSES], [...CONTRIBUTOR_STATUSES]]);
+});
+
+// The sign-up settings are written out for the client too: they must stay the enum's, in its order
+test("the sign-up settings are the enum's", async () => {
+  const live = await db.execute<{ policy: string }>(sql`SELECT unnest(enum_range(NULL::sign_up_policy)) AS policy`);
+  expect(live.rows.map((row) => row.policy)).toEqual([...SIGN_UP_POLICIES]);
 });

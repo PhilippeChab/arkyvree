@@ -4,6 +4,7 @@ import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/
 
 import AccountCodesRepository from "./accounts/AccountCodesRepository.ts";
 import ApiKeysRepository from "./accounts/ApiKeysRepository.ts";
+import InstanceSettingsRepository from "./accounts/InstanceSettingsRepository.ts";
 import OauthAccountsRepository from "./accounts/OauthAccountsRepository.ts";
 import OAuthAuthorizationsRepository from "./accounts/OAuthAuthorizationsRepository.ts";
 import OAuthClientsRepository from "./accounts/OAuthClientsRepository.ts";
@@ -65,6 +66,7 @@ export const EntityLinks = withRequestCache("EntityLinks", new StoredLinks());
 export const EntityReferences = withRequestCache("EntityReferences", new EntityReferencesRepository());
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
+export const InstanceSettings = withRequestCache("InstanceSettings", new InstanceSettingsRepository());
 export const Invites = withRequestCache("Invites", new InvitesRepository());
 export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
 export const NameBindings = withRequestCache("NameBindings", new NameBindingsRepository());

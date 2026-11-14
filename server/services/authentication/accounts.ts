@@ -4,7 +4,13 @@ import type { Db } from "@/drizzle/database.ts";
 import type { usersInAccount } from "@/drizzle/schema.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
-import { ConflictError, InternalError, UnauthorizedError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import {
+  ConflictError,
+  ForbiddenError,
+  InternalError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+} from "@/server/errors/index.ts";
 import {
   Activities,
   ApiKeys,
@@ -23,11 +29,16 @@ import { BUSY_ACCOUNT_MESSAGE, withAccountFoundBy } from "@/server/services/writ
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { User } from "@/shared/relations.ts";
 
+import { checkSignUp } from "./signUps.ts";
+
 /** A field that's one account's alone: its email address or its username. */
 type AccountField = "emailAddress" | "username";
 
 /** What an account is found by, besides its id: its email address or its username. */
 type AccountIdentifier = { emailAddress: string } | { username: string };
+
+/** What refuses a sign-in to an account an admin deactivated. */
+const DEACTIVATED_MESSAGE = "This account was deactivated by an admin of this Arkyvree.";
 
 /** The unique index that keeps a Google account linked to one user (`drizzle/schema.ts`). */
 const GOOGLE_LINK_INDEX = "oauth_accounts_provider_provider_account_id";
@@ -92,6 +103,7 @@ async function signInGoogleOnce(payload: { email: string; sub: string }) {
       // makes one. An archived row the data fix hasn't reached still holds its address: taken, never linked
       if (found && found.emailAddress !== email) throw toRerun(BUSY_ACCOUNT_MESSAGE);
       if (found?.deletedAt) throw toTakenError("emailAddress");
+      if (found?.deactivatedAt) throw new ForbiddenError(DEACTIVATED_MESSAGE);
 
       if (found) {
         await withGoogleLinkRefusal(() =>
@@ -116,8 +128,9 @@ async function signInGoogleOnce(payload: { email: string; sub: string }) {
 
       // Case 3: New user. Another first sign-in of the address that commits its account first refuses this one's on
       // its index, which the rerun finds and signs in to as its returning user
+      const { isAdmin } = await checkSignUp(tx, email);
       const userRows = await withUniqueRefusal(
-        () => Users.create(tx, { emailAddress: email }),
+        () => Users.create(tx, { emailAddress: email, isAdmin }),
         (index) => (index === "users_email" ? toRerun(toTakenError("emailAddress").message) : undefined),
       );
       if (!userRows[0]) throw new InternalError("Could not create user");
@@ -166,14 +179,17 @@ export async function assertNotTaken(tx: Db, identifier: AccountIdentifier) {
 
 /**
  * A new session for `user`, with its activity (`signIn`, or `signUp` for a new account): the invites sent to their
- * email before they had an account become theirs.
+ * email before they had an account become theirs. An account an admin deactivated is refused (403): every sign-in opens
+ * its session here, a password's, a Google account's, a verified email's.
  */
 export async function openSession(
   tx: Db,
-  user: { emailAddress: string; id: string },
+  user: { deactivatedAt: string | null; emailAddress: string; id: string },
   type: "signIn" | "signUp",
   data?: { provider: "google" },
 ) {
+  if (user.deactivatedAt) throw new ForbiddenError(DEACTIVATED_MESSAGE);
+
   const [session] = await Sessions.create(tx, { userId: user.id });
   if (!session) throw new InternalError("Could not create session");
 

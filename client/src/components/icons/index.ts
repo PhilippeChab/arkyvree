@@ -6,6 +6,7 @@ export {
   AccountCircle as AccountCircleIcon,
   AccountTree as AccountTreeIcon,
   Add as AddIcon,
+  ManageAccounts as AdminIcon,
   Archive as ArchiveIcon,
   ArrowBack as ArrowBackIcon,
   Bolt as BoltIcon,
@@ -26,6 +27,7 @@ export {
   ContentCopy as CopyIcon,
   DarkMode as DarkModeIcon,
   Dashboard as DashboardIcon,
+  Block as DeactivateIcon,
   Delete as DeleteIcon,
   Description as DocumentIcon,
   Download as DownloadIcon,
@@ -70,6 +72,7 @@ export {
   CheckCircle as PublishedIcon,
   Publish as PublishIcon,
   Refresh as RefreshIcon,
+  RemoveModerator as RemoveAdminIcon,
   Remove as RemoveIcon,
   Rule as RequirementsIcon,
   Restore as RestoreIcon,
@@ -94,6 +97,7 @@ export {
   PersonOff as UnassignedIcon,
   UploadFile as UploadFileIcon,
   EventRepeat as UsesIcon,
+  MarkEmailRead as VerifyEmailIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 export type { SvgIconComponent } from "@mui/icons-material";

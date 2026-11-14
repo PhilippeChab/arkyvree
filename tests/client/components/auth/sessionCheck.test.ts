@@ -63,6 +63,16 @@ describe("The session check, with a user the store remembers", () => {
     expect(useAuthStore.getState().user).toBe(remembered);
   });
 
+  test("takes the server's admin standing when it changed since the store kept them", async () => {
+    const { session } = await createUserWithSession({ prefix: "session-check" });
+    useAuthStore.getState().startSession(await fetchUserOf(session.id)());
+    useAuthStore.getState().updateUser({ isAdmin: true });
+
+    await checkSession(fetchUserOf(session.id));
+
+    expect(useAuthStore.getState().user?.isAdmin).toBe(false);
+  });
+
   test("signs them out when the server knows no session (a 401)", async () => {
     const { session } = await createUserWithSession({ prefix: "session-check" });
     useAuthStore.getState().startSession(await fetchUserOf(session.id)());

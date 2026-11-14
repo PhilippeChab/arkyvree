@@ -10,7 +10,9 @@ How the client routes between unauthenticated, public, and authenticated surface
 |---|---|---|---|
 | `AuthLayoutRoute` | `client/src/components/auth/AuthLayoutRoute.tsx` | Unauth users on auth-flow pages | Signed-in user → `/dashboard`. Unauth → form. |
 | `PublicLayout` | `client/src/components/layout/PublicLayout.tsx` | Anyone | None. Toolbar swaps "Sign Up" ↔ "Dashboard" by auth state. |
-| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`, while the session probe confirms the remembered user (another user's session replaces them; a 401 signs out). No remembered user: while the probe runs → `PageLoader`. Unauth → `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
+| `PrivateRoute` | `client/src/components/auth/PrivateRoute.tsx` | Authenticated users | Authed → `<Outlet/>`, while the session probe confirms the remembered user (another user's session replaces them, and their admin standing follows the server's; a 401 signs out). No remembered user: while the probe runs → `PageLoader`. Unauth → `/sign-in?redirect=<path>` (`authPagePath`; no redirect when the user signed out of the page). |
+
+The admin page (`/admin`, `AdminPage`) is a private page its admins alone see in the sidebar (`isAdmin`, which the store keeps with the user); anyone else who opens it goes to `/dashboard`, and its routes refuse them (`InstancePolicy`, [access.md](./access.md#the-instance--instancepolicy)). The sign-up and sign-in pages read who may sign up (`GET /auth/sign-up-policy`): an instance closed to new accounts shows its sign-up page's form as a message instead, and its sign-in page offers no sign-up; one that takes invites alone says so above the form.
 
 ## Cookie security
 

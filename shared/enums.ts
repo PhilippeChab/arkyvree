@@ -4,7 +4,14 @@
  * checks the constraints' and the base rules' against the migrated database.
  */
 
-import type { contributorRole, exportStatus, role, rulesetKind, rulesetStatus } from "@/drizzle/schema.ts";
+import type {
+  contributorRole,
+  exportStatus,
+  role,
+  rulesetKind,
+  rulesetStatus,
+  signUpPolicy,
+} from "@/drizzle/schema.ts";
 
 /** A registered module's base rules: `rules.modules` holds them, and `rulesets.base_rules` names one. */
 export type BaseRules = (typeof BASE_RULES_OPTIONS)[number];
@@ -19,8 +26,12 @@ export type ExportStatus = (typeof exportStatus.enumValues)[number];
 export type RulesetKind = (typeof rulesetKind.enumValues)[number];
 /** Where a ruleset stands: a draft, published, or archived. */
 export type RulesetStatus = (typeof rulesetStatus.enumValues)[number];
+/** Who may make an account on the instance: anyone, only an address an invite was sent to, or nobody. */
+export type SignUpPolicy = (typeof signUpPolicy.enumValues)[number];
 
 export const BASE_RULES_OPTIONS = ["Dungeons & Dragons: 3.5", "Pathfinder: 1", "Dungeons & Dragons: 5"] as const;
 /** A ruleset contributor's roles, highest first: the `contributor_role` enum's. */
 export const CONTRIBUTOR_ROLES = ["Admin", "Editor", "Viewer"] as const satisfies readonly ContributorRole[];
 export const CONTRIBUTOR_STATUSES = ["Pending", "Active", "Rejected", "Revoked"] as const;
+/** Who may make an account on the instance, the most open first: the `sign_up_policy` enum's. */
+export const SIGN_UP_POLICIES = ["Open", "Invite Only", "Closed"] as const satisfies readonly SignUpPolicy[];
