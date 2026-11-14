@@ -1,8 +1,7 @@
-import { metrics } from "@opentelemetry/api";
-import { logs } from "@opentelemetry/api-logs";
+import { logs, metrics } from "@opentelemetry/api";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
-import { HostMetrics } from "@opentelemetry/host-metrics";
+import { HostMetricsInstrumentation } from "@opentelemetry/instrumentation-host-metrics";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
 import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
@@ -12,7 +11,7 @@ import { getEnvironmentName, readEnv } from "./environment.ts";
 
 /** OpenTelemetry's metrics and logs, pushed to Better Stack: its providers, kept to drain them on shutdown. */
 class Telemetry {
-  private hostMetrics: HostMetrics | null = null;
+  private hostMetrics: HostMetricsInstrumentation | null = null;
 
   private initialized = false;
 
@@ -51,11 +50,9 @@ class Telemetry {
     });
     metrics.setGlobalMeterProvider(this.meterProvider);
 
-    this.hostMetrics = new HostMetrics({
-      name: `arkyvree-${component}-host`,
-      meterProvider: this.meterProvider,
-    });
-    this.hostMetrics.start();
+    this.hostMetrics = new HostMetricsInstrumentation({ enabled: false });
+    this.hostMetrics.setMeterProvider(this.meterProvider);
+    this.hostMetrics.enable();
 
     this.loggerProvider = new LoggerProvider({
       resource,
