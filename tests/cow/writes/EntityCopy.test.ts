@@ -65,7 +65,7 @@ function findGrantings(baseRules: BaseRules, view: RulesetData, grantedType: str
     const holders = fromLevels
       ? ownedTypes.flatMap((type) => view.rows(type).filter((level) => level.ownerId === klass.id))
       : [klass];
-    const linked = holders.flatMap((holder) => view.nameLinks(linksTo(view, holder.id, grantedType)));
+    const linked = holders.flatMap((holder) => view.nameLinks(view.linksOf(holder.id, undefined, grantedType)));
     return linked.length > 0 ? [{ classId: klass.id, grantedId: linked[0].toId }] : [];
   });
 }
@@ -106,15 +106,6 @@ function linksShown(baseRules: BaseRules, view: RulesetData, classId: string) {
         .map((link) => `${holder.position ?? 0} ${link.role} ${link.toType} ${link.toName} ${link.viaId ?? ""}`),
     )
     .toSorted();
-}
-
-/**
- * An entity's links (`entityId`) to entities of `toType` alone, of any role. The view's own `linksOf` filters by a
- * kind only with a role: given none, it answers every link, a level's base bonuses to its saves among its feats, in an
- * order a seed's ids decide.
- */
-function linksTo(view: RulesetData, entityId: string, toType: string) {
-  return view.linksOf(entityId).filter((link) => link.toType === toType);
 }
 
 /**
@@ -238,10 +229,10 @@ describe("a first edit of a class that names an entity deleted since", () => {
         // A skill the class doesn't have, of a class that has some
         {
           name: "class skill",
-          takes: (shown, classId) => linksTo(shown, classId, "skills").length > 0,
+          takes: (shown, classId) => shown.linksOf(classId, undefined, "skills").length > 0,
           run: async (session, forkId, classId) => {
             const shown = await readView(forkId);
-            const held = new Set(linksTo(shown, classId, "skills").map((link) => link.toId));
+            const held = new Set(shown.linksOf(classId, undefined, "skills").map((link) => link.toId));
             const skill = shown.rows("skills").find((row) => !held.has(row.id))!;
             return await EntitiesService.addEntityLink(session, forkId, "classes", classId, skill.id);
           },
