@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type UnsettledKey } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/views/scope.ts";
-import { Entities, Modifiers, NameBindings, Requirements } from "@/server/repositories/index.ts";
+import { Entities, Locks, Modifiers, NameBindings, Requirements } from "@/server/repositories/index.ts";
 
 /** A stored row a rekey rewrites: its text, and the version a write it races checks. */
 interface RekeyedRow {
@@ -44,14 +44,22 @@ export default class NameRekey {
       requirementIds: requirements.map((requirement) => requirement.id),
     });
     const rows: RekeyedRow[] = [...modifiers, ...set, ...requirements];
-    return { bindings, modifierIds: new Set(modifierIds), rows };
+    const characterOf = new Map(set.map((modifier) => [modifier.id, modifier.sourceId]));
+    return { bindings, characterOf, modifierIds: new Set(modifierIds), rows };
   }
 
-  /** Rewrites the ruleset's rows saved under the old keys (`rulesetId`), in `tx`: what it did. */
+  /**
+   * Rewrites the ruleset's rows saved under the old keys (`rulesetId`), in `tx`: what it did. It locks as every write
+   * does (`Locks`), the ruleset before anything else, then the characters whose own modifiers it rewrites, then their
+   * rows, so a save beside it waits its turn rather than deadlock.
+   */
   static async rekey(tx: Db, rulesetId: string): Promise<RekeyResult> {
+    await Locks.lockRulesets(tx, { ids: [rulesetId] }, "update");
     return await withRulesetScope(tx, rulesetId, async (scope) => {
-      const { bindings, modifierIds, rows } = await NameRekey.readRows(tx, rulesetId);
+      const { bindings, characterOf, modifierIds, rows } = await NameRekey.readRows(tx, rulesetId);
       const plan = Engine.for(scope).planRekeyedNames(rows, bindings);
+      const characterIds = [...plan.rows.keys()].flatMap((id) => characterOf.get(id) ?? []);
+      await Locks.lockCharacters(tx, { ids: [...new Set(characterIds)] }, "no key update");
       const written = new Set<string>();
       for (const row of rows) {
         const text = plan.rows.get(row.id);

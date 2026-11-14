@@ -154,8 +154,8 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
   }
 
   /**
-   * The modifiers set on the characters of a ruleset (`rulesetId`), archived ones' too, with their text and their
-   * version: what a rekey reads (`NameRekey`).
+   * The modifiers set on the characters of a ruleset (`rulesetId`), archived ones' too, with their character
+   * (`sourceId`), their text and their version: what a rekey reads (`NameRekey`).
    */
   async findOfCharacters(db: Db, where: { rulesetId: string }) {
     const characters = db
@@ -165,6 +165,7 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
     return await db
       .select({
         id: modifiersInCustomization.id,
+        sourceId: modifiersInCustomization.sourceId,
         target: modifiersInCustomization.target,
         updatedAt: modifiersInCustomization.updatedAt,
         value: modifiersInCustomization.value,

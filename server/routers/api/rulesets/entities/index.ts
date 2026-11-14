@@ -6,6 +6,7 @@ import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
   entityFields,
   entityLinks,
+  entityName,
   entityOrderBy,
   idParam,
   limit,
@@ -21,7 +22,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
  * update's). No other key.
  */
 const entityBody = z.strictObject({
-  name: z.string().min(1),
+  name: entityName,
   description: z
     .string()
     .optional()
@@ -184,7 +185,7 @@ export default new Hono<SessionContext>()
     "/:id/entities/:entityType/:entityId/progression/features",
     validate("param", entityParams),
     // The feature a name creates, as its picker offers it: the name its rules give it, and whether it exists
-    validate("query", z.object({ name: z.string().min(1) })),
+    validate("query", z.object({ name: entityName })),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const { name } = c.req.valid("query");
@@ -296,7 +297,7 @@ export default new Hono<SessionContext>()
     "/:id/entities/:entityType/:entityId/progression/features",
     validate("param", entityParams),
     // A feature its owned entities can grant, by its name as typed: its rules name it and make its pool (3.5's)
-    validate("json", z.strictObject({ name: z.string().min(1) })),
+    validate("json", z.strictObject({ name: entityName })),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const { name } = c.req.valid("json");
@@ -326,7 +327,7 @@ export default new Hono<SessionContext>()
         variants: z
           .array(
             z.object({
-              name: z.string().min(1),
+              name: entityName,
               description: z
                 .string()
                 .optional()

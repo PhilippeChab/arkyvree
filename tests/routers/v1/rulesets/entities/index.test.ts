@@ -115,6 +115,9 @@ describe("v1 ruleset entities", () => {
 
     const created = await expectOk(entities.$post({ json: { name: "Keyed Entity" }, param: { id, kind: type } }));
     expect(created).toMatchObject({ name: "Keyed Entity", rulesetId: id, type });
+    // A name is stored composed: an accent typed apart from its letter is the letter whole
+    const accented = await expectOk(entities.$post({ json: { name: "Entite\u0301" }, param: { id, kind: type } }));
+    expect(accented.name).toBe("Entit\u00E9");
     const param = { entityId: created.id, id, kind: type };
     const json = { description: "Described", name: "Keyed Entity" };
     expect((await expectOk(entities[":entityId"].$put({ json, param }))).description).toBe("Described");

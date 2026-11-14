@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { api, expectOk } from "@/tests/support/api.ts";
+import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import {
@@ -47,5 +47,16 @@ describe("rulesets entities: skills", () => {
     expect(await read(copied.id)).toEqual({ ...copied, restorableDelete: true });
     expect(await read(climbId)).toEqual({ ...copied, restorableDelete: true });
     expect(copied.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Dexterity"], toName: "Dexterity" }]);
+  });
+
+  test("stores a name composed, so an accent typed apart from its letter can't make a second skill of one key", async () => {
+    const { abilityMap } = await getSeedCtx();
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const json = (name: string) => ({ name, links: { keyAbility: abilityMap["Dexterity"] } });
+
+    const created = await expectOk(kinds.$post({ param: { id, entityType }, json: json("Discre\u0301tion") }));
+
+    expect(created.name).toBe("Discr\u00E9tion");
+    await expectStatus(kinds.$post({ param: { id, entityType }, json: json("Discr\u00E9tion") }), 409);
   });
 });

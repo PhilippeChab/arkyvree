@@ -36,6 +36,9 @@ const VIEW = composeView([
       "Prédiction",
       "Prèdiction",
       "Climb",
+      "Pêcheur",
+      "Élan",
+      "Lan",
     ].map((name, index) => ({ id: `o${index}`, name, rulesetId: "base" })),
     targets: [{ id: "t0", name: "Bardé Lore", rulesetId: "base" }],
   }),
@@ -151,6 +154,21 @@ describe("A rule's text saved before keys kept accented letters", () => {
     expect(plan.unsettled).toEqual([
       { field: "target", held: "prdiction", keys: ["prédiction", "prèdiction"], rowId: "m1" },
     ]);
+  });
+
+  test("written under the new keys already: stays as it is, though its letters read past their accents name another", () => {
+    const rows = [
+      { id: "m1", target: "perks.pré*.misc", value: "1" },
+      { id: "m2", target: "perks.pécheur.misc", value: "1" },
+    ];
+    const plan = planOf(rows, [bindingOf("m2", {}, { kind: "group", name: "pécheur" })]);
+    expect(plan).toEqual({ groups: new Map(), rows: new Map(), unsettled: [] });
+  });
+
+  test("an old key that names an entity now, and was another name's old key: left, and listed with both", () => {
+    const plan = planOf([{ id: "m1", target: "perks.lan.misc", value: "1" }]);
+    expect(plan.rows.size).toBe(0);
+    expect(plan.unsettled).toEqual([{ field: "target", held: "lan", keys: ["lan", "élan"], rowId: "m1" }]);
   });
 
   test("a text that names nothing under either key, or a word the paths use themselves, stays as it is", () => {

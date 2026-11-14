@@ -40,8 +40,9 @@ async function findRulesets(db: Db, which: "all" | "system") {
 
 /**
  * Moves the text of every ruleset's rules saved before a name's key kept its accented Latin letters to the keys that
- * keep them (`NameRekey`): each ruleset in turn, its sources before it, each in a transaction of its own, its content
- * version bumped when it changed. Its bindings stay as they are. A row whose text holds no old key is left as it is, so
+ * keep them (`NameRekey`): each ruleset in turn, its sources before it, each in a transaction of its own that locks the
+ * ruleset first, as every write does, its content version bumped (under that lock) only when it changed, so the views
+ * of the rulesets it leaves stay cached. Its bindings stay as they are. A row whose text holds no old key is left as it is, so
  * it runs again without harm: a second run changes nothing. Every ruleset, or those `only` names. What it did, and the
  * old keys it left.
  */

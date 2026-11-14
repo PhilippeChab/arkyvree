@@ -41,6 +41,8 @@ export interface UnsettledKey {
   rowId: string;
 }
 
+/** A Latin letter past ASCII ("é", "ß"): a text that holds one is written under the new keys, which an old key never is. */
+const ACCENTED_LATIN = /(?!\p{ASCII})\p{scx=Latin}/u;
 /** The fields of a row a key sits in. */
 const FIELDS = ["target", "value"] as const;
 
@@ -147,19 +149,24 @@ export default class LegacyKeys {
 
   /**
    * An unbound segment's (or a group's) new key: the one name of the view whose old key it holds, its family's too,
-   * when it names nothing under the new keys; several when several did.
+   * when it names nothing under the new keys; several when several did, or when it names an entity now as well. None
+   * for one written under the new keys (an accented letter in it), which a second run leaves as it is.
    */
   private textKey(named: NamedSegment, held: string): string | string[] | undefined {
+    // Written under the new keys already (after the deploy): never an old key, whatever it names now
+    if (ACCENTED_LATIN.test(held)) return undefined;
     if (held.endsWith("*")) return this.prefixKey(named, held.slice(0, -1));
     if (held.includes("*")) return undefined;
     const slug = stripSeparators(held);
     const legacy = stripSeparatorsDroppingAccents(held);
-    const shown = this.keysOf(named, (name) => NameBindingReader.slugOf(named, name));
-    if (shown.has(slug)) return undefined;
     const keys = this.keysOf(named, (name, old) =>
       old === legacy ? NameBindingReader.slugOf(named, name) : undefined,
     );
     keys.delete(slug);
+    const shown = this.keysOf(named, (name) => NameBindingReader.slugOf(named, name));
+    // One that names an entity now, and was an accented name's old key too ("lan", "Élan"'s, beside a skill "Lan"): the
+    // person's to settle
+    if (shown.has(slug)) return keys.size === 0 ? undefined : [slug, ...keys];
     if (keys.size === 0) return undefined;
     return keys.size === 1 ? [...keys][0] : [...keys];
   }

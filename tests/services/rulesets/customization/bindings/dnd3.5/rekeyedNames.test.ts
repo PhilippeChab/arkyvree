@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";
 
@@ -6,14 +6,19 @@ import { updateNameKeys } from "@/database/packages/nameBindings.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { NameBindingFill, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Modifiers, NameBindings, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { createTestPool } from "@/server/database/test.ts";
+import { Locks, Modifiers, NameBindings, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { runWhileLocked } from "@/tests/support/database.ts";
 import { createTestCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+
+const pool = createTestPool();
 
 /**
  * A fork that calls Hide "Discrétion", whose rules name it: a feat's bonus to it, gated on its misc bonus, and a formula
@@ -158,4 +163,29 @@ describe("a rule saved before a name's key kept its accented letters", () => {
     expect((await storedOf(rows)).texts).toEqual(saved.texts);
     expect(await sheetOf(character.id)).toEqual(sheet);
   });
+
+  test("waits for a write that holds its ruleset before it locks any row, as every write does: no deadlock", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const held = await db.execute<{ id: string }>(sql`
+      select modifiers.id from customization.modifiers join rules.entities on entities.id = modifiers.source_id
+      where entities.ruleset_id = ${rulesetId} limit 1
+    `);
+    let waitedAt = "";
+
+    const update = await runWhileLocked(
+      pool,
+      (blockerDb) => Locks.lockRulesetContent(blockerDb, rulesetId),
+      () => updateNameKeys(db, [rulesetId]),
+      async ({ blockerDb, waiting }) => {
+        waitedAt = waiting;
+        // The write goes on to a row of the ruleset's, which the rekey holds none of while it waits
+        await blockerDb.execute(sql`update customization.modifiers set value = value where id = ${held.rows[0].id}`);
+      },
+    );
+
+    expect(waitedAt).toContain('rules"."rulesets');
+    expect(update.failed).toEqual([]);
+  });
 });
+
+afterAll(() => pool.end());
