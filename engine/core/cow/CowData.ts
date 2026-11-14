@@ -55,7 +55,7 @@ export default class CowData {
     this.siblingIds = new Set(this.winners.keys());
     this.texts = texts;
     this.shownTexts = [...this.siblings.keys()].flatMap((winnerId) => {
-      const shown = this.isHidden(winnerId) ? {} : this.getShownTexts(winnerId);
+      const shown = this.getShownTexts(winnerId);
       return Object.keys(shown).length > 0 ? [{ id: winnerId, ...shown }] : [];
     });
   }
@@ -96,7 +96,8 @@ export default class CowData {
 
   /**
    * The winners the view shows under texts other than their own rows' (`getShownTexts`), with those texts: what a list
-   * shows, orders and searches them by, and the names a name check reads.
+   * shows, orders and searches them by, and the names a name check reads, one the ruleset's own entity of that name
+   * hides among them.
    */
   readonly shownTexts: readonly ShownTexts[];
 
@@ -117,11 +118,17 @@ export default class CowData {
 
   /**
    * The texts the view shows for an entity (`id`, a winner of sibling copies) that its own row doesn't hold: those of
-   * its siblings that give theirs (`mergeTexts`), none for one without siblings.
+   * its siblings that give theirs (`mergeTexts`), none for one without siblings, or one a copy overrides (the ruleset's
+   * own copy holds its own). One the ruleset's own entity of its name hides (`isShadowed`) keeps its siblings' texts:
+   * the name it's hidden under.
    */
   getShownTexts(id: string): CopyTexts {
-    if (!this.hasSiblings(id)) return {};
-    return this.mergeTexts([id, ...this.getSiblings(id).filter((siblingId) => !this.isOverridden(siblingId))]);
+    if (!this.hasSiblings(id) || (this.isOverridden(id) && !this.isShadowed(id))) return {};
+    const siblingIds = this.getSiblings(id);
+    return this.mergeTexts([
+      id,
+      ...(this.isShadowed(id) ? siblingIds : siblingIds.filter((siblingId) => !this.isOverridden(siblingId))),
+    ]);
   }
 
   /** The sibling losers that merge into `winnerId`, in the order they were paired. */

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { advancementsInCharacter } from "@/drizzle/schema.ts";
-import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -222,5 +222,31 @@ describe("unsubscribing from a book whose copy of a core entity the fork changed
       .from(advancementsInCharacter)
       .where(eq(advancementsInCharacter.id, level.id));
     expect((await readCowData(host.id)).resolve(entryId)).toBe((await findClassLevel(mine.id, 1))!.id);
+  });
+
+  test("keeps a level of the book's class its new source doesn't have: a character's level in it reads the fork's", async () => {
+    const { session, user } = await createTestUser();
+    const host = await createSeededTestRuleset(user.id);
+    const book = await createBook(user.id, host.rulesetId!);
+    const bookFighter = await copyEntity(db, "classes", (await getSeedCtx()).classMap.pc["Fighter"], book);
+    const [beyond] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
+      ownerId: bookFighter.id,
+      position: 21,
+    });
+    await RulesetExtensionsService.subscribeExtension(session, host.id, [book.id]);
+    const character = await createTestCharacter(user.id, { rulesetId: host.id });
+    const level = await addCharacterLevel(character.id, beyond.id);
+    const mine = await EntitiesService.updateEntity(session, host.id, "classes", bookFighter.id, {
+      name: "Fighter",
+      description: "The fork's own words",
+    });
+
+    await RulesetExtensionsService.unsubscribeExtension(session, host.id, book.id);
+
+    const [{ entryId }] = await db
+      .select()
+      .from(advancementsInCharacter)
+      .where(eq(advancementsInCharacter.id, level.id));
+    expect((await readCowData(host.id)).resolve(entryId)).toBe((await findClassLevel(mine.id, 21))!.id);
   });
 });

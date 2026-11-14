@@ -55,10 +55,11 @@ export default class EntityNames {
 
   /**
    * The name a view (`cow`'s) shows an entity under (`entity`, as stored): a winner's whose sibling copy renamed it
-   * (`CowData.shownTexts`), its own otherwise, and a hidden one's own.
+   * (`CowData.shownTexts`), its own otherwise, and a hidden one's own; one the ruleset's own entity hides goes by the
+   * name it's hidden under, which a change to the view's books counts as shown.
    */
   private static nameIn(cow: CowData, entity: { id: string; name: string }): string {
-    if (cow.isHidden(entity.id)) return entity.name;
+    if (cow.isHidden(entity.id) && !cow.isShadowed(entity.id)) return entity.name;
     return cow.shownTexts.find((shown) => shown.id === entity.id)?.name ?? entity.name;
   }
 
@@ -380,20 +381,31 @@ export default class EntityNames {
    * Refuses unsubscribing the ruleset from an extension (`departure`) when its view would then show more entities of a
    * kind under a name than once, and than it shows now (`refuseChainNames`, with the view it shows once unsubscribed,
    * `departure.after`): what the extension hid shows again under its name (a core entity it copied, its copies'
-   * siblings, a reprint it won over), which the ruleset may have given another entity since. The ruleset's copies of
-   * the extension's entities (`departure.copyIds`) go with it.
+   * siblings, a reprint it won over), or a winner the extension's copy named goes back to its own, which the ruleset
+   * may have given another entity since: its own entity of that name would hide it. The ruleset's copies of the
+   * extension's entities that go with it (`departure.copyIds`) count none.
    */
   async assertReturningNamesAvailable(tx: Db, departure: ExtensionDeparture): Promise<void> {
     const { after, copyIds } = departure;
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
-    const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id));
-    const shown = await RulesetEntities.findNames(tx, { ids: returning });
+    // What shows again, or the ruleset's own entity hides once the extension is gone (a book's copy it won over, which
+    // a fork's own entity of that copy's name hides), and the winners whose name changes with it (a winner the
+    // extension's copy named, which goes back to its own)
+    const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id) || after.isShadowed(id));
+    const renamed = [...this.cow.shownTexts, ...after.shownTexts].map((shown) => shown.id);
+    const entities = await RulesetEntities.findNames(tx, { ids: [...new Set([...returning, ...renamed])] });
+    const returningIds = new Set(returning);
+    const shown = entities.filter(
+      (entity) =>
+        remaining.has(entity.rulesetId) &&
+        (returningIds.has(entity.id) || EntityNames.nameIn(this.cow, entity) !== EntityNames.nameIn(after, entity)),
+    );
     await this.refuseChainNames(
       tx,
       after,
       EntityNames.namesByType(
         this.scope.ruleset.baseRules,
-        shown.filter((entity) => remaining.has(entity.rulesetId)),
+        shown.map((entity) => ({ ...entity, name: EntityNames.nameIn(after, entity) })),
       ),
       new Set(copyIds),
       (entityType, name) =>

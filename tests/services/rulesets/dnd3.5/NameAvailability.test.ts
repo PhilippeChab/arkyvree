@@ -113,6 +113,23 @@ async function setup() {
   return { session, fork, baseId, general, baseFeat };
 }
 
+/**
+ * Two of the fork's owner's books that each copy the core Dodge, the second's copy renamed (`renamed`), and the first's
+ * when `firstRenamed` says.
+ */
+async function twoDodgeBooks(session: Session, baseId: string, renamed: string, firstRenamed?: string) {
+  const dodge = (await Entities.findOne<Feat>(db, { entityType: "feats", name: "Dodge", rulesetId: baseId }))!;
+  const books = [];
+  for (const name of [firstRenamed, renamed]) {
+    const book = await createSeededTestRuleset(session.userId);
+    const copy = await copyEntity(db, "feats", dodge.id, book);
+    if (name) await EntitiesService.updateEntity(session, book.id, "feats", copy.id as string, { name });
+    await publishExtension(book.id);
+    books.push({ book, copy });
+  }
+  return books;
+}
+
 // A renamed local copy is still the override: inherited picks of the source
 // must keep resolving to it, and its snapshot must not move to a new entity
 // that reuses the original name.
@@ -420,6 +437,50 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
   expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
   expect(await countNamed(fork.id, "feats", "Dodge (Local)")).toBe(1);
 });
+
+// A book whose copy of Dodge renames it names the feat both books copy in the fork's view: a fork's feat of that name
+// would hide it, which a subscribe refuses, as it refuses a book's entity named as the fork's
+test("subscribing to a book whose copy renames a feat another book copies, to a name the fork's own feat has, is refused", async () => {
+  const { session, fork, baseId, general } = await setup();
+  const [first, second] = await twoDodgeBooks(session, baseId, "Clash Name");
+  await RulesetExtensionsService.subscribeExtension(session, fork.id, [first.book.id]);
+  await EntitiesService.createEntity(session, fork.id, "feats", {
+    name: "Clash Name",
+    links: { listedIn: [{ toId: general.id }] },
+  });
+
+  await expectRefusedWith(RulesetExtensionsService.subscribeExtension(session, fork.id, [second.book.id]), 409);
+  expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
+});
+
+// Without the book that renamed it, the feat both books copy takes back the other's name, which the fork may have given
+// a feat of its own since: refused, as what shows again under it is
+test.each([
+  ["the book whose copy gave the feat its name", "Dodge B2", undefined, 1],
+  ["the book whose copy won, the other's copy named as the fork's feat", "Dodge B2", "Dodge B1", 0],
+] as const)(
+  "unsubscribing from %s, once the fork named a feat as the feat then shows, is refused",
+  async (_, renamed, firstRenamed, leaving) => {
+    const { session, fork, baseId, general } = await setup();
+    const books = await twoDodgeBooks(session, baseId, renamed, firstRenamed);
+    await RulesetExtensionsService.subscribeExtension(
+      session,
+      fork.id,
+      books.map(({ book }) => book.id),
+    );
+    const shownAfter = leaving === 1 ? "Dodge" : renamed;
+    await EntitiesService.createEntity(session, fork.id, "feats", {
+      name: shownAfter,
+      links: { listedIn: [{ toId: general.id }] },
+    });
+
+    await expectRefusedWith(
+      RulesetExtensionsService.unsubscribeExtension(session, fork.id, books[leaving].book.id),
+      409,
+    );
+    expect((await sourcesOf(fork.id)).extensionIds).toHaveLength(2);
+  },
+);
 
 test("subscribing to an extension that shows a name its view shows twice no more often, or unsubscribing, is no clash", async () => {
   const session = makeSession();

@@ -192,11 +192,21 @@ export default class ExtensionDeparture {
       ExtensionDeparture.groupCopies(snapshots),
     );
     const kept = await ExtensionDeparture.findKept(tx, sources.id, snapshots, departures);
-    // What stays leaves nothing: what names it keeps naming it
+    // What stays leaves nothing: what names it keeps naming it. What the view showed a kept copy for (the extension's
+    // copy it copied) names that copy, and its owned entities the copy's of their positions (a class's levels: one its
+    // new source doesn't have among them)
     const keptIds = new Set(kept.map((snap) => snap.forkedEntityId));
     const reverted = snapshots.filter((snap) => !keptIds.has(snap.forkedEntityId));
+    const shownAs = (id: string) => scope.rulesetData.cow.resolve(id);
     const leaving = new Map(
-      [...departures].map(([type, fallbacks]) => [type, new Map([...fallbacks].filter(([id]) => !keptIds.has(id)))]),
+      [...departures].map(([type, fallbacks]) => [
+        type,
+        new Map(
+          [...fallbacks]
+            .filter(([id]) => !keptIds.has(id))
+            .map(([id, fallbackId]) => [id, keptIds.has(shownAs(id)) ? shownAs(id) : fallbackId]),
+        ),
+      ]),
     );
     const after = await CowDataReader.read(tx, without, {
       rebased: new Map(kept.map((snap) => [snap.forkedEntityId, snap.rebasedTo])),
