@@ -1,9 +1,11 @@
-import { keepPreviousData, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { editConflict } from "@/client/src/lib/errorMessage.ts";
+import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { formatWordCount } from "@/client/src/lib/rulesetLabels.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -42,6 +44,7 @@ export function useAddAdvancementWizard({
   words,
 }: UseAddAdvancementWizardParams) {
   const snackbar = useSnackbar();
+  const queryClient = useQueryClient();
   // The level its plan was made after: the sheet refetching while it's open doesn't move it, so a save planned on a
   // sheet another page changed since is refused as stale, never added after a level it didn't plan for
   const [openedAfter] = useState(lastAdvancementId);
@@ -140,7 +143,12 @@ export function useAddAdvancementWizard({
       snackbar.success(word ? `Added ${formatWordCount(created.length, word)}` : "Saved");
       onClose();
     },
-    onError: handleSaveError,
+    onError: (error) => {
+      handleSaveError(error);
+      // Another page added or removed a level since it opened: the sheet is read again, so the wizard opened next
+      // plans after the character's last level as it is now
+      if (editConflict(error)) void invalidateCharacter(queryClient, characterId);
+    },
   });
 
   // Next waits for the steps the advancement lists, and on the step shown for its answer (`isAnswered`). The dialog

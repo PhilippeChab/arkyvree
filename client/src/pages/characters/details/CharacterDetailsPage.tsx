@@ -31,7 +31,7 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useDialogState, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { editConflict, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
@@ -112,7 +112,14 @@ export default function CharacterDetailsPage() {
       await invalidateCharacter(queryClient, id);
       removeAdvancement.close();
     },
-    onError: (error, { words }) => snackbar.error(error, words.removeFailed),
+    onError: (error, { words }) => {
+      snackbar.error(error, words.removeFailed);
+      // Another page added or removed a level since: the sheet is read again, so the next removal names its last level
+      if (editConflict(error)) {
+        removeAdvancement.close();
+        void invalidateCharacter(queryClient, id);
+      }
+    },
   });
 
   const archiveMutation = useMutation({
