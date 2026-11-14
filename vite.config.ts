@@ -15,8 +15,8 @@ const filteredLogger = createQuietLogger();
 const baseConfig: UserConfig = {
   root: "./client",
   customLogger: filteredLogger,
-  envDir: path.resolve(__dirname),
-  publicDir: path.resolve(__dirname, "./public"),
+  envDir: path.resolve(import.meta.dirname),
+  publicDir: path.resolve(import.meta.dirname, "./public"),
   build: {
     outDir: "../dist",
     emptyOutDir: true,
@@ -40,7 +40,7 @@ const baseConfig: UserConfig = {
         this.emitFile({
           type: "asset",
           fileName: "LICENSE.txt",
-          source: readFileSync(path.resolve(__dirname, "LICENSE"), "utf8"),
+          source: readFileSync(path.resolve(import.meta.dirname, "LICENSE"), "utf8"),
         });
       },
     },
@@ -48,7 +48,7 @@ const baseConfig: UserConfig = {
       name: "inject-app-config",
       apply: "serve",
       transformIndexHtml(html) {
-        const env = loadEnv("development", path.resolve(__dirname), "");
+        const env = loadEnv("development", path.resolve(import.meta.dirname), "");
         const config = JSON.stringify({
           googleClientId: env.GOOGLE_CLIENT_ID || null,
           sentryDsn: env.SENTRY_CLIENT_DSN || null,
@@ -121,10 +121,10 @@ const baseConfig: UserConfig = {
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "."),
+      "@": path.resolve(import.meta.dirname, "."),
       // Ensure Vite uses the correct React installation, not Next.js's bundled version
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      react: path.resolve(import.meta.dirname, "node_modules/react"),
+      "react-dom": path.resolve(import.meta.dirname, "node_modules/react-dom"),
     },
     extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
