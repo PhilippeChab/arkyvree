@@ -184,7 +184,9 @@ export default class EntityWriter {
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
     const type = entityTypeOf(scope.ruleset.baseRules, made.type);
     const names = new EntityNames(scope);
-    const tombstoneAncestorId = made.standalone ? null : await names.findTombstoneAncestor(tx, type, made.row.name);
+    const tombstoneAncestorId = made.standalone
+      ? null
+      : await names.findTombstoneAncestor(tx, type, made.row.name, made.row.partition);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
       Entities.create(tx, scope.ruleset.baseRules, type, { ...made.row, rulesetId: scope.ruleset.id }),
     );
@@ -252,7 +254,13 @@ export default class EntityWriter {
       await EntityRevert.revert(tx, type, source.id, scope, names);
       return undefined;
     }
-    await names.assertRenameAvailable(tx, type, { name: stored.name ?? "" }, name, vacated.ids);
+    await names.assertRenameAvailable(
+      tx,
+      type,
+      { name: stored.name ?? "", partition: stored.partition },
+      name,
+      vacated.ids,
+    );
     if (stored.name) vacated.names.add(stored.name);
     return { description, from: stored.name, id: renamed.id, name, type };
   }
@@ -700,7 +708,7 @@ export default class EntityWriter {
    * own, or its copy, made on its first edit) updated (`updateRow`), its list links replaced, and what the plan writes
    * beside it. What its plan answers once written (`describe`).
    */
-  async update<P extends EntityEditPlan<PlannedEntity>>(
+  async update<P extends EntityEditPlan<PlannedEntity & { partition: string }>>(
     session: Session,
     rulesetId: string,
     body: { name: string; updatedAt?: string },

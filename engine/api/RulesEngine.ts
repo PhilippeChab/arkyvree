@@ -334,6 +334,15 @@ export default class RulesEngine {
   }
 
   /**
+   * The kinds of a base rules whose entities a target path names by their name alone (`TargetPaths.namedKinds`: 3.5's
+   * classes, `classes.familiar.level`): a name of one is its own across its partitions, where another kind's is its own
+   * within its partition (what a race or a class is for), as the name index keeps it.
+   */
+  pathNamedKindsOf(baseRules: BaseRules): string[] {
+    return this.entryOf(baseRules).module.targetPaths.namedKinds();
+  }
+
+  /**
    * The kinds a route that restores an entity takes, every module's (`restorableKindsOf`), each once: the words its
    * request may name, whose ruleset's own refuse another's.
    */

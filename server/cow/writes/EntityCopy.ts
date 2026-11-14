@@ -15,11 +15,15 @@ import {
   EntityLinks,
   EntitySnapshots,
   type NewLink,
+  RulesetEntities,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 
 import CustomizationCopies from "./CustomizationCopies.ts";
 import EntityNames from "./EntityNames.ts";
+
+/** What a copy's link names for an entity a link names as stored (its id): what `EntityCopy.readNamed` answers. */
+type Named = (id: string) => string;
 
 /**
  * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
@@ -45,13 +49,51 @@ export default class EntityCopy {
   }
 
   /**
-   * A link as a copy of its entity holds it (`link`, from an entity of a kind, `type`): from the copy (`fromId`), the
-   * entities it names resolved (`cow`: to what stands for them, `CowData.resolveLink`), its other parts kept; a new
-   * link, no id of its own.
+   * Links as a copy of their entity holds them (`links`, as stored, from an entity of a kind, `type`): from the copy
+   * (`fromId`), the entities they name as the copy names them (`named`), their other parts kept; new links, no id of
+   * their own.
    */
-  private static copyOf(link: ViewLink, fromId: string, type: string, cow: CowData): NewLink {
-    const { amount, free, role, tier, toId, toType, viaId } = cow.resolveLink(link);
-    return { fromId, fromType: type, role, toId, toType, viaId, tier, amount, free };
+  private static copiesOf(links: ViewLink[], fromId: (link: ViewLink) => string, type: string, named: Named) {
+    return links.map((link): NewLink => {
+      const { amount, free, role, tier, toId, toType, viaId } = link;
+      const via = viaId === null ? null : named(viaId);
+      return { fromId: fromId(link), fromType: type, role, toId: named(toId), toType, viaId: via, tier, amount, free };
+    });
+  }
+
+  /** An entity's single links (`links`, as stored), each naming what the copy names for it (`named`). */
+  private static namedLinks(links: Readonly<Partial<Record<string, string>>>, named: Named): Record<string, string> {
+    return Object.fromEntries(
+      Object.entries(links).flatMap(([role, toId]) => (toId === undefined ? [] : [[role, named(toId)]])),
+    );
+  }
+
+  /**
+   * What a copy's links name for the ids they name as stored (`ids`): the entity each resolves to (`cow`: its copy, its
+   * winner), as the view shows it, but the stored id itself where that one is gone, a copy the ruleset or its source
+   * chain deleted since (a tombstone's). The view shows no link to it (`RulesetData.nameLinks`) and a level-up grants
+   * through a pool gone so (a feature's pool deleted), whichever id the link holds, but a link can't hold a gone
+   * entity's: it holds its source's, which resolves to the same, and names it again once it's restored. An id that
+   * resolves to itself is stored, so it's there; a link names an entity no other owns, which
+   * `RulesetEntities.findNames` reads.
+   */
+  private static async readNamed(tx: Db, cow: CowData, ids: Iterable<string | undefined>): Promise<Named> {
+    const resolved = new Set<string>();
+    for (const id of ids) if (id !== undefined && cow.resolve(id) !== id) resolved.add(cow.resolve(id));
+    const live = new Set((await RulesetEntities.findNames(tx, { ids: [...resolved] })).map((entity) => entity.id));
+    return (id) => {
+      const resolvedId = cow.resolve(id);
+      return resolvedId === id || live.has(resolvedId) ? resolvedId : id;
+    };
+  }
+
+  /** What a copy's links name for the targets and pools of `links`, as stored (`readNamed`). */
+  private static async readNamedLinks(tx: Db, cow: CowData, links: ViewLink[]): Promise<Named> {
+    return await EntityCopy.readNamed(
+      tx,
+      cow,
+      links.flatMap((link) => (link.viaId === null ? [link.toId] : [link.toId, link.viaId])),
+    );
   }
 
   /**
@@ -120,9 +162,18 @@ export default class EntityCopy {
 
     // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
     // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
-    // template, a spell's save)
-    const merged = await this.mergeValues(tx, parentEntity, siblingIds, cow);
-    const [{ description, fields, links, name, partition }] = cow.resolveLinks([{ ...parentEntity, ...merged }]);
+    // template, a spell's save), or its stored target where that one is gone (`readNamed`)
+    const {
+      description,
+      fields,
+      links: stored,
+      name,
+      partition,
+    } = {
+      ...parentEntity,
+      ...(await this.mergeValues(tx, parentEntity, siblingIds, cow)),
+    };
+    const links = EntityCopy.namedLinks(stored, await EntityCopy.readNamed(tx, cow, Object.values(stored)));
     // Its rows as they're stored, its source's: a copy keeps them as they are
     // (refused as a taken name is where the ruleset's own entity already has it: two of a name in its view)
     const [newEntity] = await EntityNames.withNameRefusal(name!, () =>
@@ -158,14 +209,15 @@ export default class EntityCopy {
 
   /**
    * Copies the links of the roles they hold many of from entities of a kind (`ids`: each one's copy, by its id) onto
-   * their copies, in their order.
+   * their copies, in their order, each naming what the copy names for its targets (`readNamed`).
    */
   private async copyLinks(tx: Db, type: string, ids: ReadonlyMap<string, string>, cow: CowData) {
     const links = await EntityLinks.findMany(tx, { fromIds: [...ids.keys()] });
+    const named = await EntityCopy.readNamedLinks(tx, cow, links);
     await EntityLinks.createMany(
       tx,
       this.ruleset.baseRules,
-      links.map((link) => EntityCopy.copyOf(link, ids.get(link.fromId)!, type, cow)),
+      EntityCopy.copiesOf(links, (link) => ids.get(link.fromId)!, type, named),
     );
   }
 
@@ -173,23 +225,30 @@ export default class EntityCopy {
    * Copies the entity's links of the roles it holds many of (a feat's pools, a class's skills) onto the copy, then the
    * entities it owns (a class's levels), with their customizations and their links (a level's grants and saves). Each
    * names what the copy's CowData resolves it to (true overrides and sibling-loser aliases): a copy's references point
-   * at the canonical winner, never at a stale loser.
+   * at the canonical winner, never at a stale loser; one whose stand-in the ruleset or its book deleted since (a
+   * granted feat) keeps its stored target, which the view resolves to the same (`readNamed`).
    */
   private async copyLinksAndOwned(tx: Db, targetEntityId: string, cow: CowData) {
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), cow);
     for (const type of Engine.forRules(this.ruleset.baseRules).storage().ownedKinds(this.entityType)) {
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
-      // Each its position, its fields and its single links (each to what stands for its target), and its times
+      const named = await EntityCopy.readNamed(
+        tx,
+        cow,
+        owned.flatMap((row) => Object.values(row.links)),
+      );
+      // Each its position, its fields and its single links (each to what stands for its target: `readNamed`), and
+      // its times
       const copies = await Entities.createMany(
         tx,
         this.ruleset.baseRules,
         type,
-        cow.resolveLinks(owned).map(({ createdAt, fields, links, position, updatedAt }) => ({
+        owned.map(({ createdAt, fields, links, position, updatedAt }) => ({
           ownerId: targetEntityId,
           position: position!,
           fields,
-          links,
+          links: EntityCopy.namedLinks(links, named),
           createdAt,
           updatedAt,
         })),
@@ -222,10 +281,11 @@ export default class EntityCopy {
         resolve,
         this.entityType,
       );
+    const named = await EntityCopy.readNamedLinks(tx, cow, links);
     await EntityLinks.createMany(
       tx,
       this.ruleset.baseRules,
-      links.map((link) => EntityCopy.copyOf(link, targetEntityId, this.entityType, cow)),
+      EntityCopy.copiesOf(links, () => targetEntityId, this.entityType, named),
     );
   }
 

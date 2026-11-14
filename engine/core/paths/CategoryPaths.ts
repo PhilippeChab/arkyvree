@@ -37,6 +37,11 @@ export interface TargetPaths extends TargetPathsTraverser {
   getGroupDescriptionTemplates(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
   list(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
+  /**
+   * The kinds whose entities a path names by their name alone, in a segment (`PathCategory.names`, `segmentKinds`):
+   * 3.5's classes (`classes.familiar.level`), never its races, which a path names in a value, with their partition.
+   */
+  namedKinds(): string[];
   /** The segments of a path that name entities, each with its entities' kind (`PathCategory.names`). */
   nameSegments(path: string): NamedSegment[];
   /** A target path validated like a language server, among a catalog's paths. */
@@ -224,6 +229,16 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
           : paths,
       segmentLabels: this.labelSegments(rulesetData),
     };
+  }
+
+  namedKinds(): string[] {
+    return [
+      ...new Set(
+        this.categories.flatMap((category) =>
+          category.names ? [category.names.entityType] : (category.segmentKinds ?? []),
+        ),
+      ),
+    ];
   }
 
   nameSegments(path: string): NamedSegment[] {

@@ -263,6 +263,9 @@ export default class CombatPaths implements PathCategory<Dnd5Components> {
     "combat.weaponsets.*": "Any weapon set",
   };
 
+  /** Its unarmored Armor Class's paths name an ability (`nameSegments`). */
+  readonly segmentKinds = ["abilities"] as const;
+
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
     return [
       ...CombatPaths.generateCombatPaths(kind),
