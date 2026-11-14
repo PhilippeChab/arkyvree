@@ -33,7 +33,6 @@ COPY --from=build /app/migrate-bin ./migrate-bin
 COPY --from=build /app/dist ./dist
 COPY public ./public
 COPY drizzle ./drizzle
-COPY server/landing.html ./server/landing.html
 
 EXPOSE 8000
 

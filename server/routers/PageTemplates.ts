@@ -12,20 +12,9 @@ const APP_CONFIG = JSON.stringify({
 /** The app's public URL, which the pages' links and meta name. */
 export const APP_URL = readEnv("APP_URL") || "http://localhost:8000";
 
-/** The HTML pages the static router fills in, read from disk once and kept: the landing page and the app's shell. */
+/** The HTML page the static router fills in, read from disk once and kept: the app's shell. */
 class PageTemplates {
-  private landing: string | null = null;
-
   private template: string | null = null;
-
-  /** The landing page, its app URL filled in. */
-  async getLanding(): Promise<string> {
-    if (this.landing) return this.landing;
-    const file = Bun.file("./server/landing.html");
-    const raw = await file.text();
-    this.landing = raw.replaceAll("__APP_URL__", APP_URL);
-    return this.landing;
-  }
 
   /** The app's shell (`dist/index.html`), its runtime config filled in. */
   async getTemplate(): Promise<string> {
