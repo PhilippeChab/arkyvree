@@ -155,16 +155,34 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
         [0, 1],
       ],
       [
-        "a skill to the subtypes it prefixes",
+        "a family to the skills named for it",
         "skills.knowledge.rank",
-        { skills: { knowledgearcana: { rank: 4 }, knowledgehistory: { rank: 0 }, diplomacy: { rank: 7 } } },
+        {
+          skills: {
+            knowledgearcana: { name: "Knowledge (Arcana)", rank: 4 },
+            knowledgehistory: { name: "Knowledge (History)", rank: 0 },
+            diplomacy: { name: "Diplomacy", rank: 7 },
+          },
+        },
         [4, 0],
       ],
       [
-        "a key to itself and the subtypes it prefixes",
+        "a key to itself and the subtypes named for it",
         "skills.craft.rank",
-        { skills: { craft: { rank: 0 }, craftarmorsmithing: { rank: 12 }, diplomacy: { rank: 7 } } },
+        {
+          skills: {
+            craft: { name: "Craft", rank: 0 },
+            craftarmorsmithing: { name: "Craft (Armorsmithing)", rank: 12 },
+            diplomacy: { name: "Diplomacy", rank: 7 },
+          },
+        },
         [0, 12],
+      ],
+      [
+        "a key to itself, not to a skill whose name merely starts as its own",
+        "skills.spot.rank",
+        { skills: { spot: { name: "Spot", rank: 2 }, spotlightoperation: { name: "Spotlight Operation", rank: 6 } } },
+        [2],
       ],
       [
         "a key without subtypes to itself only",
@@ -193,10 +211,10 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       expect(paths("abilities.strength.score", { abilities: { strength: { score: 18 } } })).toEqual([
         "abilities.strength.score",
       ]);
-      expect(paths("skills.craft.rank", { skills: { craft: { rank: 0 }, craftarmorsmithing: { rank: 1 } } })).toEqual([
-        "skills.craft.rank",
-        "skills.craftarmorsmithing.rank",
-      ]);
+      const crafts = {
+        skills: { craft: { name: "Craft", rank: 0 }, craftarmorsmithing: { name: "Craft (Armorsmithing)", rank: 1 } },
+      };
+      expect(paths("skills.craft.rank", crafts)).toEqual(["skills.craft.rank", "skills.craftarmorsmithing.rank"]);
       // A feat's name reaches that feat only, not the feats it starts the names of
       expect(
         paths("feats.simpleweaponproficiency.possessed", {
@@ -204,7 +222,12 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
         }),
       ).toEqual(["feats.simpleweaponproficiency.possessed"]);
       expect(
-        paths("skills.craft.rank", { skills: { craftarmorsmithing: { rank: 1 }, craftweaponsmithing: { rank: 2 } } }),
+        paths("skills.craft.rank", {
+          skills: {
+            craftarmorsmithing: { name: "Craft (Armorsmithing)", rank: 1 },
+            craftweaponsmithing: { name: "Craft (Weaponsmithing)", rank: 2 },
+          },
+        }),
       ).toEqual(["skills.craftarmorsmithing.rank", "skills.craftweaponsmithing.rank"]);
     });
   });

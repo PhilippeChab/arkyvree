@@ -63,7 +63,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     for (const [skillName, ranks] of Object.entries(
       DetailedCharacterAdvancingBonded.scaleSkillRanks(raceStats, totalHD),
     ))
-      this.components.skills.addRanks(skillName, ranks);
+      this.components.skills.addRanks(this.skillNamed(skillName), ranks);
   }
 
   /**
@@ -80,7 +80,8 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     combat.hp.base = Math.ceil(totalHD * ANIMAL_HIT_DIE_AVERAGE);
 
     for (const [name, progression] of Object.entries(ANIMAL_SAVE_PROGRESSIONS)) {
-      const save = this.components.saves.getSave(name);
+      // The save the rules name, whatever the ruleset calls it
+      const save = this.components.saves.getSave(this.rulesetData.named("saves", name)?.name ?? name);
       if (save) save.base = ClassProgressions.saveAt(progression, totalHD);
     }
   }

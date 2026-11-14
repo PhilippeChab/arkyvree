@@ -1,5 +1,4 @@
 import type DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
-import BondedRaceData from "@/engine/rulesets/pf1/rules/BondedRaceData.ts";
 import { ANIMAL_COMPANION_BASICS, type AnimalCompanionBasics } from "@/vocabulary/pf1/bondedCreatures.ts";
 
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
@@ -32,7 +31,7 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
   protected override applyMasterDerivation(master: DetailedCharacter): void {
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    const raceStats = this.findRaceStats();
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
 

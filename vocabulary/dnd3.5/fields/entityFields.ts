@@ -45,6 +45,7 @@ import {
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+import { LANGUAGE_TYPES } from "@/vocabulary/dnd3.5/languages.ts";
 import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 import {
   MAX_SPELL_LEVEL,
@@ -425,6 +426,7 @@ const ITEM_FIELDS = {
         field: WEAPON_SIZE,
         inherits: "madeFrom",
         merge: "fallback",
+        values: SIZE_OPTIONS,
       },
       baseDamage: {
         description: "Base damage dice for weapons",
@@ -726,13 +728,13 @@ const ITEM_FIELDS = {
 /** A language's fields: its type, which its form shows beside its name. */
 const LANGUAGE_FIELDS = {
   type: {
-    description: "What kind of language it is (spoken, written, secret)",
+    description: "What kind of language it is: Common, Exotic, Secret, Sign, Spoken or Written",
     kind: "text",
     label: "Type",
-    placeholder: "e.g., Spoken, Written, Sign, Secret",
     placement: "beside-name",
     field: LANGUAGE_TYPE,
     merge: "winner",
+    values: LANGUAGE_TYPES,
   },
 } as const;
 

@@ -131,7 +131,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   protected getClassSkillIds(links: readonly ViewLink[]): Set<string> {
     return SkillRules.classSkillIds(
       links.map((link) => link.toId),
-      this.dnd35.skills,
+      this.dnd35.skillNames,
     );
   }
 

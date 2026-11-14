@@ -6,7 +6,6 @@ import WeaponRuleFeats, { type WeaponRule } from "@/engine/rulesets/pf1/rules/We
 import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
 import { RACIAL_ABILITY_POOL } from "@/vocabulary/pf1/races.ts";
 
 /**
@@ -95,7 +94,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         Object.keys(abilities).map((slug) => [slug, { misc: 0 }]),
       );
       const evaluator = new ModifierEvaluator(this.targetPaths);
-      const poolId = Pf1View.of(this.rulesetData).aptitudeIdBySlug.get(stripSeparators(RACIAL_ABILITY_POOL));
+      const poolId = this.rulesetData.named("aptitudes", RACIAL_ABILITY_POOL)?.id;
       const picked = this.data.feats.filter((feat) => !feat.virtual && poolId !== undefined && feat.viaId === poolId);
       const modifiers = [this.data.race, ...picked].flatMap((source) => source.modifiers);
       for (const modifier of modifiers.filter(({ target }) => target.startsWith("abilities.")))

@@ -30,17 +30,22 @@ export default class SkillRules {
   }
 
   /**
-   * A class's class skills among the ruleset's skills (`skills`): those its class skill links name (`linkedIds`), and
-   * their subtypes ("Craft (Armorsmithing)" of Craft), in the ruleset's order, whatever the links' order.
+   * A class's class skills among the ruleset's skills (`skills`, each with the names it goes by: its own, and the
+   * rules' when the ruleset renamed it): those its class skill links name (`linkedIds`), and their subtypes ("Craft
+   * (Armorsmithing)" of Craft), in the ruleset's order, whatever the links' order. A subtype is one by any of its names
+   * and its base's: a fork that translates Craft keeps a "Craft (Alchemy)" of its own Craft's.
    */
-  static classSkillIds(linkedIds: Iterable<string>, skills: readonly { id: string; name: string }[]): Set<string> {
+  static classSkillIds(
+    linkedIds: Iterable<string>,
+    skills: readonly { id: string; names: readonly string[] }[],
+  ): Set<string> {
     const linked = new Set(linkedIds);
     // A class with no class skill links (the ruleset's others, which the character has no level of) has none
     if (linked.size === 0) return new Set<string>();
-    const names = new Set(skills.filter((skill) => linked.has(skill.id)).map((skill) => skill.name));
-    return new Set(
-      skills.filter((skill) => linked.has(skill.id) || SkillRules.isSubtypeOf(skill.name, names)).map(({ id }) => id),
-    );
+    const names = new Set(skills.filter((skill) => linked.has(skill.id)).flatMap((skill) => skill.names));
+    const isClassSkill = (skill: { id: string; names: readonly string[] }) =>
+      linked.has(skill.id) || skill.names.some((name) => SkillRules.isSubtypeOf(name, names));
+    return new Set(skills.filter(isClassSkill).map(({ id }) => id));
   }
 
   /**

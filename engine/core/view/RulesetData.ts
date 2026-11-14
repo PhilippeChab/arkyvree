@@ -4,7 +4,7 @@ import type { OwnerFields, RulesDescription } from "@/engine/core/module/index.t
 import RulesError from "@/engine/core/RulesError.ts";
 import type { Modifier, NameBinding, Requirement, Ruleset } from "@/shared/relations.ts";
 import type { RulesWord } from "@/shared/rulesets.ts";
-import { toSentenceCase } from "@/shared/text.ts";
+import { stripSeparators, toSentenceCase } from "@/shared/text.ts";
 
 import type { NamedLink, ViewEntity, ViewLink } from "./rows.ts";
 
@@ -41,6 +41,13 @@ export interface RulesetLists {
   /** An entity's links (`entityId`, one the view shows), as the view composes them: built when they're first read */
   linksOf(entityId: string): readonly ViewLink[];
   modifiers: Modifier[];
+  /** The name a ruleset of the chain made an entity under (`id`, of `type`, one that copies none), hidden ones too */
+  originalNameOf?(type: string, id: string): string | undefined;
+  /**
+   * The id of the entity a ruleset of the chain made under a name (`slug`, of `type`), the base rules' first, hidden
+   * ones too: what the rules' own words name. None when no ruleset of the chain made one of that name
+   */
+  originalOf?(type: string, slug: string, partition?: string): string | undefined;
   /**
    * Rows the view doesn't hold (a character's own modifiers), read by their bindings as its own are: their text in
    * the view's names, one whose entity is gone left out
@@ -116,6 +123,8 @@ export default class RulesetData {
     this.entities = lists.entities;
     this.kindValuesOf = (type) => lists.kindValuesOf(type);
     this.composeLinksOf = (entityId) => lists.linksOf(entityId);
+    this.originalOf = (type, slug, partition) => lists.originalOf?.(type, slug, partition);
+    this.originalNameOf = (type, id) => lists.originalNameOf?.(type, id);
     this.modifiers = lists.modifiers;
     this.requirements = lists.requirements;
     this.tierListIds = lists.tierListIds;
@@ -203,6 +212,15 @@ export default class RulesetData {
 
   private readonly modifiers: Modifier[];
 
+  /** The entities the rules' own words name, once looked up (`named`). */
+  private readonly namedEntities = new Map<string, ViewEntity | undefined>();
+
+  /** The name an entity of the chain was made under, by its kind and id. */
+  private readonly originalNameOf: (type: string, id: string) => string | undefined;
+
+  /** The id of the entity a ruleset of the chain made under a name, by its kind and its name's slug. */
+  private readonly originalOf: (type: string, slug: string, partition?: string) => string | undefined;
+
   /** Reads rows the view doesn't hold by their bindings, as the composition reads its own. */
   private readonly readBoundRows: <R extends BoundRow>(
     rows: R[],
@@ -211,6 +229,9 @@ export default class RulesetData {
   ) => R[];
 
   private readonly requirements: Requirement[];
+
+  /** A kind's entities by their name's slug, by its type, once read (`named`). */
+  private readonly rowsBySlug = new Map<string, Map<string, ViewEntity[]>>();
 
   /** Each ruleset's of its chain own Settings, by its id. */
   private readonly settings: ReadonlyMap<string, StoredValues>;
@@ -258,6 +279,16 @@ export default class RulesetData {
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
+  }
+
+  /** A kind's entities by their name's slug (`type`), the view's order kept among those of a slug: built once. */
+  private slugIndexOf(type: string) {
+    let bySlug = this.rowsBySlug.get(type);
+    if (!bySlug) {
+      bySlug = Map.groupBy(this.rows(type), (row) => stripSeparators(row.name));
+      this.rowsBySlug.set(type, bySlug);
+    }
+    return bySlug;
   }
 
   /** A kind's entities by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
@@ -400,6 +431,51 @@ export default class RulesetData {
   }
 
   /**
+   * The view's entity the rules' own words name (`name`, of `type`: the skill the rules call "Hide", the pool they
+   * call "General"): what stands, in this view, for the entity the base rules made under that name (the ruleset's
+   * copy of it, whatever it renamed it), never another entity the ruleset gave that name since. A name no ruleset of the
+   * chain made, or whose entity the ruleset deleted, is read among the view's own names, by its key: a skill a fork
+   * made again as "Speak language" once it deleted Speak Language stands for it. Among a partition's entities when one
+   * is given (`partition`: a familiar's race, where a kind's partitions each have one of a name).
+   */
+  named(type: string, name: string, partition?: string): ViewEntity | undefined {
+    const slug = stripSeparators(name);
+    const key = `${type}|${partition ?? ""}|${slug}`;
+    if (this.namedEntities.has(key)) return this.namedEntities.get(key);
+    const originalId = this.originalOf(type, slug, partition);
+    const entity =
+      (originalId === undefined ? undefined : this.byId(type).get(originalId)) ??
+      this.slugIndexOf(type)
+        .get(slug)
+        ?.find((row) => partition === undefined || row.partition === partition);
+    this.namedEntities.set(key, entity);
+    return entity;
+  }
+
+  /**
+   * The view's entity named after another (`owner`, of `ownerType`), its name built from the owner's (`nameOf`: a
+   * class's own feature pool, "Rogue Class Feature"): the one named after the name the rules know the owner by
+   * (`rulesNameOf`: "Rogue Class Feature", whatever the ruleset calls it now), else the one named after its name in the
+   * view (the pool a page made for a class the ruleset renamed, "Roublard Class Feature"). A name a ruleset of the chain
+   * made is its owner's alone, the one the rules know by the name it's built from: a fork that renamed its rogue
+   * "Roublard", then made a class "Rogue", leaves the new class without "Rogue Class Feature", which stays Roublard's.
+   */
+  namedAfter(
+    type: string,
+    ownerType: string,
+    owner: { id: string; name: string },
+    nameOf: (ownerName: string) => string,
+  ): ViewEntity | undefined {
+    for (const ownerName of new Set([this.rulesNameOf(ownerType, owner), owner.name])) {
+      const name = nameOf(ownerName);
+      const entity = this.named(type, name);
+      const made = this.originalOf(type, stripSeparators(name)) !== undefined;
+      if (entity && (!made || this.named(ownerType, ownerName)?.id === owner.id)) return entity;
+    }
+    return undefined;
+  }
+
+  /**
    * Links (`links`, the view's) as an answer carries them: those whose targets the view shows, each with its target's
    * name (`toName`).
    */
@@ -408,6 +484,16 @@ export default class RulesetData {
       const target = this.find(link.toType, link.toId);
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
+  }
+
+  /**
+   * The names an entity of the view (`entity`, of `type`) goes by: its own, then the one the rules know it by when the
+   * ruleset renamed it (`rulesNameOf`). What a family's name is read in: a skill is Knowledge's whether the ruleset
+   * calls it "Knowledge (Arcana)" or "Connaissances (Arcana)".
+   */
+  namesOf(type: string, entity: { id: string; name: string }): string[] {
+    const rulesName = this.rulesNameOf(type, entity);
+    return rulesName === entity.name ? [entity.name] : [entity.name, rulesName];
   }
 
   /**
@@ -477,6 +563,15 @@ export default class RulesetData {
       for (const [role, toId] of Object.entries(held.links)) links[role] ??= toId;
     }
     return { fields, links };
+  }
+
+  /**
+   * The name the rules know an entity of the view by (`entity`, of `type`): the one it was made under, whatever the
+   * ruleset renamed its copy of it ("Cat", for a familiar's race a translation calls "Chat"): what the rules' own
+   * tables are keyed by. The inverse of `named`.
+   */
+  rulesNameOf(type: string, entity: { id: string; name: string }): string {
+    return this.originalNameOf(type, this.cow.originalOf(entity.id)) ?? entity.name;
   }
 
   /**

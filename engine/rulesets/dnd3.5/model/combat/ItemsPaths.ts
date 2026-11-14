@@ -184,7 +184,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     const values = rulesetData
       .kindValues("items")
       .map(({ value }) => value)
-      .filter((value) => /[a-z]/.test(stripSeparators(value)));
+      .filter((value) => /\p{L}/u.test(stripSeparators(value)));
     return { names: deriveNameLabels([UNARMED_STRIKE, ...values]) };
   }
 

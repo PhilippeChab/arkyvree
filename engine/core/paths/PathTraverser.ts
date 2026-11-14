@@ -21,26 +21,59 @@ export type Component = object;
  */
 export type Components = object;
 
+/**
+ * The slugs of the families a name is of: each base a " (" ends ("Knowledge (Arcana) (Ancient)" is of Knowledge and
+ * of Knowledge (Arcana)).
+ */
+function familiesOf(name: string): string[] {
+  const families: string[] = [];
+  for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
+    families.push(stripSeparators(name.slice(0, idx)));
+  return families;
+}
+
 /** The key of `value` whose slug is `slug`: one written its own way, as a spell's fields are (`SPELL_COMPONENT`). */
 function keyBySlug(value: Record<string, unknown>, slug: string) {
   return Object.keys(value).find((key) => stripSeparators(key) === slug);
 }
 
-/** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
-function subtypesOf(value: Record<string, unknown>, slug: string) {
+/**
+ * The names an entry of a component's data goes by (`key`, its slug): those the component answers
+ * (`getEntryNames`: a skill's own, and the rules' when the ruleset renamed it), else the entry's own `name`, else none.
+ */
+function namesOf(component: Component, key: string, entry: object): readonly string[] {
+  const answer: unknown = Reflect.get(component, "getEntryNames");
+  const names: unknown = typeof answer === "function" ? answer.call(component, key) : undefined;
+  if (Array.isArray(names)) return names.filter((name) => typeof name === "string");
+  const name: unknown = Reflect.get(entry, "name");
+  return typeof name === "string" ? [name] : [];
+}
+
+/**
+ * The entries of `value` in the family `slug` names (a skill's subtypes), but the entry it names itself (`key`): those
+ * named "<family> (<variant>)" by any name they go by (`namesOf`), the family read by `slug` and, when an entry of its
+ * own stands for it, by any name that entry goes by: a translation's "Connaissances (Arcana)" is still of Knowledge,
+ * and a ruleset's "Craft (Alchemy)" of the Craft it calls "Artisanat". An entry whose name merely starts as the
+ * family's ("Spotlight Operation", of Spot) is none.
+ */
+function subtypesOf(component: Component, value: Record<string, unknown>, slug: string, key?: string) {
+  const own = key === undefined ? undefined : value[key];
+  const family = new Set([slug]);
+  if (key !== undefined && typeof own === "object" && own !== null)
+    for (const name of namesOf(component, key, own)) family.add(stripSeparators(name));
   return Object.entries(value).filter(
-    ([key, entry]) =>
+    ([entryKey, entry]) =>
+      entryKey !== key &&
       entry !== null &&
       typeof entry === "object" &&
-      stripSeparators(key).startsWith(slug) &&
-      stripSeparators(key) !== slug,
+      namesOf(component, entryKey, entry).some((name) => familiesOf(name).some((base) => family.has(base))),
   );
 }
 
 /**
  * Walks a target path through a component's data, element by element: an entry by its slug, or a wildcard (`*`,
  * `prefix*`) over the entries it matches. In a category of `subtypeCategories`, an entry's name also reaches the
- * entries its name starts: a skill's subtypes.
+ * entries of its family, named "<family> (<variant>)": a skill's subtypes (`subtypesOf`).
  */
 export default class PathTraverser {
   constructor(private readonly subtypeCategories: ReadonlySet<string>) {}
@@ -150,12 +183,12 @@ export default class PathTraverser {
     if (key === undefined) {
       // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
       // expand to all of them like an implicit wildcard
-      const prefixMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+      const prefixMatches = reachesSubtypes ? subtypesOf(component, currentValue, formattedKey) : [];
       if (prefixMatches.length === 0)
         return PathTraverser.failed(component, formattedKey, `Element not found: ${next}`);
       return this.traverseEach(component, prefixMatches, rest, maxDepth, pathParts);
     }
-    const subtypeMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+    const subtypeMatches = reachesSubtypes ? subtypesOf(component, currentValue, formattedKey, key) : [];
     if (subtypeMatches.length > 0) {
       // The skill itself, then its subtypes.
       return this.traverseEach(component, [[key, currentValue[key]], ...subtypeMatches], rest, maxDepth, pathParts);

@@ -12,6 +12,15 @@ export const LANGUAGE_PICKS = 2;
 /** The type of a rare language, which a character speaks only when a feature grants it: no pick takes one. */
 export const RARE_LANGUAGE_TYPE = "Rare";
 
+/** The type of a standard language, which a new character's picks take. */
+export const STANDARD_LANGUAGE_TYPE = "Standard";
+
+/**
+ * The types a language is of: Standard or Rare, as the SRD's tables sort them. A closed list, so the rules read a rare
+ * language whatever a ruleset calls its languages.
+ */
+export const LANGUAGE_TYPES = [STANDARD_LANGUAGE_TYPE, RARE_LANGUAGE_TYPE] as const;
+
 /** The rare languages, which no pick takes but a feature grants. */
 export const RARE_LANGUAGES = [
   "Abyssal",
@@ -24,9 +33,6 @@ export const RARE_LANGUAGES = [
   "Thieves' Cant",
   "Undercommon",
 ] as const;
-
-/** The type of a standard language, which a new character's picks take. */
-export const STANDARD_LANGUAGE_TYPE = "Standard";
 
 /** The standard languages, Common first. */
 export const STANDARD_LANGUAGES = [

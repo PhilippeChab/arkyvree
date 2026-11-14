@@ -213,7 +213,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     for (const { field, value } of rulesetData.kindValues("spells")) {
       fallbacks[field] ??= formatFieldName(field);
       const slug = stripSeparators(value);
-      if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
+      if (/\p{L}/u.test(slug)) fallbacks[slug] ??= value;
     }
     return { fallbacks, names: deriveNameLabels(dnd35.spells.map(({ name }) => name)) };
   }

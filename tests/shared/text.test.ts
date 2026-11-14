@@ -44,6 +44,38 @@ describe("Text", () => {
     expect(stripSeparators("Knowledge (the planes)")).toBe("knowledgetheplanes");
     expect(stripSeparators("Two-Bladed Sword +1")).toBe("twobladedsword1");
   });
+
+  test("leaves out an accented Latin letter and a sign every script shares, as it always did", () => {
+    expect(stripSeparators("Discrétion")).toBe("discrtion");
+    expect(stripSeparators("Weapon Focus: Longsword")).toBe("weaponfocuslongsword");
+    expect(stripSeparators("Potion ½ (Kai²)")).toBe("potionkai");
+  });
+
+  test("keeps a letter of another script, lowercased, so each name has a slug of its own", () => {
+    const names = ["Лазание", "Плавание", "Прыжок", "Πήδημα", "火球"];
+    const slugs = names.map(stripSeparators);
+    expect(slugs).toEqual(["лазание", "плавание", "прыжок", "πήδημα", "火球"]);
+    expect(new Set(slugs).size).toBe(names.length);
+    expect(stripSeparators("ЛАЗАНИЕ")).toBe(stripSeparators("лазание"));
+    expect(stripSeparators("Лазание (Скалы)")).toBe("лазаниескалы");
+  });
+
+  test("keeps another script's marks and signs, so names that differ by them have keys of their own", () => {
+    const pairs = [
+      ["कला", "काल"],
+      ["กิน", "กน"],
+      ["ビール", "ビル"],
+    ];
+    for (const [one, other] of pairs) expect(stripSeparators(one)).not.toBe(stripSeparators(other));
+    expect(stripSeparators("ビール")).toBe("ビール");
+    // A Latin letter's mark stays out, as it always did: written apart, its letter stays
+    expect([stripSeparators("Discre\u0301tion"), stripSeparators("Discrétion")]).toEqual(["discretion", "discrtion"]);
+  });
+
+  test("lowercases a word of another script whole: a Greek name's final sigma is one letter, however it's cased", () => {
+    expect(stripSeparators("ΟΔΟΣ")).toBe(stripSeparators("Οδος"));
+    expect(stripSeparators("Οδος Ήλιου")).toBe(stripSeparators("ΟΔΟΣ ΉΛΙΟΥ"));
+  });
 });
 
 describe("A value", () => {

@@ -70,7 +70,7 @@ Common targets:
 | `identity.meta.level`    | total character level (sum of class levels)                |
 | `languages.<slug>.known` | whether the character speaks a language, picked or granted |
 
-The slug is the entity name lowercased with separators stripped — Power Attack becomes `powerattack`, Knowledge (Arcana) becomes `knowledgearcana`.
+The slug is the entity name lowercased with separators stripped — Power Attack becomes `powerattack`, Knowledge (Arcana) becomes `knowledgearcana`. Accented letters are left out (Discrétion becomes `discrtion`), and a name in another script keeps its letters: Лазание becomes `лазание`. Two names of one slug would be one name to the rules, so a ruleset can't give an ability, a save, a class, a feat, a skill, a language, a pool or a spell a name that differs from another of its kind only in case, spaces or signs ("dodge" beside Dodge). Items may: an Amulet of Health +2 beside a -2.
 
 A class is customized like the rest: its fields (its caster type, its bonus spell ability) in its details on its page, its modifiers and requirements in the **Modifiers** and **Requirements** tabs. Its modifiers apply once to a character with any level of the class, and its requirements are checked to take any level of it, with the level's own.
 

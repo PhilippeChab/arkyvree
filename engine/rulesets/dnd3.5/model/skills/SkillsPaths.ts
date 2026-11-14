@@ -3,7 +3,6 @@ import PathTraverser, { type Components, type TraversePathResult } from "@/engin
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
 import {
   deriveNameLabels,
@@ -15,6 +14,12 @@ import {
 import { stripSeparators } from "@/shared/text.ts";
 
 import type SkillsComponent from "./SkillsComponent.ts";
+
+/** A skill by its name, and the names it goes by when the ruleset renamed it (`Dnd35View.skillNames`). */
+interface NamedSkill {
+  name: string;
+  names?: readonly string[];
+}
 
 const BUDGET_PATHS = [
   { path: "perlevel", description: "Bonus skill points per level (a human's)", type: "number" as const },
@@ -38,9 +43,10 @@ const NAVIGATABLE_PATHS = [
 export default class SkillsPaths implements PathCategory<Dnd35Components> {
   /**
    * Each skill's paths, and a family's that no skill of its own names: `skills.knowledge.rank` reaches every Knowledge
-   * skill, as the engine reads it (any of them for a requirement, all for a modifier).
+   * skill, as the engine reads it (any of them for a requirement, all for a modifier): a family by the name the rules
+   * give it too (`names`), so a ruleset that translates the Knowledge skills keeps `skills.knowledge.rank`.
    */
-  static generateSkillPaths(skills: Pick<Skill, "name">[], kind: OperatorKind): TargetPath[] {
+  static generateSkillPaths(skills: NamedSkill[], kind: OperatorKind): TargetPath[] {
     const paths: TargetPath[] = [];
     const entries = [
       ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "", readsMany: false })),
@@ -89,13 +95,18 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  /** The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. */
-  static getFamilyLabels(skills: Pick<Skill, "name">[]): Record<string, string> {
-    const names = new Set(skills.map((skill) => skill.name));
+  /**
+   * The skill families no skill of their own names, by their slug: "knowledge" for the Knowledge skills. A family is
+   * read in each name a skill goes by (`names`: its own, and the rules' when the ruleset renamed it), and so is a skill
+   * of the family's own name.
+   */
+  static getFamilyLabels(skills: NamedSkill[]): Record<string, string> {
+    const namesOf = (skill: NamedSkill) => skill.names ?? [skill.name];
+    const names = new Set(skills.flatMap(namesOf));
     const labels: Record<string, string> = {};
-    for (const skill of skills) {
-      const family = skill.name.match(/^(.+?) \(/)?.[1];
-      if (family && !names.has(family)) labels[stripSeparators(family)] = family;
+    for (const name of names) {
+      const family = name.match(/^(.+?) \(/)?.[1];
+      if (family && !names.has(family)) labels[stripSeparators(family)] ??= family;
     }
     return labels;
   }
@@ -121,7 +132,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
   readonly names = { entityType: "skills", fixed: ["budget"] } as const;
 
   generate(rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
-    return SkillsPaths.generateSkillPaths(Dnd35View.of(rulesetData).skills, kind);
+    return SkillsPaths.generateSkillPaths(Dnd35View.of(rulesetData).skillNames, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -135,8 +146,9 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's skills, labeled by their names, and the skill families no skill of their own names. */
   labelNames(rulesetData: RulesetData) {
-    const { skills } = Dnd35View.of(rulesetData);
-    return { names: { ...deriveNameLabels(skills.map(({ name }) => name)), ...SkillsPaths.getFamilyLabels(skills) } };
+    const { skillNames } = Dnd35View.of(rulesetData);
+    const labels = deriveNameLabels(skillNames.map(({ name }) => name));
+    return { names: { ...labels, ...SkillsPaths.getFamilyLabels(skillNames) } };
   }
 
   /** skills.budget: the skill points' budget, from its own getter. Null for a skill's path. */

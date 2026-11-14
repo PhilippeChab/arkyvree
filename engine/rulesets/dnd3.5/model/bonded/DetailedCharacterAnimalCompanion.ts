@@ -1,5 +1,4 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import { ANIMAL_COMPANION_BASICS, type AnimalCompanionBasics } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
@@ -32,7 +31,7 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
   protected override applyMasterDerivation(master: DetailedCharacter): void {
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    const raceStats = this.findRaceStats();
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
 

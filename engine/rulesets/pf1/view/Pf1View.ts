@@ -26,7 +26,15 @@ interface Indices {
   classLevelsByClass: Map<string, KlassLevel[]>;
   featIdBySlug: Map<string, string>;
   languageIdBySlug: Map<string, string>;
+  skillNames: SkillNames[];
   spellIdsBySlug: Map<string, string[]>;
+}
+
+/** A skill's id and name, and the names it goes by: its own, then the rules' when the ruleset renamed it. */
+export interface SkillNames {
+  id: string;
+  name: string;
+  names: string[];
 }
 
 /** Rows' ids by their name's slug (`stripSeparators`): the first row of a slug wins, as the view lists them. */
@@ -258,6 +266,11 @@ export default class Pf1View {
     return this.declared.rows("mechanics");
   }
 
+  /** The view's entity the rules' own words name, whatever the ruleset calls it (`RulesetData.named`). */
+  named(type: string, name: string, partition?: string) {
+    return this.rulesetData.named(type, name, partition);
+  }
+
   get races(): Race[] {
     return this.declared.rows("races");
   }
@@ -266,12 +279,29 @@ export default class Pf1View {
     return this.declared.byId("races");
   }
 
+  /** The name the rules know an entity of the view by (`RulesetData.rulesNameOf`). */
+  rulesNameOf(type: string, entity: { id: string; name: string }): string {
+    return this.rulesetData.rulesNameOf(type, entity);
+  }
+
   get saves(): RulesetSave[] {
     return this.declared.rows("saves");
   }
 
   get savesById(): Map<string, RulesetSave> {
     return this.declared.byId("saves");
+  }
+
+  /**
+   * Each skill with the names it goes by: its own, then the rules' when the ruleset renamed it (`RulesetData.namesOf`):
+   * what a skill's subtypes and families are read by.
+   */
+  get skillNames(): SkillNames[] {
+    return (this.built.skillNames ??= this.skills.map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      names: this.rulesetData.namesOf("skills", skill),
+    })));
   }
 
   get skills(): Skill[] {

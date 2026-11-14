@@ -10,6 +10,9 @@ export type SkillName = keyof typeof SKILL_ABILITIES;
 /** What Expertise multiplies the Proficiency Bonus a skill adds by: 2. */
 export const EXPERTISE_MULTIPLIER = 2;
 
+/** The skill a character's passive check is made with, as the books name it. */
+export const PASSIVE_CHECK_SKILL = "Perception";
+
 /** Each skill's ability, by its name, in the table's order. */
 export const SKILL_ABILITIES = {
   Acrobatics: "Dexterity",

@@ -50,6 +50,7 @@ import {
   WEAPON_PROFICIENCY,
   WIZARD_PROHIBITED_SCHOOL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { LANGUAGE_TYPES } from "@/vocabulary/dnd3.5/languages.ts";
 import { SPELL_COMPONENTS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** Where a form's field sends its value: its stored field, a link its role; a group, its label. */
@@ -299,7 +300,12 @@ describe("rules", () => {
       ...["class-levels", "classes", "feats", "items", "languages", "races", "rulesets", "saves", "skills", "spells"],
     ]);
     expect(fields.languages).toEqual([
-      expect.objectContaining({ field: LANGUAGE_TYPE, input: "text", placement: "beside-name" }),
+      expect.objectContaining({
+        field: LANGUAGE_TYPE,
+        input: "choice",
+        options: [...LANGUAGE_TYPES],
+        placement: "beside-name",
+      }),
     ]);
     expect(fields.saves).toEqual([
       expect.objectContaining({ input: "ref", references: "abilities", required: true, role: "keyAbility" }),
