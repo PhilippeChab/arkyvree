@@ -120,7 +120,7 @@ class CharacterModifiersService {
     session: Session,
     characterId: string,
     modifierId: string,
-    body: { operator: string; target: string; updatedAt?: string; value: string },
+    body: { operator: string; target?: string; updatedAt?: string; value?: string },
   ) {
     return await withCharacterWrite(session, characterId, async (tx, scope, character) => {
       const existing = await Modifiers.findOne(tx, {
@@ -130,26 +130,40 @@ class CharacterModifiersService {
       });
       if (!existing) throw new NotFoundError("Modifier not found");
 
-      const { bindings, row } = await this.planModifier(scope, body);
+      // A field it isn't sent keeps its text as the view reads it, and what its names mean
+      const stored = await NameBindings.findMany(tx, { modifierIds: [modifierId], requirementIds: [] });
+      const { operator, target, value } = body;
+      const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
+      const { bindings, condition, rebound, row } = Engine.for(scope)
+        .targetPaths()
+        .planModifierEdit(catalogs, "characters", {
+          bindings: stored,
+          body: { operator, target, value },
+          stored: existing,
+        });
 
       const rows = await Modifiers.update(tx, row, { id: modifierId, expectedUpdatedAt: body.updatedAt });
       if (body.updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const modifier = rows[0];
-      // Its names are kept anew, with the text it now stores
-      await NameBindings.delete(tx, { modifierId });
+      // The fields it wrote take their names anew, with the text they now store; the others keep what they meant
+      await NameBindings.delete(tx, { fields: rebound, modifierId });
       await NameBindings.createMany(
         tx,
         bindings.map((binding) => ({ ...binding, modifierId })),
       );
 
-      const { operator, target, value } = row;
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifierId,
         targetType: TARGET_TYPES.modifiers,
         type: "updateCharacterModifier",
-        data: { characterName: character.name, target, value, operator },
+        data: {
+          characterName: character.name,
+          target: condition.target,
+          value: condition.value,
+          operator: condition.operator,
+        },
       });
 
       return modifier;

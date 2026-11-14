@@ -11,6 +11,9 @@ import type { Module } from "./Modules.ts";
 /** A modifier's save, as its form sends it. */
 type ModifierBody = Parameters<typeof ModifierEdits.rowOf>[3];
 
+/** A modifier's edit, as its form sends it: its target and its value only where they changed. */
+type ModifierEditBody = Parameters<typeof ModifierEdits.planChange>[3]["body"];
+
 /**
  * The engine bound to the ruleset's target paths: listed, completed, validated, and a modifier's row checked against
  * them.
@@ -52,6 +55,24 @@ export default class TargetPathsEngine {
   planModifier(catalogs: TargetCatalogs, sourceType: string, body: ModifierBody) {
     const row = ModifierEdits.rowOf(this.module.targetPaths, catalogs, sourceType, body);
     return { bindings: new NameBinder(this.view.rulesetData, this.module.targetPaths).bind(row), row };
+  }
+
+  /**
+   * An edit of a modifier on a source the view doesn't hold (`sourceType`: a character's), stored as `stored` with its
+   * `bindings`: the row it stores, checked against its path among the catalogs of a modifier's paths and a template's,
+   * and the bindings of the fields it writes (`rebound`). A field it isn't sent keeps its text as the view reads the
+   * modifier, under its entities' names there, and what its names mean. Refused as invalid with what's wrong.
+   */
+  planModifierEdit(
+    catalogs: TargetCatalogs,
+    sourceType: string,
+    edit: { bindings: readonly NameBinding[]; body: ModifierEditBody; stored: ModifierBody & { id: string } },
+  ) {
+    const binder = new NameBinder(this.view.rulesetData, this.module.targetPaths);
+    const [current] = this.view.rulesetData.readRows([edit.stored], edit.bindings, true);
+    const change = { body: edit.body, current };
+    const bind = (condition: ModifierBody) => binder.bind(condition);
+    return ModifierEdits.planChange(this.module.targetPaths, catalogs, sourceType, change, bind);
   }
 
   /** A target path validated like a language server, among a catalog's paths (those an entity type takes). */

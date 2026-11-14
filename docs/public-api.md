@@ -95,6 +95,9 @@ unsubscribing it from an extension answers its extensions.
 
 - An edit sends back the `updatedAt` it read (a character's, an entry's, a modifier's, a ruleset's), and is refused
   with a 409 when the row changed since, as the app's forms are.
+- A modifier's or a requirement's edit sends its target and its value only when it changes them, as the app's dialogs
+  do: one it leaves out keeps its text and the entities its names mean, whatever they're called since, and the
+  operator or the value it sends is checked against the path it keeps. A target it sends names what has that name now.
 - An advancement is saved as the wizard saves one: a plan's steps, the payloads `POST …/advancement-plan` answered;
   `force` saves it past the rules' issues, as the wizard's confirm does. An edit (`PUT …/advancements/{advancementId}`)
   takes the saved plan (`GET …/advancements/{advancementId}/plan`) without its plan step.

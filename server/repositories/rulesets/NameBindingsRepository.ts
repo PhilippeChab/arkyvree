@@ -94,15 +94,19 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
     return created;
   }
 
-  /** Removes a row's bindings: a save that changes its paths stores them anew. */
-  async delete(db: Db, where: { modifierId: string } | { requirementId: string }) {
+  /** Removes a row's bindings, or those of its fields a save writes (`fields`), which it stores anew. */
+  async delete(db: Db, where: ({ modifierId: string } | { requirementId: string }) & { fields?: string[] }) {
+    if (where.fields?.length === 0) return [];
     return await db
       .delete(this.table)
       .where(
-        this.branchWhere([
-          "modifierId" in where && eq(this.table.modifierId, where.modifierId),
-          "requirementId" in where && eq(this.table.requirementId, where.requirementId),
-        ]),
+        this.branchWhere(
+          [
+            "modifierId" in where && eq(this.table.modifierId, where.modifierId),
+            "requirementId" in where && eq(this.table.requirementId, where.requirementId),
+          ],
+          [where.fields !== undefined && inArray(this.table.field, where.fields)],
+        ),
       )
       .returning();
   }

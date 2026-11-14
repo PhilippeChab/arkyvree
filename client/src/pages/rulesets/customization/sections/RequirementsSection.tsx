@@ -26,6 +26,7 @@ import {
   RequirementFormFields,
   type RequirementType,
   TargetPathBreadcrumbs,
+  toConditionEdit,
 } from "@/client/src/components/customization/index.ts";
 import { AddIcon, DeleteIcon, EditIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
@@ -69,6 +70,17 @@ function CharactersWarning() {
       Changing requirements may break the validation of characters built on this ruleset.
     </Alert>
   );
+}
+
+/** A condition's values in its edit form, as its dialog opens on them. */
+function conditionForm(requirement: Requirement): RequirementFormData {
+  return {
+    level: requirement.level,
+    target: requirement.target || "",
+    value: requirement.value || "",
+    operator: requirement.operator || "",
+    chainingOperator: undefined,
+  };
 }
 
 /** The ids of a tree's requirements that group others, at every depth: what opens expanded. */
@@ -132,12 +144,13 @@ export function RequirementsSection({
           }),
         ),
       ),
-    updateFn: async (requirementId: string, data: RequirementFormData, updatedAt: string | undefined) =>
+    // A condition's target and value only where they changed: one it doesn't send keeps what it means, renamed or not
+    updateFn: async (requirement: Requirement, data: RequirementFormData) =>
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements[":requirementId"].$put({
-            param: { ...entityParam, requirementId },
-            json: { ...data, updatedAt },
+            param: { ...entityParam, requirementId: requirement.id },
+            json: { ...toConditionEdit(data, conditionForm(requirement)), updatedAt: requirement.updatedAt },
           }),
         ),
       ),
@@ -189,13 +202,7 @@ export function RequirementsSection({
 
   const handleEditCondition = (requirement: Requirement) => {
     setEditRequirementType("condition");
-    handleEdit(requirement, {
-      level: requirement.level,
-      target: requirement.target || "",
-      value: requirement.value || "",
-      operator: requirement.operator || "",
-      chainingOperator: undefined,
-    });
+    handleEdit(requirement, conditionForm(requirement));
   };
 
   const handleEditRequirement = (requirement: Requirement) => {
@@ -372,9 +379,8 @@ export function RequirementsSection({
         onSubmit={(data) => {
           if (!editDialog.target) return;
           updateMutation.mutate({
-            id: editDialog.target.id,
+            row: editDialog.target,
             data: requirementPayload(editRequirementType, editDialog.target.level, data),
-            updatedAt: editDialog.target.updatedAt,
           });
         }}
         maxWidth="md"

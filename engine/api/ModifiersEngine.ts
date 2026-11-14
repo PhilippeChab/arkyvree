@@ -8,6 +8,9 @@ import type { Module } from "./Modules.ts";
 /** A modifier's save, as its form sends it. */
 type ModifierBody = Parameters<ModifierEdits["planCreate"]>[2];
 
+/** A modifier's edit, as its form sends it: its target and its value only where they changed. */
+type ModifierEditBody = Parameters<ModifierEdits["planEdit"]>[3];
+
 /** The engine bound to an entity's modifiers (`entityType`, `entityId`): described, and what their saves store. */
 export default class ModifiersEngine {
   constructor(
@@ -46,8 +49,11 @@ export default class ModifiersEngine {
     return this.modifiers.planDelete(modifierId);
   }
 
-  /** One of the entity's own modifiers' edit: the entity, the modifier, and the row it stores, checked. */
-  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
+  /**
+   * One of the entity's own modifiers' edit: the entity, the modifier, the row it stores, checked, and the bindings of
+   * the fields it writes; a field it isn't sent keeps its text and what its names mean.
+   */
+  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierEditBody) {
     return this.modifiers.planEdit(this.module.targetPaths, catalogs, modifierId, body);
   }
 }

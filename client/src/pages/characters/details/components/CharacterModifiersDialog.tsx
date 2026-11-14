@@ -30,6 +30,7 @@ import {
   ModifierOperatorCell,
   ModifierTargetCell,
   ModifierValueCell,
+  toConditionEdit,
 } from "@/client/src/components/customization/index.ts";
 import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -59,6 +60,11 @@ const MODIFIER_COLUMNS: TableColumn[] = [
   { key: "value", label: "Value", width: "25%" },
   { key: "actions", label: "Actions", width: "20%", align: "right" },
 ];
+
+/** A modifier's values in its form: its edit's, and its duplicate's. */
+function modifierForm(modifier: Modifier): ModifierFormData {
+  return { target: modifier.target, value: modifier.value, operator: modifier.operator };
+}
 
 /** A character's own modifiers: listed, added, edited and deleted. */
 export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId }: CharacterModifiersDialogProps) {
@@ -98,12 +104,13 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
     onError: (error) => snackbar.error(error, "Failed to add modifier"),
   });
 
+  // Its target and its value only where they changed: one it doesn't send keeps what it means, renamed since or not
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, updatedAt }: { data: ModifierFormData; id: string; updatedAt?: string }) =>
+    mutationFn: async ({ data, modifier }: { data: ModifierFormData; modifier: Modifier }) =>
       parseResponse(
         rpc.api.characters.modifiers[":characterId"].modifiers[":modifierId"].$put({
-          param: { characterId, modifierId: id },
-          json: { ...data, updatedAt },
+          param: { characterId, modifierId: modifier.id },
+          json: { ...toConditionEdit(data, modifierForm(modifier)), updatedAt: modifier.updatedAt },
         }),
       ),
     onSuccess: () => {
@@ -130,7 +137,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
   });
 
   const handleEdit = (modifier: Modifier) => {
-    editForm.reset({ target: modifier.target, value: modifier.value, operator: modifier.operator });
+    editForm.reset(modifierForm(modifier));
     editDialog.openWith(modifier);
   };
 
@@ -141,14 +148,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
   };
 
   const handleDuplicate = (modifier: Modifier) => {
-    createForm.reset(
-      {
-        target: modifier.target,
-        value: modifier.value,
-        operator: modifier.operator,
-      },
-      { keepDefaultValues: true },
-    );
+    createForm.reset(modifierForm(modifier), { keepDefaultValues: true });
     setCreateOpen(true);
   };
 
@@ -234,10 +234,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
         onClose={editDialog.close}
         title="Edit Modifier"
         form={editForm}
-        onSubmit={(data) =>
-          editDialog.target &&
-          updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt })
-        }
+        onSubmit={(data) => editDialog.target && updateMutation.mutate({ data, modifier: editDialog.target })}
         pending={updateMutation.isPending}
         maxWidth="md"
       >
