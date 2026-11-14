@@ -5,7 +5,7 @@ import type ClassesComponent from "@/engine/rulesets/dnd5/model/classes/ClassesC
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5/model/loading/DetailedCharacterDataLoader.ts";
 import Dnd5View from "@/engine/rulesets/dnd5/view/Dnd5View.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { EXPERTISE_MULTIPLIER } from "@/vocabulary/dnd5/skills.ts";
+import { EXPERTISE_MULTIPLIER, PASSIVE_CHECK_SKILL } from "@/vocabulary/dnd5/skills.ts";
 
 /** A skill as the sheet counts it. */
 interface SkillData {
@@ -39,9 +39,14 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
 
   private readonly skills: SkillsData = {};
 
+  /** The skill a passive check is made with: the one the rules call Perception, whatever the ruleset calls it. */
+  private passiveSkillSlug: string | undefined;
+
   /** Each of the ruleset's skills, its ability's modifier and its proficiency counted when read. */
   override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
     const { abilities, classes } = this;
+    const passive = rulesetData.named("skills", PASSIVE_CHECK_SKILL);
+    this.passiveSkillSlug = passive && stripSeparators(passive.name);
     for (const skill of Dnd5View.of(rulesetData).skills) {
       const abilityName = (skill.links.keyAbility && abilities.getAbilityName(skill.links.keyAbility)) ?? "";
       // What's computed is computed when read, so it follows the abilities, the level and the parts
@@ -65,6 +70,11 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         },
       };
     }
+  }
+
+  /** The skill a passive check is made with, as the sheet counts it: none in a ruleset that deleted it. */
+  getPassiveSkill(): SkillData | undefined {
+    return this.passiveSkillSlug === undefined ? undefined : this.skills[this.passiveSkillSlug];
   }
 
   /** A skill, by its name, as the sheet counts it: none for a skill the ruleset doesn't have. */

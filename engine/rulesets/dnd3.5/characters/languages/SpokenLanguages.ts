@@ -68,9 +68,11 @@ export default class SpokenLanguages {
    */
   private room(): number {
     const { abilities, languages, skills } = this.character.components;
+    // The skill the rules call Speak Language, whatever the ruleset calls it
+    const speaking = this.view.rulesetData.named("skills", SPEAK_LANGUAGE_SKILL);
     return LanguageRules.roomOf(
       abilities.getPermanentModifier(LANGUAGE_PICK_ABILITY),
-      skills.getSkills()[stripSeparators(SPEAK_LANGUAGE_SKILL)]?.rank ?? 0,
+      speaking ? (skills.getSkills()[stripSeparators(speaking.name)]?.rank ?? 0) : 0,
       languages.getExtraPicks(),
     );
   }

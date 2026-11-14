@@ -1,5 +1,4 @@
 import type DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
-import BondedRaceData from "@/engine/rulesets/pf1/rules/BondedRaceData.ts";
 import {
   type BondedRaceStatBlock,
   FAMILIAR_BASE_SAVES,
@@ -40,7 +39,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / FAMILIAR_HIT_POINTS_DIVISOR);
     familiarCombat.bab = masterCombat.bab;
 
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    const raceStats = this.findRaceStats();
     familiarCombat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + naBonus;
 
     const intelligence = this.components.abilities.getAbility("Intelligence");
@@ -51,10 +50,12 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
 
     const masterSaves = master.components.saves.getSaves();
     const familiarSaves = this.components.saves.getSaves();
-    for (const saveName of Object.keys(familiarSaves)) {
-      const own = FAMILIAR_BASE_SAVES[saveName.toLowerCase() as keyof typeof FAMILIAR_BASE_SAVES] ?? 0;
-      familiarSaves[saveName].base = Math.max(own, masterSaves[saveName]?.base ?? 0);
-    }
+    // Each save's own base, by the name the rules know it by, whatever the ruleset calls it
+    const ownBase = new Map(
+      Object.entries(FAMILIAR_BASE_SAVES).map(([name, base]) => [this.rulesetData.named("saves", name)?.name, base]),
+    );
+    for (const [saveName, save] of Object.entries(familiarSaves))
+      save.base = Math.max(ownBase.get(save.name) ?? 0, masterSaves[saveName]?.base ?? 0);
 
     this.masterSkillRanks = Object.fromEntries(
       Object.entries(master.components.skills.getSkills()).map(([slug, skill]) => [slug, skill.rank]),

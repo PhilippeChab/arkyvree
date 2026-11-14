@@ -30,13 +30,13 @@ describe("A ruleset's copies of an extension's entities", () => {
     const language = (name: string, bookId = extension.id) =>
       EntitiesService.createEntity(session, bookId, "languages", {
         name,
-        fields: { [LANGUAGE_TYPE]: "Standard" },
+        fields: { [LANGUAGE_TYPE]: "Common" },
       });
     const edit = (id: string, name: string) =>
       EntitiesService.updateEntity(session, host.id, "languages", id, {
         name,
         description: "The host's",
-        fields: { [LANGUAGE_TYPE]: "Standard" },
+        fields: { [LANGUAGE_TYPE]: "Common" },
       });
     const [kept, tombstoned, gone] = [await language("Kept"), await language("Tombstoned"), await language("Gone")];
     // A change to one, a copy deleted since of another, and a copy whose source the extension deleted
@@ -73,7 +73,7 @@ describe("Whether a delete can be undone from Local Changes, as an entity's read
     });
     const own = await EntitiesService.createEntity(session, fork.id, "languages", {
       name: `Own ${uniqueId()}`,
-      fields: { [LANGUAGE_TYPE]: "Standard" },
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
 
     expect([
@@ -93,12 +93,12 @@ describe("Whether a delete can be undone from Local Changes, as an entity's read
     await subscribeTestRuleset(host.id, [extension.id]);
     const source = await EntitiesService.createEntity(session, extension.id, "languages", {
       name: `Gone ${uniqueId()}`,
-      fields: { [LANGUAGE_TYPE]: "Standard" },
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
     const copy = await EntitiesService.updateEntity(session, host.id, "languages", source.id, {
       name: source.name,
       description: "The host's",
-      fields: { [LANGUAGE_TYPE]: "Standard" },
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
     expect(await restorable(host.id, "languages", copy.id)).toBe(true);
 

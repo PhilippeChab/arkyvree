@@ -906,12 +906,12 @@ describe("RulesetsService", () => {
       await subscribeTestRuleset(host.id, [extension.id]);
       const language = await EntitiesService.createEntity(session, extension.id, "languages", {
         name: "Fading Tongue",
-        fields: { [LANGUAGE_TYPE]: "Standard" },
+        fields: { [LANGUAGE_TYPE]: "Common" },
       });
       const copy = await EntitiesService.updateEntity(session, host.id, "languages", language.id, {
         name: "Fading Tongue",
         description: "Kept by the host",
-        fields: { [LANGUAGE_TYPE]: "Standard" },
+        fields: { [LANGUAGE_TYPE]: "Common" },
       });
       expect(await RulesetChangesService.getChanges(session, host.id)).toMatchObject([{ status: "modified" }]);
 

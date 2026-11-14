@@ -18,7 +18,7 @@ export function SeedsCoreRules<B extends Constructor<Pf1ContentSeeder>>(Base: B)
       const namesBySlug = new Map(Object.keys(this.ctx.abilityMap).map((name) => [stripSeparators(name), name]));
       for (const { name } of abilities) {
         const slug = stripSeparators(name);
-        if (!slug) throw new Error(`The ability ${name} has no slug: its name needs a letter or a digit of a-z, 0-9`);
+        if (!slug) throw new Error(`The ability ${name} has no slug: its name holds no letter or digit a slug keeps`);
         const other = namesBySlug.get(slug);
         if (other) throw new Error(`The abilities ${other} and ${name} share the slug ${slug}`);
         namesBySlug.set(slug, name);

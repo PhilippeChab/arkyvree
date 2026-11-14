@@ -49,6 +49,20 @@ class RequirementsService {
   }
 
   /**
+   * Refuses turning a group (at `level`) of an entity's requirements (`entityId`, as stored: a copy's once copied) into
+   * a condition while the entity stores requirements under it, those its page lists and those the view leaves out (a
+   * condition whose entity is gone): a condition groups none, and the evaluation would drop them.
+   */
+  private async refuseGroupedUnder(tx: Db, entityType: string, entityId: string, level: string) {
+    const stored = await Requirements.findMany(tx, { entityIds: [entityId], entityType });
+    if (stored.some((requirement) => requirement.level.startsWith(`${level}.`))) {
+      throw new ConflictError(
+        "A group with requirements under it can't become a condition: delete the requirements under it first",
+      );
+    }
+  }
+
+  /**
    * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at: the
    * database keeps one per level. An edit (`edited`: the requirement it moves, and the version it started from) keeps
    * its own level, and one started from a stale version is told so first, its refresh showing the level taken.
@@ -180,7 +194,7 @@ class RequirementsService {
         // What its names mean as stored, which a field it isn't sent keeps
         const bound = await NameBindings.findMany(tx, { modifierIds: [], requirementIds: [requirementId] });
         const plan = requirements.planEdit(catalogs, requirementId, body, bound);
-        const { bindings, condition, entity, levels, rebound, row: sent } = plan;
+        const { bindings, condition, entity, levels, rebound, row: sent, ungroupedLevel } = plan;
 
         // COW the owning entity if this requirement is inherited
         const edit = new CustomizationEdit(scope);
@@ -192,7 +206,8 @@ class RequirementsService {
           requirementId,
         );
 
-        const expectedUpdatedAt = customization.expected(body.updatedAt);
+        if (ungroupedLevel !== null) await this.refuseGroupedUnder(tx, entityType, resolvedEntityId, ungroupedLevel);
+        const expectedUpdatedAt = await customization.expected(tx, body.updatedAt);
         // A level a condition its page doesn't list holds is free to the client: the edit takes the next one beside it
         const row = { ...sent, level: await this.pickFreeLevel(tx, entityType, resolvedEntityId, sent.level, levels) };
         await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {

@@ -102,6 +102,12 @@ Requirements use a dotted level numbering system for hierarchy:
 - Root conditions: `"1"`, `"2"`, `"3"`
 - Chain node: `"1"` with `chainingOperator: "or"` — children are `"1.1"`, `"1.2"`, etc.
 - This enables OR/AND groups: a chain node groups its children under one logical operator
+- A requirement is a condition (its target, operator, value and value type) or a chain node (its chaining operator),
+  never both (`requirements_check`): an edit may turn one into the other, and stores the new kind's columns with the
+  old kind's cleared, a condition's name bindings going with its text (`RequirementEdits.planEdit`). A chain node with
+  requirements under it is refused (409) as it turns into a condition, which groups nothing: the evaluation would drop
+  them; its children are deleted first. The service counts the rows its entity stores under it
+  (`RequirementsService`), not only those its page lists
 - An entity holds one requirement per level (`requirements_entity_id_entity_type_level_key`): a requirement created at a level its entity already holds, or edited onto one, is refused with a 409, on the copy an inherited entity's save makes too (`RequirementsService`; an edit started from a stale version is told so first)
 
 ### Requirement Builder Helpers
@@ -148,7 +154,7 @@ Skills with sub-types (Craft, Knowledge, Perform) share a common slug prefix. Re
 
 The `*` suffix matches any key starting with the prefix. This is handled by the engine's path walk (`PathTraverser`, `engine/core/paths/`).
 
-A skill's name without the `*` reaches its subtypes too: next to the skill of that name (`skills.craft.rank`, Craft and each Craft (…)), or alone when no skill has it (`skills.knowledge.rank`: implicit prefix expansion). Only skills: anywhere else a name reaches its own entry only. A feat's name is that feat, not the feats whose names it starts (`feats.dodge.possessed` isn't met by Dodge Bonus (Swashbuckler)), and names nothing when no feat has it (`feats.light.possessed`, not Lightning Reflexes). A family of feats is checked by its group.
+A skill's name without the `*` reaches its subtypes too: next to the skill of that name (`skills.craft.rank`, Craft and each Craft (…)), or alone when no skill has it (`skills.knowledge.rank`, a family). A subtype is a skill named "<family> (<variant>)", by its own name or the one the rules know it by, the family read by its slug and by every name the skill of its name goes by (the sheet's skills answer each one's, `getEntryNames`): a fork that translates the Knowledge skills ("Connaissances (Arcana)") keeps `skills.knowledge.rank`, and a "Craft (Alchemy)" of its own stays its translated Craft's. A skill whose name only starts as another's is none of its family ("Spotlight Operation" is no Spot). Only skills: anywhere else a name reaches its own entry only. A feat's name is that feat, not the feats whose names it starts (`feats.dodge.possessed` isn't met by Dodge Bonus (Swashbuckler)), and names nothing when no feat has it (`feats.light.possessed`, not Lightning Reflexes). A family of feats is checked by its group.
 
 ### Modifier wildcards (`saves.*.misc`, `items.weapons.*.damage.misc`)
 
@@ -472,7 +478,11 @@ write ends. A modifier or requirement the client names that the view no longer s
 refused as not found (404), for both kinds, and so is a modifier a class's progression save drops
 (`EditTarget.resolveCustomizations`). One of an entity another write copied since the client read it, a copy deleted
 since included, is refused as stale (409): its ids are the source's, which the copy doesn't keep
-(`CustomizationEdit.refuseCopiedSince`). Ordinary reads take no lock, and different rulesets are edited independently.
+(`CustomizationEdit.refuseCopiedSince`). A change that makes the copy itself (the first change of an inherited
+entity's modifier or requirement) is checked against what the page read too: the client's `updatedAt` is the inherited
+row's, which the copy takes its values from, so one that changed since (its book's author edited it) is refused as
+stale, never copied as it is now under the client's change (`EditTarget.expected`). Ordinary reads take no lock, and
+different rulesets are edited independently.
 First COW copies run under the same lock. Modifier
 deletion removes the selected modifiers and batches removal of their requirements
 and activity records.

@@ -5,6 +5,7 @@ import type { RulesDescription } from "@/engine/core/module/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import type { Modifier, NameBinding, Requirement } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import type { ViewEntity, ViewLink } from "./rows.ts";
 import RulesetData, { type BoundRow, type KindValue, type RulesetLists, type SwitchedOffRow } from "./RulesetData.ts";
@@ -21,6 +22,12 @@ interface BoundRows {
 interface HeldLinks {
   links: readonly ViewLink[];
   type: string;
+}
+
+/** A kind's entities as their rulesets made them: each one's name by its id, and its id by its name's slug. */
+interface Originals {
+  ids: Map<string, string>;
+  names: Map<string, string>;
 }
 
 /** A modifier's own conditions once those naming something gone are settled, and what its gate failed for, if it did. */
@@ -128,6 +135,9 @@ export default class RulesetComposition {
 
   /** The fields its modules declare: their order, and how sibling copies merge them */
   private readonly declared: DeclaredFields;
+
+  /** Each kind's entities as their rulesets made them, by name, once asked for (`composeOriginals`). */
+  private readonly originals = new Map<string, Originals>();
 
   /** The kinds a name pairs across books (a feat two books print): a binding out of the chain pairs so too. */
   private readonly paired: ReadonlySet<string>;
@@ -266,6 +276,9 @@ export default class RulesetComposition {
       entities,
       kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, { merged, taken }),
       linksOf: (entityId: string) => this.composeLinks(entityId),
+      originalNameOf: (type: string, id: string) => this.composeOriginals(type).names.get(id),
+      originalOf: (type: string, slug: string, partition?: string) =>
+        this.composeOriginals(type).ids.get(partition === undefined ? slug : `${partition} ${slug}`),
       tierListIds: this.composeTierListIds(),
       modifiers,
       requirements: this.composeRequirements(leftOut, excludedModifierIds, bound, gates),
@@ -303,6 +316,30 @@ export default class RulesetComposition {
       gates,
       modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })),
     };
+  }
+
+  /**
+   * A kind's entities as the chain's rulesets made them (`type`): those that copy none, hidden ones too (one the
+   * ruleset copied and renamed, or deleted), each by its id with the name it was made under, and by that name's slug,
+   * the base rules' first, then each ruleset built on them, the first of a name. What the rules' own words name
+   * ("Hide"), whatever the view calls it now.
+   */
+  private composeOriginals(type: string): Originals {
+    const known = this.originals.get(type);
+    if (known) return known;
+    const originals: Originals = { ids: new Map(), names: new Map() };
+    for (const raw of this.chain.toReversed()) {
+      for (const row of raw.entities[type] ?? []) {
+        if (this.cow.sourceOf(row.id) !== undefined) continue;
+        const slug = stripSeparators(row.name);
+        originals.names.set(row.id, row.name);
+        // Under its name, and under its name among its partition's (a familiar's race, a player's)
+        for (const key of [slug, `${row.partition} ${slug}`])
+          if (!originals.ids.has(key)) originals.ids.set(key, row.id);
+      }
+    }
+    this.originals.set(type, originals);
+    return originals;
   }
 
   /**

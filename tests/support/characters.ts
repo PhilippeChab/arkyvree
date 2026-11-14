@@ -3,7 +3,7 @@ import { eq, or } from "drizzle-orm";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { SheetBlock } from "@/engine/core/module/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLinks } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, CharacterLinks } from "@/server/repositories/index.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** The notes a sheet's identity block holds: its public ones, and its private ones for a reader who reads them. */
@@ -32,6 +32,14 @@ export async function backdateLastChange(characterId: string, at = "2000-01-01T0
     .update(charactersInCharacter)
     .set({ lastChangedAt: at })
     .where(or(eq(charactersInCharacter.id, characterId), eq(charactersInCharacter.parentCharacterId, characterId)));
+}
+
+/**
+ * A character's last advancement, as its sheet names it (`lastAdvancementId`) for an add's or a removal's token: none
+ * without one.
+ */
+export async function findLastAdvancementId(characterId: string) {
+  return (await CharacterAdvancements.findMany(db, { characterId })).at(-1)?.id ?? null;
 }
 
 /** A character's links of a role it holds many of (`role`: 3.5's `score`, `speaks`), as stored, in their order. */

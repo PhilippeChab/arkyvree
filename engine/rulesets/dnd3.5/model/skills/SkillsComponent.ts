@@ -14,7 +14,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
-import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
+import { SIZE_HIDE_MOD, SIZE_MODIFIED_SKILL } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
 interface SkillBudget {
@@ -83,7 +83,13 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     };
   })();
 
+  /** The names each skill goes by, by its slug: its own, then the rules' when the ruleset renamed it. */
+  private readonly skillNamesBySlug = new Map<string, readonly string[]>();
+
   private readonly skills: SkillsData = {} as SkillsData;
+
+  /** The skill a creature's size weighs on: the one the rules call Hide, whatever the ruleset calls it. */
+  private sizedSkillId: string | undefined;
 
   private skillPointAbilityId: string | null = null;
 
@@ -102,7 +108,8 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     }: Pick<LoadedCharacterData, "classLevelFields" | "skillFields" | "skillPointAbilityId">,
     { rulesetData }: RulesetView,
   ) {
-    const rulesetSkills = Dnd35View.of(rulesetData).skills;
+    const { skillNames, skills: rulesetSkills } = Dnd35View.of(rulesetData);
+    this.sizedSkillId = rulesetData.named("skills", SIZE_MODIFIED_SKILL)?.id;
     this.skillPointAbilityId = skillPointAbilityId;
     this.skillPointClassLevelFields = classLevelFields;
     const classes = this.classes.getClasses();
@@ -114,11 +121,12 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         klass,
         SkillRules.classSkillIds(
           klass.classSkillLinks.map((link) => link.toId),
-          rulesetSkills,
+          skillNames,
         ),
       ]),
     );
     for (const ids of classSkillsOf.values()) for (const id of ids) this.innateSkillIds.add(id);
+    for (const { name, names } of skillNames) this.skillNamesBySlug.set(stripSeparators(name), names);
 
     // Convert stored points to actual ranks per class-level: a class skill's (for that class) at a rank a point, a
     // cross-class one's at half a rank a point
@@ -195,7 +203,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     const invested = this.rankBySkillId.get(skill.id) ?? 0;
     // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
     const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
-    const sizeOfRace = () => (skill.name === "Hide" ? (SIZE_HIDE_MOD[raceSize()] ?? 0) : 0);
+    const sizeOfRace = () => (skill.id === this.sizedSkillId ? (SIZE_HIDE_MOD[raceSize()] ?? 0) : 0);
     let sizeBonus = 0;
     return {
       name: skill.name,
@@ -254,6 +262,14 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         currentRank: skillData?.rank || 0,
       };
     });
+  }
+
+  /**
+   * The names a skill of the sheet goes by (`key`, its slug): its own, then the rules' when the ruleset renamed it.
+   * What a family's path reads its members by (`skills.knowledge.rank`: "Connaissances (Arcana)" is Knowledge's).
+   */
+  getEntryNames(key: string): readonly string[] | undefined {
+    return this.skillNamesBySlug.get(key);
   }
 
   /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */

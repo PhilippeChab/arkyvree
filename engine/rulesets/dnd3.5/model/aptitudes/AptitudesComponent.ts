@@ -133,22 +133,23 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
     const aptitudeById: AptitudesById = new Map(
       Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
     );
-    this.applyAllowances(aptitudeById, grantCountsByPool);
+    this.applyAllowances(aptitudeById, grantCountsByPool, LevelRules.generalFeatsPool(rulesetData)?.id);
     this.applySpent(aptitudeById, this.countSpent());
   }
 
   /**
    * What each aptitude allows: the feats and the (non-free) spells the class levels grant through it (`grantCounts`,
-   * by its id), and the general feats its total level gives (`countGeneralFeats`).
+   * by its id), and the general feats its total level gives (`countGeneralFeats`), which count toward the pool the
+   * rules call General (`generalId`, as the view has it: `LevelRules.generalFeatsPool`).
    */
-  private applyAllowances(aptitudeById: AptitudesById, grantCounts: Record<string, number>) {
+  private applyAllowances(aptitudeById: AptitudesById, grantCounts: Record<string, number>, generalId?: string) {
     for (const [aptitudeId, count] of Object.entries(grantCounts)) {
       const aptitude = aptitudeById.get(aptitudeId);
       if (aptitude) aptitude.allowed += count;
     }
 
     const generalFeats = this.countGeneralFeats(this.identity.getIdentity().meta.level);
-    const general = this.aptitudes[LevelRules.GENERAL_FEATS_APTITUDE_SLUG];
+    const general = generalId === undefined ? undefined : aptitudeById.get(generalId);
     if (general) general.allowed += generalFeats;
     this.unplacedGeneralFeats = general ? 0 : generalFeats;
   }

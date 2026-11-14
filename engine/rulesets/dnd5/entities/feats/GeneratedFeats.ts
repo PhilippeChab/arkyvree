@@ -248,7 +248,8 @@ export default abstract class GeneratedFeats {
   make(name: string, freed: readonly { id: string }[] = [], standalone = false): MadeEntity[] {
     const { rulesetData } = this.view;
     const dnd5 = Dnd5View.of(rulesetData);
-    const aptitudeId = dnd5.aptitudeIdBySlug.get(this.poolSlug);
+    // The pool the rules name, whatever the ruleset calls it now
+    const aptitudeId = rulesetData.named("aptitudes", this.poolSlug)?.id;
     if (!aptitudeId) return [];
     const vacated = new Set(freed.map((feat) => feat.id));
     const shown = new Set(dnd5.feats.flatMap((feat) => (vacated.has(feat.id) ? [] : feat.name)));

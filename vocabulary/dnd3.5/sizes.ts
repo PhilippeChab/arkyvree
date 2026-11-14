@@ -45,6 +45,9 @@ export const SIZE_HIDE_MOD: Record<string, number> = {
   Colossal: -16,
 };
 
+/** The skill a creature's size weighs on, as the books name it: Hide. */
+export const SIZE_MODIFIED_SKILL = "Hide";
+
 /** Every size, smallest first. */
 export const SIZE_OPTIONS = [
   "Fine",

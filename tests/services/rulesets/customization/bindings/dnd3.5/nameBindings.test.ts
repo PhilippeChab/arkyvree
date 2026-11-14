@@ -4,10 +4,11 @@ import { sql } from "drizzle-orm";
 
 import { DND35_COMPLETE_ARCANE_NAME, DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { writeNameBindings } from "@/database/packages/nameBindings.ts";
+import { RulesError } from "@/engine/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { NameBindingFill, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
+import { Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
@@ -442,11 +443,11 @@ describe("a path that names two things, and a value that names one", () => {
     const spell = view.spells.find((candidate) => candidate.name === "Fireball")!;
 
     await EntitiesService.updateEntity(session, fork.id, "aptitudes", list.id, { name: "Mage Spells" });
-    await EntitiesService.updateEntity(session, fork.id, "spells", spell.id, { name: "Firestorm" });
+    await EntitiesService.updateEntity(session, fork.id, "spells", spell.id, { name: "Orbe de feu" });
 
     const after = await readView(fork.id);
     expect((after.modifiersBySource.get(holder.id) ?? []).map((m) => m.target)).toEqual([
-      "spells.firestorm.mage.known",
+      "spells.orbedefeu.mage.known",
     ]);
     const slots = [...after.modifiersById.values()]
       .map((m) => m.target)
@@ -867,6 +868,37 @@ describe("what a fifth independent review found", () => {
 
     expect(await listed()).toEqual(["3"]);
     expect(await conditionsOf(fork.id, holder.id)).toEqual(["feats.dodge.possessed"]);
+  });
+
+  test("a group whose children are all hidden conditions goes with them: its page can't turn it into a condition", async () => {
+    const { fork, session } = await setUp();
+    const holder = await createFeat(session, fork.id, "Holder");
+    const gone = await createFeat(session, fork.id, "Soon Gone");
+    const group = await RequirementsService.createRequirement(session, fork.id, "feats", holder.id, {
+      level: "1",
+      chainingOperator: "and",
+    });
+    await RequirementsService.createRequirement(session, fork.id, "feats", holder.id, {
+      level: "1.1",
+      operator: "equal",
+      target: "feats.soongone.possessed",
+      value: "true",
+    });
+    await EntitiesService.deleteEntity(session, fork.id, "feats", gone.id);
+    const listed = await RequirementsService.getRequirements(session, fork.id, "feats", holder.id);
+
+    const turned = RequirementsService.updateRequirement(session, fork.id, "feats", holder.id, group.id, {
+      level: "1",
+      operator: "equal",
+      target: "feats.dodge.possessed",
+      value: "true",
+    });
+
+    expect(listed).toEqual([]);
+    expect(turned).rejects.toEqual(new RulesError("not-found", "Requirement not found for this entity"));
+    expect(
+      (await Requirements.findMany(db, { entityIds: [holder.id], entityType: "feats" })).map((r) => r.level),
+    ).toEqual(["1", "1.1"]);
   });
 
   test("a condition whose race is gone is listed with the fields it stores, and no other", async () => {

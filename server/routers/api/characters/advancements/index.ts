@@ -12,7 +12,7 @@ const advancementParams = characterIdParam.extend({ advancementId: z.string().uu
 const planFields = { editedAdvancementId: z.string().uuid().optional(), steps: planSteps };
 
 /** An advancement's save, its add's and its edit's: its plan's steps, saved past the rules' issues with `force`. */
-const saveBody = z.object({ steps: planSteps, force: z.boolean().default(false) });
+const saveFields = { steps: planSteps, force: z.boolean().default(false) };
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });
@@ -38,14 +38,29 @@ export default new Hono<SessionContext>()
       200,
     );
   })
-  .post("/:characterId", validate("param", characterIdParam), validate("json", saveBody), async (c) => {
-    const { characterId } = c.req.valid("param");
-    const { steps, force } = c.req.valid("json");
-    return c.json(
-      await CharacterAdvancementsService.addAdvancements(c.var.requestSession, characterId, { steps }, force),
-      201,
-    );
-  })
+  .post(
+    "/:characterId",
+    validate("param", characterIdParam),
+    validate(
+      "json",
+      // The character's last advancement as the page read it (`null`: it had none)
+      z.object({ ...saveFields, lastAdvancementId: z.string().uuid().nullable() }),
+    ),
+    async (c) => {
+      const { characterId } = c.req.valid("param");
+      const { steps, force, lastAdvancementId } = c.req.valid("json");
+      return c.json(
+        await CharacterAdvancementsService.addAdvancements(
+          c.var.requestSession,
+          characterId,
+          { steps },
+          force,
+          lastAdvancementId,
+        ),
+        201,
+      );
+    },
+  )
   .post(
     "/:characterId/options/:step",
     validate("param", stepParams),
@@ -84,21 +99,29 @@ export default new Hono<SessionContext>()
       return c.json(await CharacterAdvancementsService.getPlan(c.var.requestSession, characterId, body), 200);
     },
   )
-  .put("/:characterId/:advancementId", validate("param", advancementParams), validate("json", saveBody), async (c) => {
+  .put(
+    "/:characterId/:advancementId",
+    validate("param", advancementParams),
+    validate("json", z.object(saveFields)),
+    async (c) => {
+      const { characterId, advancementId } = c.req.valid("param");
+      const { steps, force } = c.req.valid("json");
+      return c.json(
+        await CharacterAdvancementsService.updateSavedAdvancement(
+          c.var.requestSession,
+          characterId,
+          advancementId,
+          { steps },
+          force,
+        ),
+        200,
+      );
+    },
+  )
+  .delete("/:characterId/:advancementId", validate("param", advancementParams), async (c) => {
     const { characterId, advancementId } = c.req.valid("param");
-    const { steps, force } = c.req.valid("json");
     return c.json(
-      await CharacterAdvancementsService.updateSavedAdvancement(
-        c.var.requestSession,
-        characterId,
-        advancementId,
-        { steps },
-        force,
-      ),
+      await CharacterAdvancementsService.removeAdvancement(c.var.requestSession, characterId, advancementId),
       200,
     );
-  })
-  .delete("/:characterId", validate("param", characterIdParam), async (c) => {
-    const { characterId } = c.req.valid("param");
-    return c.json(await CharacterAdvancementsService.removeAdvancement(c.var.requestSession, characterId), 200);
   });

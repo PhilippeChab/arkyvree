@@ -6,6 +6,9 @@
 /** A creature's or a weapon's size. */
 export type SizeType = (typeof SIZE_OPTIONS)[number];
 
+/** The skills a creature's size weighs on, as the books name them, each with its modifiers. */
+export const FLY_SKILL = "Fly";
+
 /** Size modifier applied to AC and to-hit (same magnitude, same direction). */
 export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
   Fine: 8,
@@ -34,7 +37,6 @@ export const SIZE_CMB_MOD: Record<string, number> = {
   Gargantuan: 4,
   Colossal: 8,
 };
-
 /** Size modifier applied to the Fly skill (same direction as AC/attack). */
 export const SIZE_FLY_MOD: Record<string, number> = {
   Fine: 8,
@@ -86,3 +88,5 @@ export const SIZE_STEPS: Record<string, number> = {
   Gargantuan: 3,
   Colossal: 4,
 };
+
+export const STEALTH_SKILL = "Stealth";

@@ -100,7 +100,7 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
         await Entities.create<Language>(db, DND35_BASE_RULES, "languages", {
           name,
           rulesetId,
-          fields: { [LANGUAGE_TYPE]: "Standard" },
+          fields: { [LANGUAGE_TYPE]: "Common" },
         })
       )[0].id;
     case "modifiers": {

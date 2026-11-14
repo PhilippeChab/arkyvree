@@ -1,6 +1,7 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
+import type { NameBindingPlace } from "@/shared/customization/nameBindings.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -86,9 +87,13 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /**
    * An edit of one of the entity's requirements: the entity and the requirement, the row it stores, the bindings of
-   * the fields it writes (`rebound`, `ConditionEdit`), and the condition as it reads once edited (`condition`). A
-   * condition's target and value are sent only where they changed: one it isn't sent keeps its text as the view reads
-   * it, checked with what it's sent, and what its stored bindings (`bound`) mean.
+   * the fields it writes (`rebound`, `ConditionEdit`), the condition as it reads once edited (`condition`), and the
+   * level of a group it turns into a condition (`ungroupedLevel`, none otherwise), which the server refuses while it
+   * stores requirements under that level, the view's or not: a condition groups none, and the evaluation would drop
+   * them. A condition's target and value are sent only where they changed: one it isn't sent keeps its text as the
+   * view reads it, checked with what it's sent, and what its stored bindings (`bound`) mean. An edit that turns one
+   * type into the other leaves nothing of the other (the database holds a row to one): a condition made a group loses
+   * its text and its bindings, a group made a condition its chaining operator.
    */
   planEdit(
     targetPaths: TargetPaths,
@@ -99,15 +104,24 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
   ) {
     // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
     const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
-    const plan = { ...this.planDelete(requirementId), levels };
-    const { requirement } = plan;
-    const kept = { bindings: [], condition: {}, rebound: [] };
-    // A group's save, or a condition made a group: its chaining operator, and any text it holds keeps its meaning
-    if (body.target === undefined && (requirement.target === null || body.chainingOperator !== undefined))
-      return { ...plan, ...kept, row: { chainingOperator: body.chainingOperator, level: body.level } };
-    // A save of its level alone changes no text
-    if (body.target === undefined && body.operator === undefined && body.value === undefined)
-      return { ...plan, ...kept, row: { level: body.level } };
+    const deleted = this.planDelete(requirementId);
+    const { requirement } = deleted;
+    // A group it turns into a condition: its level, which the server refuses while it stores requirements under it
+    const ungroupedLevel = body.target && requirement.chainingOperator ? requirement.level : null;
+    const plan = { ...deleted, levels, ungroupedLevel };
+    const unchanged = { bindings: [], condition: {}, rebound: [] };
+    if (body.target === undefined) {
+      // A group's save, or a condition made a group: its chaining operator, and no condition's text or names
+      if (body.chainingOperator !== undefined) {
+        const cleared = { operator: null, target: null, value: null, valueType: null };
+        const row = { chainingOperator: body.chainingOperator, level: body.level, ...cleared };
+        const rebound: NameBindingPlace["field"][] = ["target", "value"];
+        return { ...plan, ...unchanged, rebound, row };
+      }
+      // A save of its level alone (a group's, or a condition's without a new operator or value) changes no text
+      if (requirement.target === null || (body.operator === undefined && body.value === undefined))
+        return { ...plan, ...unchanged, row: { level: body.level } };
+    }
     const condition = this.toCondition(targetPaths, catalogs, {
       operator: body.operator ?? requirement.operator ?? undefined,
       target: body.target ?? requirement.target!,
@@ -120,7 +134,7 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       bindings,
       condition,
       rebound: edit.rebound,
-      row: { level: body.level, ...edit.store(condition) },
+      row: { chainingOperator: null, level: body.level, ...edit.store(condition) },
     };
   }
 }

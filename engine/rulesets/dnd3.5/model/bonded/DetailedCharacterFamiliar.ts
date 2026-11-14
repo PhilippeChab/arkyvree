@@ -1,5 +1,4 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import {
   type BondedRaceStatBlock,
   FAMILIAR_HIT_POINTS_DIVISOR,
@@ -39,7 +38,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / FAMILIAR_HIT_POINTS_DIVISOR);
     familiarCombat.bab = masterCombat.bab;
 
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    const raceStats = this.findRaceStats();
     familiarCombat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + naBonus;
 
     const intelligence = this.components.abilities.getAbility("Intelligence");

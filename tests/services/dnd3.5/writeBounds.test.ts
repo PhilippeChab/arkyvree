@@ -45,10 +45,12 @@ import {
   CHARACTER_XP,
   CLASS_HD,
   ITEM_COST_GP,
+  ITEM_TYPE,
   ITEM_WEIGHT,
   LANGUAGE_TYPE,
   RACE_BASE_SPEED,
   RACE_SIZE,
+  WEAPON_SIZE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A connection of its own, which holds a lock the test's call waits on. */
@@ -360,6 +362,31 @@ describe("a ruleset's entities", () => {
         fields: { [LANGUAGE_TYPE]: "Spoken" },
       }),
     ).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Spoken" } });
+  });
+
+  test("takes a language's type from its list only: a translated one would lose its rule", async () => {
+    const { session: owner, ruleset } = await createTestUserAndRuleset();
+    // "Secrète" would be no secret language, which any character could pick
+    expect(
+      EntitiesService.createEntity(owner, ruleset.id, "languages", {
+        name: "Druidique",
+        fields: { [LANGUAGE_TYPE]: "Secrète" },
+      }),
+    ).rejects.toMatchObject(invalidAt(`fields.${LANGUAGE_TYPE}`));
+  });
+
+  test("takes a weapon's size from its list only: a translated one would leave a greatsword to one hand", async () => {
+    const { session: owner, ruleset } = await createTestUserAndRuleset();
+    const weapon = (size: string) => ({
+      name: `Espadon ${size}`,
+      fields: { [ITEM_TYPE]: "Weapon", [WEAPON_SIZE]: size },
+    });
+    expect(EntitiesService.createEntity(owner, ruleset.id, "items", weapon("Grande"))).rejects.toMatchObject(
+      invalidAt(`fields.${WEAPON_SIZE}`),
+    );
+    expect(await EntitiesService.createEntity(owner, ruleset.id, "items", weapon("Large"))).toMatchObject({
+      fields: { [WEAPON_SIZE]: "Large" },
+    });
   });
 
   test("offers no write of an ability, whose description its rules seed", async () => {

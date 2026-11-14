@@ -82,7 +82,25 @@ describe("v1 character advancements", () => {
     const sheet = await expectOk(characters.advancements.$post({ json: { force: true, steps }, param }));
     expect(JSON.stringify(sheet.sections)).toContain(track.name);
     expect(await CharacterAdvancements.findMany(db, { characterId: character.id })).toHaveLength(1);
-    await expectOk(characters.advancements.$delete({ param }));
+    await expectOk(characters.advancements.$delete({ param, query: {} }));
     expect(await CharacterAdvancements.findMany(db, { characterId: character.id })).toHaveLength(0);
+  });
+
+  test("refuses a save or a removal sent with a last advancement the character has moved past", async () => {
+    const { api, character, characters, param } = await keyedCharacter();
+    const { steps } = await planFirstAdvancement(api, character.id);
+    const read = await expectOk(characters.$get({ param }));
+    expect(read.lastAdvancementId).toBeNull();
+
+    // The same save sent twice adds one advancement
+    const json = { force: true, lastAdvancementId: read.lastAdvancementId, steps };
+    const saved = await expectOk(characters.advancements.$post({ json, param }));
+    await expectStatus(characters.advancements.$post({ json, param }), 409);
+    expect(await CharacterAdvancements.findMany(db, { characterId: character.id })).toHaveLength(1);
+
+    // Two removals of the advancement read as the last take it once
+    const query = { advancementId: saved.lastAdvancementId! };
+    await expectOk(characters.advancements.$delete({ param, query }));
+    await expectStatus(characters.advancements.$delete({ param, query }), 409);
   });
 });

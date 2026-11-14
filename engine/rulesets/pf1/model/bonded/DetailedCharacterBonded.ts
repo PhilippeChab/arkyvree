@@ -3,8 +3,6 @@ import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/pf1/rules/BondedRaceData.ts";
-import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
-import { stripSeparators } from "@/shared/text.ts";
 import { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/vocabulary/pf1/bondedCreatures.ts";
 
 export default abstract class DetailedCharacterBonded extends DetailedCharacter {
@@ -35,7 +33,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
   protected override prepareSheet(): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    const raceStats = this.findRaceStats();
     if (raceStats) {
       if (raceStats.naturalAttacks.length > 0) {
         this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
@@ -62,7 +60,8 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
    */
   protected applyGrantedFeats(featNames: string[]): void {
     for (const featName of featNames) {
-      const featId = Pf1View.of(this.rulesetData).featIdBySlug.get(stripSeparators(featName));
+      // The feat the rules name, whatever the ruleset calls it
+      const featId = this.rulesetData.named("feats", featName)?.id;
       if (featId) this.joinModifiers(this.possessFeat(featId, false));
     }
   }
@@ -85,13 +84,26 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
         (sum, featName) => sum + (STAT_BLOCK_FEAT_SKILL_BONUSES[featName]?.[skillName] ?? 0),
         0,
       );
-      this.components.skills.setStatBlockTotal(skillName, total, ranks[skillName] ?? 0, featBonus);
+      this.components.skills.setStatBlockTotal(this.skillNamed(skillName), total, ranks[skillName] ?? 0, featBonus);
     }
+  }
+
+  /**
+   * The stat block of the creature's race, by the name the rules know the race by, whatever the ruleset calls it
+   * (`RulesetData.rulesNameOf`): a translation's "Chat" is the rules' Cat.
+   */
+  protected findRaceStats() {
+    return BondedRaceData.getStats(this.rulesetData.rulesNameOf("races", this.data.race));
   }
 
   /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
   protected requireMaster(): DetailedCharacter {
     if (!this.master) throw new Error(`Bonded's master not built: ${this.character.parentCharacterId}`);
     return this.master;
+  }
+
+  /** The name the view has for a skill a stat block names ("Listen"): the stat block's own where the view has none. */
+  protected skillNamed(name: string): string {
+    return this.rulesetData.named("skills", name)?.name ?? name;
   }
 }

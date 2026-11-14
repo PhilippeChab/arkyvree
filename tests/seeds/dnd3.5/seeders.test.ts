@@ -216,7 +216,7 @@ describe("Seeding", () => {
       expect(seed("Force Points", "Strength", "Force-Points")).rejects.toThrow(
         "The abilities Force Points and Force-Points share the slug forcepoints",
       );
-      expect(seed("気力")).rejects.toThrow("The ability 気力 has no slug");
+      expect(seed("½ ★")).rejects.toThrow("The ability ½ ★ has no slug");
       expect(seeder.ctx.abilityMap).toEqual({});
     });
 

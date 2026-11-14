@@ -5,6 +5,14 @@ export function accessLost(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 404 || error.status === 403);
 }
 
+/**
+ * A save refused for the record's state as the page read it (a 409 that stands, not a lock's give-up: "modified by
+ * someone else"): the page's copy is stale, and refetching it lets the next attempt start from what's there now.
+ */
+export function editConflict(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 409 && !saveBusy(error);
+}
+
 /** A sign-in refused until its email is verified (`EmailNotVerifiedError`): the email waits for its code. */
 export function emailNotVerified(error: unknown): boolean {
   return error instanceof ApiError && error.errorName === "EmailNotVerifiedError";

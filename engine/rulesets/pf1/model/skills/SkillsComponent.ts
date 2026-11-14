@@ -14,7 +14,7 @@ import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
 import type { Skill } from "@/engine/rulesets/pf1/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { RACE_SIZE } from "@/vocabulary/pf1/fields/index.ts";
-import { SIZE_FLY_MOD, SIZE_STEALTH_MOD } from "@/vocabulary/pf1/sizes.ts";
+import { FLY_SKILL, SIZE_FLY_MOD, SIZE_STEALTH_MOD, STEALTH_SKILL } from "@/vocabulary/pf1/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
 interface SkillBudget {
@@ -83,11 +83,20 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     };
   })();
 
+  /** The names each skill goes by, by its slug: its own, then the rules' when the ruleset renamed it. */
+  private readonly skillNamesBySlug = new Map<string, readonly string[]>();
+
   private readonly skills: SkillsData = {} as SkillsData;
+
+  /** The skill a creature's size weighs on as it does on its Armor Class: the one the rules call Fly. */
+  private flySkillId: string | undefined;
 
   private skillPointClassLevelFields: Map<string, { bab: number; skills: number }> = new Map();
 
   private skillRankAbilityId: string | null = null;
+
+  /** The skill a creature's size weighs on the other way: the one the rules call Stealth. */
+  private stealthSkillId: string | undefined;
 
   /**
    * Each of the ruleset's skills, with its fields (`skillFields`) and the ranks the character's class
@@ -102,7 +111,9 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     }: Pick<LoadedCharacterData, "classLevelFields" | "skillFields" | "skillRankAbilityId">,
     { rulesetData }: RulesetView,
   ) {
-    const rulesetSkills = Pf1View.of(rulesetData).skills;
+    const { skillNames, skills: rulesetSkills } = Pf1View.of(rulesetData);
+    this.flySkillId = rulesetData.named("skills", FLY_SKILL)?.id;
+    this.stealthSkillId = rulesetData.named("skills", STEALTH_SKILL)?.id;
     this.skillRankAbilityId = skillRankAbilityId;
     this.skillPointClassLevelFields = classLevelFields;
     const classes = this.classes.getClasses();
@@ -114,11 +125,12 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         klass,
         SkillRules.classSkillIds(
           klass.classSkillLinks.map((link) => link.toId),
-          rulesetSkills,
+          skillNames,
         ),
       ]),
     );
     for (const ids of classSkillsOf.values()) for (const id of ids) this.innateSkillIds.add(id);
+    for (const { name, names } of skillNames) this.skillNamesBySlug.set(stripSeparators(name), names);
 
     // Convert stored points to ranks per class level: a rank a point, a class skill's or not
     for (const klass of Object.values(classes)) {
@@ -191,8 +203,8 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
     const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
     const sizeOfRace = () => {
-      if (skill.name === "Stealth") return SIZE_STEALTH_MOD[raceSize()] ?? 0;
-      if (skill.name === "Fly") return SIZE_FLY_MOD[raceSize()] ?? 0;
+      if (skill.id === this.stealthSkillId) return SIZE_STEALTH_MOD[raceSize()] ?? 0;
+      if (skill.id === this.flySkillId) return SIZE_FLY_MOD[raceSize()] ?? 0;
       return 0;
     };
     let sizeBonus = 0;
@@ -260,6 +272,14 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         currentRank: skillData?.rank || 0,
       };
     });
+  }
+
+  /**
+   * The names a skill of the sheet goes by (`key`, its slug): its own, then the rules' when the ruleset renamed it.
+   * What a family's path reads its members by (`skills.knowledge.rank`: "Connaissances (Arcana)" is Knowledge's).
+   */
+  getEntryNames(key: string): readonly string[] | undefined {
+    return this.skillNamesBySlug.get(key);
   }
 
   /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */

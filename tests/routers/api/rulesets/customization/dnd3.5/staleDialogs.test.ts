@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
+import { NameBindings } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createSignedInUser, expectOk } from "@/tests/support/api.ts";
@@ -14,6 +15,11 @@ import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts"
 
 /** The kinds these tests rename: a feat, a skill, a class, a race. */
 type RenamedKind = "classes" | "feats" | "races" | "skills";
+
+/** A modifier's stored bindings, as rows. */
+async function bindingsOf(modifierId: string) {
+  return await NameBindings.findMany(db, { modifierIds: [modifierId], requirementIds: [] });
+}
 
 /** A new feat of the fork's own, on its General list. */
 async function createFeat(session: Session, rulesetId: string, name: string) {
@@ -209,6 +215,36 @@ describe("a requirement's dialog opened before a rename", () => {
     await rename(session, fork.id, "feats", "Mighty Swing", "Brutal Swing");
     expect(await expectOk(requirements.$get({ param }))).toMatchObject([{ target: "feats.brutalswing.possessed" }]);
   });
+
+  test("a group made a condition binds the target it's sent, and made a group again drops it", async () => {
+    const { api, fork, session } = await setUp();
+    const requirements = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements;
+    await createFeat(session, fork.id, "Mighty Swing");
+    const holder = await createFeat(session, fork.id, "Cleaving Swing");
+    const param = { id: fork.id, entityType: "feats", entityId: holder.id };
+    const group = await expectOk(requirements.$post({ param, json: { level: "1", chainingOperator: "or" } }));
+    const put = { ...param, requirementId: group.id };
+
+    const condition = await expectOk(
+      requirements[":requirementId"].$put({
+        param: put,
+        json: { level: "1", operator: "equal", target: "feats.mightyswing.possessed", value: "true" },
+      }),
+    );
+    await rename(session, fork.id, "feats", "Mighty Swing", "Heavy Swing");
+    expect(await expectOk(requirements.$get({ param }))).toMatchObject([
+      { chainingOperator: null, target: "feats.heavyswing.possessed" },
+    ]);
+
+    await expectOk(
+      requirements[":requirementId"].$put({
+        param: put,
+        json: { level: "1", chainingOperator: "and", updatedAt: condition.updatedAt },
+      }),
+    );
+    expect(await expectOk(requirements.$get({ param }))).toMatchObject([{ chainingOperator: "and", target: null }]);
+    expect(await NameBindings.findMany(db, { modifierIds: [], requirementIds: [group.id] })).toEqual([]);
+  });
 });
 
 describe("a modifier's dialog opened before a rename", () => {
@@ -403,39 +439,41 @@ describe("a row written past a save, which holds no binding yet", () => {
 });
 
 describe("a new target, its formula value left as it was", () => {
-  test("keeps the skill the formula names, not another whose name reads the same in a path", async () => {
+  test("keeps the formula's stored bindings, and binds the new target", async () => {
     const { api, fork, session } = await setUp();
     const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
-    // A skill whose name reads as the formula's will once its skill is renamed, made first so a reading finds it first
-    await createSkill(session, fork.id, "Sca Ling");
-    await createSkill(session, fork.id, "Rope Work");
-    const holder = await createFeat(session, fork.id, "Sure Grip");
+    const holder = await createFeat(session, fork.id, "Wild Growth");
     const param = { id: fork.id, entityType: "feats", entityId: holder.id };
     const created = await expectOk(
       modifiers.$post({
         param,
-        json: { operator: "add", target: "abilities.strength.misc", value: "{{ [skills.ropework.rank] }}" },
+        json: { operator: "add", target: "skills.climb.misc", value: "{{ [classes.druid.level] }}" },
       }),
     );
-    await rename(session, fork.id, "skills", "Rope Work", "Scaling");
+    const before = await bindingsOf(created.id);
+    await rename(session, fork.id, "classes", "Druid", "Greenwarden");
 
     await expectOk(
       modifiers[":modifierId"].$put({
         param: { ...param, modifierId: created.id },
-        json: { operator: "add", target: "abilities.dexterity.misc", updatedAt: created.updatedAt },
+        json: { operator: "add", target: "skills.jump.misc", updatedAt: created.updatedAt },
       }),
     );
-    await rename(session, fork.id, "skills", "Scaling", "Knots");
 
+    // The formula's binding is the one it was saved with; the target's is the new path's
+    const after = await bindingsOf(created.id);
+    expect(after.filter((binding) => binding.field === "value")).toEqual(
+      before.filter((binding) => binding.field === "value"),
+    );
+    expect(after.filter((binding) => binding.field === "target").map((binding) => binding.name)).toEqual(["Jump"]);
     expect(await expectOk(modifiers.$get({ param }))).toMatchObject([
-      { target: "abilities.dexterity.misc", value: "{{ [skills.knots.rank] }}" },
+      { target: "skills.jump.misc", value: "{{ [classes.greenwarden.level] }}" },
     ]);
   });
 
-  test("on a character's own modifier, keeps the skill the formula names", async () => {
+  test("on a character's own modifier, keeps the deleted skill the formula names, not a new skill of its name", async () => {
     const { api, fork, session, user } = await setUp();
-    await createSkill(session, fork.id, "Sca Ling");
-    await createSkill(session, fork.id, "Rope Work");
+    const ropeWork = await createSkill(session, fork.id, "Rope Work");
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
     const param = { characterId: character.id };
@@ -445,7 +483,8 @@ describe("a new target, its formula value left as it was", () => {
         json: { operator: "add", target: "abilities.strength.misc", value: "{{ [skills.ropework.rank] }}" },
       }),
     );
-    await rename(session, fork.id, "skills", "Rope Work", "Scaling");
+    await EntitiesService.deleteEntity(session, fork.id, "skills", ropeWork.id);
+    await createSkill(session, fork.id, "Rope Work");
 
     await expectOk(
       modifiers[":modifierId"].$put({
@@ -453,10 +492,11 @@ describe("a new target, its formula value left as it was", () => {
         json: { operator: "add", target: "abilities.dexterity.misc", updatedAt: created.updatedAt },
       }),
     );
-    await rename(session, fork.id, "skills", "Scaling", "Knots");
+    await rename(session, fork.id, "skills", "Rope Work", "Knots");
 
+    // Still the deleted skill's: listed as it's stored, never the new skill's name
     expect(await expectOk(modifiers.$get({ param }))).toMatchObject([
-      { target: "abilities.dexterity.misc", value: "{{ [skills.knots.rank] }}" },
+      { target: "abilities.dexterity.misc", value: "{{ [skills.ropework.rank] }}" },
     ]);
   });
 });

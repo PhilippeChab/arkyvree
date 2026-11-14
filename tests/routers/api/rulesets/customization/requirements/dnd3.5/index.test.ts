@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { db } from "@/server/database/index.ts";
+import { NameBindings } from "@/server/repositories/index.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/dnd3.5/entities.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -74,6 +76,46 @@ describe("rulesets customization requirements", () => {
     // A new target without a value keeps the stored one, which must suit it: false isn't a number
     const { value: _value, ...charismaWithoutValue } = charisma13;
     await expectStatus(requirement.$put({ param: requirementParam, json: charismaWithoutValue }), 400);
+  });
+
+  test("turns a condition into a group and back, its names going with its condition", async () => {
+    const { id, entityId } = await createCustomizableFeat();
+    const param = { id, entityType: "feats" as const, entityId };
+    const dodge = { level: "1", target: "feats.dodge.possessed", operator: "equal", value: "true" };
+    const created = await expectOk(requirements.$post({ param, json: dodge }));
+    const requirementParam = { ...param, requirementId: created.id };
+    const bound = () => NameBindings.findMany(db, { modifierIds: [], requirementIds: [created.id] });
+    expect(await bound()).not.toEqual([]);
+
+    const group = await expectOk(
+      requirement.$put({
+        param: requirementParam,
+        json: { level: "1", chainingOperator: "or", updatedAt: created.updatedAt },
+      }),
+    );
+    expect(group).toMatchObject({ chainingOperator: "or", target: null, operator: null, value: null, valueType: null });
+    expect(await bound()).toEqual([]);
+
+    const condition = await expectOk(
+      requirement.$put({ param: requirementParam, json: { ...charisma13, updatedAt: group.updatedAt } }),
+    );
+    expect(condition).toMatchObject({ ...charisma13, valueType: "number", chainingOperator: null });
+  });
+
+  test("refuses turning a group into a condition while requirements sit under it", async () => {
+    const { id, entityId } = await createCustomizableFeat();
+    const param = { id, entityType: "feats" as const, entityId };
+    const group = await expectOk(requirements.$post({ param, json: { level: "1", chainingOperator: "and" } }));
+    await expectOk(requirements.$post({ param, json: { ...charisma13, level: "1.1" } }));
+
+    const turned = requirement.$put({ param: { ...param, requirementId: group.id }, json: charisma13 });
+    expect(await (await expectStatus(turned, 409)).json()).toMatchObject({
+      message: "A group with requirements under it can't become a condition: delete the requirements under it first",
+    });
+    expect((await expectOk(requirements.$get({ param }))).find((row) => row.id === group.id)).toMatchObject({
+      chainingOperator: "and",
+      target: null,
+    });
   });
 
   test("rejects a requirement without a level", async () => {

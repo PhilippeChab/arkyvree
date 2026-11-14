@@ -1,9 +1,11 @@
-import { keepPreviousData, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { editConflict } from "@/client/src/lib/errorMessage.ts";
+import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { formatWordCount } from "@/client/src/lib/rulesetLabels.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -16,6 +18,8 @@ import { navigationOf } from "./wizardNavigation.ts";
 
 interface UseAddAdvancementWizardParams {
   characterId: string;
+  /** The character's last level as the sheet showed it as the wizard opened: what its save sends, kept as it opened */
+  lastAdvancementId: string | null;
   onClose: () => void;
   open: boolean;
   /** The track it plans for the next advancement as it opens, once the plan's options list it (`planOpenedTrack`) */
@@ -31,8 +35,19 @@ const PLAN_OPTIONS_PAGE = 10;
  * on, `planSlots.ts`), the track it opened with first, the plan's options (its quick-add buttons', and an empty slot's
  * picker's), and the save of its plan. The plan is answered once it plans an advancement and moves past its plan step.
  */
-export function useAddAdvancementWizard({ open, onClose, characterId, trackId, words }: UseAddAdvancementWizardParams) {
+export function useAddAdvancementWizard({
+  open,
+  onClose,
+  characterId,
+  lastAdvancementId,
+  trackId,
+  words,
+}: UseAddAdvancementWizardParams) {
   const snackbar = useSnackbar();
+  const queryClient = useQueryClient();
+  // The level its plan was made after: the sheet refetching while it's open doesn't move it, so a save planned on a
+  // sheet another page changed since is refused as stale, never added after a level it didn't plan for
+  const [openedAfter] = useState(lastAdvancementId);
   // The next slot's key: never one a removed slot had, whose values the form still holds by it
   const [nextKey, setNextKey] = useState(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
@@ -119,7 +134,7 @@ export function useAddAdvancementWizard({ open, onClose, characterId, trackId, w
       parseResponse(
         rpc.api.characters.advancements[":characterId"].$post({
           param: { characterId },
-          json: { steps: wizard.saveRequest().steps, force },
+          json: { steps: wizard.saveRequest().steps, force, lastAdvancementId: openedAfter },
         }),
       ),
     onSuccess: async (created) => {
@@ -128,7 +143,12 @@ export function useAddAdvancementWizard({ open, onClose, characterId, trackId, w
       snackbar.success(word ? `Added ${formatWordCount(created.length, word)}` : "Saved");
       onClose();
     },
-    onError: handleSaveError,
+    onError: (error) => {
+      handleSaveError(error);
+      // Another page added or removed a level since it opened: the sheet is read again, so the wizard opened next
+      // plans after the character's last level as it is now
+      if (editConflict(error)) void invalidateCharacter(queryClient, characterId);
+    },
   });
 
   // Next waits for the steps the advancement lists, and on the step shown for its answer (`isAnswered`). The dialog

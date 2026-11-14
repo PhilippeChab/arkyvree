@@ -24,6 +24,7 @@ import { DEFAULT_HIT_DIE, HIT_DIE_LABELS, HIT_DIE_VALUES, MULTICLASS_SLOTS } fro
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd5/equipment.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd5/feats.ts";
 import { ITEM_RARITIES, ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd5/itemTemplates.ts";
+import { LANGUAGE_TYPES } from "@/vocabulary/dnd5/languages.ts";
 import { SIZE_OPTIONS } from "@/vocabulary/dnd5/sizes.ts";
 import { MAX_SPELL_LEVEL, SPELL_COMPONENTS, SPELL_SCHOOLS } from "@/vocabulary/dnd5/spells.ts";
 import {
@@ -521,10 +522,10 @@ const LANGUAGE_FIELDS = {
     description: "Standard or Rare",
     kind: "text",
     label: "Type",
-    placeholder: "e.g., Standard, Rare",
     placement: "beside-name",
     field: LANGUAGE_TYPE,
     merge: "winner",
+    values: LANGUAGE_TYPES,
   },
 } as const;
 
