@@ -38,7 +38,7 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  *   4. A local copy's siblings become overrides of it.
  *   5. The namesakes of the kinds a name is the identity of (`CowKinds.identities`: 3.5's pools).
  *   6. The ruleset's own entities over its extensions' of their names — an extension's entity of a name the ruleset's
- *      own has is overridden by it (a homebrew feat a book's author named as the ruleset's since it subscribed).
+ *      own has is overridden by it (a homebrew feat and a book's of its name stored past the checks that refuse them).
  *   7. The owned entities of an owner another stands for (a copy in the chain, to its last copy; an extension's owner
  *      the ruleset's own hides), paired by position with that owner's (3.5's class levels, by level).
  *
@@ -130,8 +130,9 @@ export default class CowDataBuilder {
   /**
    * The ruleset's own entities win over its extensions' of their names, of every type, each in its partition (a
    * familiar's Hawk never hides an animal companion's) but of a kind a path names by its name alone, whatever its
-   * partition (a class): an extension's entity named as one of the ruleset's (one its
-   * author added or renamed since the ruleset subscribed, which a subscribe refuses) is overridden by the ruleset's, as
+   * partition (a class): an extension's entity named as one of the ruleset's (stored past the checks that refuse it:
+   * a subscribe's, and the book's create, rename and restore against its subscribers' views) is overridden by the
+   * ruleset's, as
    * a local copy overrides what it copied. Its own rows go with it (its customizations, its links to lists), never
    * merged: a homebrew entity and a book's of one name may be different things. What stood for it stands for the
    * ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a book's class granting it,

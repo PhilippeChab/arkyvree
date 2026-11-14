@@ -225,12 +225,25 @@ for a kind a path names by its name alone: a class), of every kind
 (`CowDataBuilder`'s own namesakes pass, over `RulesetEntities.findOwnNamesakes`: the
 fork's entities and its extensions' of a name both have; `CowData.isShadowed`). Not
 over its base's, whose entity an unsubscribe would show again is refused instead
-(above). The checks above read the fork's view, but an extension's entities show in
-every subscriber's: its author may add or rename one to a name a subscriber's own
-entity has, which no check of the author's reads, and which the author is never
-refused for, so nothing of another user's ruleset reaches them. The subscriber's
-view then shows its own entity, and the book's of its name is overridden by it, as a
-local copy overrides what it copied:
+(above).
+
+An extension's entities show in every subscriber's view too, so a book's create, rename
+and restore (and an entity its save makes beside them: a skill's feat) also check its
+subscribers' views (`EntityNames`' subscribers' check): a name one of them shows another
+entity of in its partition (the subscriber's own, another book it takes, its parent's)
+is refused, a conflict (409) naming the name and never the subscriber, another user's
+ruleset. Without it, the subscriber's own entity would hide the book's, and a
+character's pick of the book's feat would silently read the subscriber's feat of that
+name instead. The subscriber's copy of the book's very entity is no rival: its view
+already shows it in the book's place. One read finds the names among every subscriber's
+sources (`RulesetEntities.findNames` by `subscribersOf`), and a subscriber's view is read
+only when that read found one of the names in it, so a book with many subscribers pays
+for those that hold the name alone; the book's own chain is the book's own check's.
+
+A book's entity of a name a subscriber's own has can still be stored (rows written
+before the check, or past it: a package's seed), and a subscriber's view then shows
+its own entity, the book's of its name overridden by it, as a local copy overrides
+what it copied:
 
 - the book's entity's own rows go with it, never merged into the fork's: its
   customizations and its links to lists (a homebrew feat and a book's of one name
