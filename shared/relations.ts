@@ -59,11 +59,8 @@ export type Requirement = typeof requirementsInCustomization.$inferSelect;
 export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules" | "contentVersion"> & {
   baseRules: BaseRules;
 };
-/**
- * Who a request acts as, which the services read: a signed-in session's user, or the user an API key acts as. A demo's
- * (`isDemo`: its user expires) is refused, by its policies, what pulls in other users or reaches outside its account.
- */
-export type Session = Pick<SessionRow, "userId"> & { isDemo?: boolean };
+/** Who a request acts as, which the services read: a signed-in session's user, or the user an API key acts as. */
+export type Session = Pick<SessionRow, "userId">;
 /** A signed-in session's row, which signing in and out write. */
 export type SessionRow = typeof sessionsInAccount.$inferSelect;
 export type User = typeof usersInAccount.$inferSelect;

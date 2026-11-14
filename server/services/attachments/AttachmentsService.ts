@@ -84,8 +84,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   [
     ATTACHMENT_SLOTS.avatar.recordType,
     {
-      // The account's own, which a demo's doesn't take: it stores no file, as its records' policies refuse one. Its
-      // policy refuses anyone else (a 403)
+      // The account's own: its policy refuses anyone else (a 403)
       canAttach: getAvatarEditableUser,
       ...image,
       names: [ATTACHMENT_SLOTS.avatar.name],

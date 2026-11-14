@@ -19,7 +19,6 @@ const GRANT_COLUMNS = {
   grantId: oauthGrantsInAccount.id,
   lastUsedAt: oauthGrantsInAccount.lastUsedAt,
   readOnly: oauthGrantsInAccount.readOnly,
-  userExpiresAt: usersInAccount.expiresAt,
   userId: oauthGrantsInAccount.userId,
 };
 
@@ -43,9 +42,8 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
   }
 
   /**
-   * The pair a refresh token's digest names, or an access token's (a revocation's), with its grant and whether its user
-   * is a demo's (`userExpiresAt`), expired or used already (its caller decides): none when its user's account is
-   * deleted or the app was disconnected.
+   * The pair a refresh token's digest names, or an access token's (a revocation's), with its grant, expired or used
+   * already (its caller decides): none when its user's account is deleted or the app was disconnected.
    */
   async findOne(db: Db, where: { accessDigest: string } | { refreshDigest: string }) {
     const [tokens] = await db
@@ -71,8 +69,8 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
   }
 
   /**
-   * The grant an access token's digest names, unless the token expired, with whether its user is a demo's
-   * (`userExpiresAt`): none when its user's account is deleted or the app was disconnected.
+   * The grant an access token's digest names, unless the token expired: none when its user's account is deleted or the
+   * app was disconnected.
    */
   async findOneWithUser(db: Db, where: { accessDigest: string }) {
     const [grant] = await db

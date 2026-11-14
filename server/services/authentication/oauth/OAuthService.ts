@@ -142,7 +142,7 @@ class OAuthService {
       throw new OAuthError("invalid_request", "refresh_token and client_id are required");
     const tokens = await OAuthTokens.findOne(db, { refreshDigest: hashApiKeyToken(refresh_token) });
     const refused = new OAuthError("invalid_grant", "The refresh token is wrong, expired or used");
-    if (!tokens || tokens.clientId !== client_id || tokens.userExpiresAt) throw refused;
+    if (!tokens || tokens.clientId !== client_id) throw refused;
     if (new Date(tokens.refreshExpiresAt).getTime() <= Date.now()) throw refused;
     // Used again just now: a retry that lost its answer, or two refreshes at once. Refused, the app kept on its new pair
     const usedAt = tokens.refreshedAt && new Date(tokens.refreshedAt).getTime();

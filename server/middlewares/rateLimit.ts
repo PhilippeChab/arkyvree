@@ -80,5 +80,3 @@ export const oauthAuthorizeRateLimit = limitRate({ windowMs: MINUTE, limit: 30 }
  * exchange every user's codes and refresh tokens from a few addresses.
  */
 export const oauthTokenRateLimit = limitRate({ windowMs: MINUTE, limit: 120, failedOnly: true });
-
-export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

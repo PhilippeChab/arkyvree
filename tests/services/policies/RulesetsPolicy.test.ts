@@ -136,16 +136,6 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Owner", SYSTEM).canPublish(AS_RULESET)).toThrow("Cannot publish a base ruleset");
   });
 
-  test("refuses a demo its ruleset's publishing and its contributors' management, not its edits", () => {
-    const demo = new RulesetsPolicy({ ...makeSession(OWNER), isDemo: true }, rulesetOf());
-    const signUp = new ForbiddenError("Sign up to use this feature");
-    for (const check of ["canManageContributors", "canInviteContributors", "canUpdateContributorRole"] as const)
-      expect(thrownBy(() => demo[check]())).toEqual(signUp);
-    expect(thrownBy(() => demo.canPublish(AS_RULESET))).toEqual(signUp);
-    expect(thrownBy(() => demo.canRevokeContributor({ role: "Editor", status: "Active" }))).toEqual(signUp);
-    expect([demo.canUpdate(), demo.canReadContributors()]).toEqual([true, true]);
-  });
-
   test("canFork: published base rulesets only", () => {
     expect(policyOf("Stranger", { userId: null, rulesetId: null, status: "Published" }).canFork()).toBe(true);
     expect(() => policyOf("Stranger", { userId: null, rulesetId: null }).canFork()).toThrow(

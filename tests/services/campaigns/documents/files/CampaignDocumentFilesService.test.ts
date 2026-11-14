@@ -10,7 +10,6 @@ import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
 import { DOCUMENT_FILE_SLOT, MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
-import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
@@ -201,18 +200,14 @@ describe("CampaignDocumentFilesService", () => {
     expect(stored.size).toBe(2);
   });
 
-  test("refuses another campaign's document, a demo Game Master and an archived campaign", async () => {
+  test("refuses another campaign's document and an archived campaign", async () => {
     const { gm, campaign, upload } = await setup();
     const map = await upload(fileOf(PNG, "map.png"));
     const other = await createTestCampaign(gm.userId);
     expect(
       CampaignDocumentFilesService.setDocumentFile(gm, other.campaign.id, map.id, fileOf(PNG, "map.png")),
     ).rejects.toEqual(new NotFoundError("Document not found in this campaign"));
-    const demo: Session = { ...gm, isDemo: true };
     const mine = { name: "Mine", parentId: null, readerIds: [], visibility: "Public" as const };
-    expect(
-      CampaignDocumentFilesService.createDocumentFile(demo, campaign.id, mine, fileOf(PNG, "map.png")),
-    ).rejects.toEqual(new ForbiddenError("Sign up to use this feature"));
     await CampaignsService.archiveCampaign(gm, campaign.id);
     for (const write of [
       CampaignDocumentFilesService.createDocumentFile(gm, campaign.id, mine, fileOf(PNG, "map.png")),

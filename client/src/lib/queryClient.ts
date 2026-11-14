@@ -2,7 +2,6 @@ import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack
 
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { markDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 
 import { FIVE_MINUTES } from "./durations.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
@@ -12,10 +11,6 @@ function handleGlobalError(error: unknown) {
   if (error instanceof ApiError && error.status === 401) {
     // Skip when already unauth — re-clearing on every 401 creates a refetch loop.
     if (!useAuthStore.getState().isAuthenticated) return;
-    // If the cleared user was a demo, leave a breadcrumb so the post-clear
-    // catch-all can route to /demo-expired instead of /sign-in.
-    if (useAuthStore.getState().user?.expiresAt) markDemoExpired();
-
     useAuthStore.getState().clearSession();
   }
 }

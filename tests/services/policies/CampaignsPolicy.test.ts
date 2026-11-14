@@ -391,23 +391,9 @@ describe("CampaignsPolicy", () => {
     expect((await CampaignsPolicy.for(db, session, archived)).canHardDelete()).toBe(true);
   });
 
-  test("refuses a demo its players' management and its characters' PDFs, as their Game Master too", async () => {
-    const { campaign, session } = await policyFor("Game Master");
-    const demo = await CampaignsPolicy.for(db, { ...session, isDemo: true }, campaign);
-    const { user } = await createTestUser();
-    const character = new CharactersPolicy(session, await createTestCharacter(user.id));
-
-    expect(demo.isGameMaster()).toBe(true);
-    for (const check of [() => demo.canManagePlayers(), () => demo.canExportCharacter(character)])
-      expect(thrownBy(check)).toEqual(new ForbiddenError("Sign up to use this feature"));
-    expect(demo.canEdit()).toBe(true);
-  });
-
-  test("canManageDocuments: its Game Masters', but a demo's, while the campaign isn't archived", async () => {
+  test("canManageDocuments: its Game Masters', while the campaign isn't archived", async () => {
     const { campaign, session, policy } = await policyFor("Game Master");
     expect(policy.canManageDocuments()).toBe(true);
-    const demo = await CampaignsPolicy.for(db, { ...session, isDemo: true }, campaign);
-    expect(thrownBy(() => demo.canManageDocuments())).toEqual(new ForbiddenError("Sign up to use this feature"));
     const { policy: player } = await policyFor("Player Character");
     expect(thrownBy(() => player.canManageDocuments())).toEqual(
       new ForbiddenError("Only the Game Master can edit this campaign"),

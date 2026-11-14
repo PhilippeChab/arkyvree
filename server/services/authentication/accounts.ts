@@ -19,7 +19,7 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { BUSY_ACCOUNT_MESSAGE, lockAccounts, withAccountFoundBy } from "@/server/services/writes/index.ts";
+import { BUSY_ACCOUNT_MESSAGE, withAccountFoundBy } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { User } from "@/shared/relations.ts";
 
@@ -73,7 +73,7 @@ async function findTakenUser(tx: Db, identifier: AccountIdentifier) {
  * One run of a Google sign-in (`signInAsGoogleAccount`): its account found, locked and read again, then signed in,
  * linked, or made. A race its lock couldn't cover is refused for a rerun (`toRerun`).
  */
-async function signInGoogleOnce(payload: { email: string; sub: string }, existingSessionId?: string) {
+async function signInGoogleOnce(payload: { email: string; sub: string }) {
   const email = sanitizeEmail(payload.email);
 
   // Its account (the one the Google account is linked to, else the one its address names) locked first, then read
@@ -83,8 +83,6 @@ async function signInGoogleOnce(payload: { email: string; sub: string }, existin
       (await OauthAccounts.findOne(tx, { provider: "google", providerAccountId: payload.sub }))?.userId ??
       (await findTakenUser(tx, { emailAddress: email }))?.id,
     async (tx, found) => {
-      await purgeDemoSessionUser(tx, existingSessionId);
-
       // Case 1: Returning Google user
       const returning = await signInLinkedGoogleAccount(tx, payload.sub);
       if (returning) return returning;
@@ -195,35 +193,19 @@ export async function openSession(
 }
 
 /**
- * Conversion cleanup: when a request reaches sign-in / verifyEmail / Google while still carrying a demo cookie,
- * hard-delete the demo user the cookie points at. CASCADE wipes their fork/character/etc. immediately rather than
- * waiting for lazy recycle on the next /api/demo/start.
- */
-export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined) {
-  if (!sessionId) return;
-  const session = await Sessions.findOne(tx, { id: sessionId });
-  if (!session) return;
-  const user = await Users.findOne(tx, { id: session.userId });
-  if (!user?.expiresAt) return;
-  // Everything the demo owns locked first, after the account the request signs in to, as an account's deletion does
-  await lockAccounts(tx, [user.id]);
-  await Users.delete(tx, { id: user.id });
-}
-
-/**
  * Signs in the owner of a Google account Google has verified (`sub` and `email` from its ID token): its returning
  * user, the account with its email (which it links and verifies), or a new user. A run that lost a race its lock
  * couldn't cover (`RERUN_CAUSE`) runs again, once, as the winner left the accounts: the second of two first sign-ins
  * of a Google account signs in to the account the first made.
  */
-export async function signInAsGoogleAccount(payload: { email: string; sub: string }, existingSessionId?: string) {
+export async function signInAsGoogleAccount(payload: { email: string; sub: string }) {
   try {
-    return await signInGoogleOnce(payload, existingSessionId);
+    return await signInGoogleOnce(payload);
   } catch (error) {
     if (!isRerun(error)) throw error;
   }
   try {
-    return await signInGoogleOnce(payload, existingSessionId);
+    return await signInGoogleOnce(payload);
   } catch (error) {
     // Lost twice: answered as a plain conflict, its cause the API's own
     throw isRerun(error) ? new ConflictError(error.message) : error;

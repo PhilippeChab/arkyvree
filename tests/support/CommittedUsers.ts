@@ -9,7 +9,7 @@ import { runWhileCommitting } from "./database.ts";
 import { uniqueId } from "./seed.ts";
 
 /**
- * The demo users a test file commits through a pool of its own (`pool`), out of any test's transaction: rows another
+ * The users a test file commits through a pool of its own (`pool`), out of any test's transaction: rows another
  * connection sees, so it can hold them as a write does. Deleted for good, by id, once the file's tests rolled back
  * (`deleteAll`, in its `afterAll`), their Google links with them.
  */
@@ -23,16 +23,15 @@ export class CommittedUsers {
     this.ids.push(id);
   }
 
-  /** A demo user, committed: `prefix` starts its username and address, and its password is `password1234`. */
+  /** A user, committed: `prefix` starts its username and address, and its password is `password1234`. */
   async commit(prefix: string) {
     const client = await this.pool.connect();
     try {
       const id = uniqueId();
       const [user] = await Users.create(createTestDbFromClient(client), {
         username: `${prefix}-${id}`,
-        emailAddress: `${prefix}-${id}@demo.invalid`,
+        emailAddress: `${prefix}-${id}@example.com`,
         password: "password1234",
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       });
       this.add(user.id);
       return user;

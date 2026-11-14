@@ -530,19 +530,4 @@ describe("CharactersPolicy", () => {
       ),
     );
   });
-
-  test("refuses a demo its owner's contributors, its share link, its PDF and its portrait; it reads them", async () => {
-    const { character, owner } = await setup();
-    const policy = new CharactersPolicy({ ...owner, isDemo: true }, character);
-
-    for (const check of ["canManageContributors", "canInviteContributors", "canShare", "canExport"] as const)
-      expect(thrownBy(() => policy[check]())).toEqual(new ForbiddenError("Sign up to use this feature"));
-    expect(thrownBy(() => policy.canRevokeContributor({ status: "Active" }))).toEqual(
-      new ForbiddenError("Sign up to use this feature"),
-    );
-    expect(policy.isPortraitEditable()).toBe(false);
-    expect(thrownBy(() => policy.canEditPortrait())).toEqual(new ForbiddenError("Sign up to use this feature"));
-    // What it doesn't need an account for: reading them, editing its sheet, archiving it
-    expect([policy.canReadContributors(), policy.isEditable(), policy.canArchive()]).toEqual([true, true, true]);
-  });
 });

@@ -1,13 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import {
-  authEmailRateLimit,
-  authRateLimit,
-  getSessionCookie,
-  setSessionCookie,
-  validate,
-} from "@/server/middlewares/index.ts";
+import { authEmailRateLimit, authRateLimit, setSessionCookie, validate } from "@/server/middlewares/index.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
@@ -27,7 +21,7 @@ export default new Hono()
   )
   .post("/google", authRateLimit, validate("json", z.object({ idToken: z.string().min(1) })), async (c) => {
     const { idToken } = c.req.valid("json");
-    const { session, user } = await AuthenticationService.signInWithGoogle(idToken, getSessionCookie(c));
+    const { session, user } = await AuthenticationService.signInWithGoogle(idToken);
     setSessionCookie(c, session.id);
     return c.json(user, 200);
   })
@@ -68,7 +62,7 @@ export default new Hono()
     validate("json", z.object({ emailAddress: sanitizedEmail, password: sanitizedText })),
     async (c) => {
       const { emailAddress, password } = c.req.valid("json");
-      const { session, user } = await AuthenticationService.signIn(emailAddress, password, getSessionCookie(c));
+      const { session, user } = await AuthenticationService.signIn(emailAddress, password);
       setSessionCookie(c, session.id);
       return c.json(user, 200);
     },
@@ -95,7 +89,7 @@ export default new Hono()
     validate("json", z.object({ emailAddress: sanitizedEmail, code: sanitizedText })),
     async (c) => {
       const { emailAddress, code } = c.req.valid("json");
-      const { session, user } = await AuthenticationService.verifyEmail(emailAddress, code, getSessionCookie(c));
+      const { session, user } = await AuthenticationService.verifyEmail(emailAddress, code);
       setSessionCookie(c, session.id);
       return c.json(user, 200);
     },

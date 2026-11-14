@@ -33,20 +33,18 @@ export async function createTestUser(prefix = "testuser") {
 }
 
 /**
- * A new user (a demo's when `expiresAt` is given) and a stored session of theirs (`sessionExpiresAt`, else live): one a
- * request's cookie signs in. `prefix` starts the username and email.
+ * A new user and a stored session of theirs (`sessionExpiresAt`, else live): one a request's cookie signs in. `prefix`
+ * starts the username and email.
  */
 export async function createUserWithSession({
-  expiresAt,
   prefix = "testuser",
   sessionExpiresAt,
-}: { expiresAt?: string; prefix?: string; sessionExpiresAt?: string } = {}) {
+}: { prefix?: string; sessionExpiresAt?: string } = {}) {
   const id = uniqueId();
   const [user] = await Users.create(db, {
     username: `${prefix}-${id}`,
     emailAddress: `${prefix}-${id}@example.com`,
     password: "password1234",
-    expiresAt,
   });
   const [session] = await Sessions.create(db, { userId: user.id, expiresAt: sessionExpiresAt });
   return { session, user };

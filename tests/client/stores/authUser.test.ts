@@ -10,7 +10,6 @@ describe("A user as storage held it", () => {
       username: "Ann",
       pendingEmailAddress: null,
       onboardingCompletedAt: null,
-      expiresAt: null,
     });
   });
 

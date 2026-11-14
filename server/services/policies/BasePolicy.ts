@@ -1,4 +1,4 @@
-import { ConflictError, ForbiddenError, SIGN_UP_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
@@ -11,16 +11,6 @@ export default abstract class BasePolicy<T> {
     protected readonly session: Session,
     protected readonly entity: T,
   ) {}
-
-  /**
-   * What a demo's session (`isDemo`) may not do on any record, whatever its standing on it: pull other users in (its
-   * contributors, its players), reach outside its account (a share link, publishing, a PDF), or store a file.
-   */
-  protected canUseSignedUpFeatures() {
-    if (this.session.isDemo) throw new ForbiddenError(SIGN_UP_MESSAGE);
-
-    return true;
-  }
 
   /**
    * Answering an invite to the record, accepting or rejecting it (`status`, the invite's): a pending one, as neither an

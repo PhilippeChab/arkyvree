@@ -1,6 +1,6 @@
 import type { JobHelpers } from "graphile-worker";
 
-import { db, withWrite } from "@/server/database/index.ts";
+import { withWrite } from "@/server/database/index.ts";
 import {
   Activities,
   ApiKeys,
@@ -12,9 +12,7 @@ import {
   OAuthTokens,
   PasswordResets,
   Sessions,
-  Users,
 } from "@/server/repositories/index.ts";
-import { withAccountDeletion } from "@/server/services/writes/index.ts";
 
 function retentionCutoff(): string {
   const date = new Date();
@@ -70,16 +68,6 @@ export async function runCleanupTask(_payload: unknown, helpers: JobHelpers): Pr
     {
       name: "exports",
       run: () => withWrite((tx) => Exports.delete(tx, { expiresBefore: now })),
-    },
-    {
-      // Demo users have a 1h TTL on users.expires_at. Hard-delete past-expiry rows so CASCADE wipes their
-      // characters/forks/sessions/activities/etc., and the database their attachments and customizations: everything
-      // they own locked first, as an account's deletion locks it
-      name: "demo_users",
-      run: async () => {
-        const ids = await Users.findIds(db, { expiredDemosBefore: now });
-        return await withAccountDeletion(ids, (tx) => Users.delete(tx, { expiredDemosBefore: now, ids }));
-      },
     },
     {
       name: "notifications",

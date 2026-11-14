@@ -42,7 +42,7 @@ const committedCampaigns: string[] = [];
 
 const pool = createTestPool();
 
-/** The demo users the probes committed, deleted after the campaigns. */
+/** The users the probes committed, deleted after the campaigns. */
 const users = new CommittedUsers(pool);
 
 /** An account's deletion, as a call `runQueued` runs. */

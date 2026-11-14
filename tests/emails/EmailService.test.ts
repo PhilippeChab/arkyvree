@@ -50,21 +50,6 @@ describe("EmailService.send", () => {
     });
   });
 
-  test("drops demo accounts' addresses, and queues nothing when none is left", async () => {
-    const subject = `Welcome ${uniqueId()}`;
-    const sent = await outsideTests(() =>
-      emailService.send({
-        to: ["demo-1@demo.invalid", "demo-2@demo.invalid"],
-        subject,
-        template: "welcome",
-        props: {},
-      }),
-    );
-
-    expect(sent).toEqual({ success: true });
-    expect(await queuedJobs("subject", subject)).toEqual([]);
-  });
-
   test("reports a job it couldn't queue", async () => {
     // Props that can't be serialized, as a template's could by mistake
     const sent = await outsideTests(() =>

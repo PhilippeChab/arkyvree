@@ -41,7 +41,7 @@ import {
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useAttachment, useAuthRequests, useIsMobile } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
@@ -60,7 +60,6 @@ import { pastInset, SAFE_BOTTOM, SAFE_LEFT } from "@/client/src/theme/safeArea.t
 
 import { AppBrand } from "./AppBrand.tsx";
 import { AppMain } from "./AppMain.tsx";
-import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 import { Onboarding } from "./Onboarding.tsx";
@@ -156,10 +155,7 @@ export function Layout() {
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
   const { data: avatarAttachment } = useAttachment({ name: "avatar", recordId: user?.id });
-  const isDemo = useIsDemo();
-  // Suppress the onboarding popovers for demo users — they already see a
-  // dedicated demo banner and the popover would just stack on top.
-  const [onboardingOpen, setOnboardingOpen] = useState(() => !isDemo && !user?.onboardingCompletedAt);
+  const [onboardingOpen, setOnboardingOpen] = useState(() => !user?.onboardingCompletedAt);
   const [onboardingStep, setOnboardingStep] = useState(0);
   // Sidebar item elements live in state (not a ref) so the onboarding popover
   // can read its anchor during render, on the same render its step changes.
@@ -255,17 +251,15 @@ export function Layout() {
           </Typography>
 
           <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", flexShrink: 0 }}>
-            {!isDemo && <FeedbackButton />}
-            {!isDemo && <NotificationBell />}
-            {!isDemo && (
-              <Tooltip title="Account Menu">
-                <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account Menu">
-                  <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
-                    <AccountCircleIcon />
-                  </Avatar>
-                </IconButton>
-              </Tooltip>
-            )}
+            <FeedbackButton />
+            <NotificationBell />
+            <Tooltip title="Account Menu">
+              <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account Menu">
+                <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
+                  <AccountCircleIcon />
+                </Avatar>
+              </IconButton>
+            </Tooltip>
           </Stack>
 
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
@@ -473,7 +467,7 @@ export function Layout() {
           )}
         </Stack>
       </Drawer>
-      <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : DRAWER_WIDTH} />
+      <AppMain railWidth={isMobile ? 0 : DRAWER_WIDTH} />
       <Onboarding
         open={onboardingOpen}
         onClose={handleOnboardingClose}

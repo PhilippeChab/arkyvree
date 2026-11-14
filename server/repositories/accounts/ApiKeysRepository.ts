@@ -66,13 +66,10 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
       .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(this.table.id));
   }
 
-  /**
-   * The key a token's digest names, unless it's expired, with whether its user is a demo's
-   * (`userExpiresAt`): none when its user's account is deleted.
-   */
+  /** The key a token's digest names, unless it's expired: none when its user's account is deleted. */
   async findOneWithUser(db: Db, where: { digest: string }) {
     const [key] = await db
-      .select({ ...SHOWN_COLUMNS, userExpiresAt: usersInAccount.expiresAt })
+      .select(SHOWN_COLUMNS)
       .from(this.table)
       .innerJoin(usersInAccount, and(eq(usersInAccount.id, this.table.userId), isNull(usersInAccount.deletedAt)))
       .where(and(eq(this.table.digest, where.digest), this.working()));

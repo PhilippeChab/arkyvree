@@ -3,14 +3,13 @@ import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { BadRequestError, EmailNotVerifiedError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
-import { withAccountDeletion, withAccountWrite, withNewAccount } from "@/server/services/writes/index.ts";
+import { withAccountWrite, withNewAccount } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { Session, SessionRow, User } from "@/shared/relations.ts";
+import type { Session, SessionRow } from "@/shared/relations.ts";
 
 import {
   assertNotTaken,
   openSession,
-  purgeDemoSessionUser,
   signInAsGoogleAccount,
   signOutEverywhere,
   toSafeUser,
@@ -19,8 +18,6 @@ import {
 } from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
-
-const DEMO_TTL_MS = 60 * 60 * 1000;
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
 
@@ -101,7 +98,7 @@ class AuthenticationService {
     });
   }
 
-  async signIn(emailAddress: string, password: string, existingSessionId?: string) {
+  async signIn(emailAddress: string, password: string) {
     const user = await Users.findOne(db, { emailAddress });
     if (!user) {
       await verifyPassword(password, DUMMY_HASH);
@@ -128,26 +125,17 @@ class AuthenticationService {
         await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       }
 
-      await purgeDemoSessionUser(tx, existingSessionId);
-
       const session = await openSession(tx, user, "signIn");
       return { session, user: toSafeUser(user) };
     });
   }
 
-  async signInWithGoogle(idToken: string, existingSessionId?: string) {
+  async signInWithGoogle(idToken: string) {
     const payload = await verifyGoogleIdToken(idToken);
-    return await signInAsGoogleAccount(payload, existingSessionId);
+    return await signInAsGoogleAccount(payload);
   }
 
   async signOut(session: SessionRow) {
-    // A demo's sign-out deletes it, everything it owns locked first
-    const user = await Users.findOne(db, { id: session.userId });
-    if (user?.expiresAt) {
-      await withAccountDeletion([user.id], async (tx) => void (await Users.delete(tx, { id: user.id })));
-      return;
-    }
-
     return await withAccountWrite(session.userId, async (tx) => {
       const rows = await Sessions.archive(tx, { id: session.id });
       const archivedSession = rows[0];
@@ -186,35 +174,7 @@ class AuthenticationService {
     return { user };
   }
 
-  /**
-   * The demo of a browser `signedIn` (`findRequestSession`'s answer, null when it's signed out): its own demo session
-   * when it's in one, refused when it's a real user's, else a fresh demo user and session. Expired demo users are the
-   * runCleanup cron task's to delete.
-   */
-  async startDemo(signedIn: { session: SessionRow; user: User } | null = null) {
-    if (signedIn) {
-      if (!signedIn.user.expiresAt) throw new BadRequestError("Already signed in");
-      return { session: signedIn.session, user: toSafeUser(signedIn.user), reused: true as const };
-    }
-
-    return await withNewAccount(async (tx) => {
-      const expiresAt = new Date(Date.now() + DEMO_TTL_MS).toISOString();
-      const emailAddress = `demo-${crypto.randomUUID()}@demo.invalid`;
-      const emailVerifiedAt = new Date().toISOString();
-
-      const rows = await Users.create(tx, { emailAddress, expiresAt, emailVerifiedAt });
-      const user = rows[0];
-      if (!user) throw new InternalError("Could not create demo user");
-
-      const sessionRows = await Sessions.create(tx, { userId: user.id, expiresAt });
-      const session = sessionRows[0];
-      if (!session) throw new InternalError("Could not create demo session");
-
-      return { session, user: toSafeUser(user), reused: false as const };
-    });
-  }
-
-  async verifyEmail(emailAddress: string, code: string, existingSessionId?: string) {
+  async verifyEmail(emailAddress: string, code: string) {
     return await withAccountByAddress(emailAddress, async (tx, user) => {
       if (!user) throw new UnauthorizedError("Invalid email or code");
 
@@ -231,8 +191,6 @@ class AuthenticationService {
 
       await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
       await EmailVerifications.archive(tx, { id: verification.id });
-
-      await purgeDemoSessionUser(tx, existingSessionId);
 
       const session = await openSession(tx, user, "signUp");
       return { session, user: toSafeUser(user) };

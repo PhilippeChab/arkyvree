@@ -30,16 +30,12 @@ import {
   type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Modifiers, Users } from "@/server/repositories/index.ts";
-import { AuthenticationService } from "@/server/services/authentication/index.ts";
+import { Entities, Modifiers } from "@/server/repositories/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
-import { makeSession } from "@/tests/support/users.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   CLASS_HD,
@@ -198,24 +194,6 @@ describe("customization cleanup", () => {
 
     // The class's levels go through their foreign key's cascade
     await db.execute(sql`DELETE FROM ${entitiesInRules} WHERE id = ${klass.id}`);
-    expect(await orphans()).toEqual([]);
-  });
-
-  test("deletes a demo account's customizations with its rulesets and characters", async () => {
-    const { user } = await AuthenticationService.startDemo();
-    // The fork saves Settings of its own: the skill points' ability
-    const fork = await createSeededTestRuleset(user.id);
-    await writeFieldValues("rulesets", fork.id, [], { skillPointAbility: (await getSeedCtx()).abilityMap["Wisdom"] });
-    const { classLevel } = await createTestClassLevel(fork.id);
-    const character = await createTestCharacter(user.id, { rulesetId: fork.id });
-    await customize("feats", await createOwner("feats", user.id, fork.id));
-    await customize("class-levels", classLevel.id);
-    await customizeOwner("characters", character.id);
-    expect(await findFormValues("rulesets", fork.id)).not.toEqual({ fields: {}, links: {} });
-
-    // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters
-    await AuthenticationService.signOut(makeSession(user.id));
-    expect(await Users.findOne(db, { id: user.id })).toBeUndefined();
     expect(await orphans()).toEqual([]);
   });
 });

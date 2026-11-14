@@ -11,7 +11,7 @@ export default new Hono().get(
 
     return {
       async onOpen(_event, ws) {
-        // The session a request takes, refused as a request's is (an expired demo user's among them)
+        // The session a request takes, refused as a request's is
         const signedIn = await findSignedIn(getSessionCookie(c));
         if (!signedIn) {
           ws.close(4001, "Unauthorized");

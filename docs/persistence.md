@@ -78,7 +78,7 @@ Archiving preserves content for later restoration.
 
 ### FK CASCADE avoidance
 
-`Users` (real accounts only — demo accounts hard-delete; see *Special cases* below).
+`Users`.
 
 Hard-deleting a user row would FK CASCADE through everything they own or created — characters in someone else's campaign, campaigns they GM'd that other users have characters linked to, rulesets others have forked, etc. — and silently wipe content other users still depend on. Archive leaves the user row physically present so dependent FKs stay resolvable.
 
@@ -115,7 +115,7 @@ These are intentionally archived. Don't flip them — the restore-by-recreate be
 
 ### Polymorphic rows: customizations and attachments
 
-Customizations (`Modifiers`, `Requirements`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a demo account's purge deletes its rulesets, their entities and its characters).
+Customizations (`Modifiers`, `Requirements`) and `Attachments` name what they belong to by type and id (`source_type` / `source_id`, `entity_type` / `entity_id`, `record_type` / `record_id`), with no foreign key. Triggers delete them with their owner, whatever deletes it: a service, or a foreign key's cascade (a class's deletion deletes its levels).
 
 - **Customizations:** a trigger on each table a customization can belong to (`delete_customizations`, `drizzle/0000_baseline.sql`; an entity's, on `rules.entities`, runs `rules.delete_entity_customizations`). Deleting a modifier deletes its requirements the same way. A new type of owner needs the trigger too, and a row in `OWNERS` of `tests/services/rulesets/customization/dnd3.5/CustomizationCleanup.test.ts`, which deletes a row of each type and finds no customization left without its owner.
 - **Attachments:** a trigger on users and characters (`delete_attachments`, `drizzle/0000_baseline.sql`) and on campaign documents (`drizzle/0004_campaign_documents.sql`: a folder's delete takes its documents by cascade, whose rows the trigger sees too); the blob sweep then reclaims their files. Archiving keeps them: account deletion, which archives the user, purges its avatar itself (`purgeAttachmentsForRecords`), and the characters it deletes lose theirs by the trigger, those it hands on keeping them.
@@ -166,10 +166,6 @@ A character's seat in a campaign (`PlayerCharacters`) has no archive: it's hard-
 3. Every other character it owns is hard-deleted (`Characters.delete({ userId })`): one in no campaign, in an archived campaign, one it had archived, and one in a campaign with nobody left to take it. Its bonded creatures, contributors and link go by cascade, and the database deletes its attachments and modifiers (see *Polymorphic rows* above).
 
 Two accounts of one campaign deleted at once take turns on its row, which `lockAccounts` locks before their characters: the second reads its characters after the first committed, so what it was handed is its own to hand on or delete, under its lock. No lock of a new owner is taken: a seat is written only under its campaign's lock, which the deletion holds, and the new owner's own deletion waits on it, or went first and archived their seat. So a character can reach an account whose deletion is queued behind this one, never one whose deletion is done.
-
-### Demo `Users`
-
-Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* above).
 
 ### A fork's copies of an extension's entities (`unsubscribeExtension`)
 

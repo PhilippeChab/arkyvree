@@ -1,11 +1,10 @@
 import { alpha, Box, Paper, Stack, Typography } from "@mui/material";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Suspense } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 
-import { DiceSpinner, GoldDivider, LinkButton, PageLoader } from "@/client/src/components/common/index.ts";
+import { GoldDivider, PageLoader } from "@/client/src/components/common/index.ts";
 import { SourceLink } from "@/client/src/components/layout/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
+import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { APP_NAME, TAGLINE } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
@@ -14,41 +13,8 @@ import { pastInset, SAFE_BOTTOM } from "@/client/src/theme/safeArea.ts";
 import { useAuthRedirect } from "./useAuthRedirect.ts";
 
 function AuthFooterLinks() {
-  const snackbar = useSnackbar();
-  const { startDemo, pending } = useAuthRequests();
-  // The demo is for newcomers, so only sign-up offers it.
-  const showDemo = useLocation().pathname === "/sign-up";
   return (
-    <Stack
-      direction="row"
-      sx={{
-        flexWrap: "wrap",
-        columnGap: { xs: 1, sm: 2 },
-        rowGap: 0.5,
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-        maxWidth: 450,
-      }}
-    >
-      {showDemo && (
-        <>
-          <LinkButton
-            onClick={() =>
-              startDemo.mutate(undefined, { onError: (error) => snackbar.error(error, "Failed to start demo") })
-            }
-            disabled={pending}
-            variant="body2"
-          >
-            <DiceSpinner size="small" loading={startDemo.isPending}>
-              Try the Demo
-            </DiceSpinner>
-          </LinkButton>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            |
-          </Typography>
-        </>
-      )}
+    <Stack direction="row" sx={{ justifyContent: "center", width: "100%", maxWidth: 450 }}>
       <SourceLink variant="body2" />
     </Stack>
   );
@@ -218,27 +184,8 @@ function MobileBranding() {
 export function AuthLayoutRoute() {
   const isMobile = useIsMobile();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isDemo = useIsDemo();
-
-  // Only kill the demo if we were already one at mount — a freshly-created
-  // demo on /sign-up must survive the route change.
-  const [isClearingDemo, setIsClearingDemo] = useState(isDemo);
-  const demoSignOutStarted = useRef(false);
-  const { signOut } = useAuthRequests();
-  const signOutDemo = signOut.mutate;
   // Where a user signing in was going: the page that sent them to sign in, which verifying an email carries along
   const destination = useAuthRedirect() ?? "/dashboard";
-
-  // Demo sessions live only inside the app — drop the demo on entry to any auth route.
-  // A sign-out that fails (server already 401'd, network blip) still ends signed out locally: the server-side demo may
-  // already be gone.
-  useEffect(() => {
-    if (!isClearingDemo || demoSignOutStarted.current) return;
-    demoSignOutStarted.current = true;
-    signOutDemo(undefined, { onSettled: () => setIsClearingDemo(false) });
-  }, [isClearingDemo, signOutDemo]);
-
-  if (isClearingDemo) return <PageLoader />;
 
   if (isAuthenticated) return <Navigate to={destination} replace />;
 

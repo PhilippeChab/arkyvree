@@ -15,9 +15,6 @@ export interface ErrorJson {
   message: string;
 }
 
-/** What a demo's session is refused: what its account, which expires, doesn't take (`Session`'s `isDemo`). */
-export const SIGN_UP_MESSAGE = "Sign up to use this feature";
-
 export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
 
 class BaseError extends Error {

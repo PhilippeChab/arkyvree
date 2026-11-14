@@ -106,13 +106,12 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   /**
    * Exporting a character linked to the campaign as a PDF, from the campaign: its Game Master's, or whoever exports it
-   * themselves (`character`, the session's policy on it: `canExport`, its editors', a demo's refused), but a demo
-   * Game Master's (`canUseSignedUpFeatures`).
+   * themselves (`character`, the session's policy on it: `canExport`, its editors').
    */
   canExportCharacter(character: CharactersPolicy) {
     if (!this.isGameMaster()) return character.canExport();
 
-    return this.canUseSignedUpFeatures();
+    return true;
   }
 
   canHardDelete() {
@@ -155,23 +154,20 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   /**
    * Adding, editing, moving and removing the campaign's folders and documents, and choosing whom each admits: its Game
-   * Master's, but a demo's (`canUseSignedUpFeatures`), in a campaign that isn't archived. Where a write puts an item and
+   * Master's, in a campaign that isn't archived. Where a write puts an item and
    * whom it admits (`placement`, the other records it names) is checked between the two (`canPlaceDocument`).
    */
   canManageDocuments(placement?: DocumentPlacement) {
     this.canUpdate();
-    this.canUseSignedUpFeatures();
     if (placement) this.canPlaceDocument(placement);
     return this.canModify();
   }
 
   /**
-   * Adding, editing and removing the campaign's players: its Game Master's, but a demo's (`canUseSignedUpFeatures`), in
-   * a campaign that isn't archived.
+   * Adding, editing and removing the campaign's players: its Game Master's, in a campaign that isn't archived.
    */
   canManagePlayers() {
     this.canUpdate();
-    this.canUseSignedUpFeatures();
     return this.canModify();
   }
 
