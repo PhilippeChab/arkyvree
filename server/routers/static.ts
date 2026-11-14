@@ -18,8 +18,8 @@ const DEFAULT_TITLE = "Arkyvree | Programmable Ruleset Engine & Character Creato
 /**
  * Routes that should be crawled and indexed via the SPA shell. Everything else (auth-gated app routes, token-gated
  * /share, utility pages like /sign-in) is served with a noindex tag — there is no public ruleset view, so /rulesets and
- * /rulesets/:id intentionally fall through to noindex. The landing page "/" is served from landing.html (never reaches
- * injectMeta), so it isn't listed here.
+ * /rulesets/:id intentionally fall through to noindex, and so does "/", which sends a visitor to sign in or to their
+ * dashboard.
  */
 const INDEXABLE_ROUTE_META: Record<string, RouteMeta> = {
   "/sign-up": {
@@ -95,17 +95,6 @@ function injectMeta(html: string, path: string): string {
 }
 
 export default new Hono()
-  .get("/", async (c) => {
-    try {
-      const html = await PageTemplates.getLanding();
-      return new Response(html, {
-        headers: { "Content-Type": "text/html", "Cache-Control": "no-cache" },
-      });
-    } catch (error) {
-      console.error("[server] Failed to serve landing.html:", error);
-      return c.text("Not Found", 404);
-    }
-  })
   .get("/assets/*", async (c) => {
     const assetPath = c.req.path.replace(/^\/assets\//, "");
     const filePath = `./dist/assets/${assetPath}`;
@@ -156,10 +145,8 @@ export default new Hono()
     }),
   )
   .get("/sitemap.xml", (c) => {
-    // Only list pages Googlebot can actually render. /rulesets and
-    // /rulesets/:id sit behind PrivateRoute (auth) and /sign-in duplicates
-    // the landing page's title/description, so none belong in the sitemap.
-    const staticUrls = ["/", "/sign-up"];
+    // Only list pages Googlebot can actually render: "/", /rulesets and /rulesets/:id sit behind PrivateRoute (auth).
+    const staticUrls = ["/sign-up"];
     const entries = staticUrls.map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`).join("\n");
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
