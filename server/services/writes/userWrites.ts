@@ -102,13 +102,14 @@ export async function withAccountJob<T>(userId: string, write: (tx: Db) => Promi
 /**
  * Runs a write of the session's account (`userId`: its profile, its password, its keys, its links, its stars, its
  * notifications), its row locked first, so its writes take turns, and an account's deletion waits for them or makes
- * them wait: refused as its session is (401) once the account is gone.
+ * them wait: refused as its session is (401) once the account is gone, or an admin deactivated it.
  */
 export async function withAccountWrite<T>(userId: string, write: (tx: Db, user: User) => Promise<T>): Promise<T> {
   return await withWrite(async (tx) => {
     const locked = await Locks.lockUser(tx, userId, "no key update");
     const user = isVisible(locked, Visibility.UnarchivedOnly) ? await Users.findOne(tx, { id: userId }) : undefined;
-    if (!user) throw new UnauthorizedError("Invalid session");
+    // Deactivated meanwhile (a request in flight as an admin deactivated it): nothing it makes outlives its sign-out
+    if (!user || user.deactivatedAt) throw new UnauthorizedError("Invalid session");
     return await write(tx, user);
   }, BUSY_ACCOUNT_MESSAGE);
 }

@@ -1,16 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
+import { usersInAccount } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { hashApiKeyToken } from "@/server/apiKeyTokens.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, EmailNotVerifiedError, ForbiddenError, UnauthorizedError } from "@/server/errors/index.ts";
 import { findRequestSession } from "@/server/middlewares/index.ts";
 import { ApiKeys, EmailVerifications, OAuthGrants, OAuthTokens, Sessions, Users } from "@/server/repositories/index.ts";
+import { AccountService } from "@/server/services/authentication/account/index.ts";
+import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { InstanceService } from "@/server/services/instance/index.ts";
 import { createKeyedApi, expectStatus } from "@/tests/support/api.ts";
 import { createOAuthClient } from "@/tests/support/oauth.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, createUserWithSession, makeSession } from "@/tests/support/users.ts";
 
 /** The seeded admin's session (LocalUser, the dev and test instances' admin). */
@@ -153,5 +156,45 @@ describe("a deactivated account", () => {
     expect(findRequestSession(session.id)).rejects.toEqual(new UnauthorizedError("Invalid session"));
     await expectStatus(keyed.v1.notifications.$get({ query: {} }), 401);
     expect(await OAuthTokens.findOneWithUser(db, { accessDigest: hashApiKeyToken(accessToken) })).toBeUndefined();
+  });
+});
+
+describe("the instance's last admin", () => {
+  test("can't delete their account until another account is an admin who can sign in", async () => {
+    const { user: lastAdmin, session } = await createVerifiedUser("last");
+    await db.update(usersInAccount).set({ isAdmin: false });
+    await Users.update(db, { isAdmin: true }, { id: lastAdmin.id });
+    expect(AccountService.deleteAccount(session, "password1234")).rejects.toEqual(
+      new ConflictError("You're this Arkyvree's only admin: make someone else admin before deleting your account."),
+    );
+    expect(await Users.findOne(db, { id: lastAdmin.id })).toBeDefined();
+
+    // An unverified admin can't sign in: it counts for none
+    const { user: unverified } = await createTestUser("unverified");
+    await Users.update(db, { isAdmin: true }, { id: unverified.id });
+    expect(AccountService.deleteAccount(session, "password1234")).rejects.toThrow(ConflictError);
+
+    const { user: other } = await createVerifiedUser("other");
+    await Users.update(db, { isAdmin: true }, { id: other.id });
+    expect(await AccountService.deleteAccount(session, "password1234")).toEqual({ success: true });
+  });
+});
+
+describe("a request in flight", () => {
+  test("an account that isn't an admin's is refused before any account is looked up or locked", async () => {
+    const { session } = await createTestUser("member");
+    // An unknown account answers as a known one would: 403, never 404
+    expect(InstanceService.setAccountAdmin(session, NIL_UUID, true)).rejects.toEqual(NOT_ADMIN);
+    expect(InstanceService.setAccountDeactivated(session, NIL_UUID, true)).rejects.toEqual(NOT_ADMIN);
+    expect(InstanceService.markAccountVerified(session, NIL_UUID)).rejects.toEqual(NOT_ADMIN);
+  });
+
+  test("a deactivated account's own write is refused as its session is: it makes no key to come back with", async () => {
+    const { user } = await createVerifiedUser("in-flight");
+    await Users.update(db, { deactivatedAt: new Date().toISOString() }, { id: user.id });
+    expect(ApiKeysService.createKey({ userId: user.id }, "Late key", null, false)).rejects.toEqual(
+      new UnauthorizedError("Invalid session"),
+    );
+    expect(await ApiKeys.findMany(db, { userId: user.id })).toEqual([]);
   });
 });

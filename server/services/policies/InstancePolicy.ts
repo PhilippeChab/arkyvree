@@ -36,6 +36,15 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
     return new InstancePolicy(session, account, !!user?.isAdmin && !user.deactivatedAt && !!user.emailVerifiedAt);
   }
 
+  /**
+   * Whether the account is the instance's last admin who can act (`activeAdmins`, how many it has): an admin, neither
+   * deactivated nor unverified, and the only one.
+   */
+  private isLastAdmin(activeAdmins: number) {
+    const entity = this.entity;
+    return !!entity?.isAdmin && !entity.deactivatedAt && !!entity.emailVerifiedAt && activeAdmins <= 1;
+  }
+
   /** Reading or changing the instance's settings and its accounts: its admins'; anyone else a 403. */
   canAdminister() {
     if (!this.isAdmin) throw new ForbiddenError("Only an admin of this Arkyvree can do this");
@@ -55,14 +64,25 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
   }
 
   /**
+   * Deleting the account, its own session's: never the instance's last admin's (`activeAdmins`, how many it has), or
+   * the instance would take any next account as its admin, whatever its sign-up setting.
+   */
+  canDeleteAccount({ activeAdmins }: { activeAdmins: number }) {
+    if (this.isLastAdmin(activeAdmins))
+      throw new ConflictError(
+        "You're this Arkyvree's only admin: make someone else admin before deleting your account.",
+      );
+
+    return true;
+  }
+
+  /**
    * Making the account an admin, or no longer one (`isAdmin`): an admin's, but the instance's last admin stays one
    * (`activeAdmins`, how many it has), or nobody could change its settings.
    */
   canSetAdmin(isAdmin: boolean, { activeAdmins }: { activeAdmins: number }) {
     this.canAdminister();
-    const entity = this.entity;
-    const isLastAdmin = !!entity?.isAdmin && !entity.deactivatedAt && !!entity.emailVerifiedAt && activeAdmins <= 1;
-    if (!isAdmin && isLastAdmin)
+    if (!isAdmin && this.isLastAdmin(activeAdmins))
       throw new ConflictError("This Arkyvree needs an admin: make another account an admin first");
 
     return true;

@@ -5,12 +5,15 @@ import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import {
+  Campaigns,
   CharacterContributors,
+  Characters,
   Contributors,
   InstanceSettings,
   Locks,
   OauthAccounts,
   Players,
+  Rulesets,
   Users,
 } from "@/server/repositories/index.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
@@ -186,6 +189,37 @@ describe("who may make an account", () => {
       const { user } = await AuthenticationService.signUp(byRuleset.emailAddress, byRuleset.password);
       expect(user.emailAddress).toBe(byRuleset.emailAddress);
       expect((await signInAsGoogleAccount(byCharacter)).user.emailAddress).toBe(byCharacter.email);
+    });
+
+    test("refuses an address whose invite is to an archived campaign, ruleset or character", async () => {
+      const { user: gm, session: gmSession } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
+      const ruleset = await createTestRuleset(gm.id);
+      const character = await createTestCharacter(gm.id);
+      const byCampaign = credentials();
+      const byRuleset = credentials();
+      const byCharacter = credentials();
+      await inviteToSlot(gmSession, slot, byCampaign.emailAddress);
+      await Contributors.create(db, {
+        rulesetId: ruleset.id,
+        email: byRuleset.emailAddress,
+        role: "Editor",
+        invitedBy: gm.id,
+      });
+      await CharacterContributors.create(db, {
+        characterId: character.id,
+        email: byCharacter.emailAddress,
+        role: "Editor",
+        invitedBy: gm.id,
+      });
+      await Campaigns.archive(db, { id: campaign.id });
+      await Rulesets.archive(db, { id: ruleset.id });
+      await Characters.archive(db, { id: character.id });
+      await setPolicy("Invite Only");
+      const refusal = new ForbiddenError(INVITE_ONLY_MESSAGE);
+      for (const account of [byCampaign, byRuleset, byCharacter])
+        expect(AuthenticationService.signUp(account.emailAddress, account.password)).rejects.toEqual(refusal);
     });
 
     test("refuses an address whose invite was answered or revoked", async () => {

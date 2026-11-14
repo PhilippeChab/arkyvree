@@ -72,8 +72,8 @@ export default function SignUpPage() {
         {!!signUpError && <LoadError what="Sign-up setting" error={signUpError} />}
         {policy === "Invite Only" && (
           <Alert severity="info">
-            Signing up here needs an invite: use the address someone on this {APP_NAME} invited to a campaign or a
-            ruleset.
+            Signing up here needs an invite: use the address someone on this {APP_NAME} invited to a campaign, a ruleset
+            or a character.
           </Alert>
         )}
         {/* The first field's own top, which adds to the gap above the form */}

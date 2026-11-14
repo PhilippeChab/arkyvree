@@ -41,7 +41,7 @@ class InstanceService {
 
   /** Marks an account's email verified, for an instance whose code never reaches it: nothing when it already is. */
   async markAccountVerified(session: Session, userId: string) {
-    return await withAdministeredAccount(userId, async (tx, account) => {
+    return await withAdministeredAccount(session, userId, async (tx, account) => {
       (await InstancePolicy.for(tx, session, account)).canAdminister();
       if (account.emailVerifiedAt) return toListedAccount(account);
 
@@ -53,7 +53,7 @@ class InstanceService {
 
   /** Makes an account one of the instance's admins, or no longer one (`isAdmin`): it keeps one at least. */
   async setAccountAdmin(session: Session, userId: string, isAdmin: boolean) {
-    return await withAdministeredAccount(userId, async (tx, account) => {
+    return await withAdministeredAccount(session, userId, async (tx, account) => {
       const activeAdmins = await Users.count(tx, { isAdmin: true });
       (await InstancePolicy.for(tx, session, account)).canSetAdmin(isAdmin, { activeAdmins });
       if (account.isAdmin === isAdmin) return toListedAccount(account);
@@ -68,7 +68,7 @@ class InstanceService {
    * sessions, its API keys, its connected apps) and signs in nowhere, its data kept as it is.
    */
   async setAccountDeactivated(session: Session, userId: string, deactivated: boolean) {
-    return await withAdministeredAccount(userId, async (tx, account) => {
+    return await withAdministeredAccount(session, userId, async (tx, account) => {
       const policy = await InstancePolicy.for(tx, session, account);
       if (deactivated) policy.canDeactivate();
       else policy.canAdminister();
@@ -86,7 +86,7 @@ class InstanceService {
 
   /** Sets who may make an account on the instance: anyone, an address an invite was sent to, or nobody. */
   async updateSettings(session: Session, signUpPolicy: SignUpPolicy) {
-    return await withInstanceWrite(async (tx) => {
+    return await withInstanceWrite(session, async (tx) => {
       (await InstancePolicy.for(tx, session)).canAdminister();
       const settings = await InstanceSettings.update(tx, { signUpPolicy });
       if (!settings) throw new InternalError("The instance's settings are missing");

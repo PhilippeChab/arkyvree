@@ -1,13 +1,34 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { contributorsInCharacter } from "@/drizzle/schema.ts";
+import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
 import ContributionRepository from "@/server/repositories/ContributionRepository.ts";
 import type { ContributorStatus } from "@/shared/enums.ts";
 
 class CharacterContributorsRepository extends ContributionRepository<typeof contributorsInCharacter, "characterId"> {
   constructor() {
     super(contributorsInCharacter, "characterId");
+  }
+
+  /**
+   * Whether an address (`pendingEmail`) holds a pending invite no sign-in claimed (the ones `backfillUserId` gives its
+   * account) to a character that isn't archived: what lets it make an account on an instance that takes invites alone.
+   */
+  async exists(db: Db, where: { pendingEmail: string }) {
+    const [row] = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
+      .where(
+        and(
+          eq(this.table.email, where.pendingEmail),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(charactersInCharacter.deletedAt),
+        ),
+      )
+      .limit(1);
+    return !!row;
   }
 
   /**

@@ -11,7 +11,7 @@ export const CLOSED_MESSAGE = "This Arkyvree isn't taking new accounts.";
 
 /** What refuses a new account on an instance that takes invites alone, to an address none was sent to. */
 export const INVITE_ONLY_MESSAGE =
-  "Signing up here needs an invite: ask someone on this Arkyvree to invite you to a campaign or a ruleset.";
+  "Signing up here needs an invite: ask someone on this Arkyvree to invite you to a campaign, a ruleset or a character.";
 
 /**
  * Whether an address (`emailAddress`) holds a pending invite no sign-in claimed: to a campaign's seat, a ruleset or a

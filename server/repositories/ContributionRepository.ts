@@ -89,20 +89,6 @@ abstract class ContributionRepository<
   }
 
   /**
-   * Whether an address (`pendingEmail`) holds a pending invite no sign-in claimed (the ones `backfillUserId` gives its
-   * account): what lets it make an account on an instance that takes invites alone.
-   */
-  async exists(db: Db, where: { pendingEmail: string }) {
-    const table = this.contributions;
-    const [row] = await db
-      .select({ id: table.id })
-      .from(table)
-      .where(and(eq(table.email, where.pendingEmail), eq(table.status, "Pending"), isNull(table.userId)))
-      .limit(1);
-    return !!row;
-  }
-
-  /**
    * A row by its `id`, or a parent's row with `status`: a user's (`userId`), or an address's (`email`), whoever holds
    * it, or no one yet (`userId: null`: an invite of an address no account had when it was sent, which a sign-in under
    * that address claims, `backfillUserId`).

@@ -28,7 +28,9 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useListPageQuery, useSearchText } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
+import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -96,13 +98,24 @@ export function AccountsPanel() {
   const accounts = useListPageQuery(adminAccountsQuery(search));
   const confirmDialog = useDialogState<{ account: Account; change: "deactivate" | "reactivate" }>();
 
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  /** The signed-in user read again (`/auth/me`), the store taking its admin standing. */
+  const refreshOwnUser = async () => {
+    const user = await queryClient.fetchQuery({ ...currentUserQuery(), staleTime: NO_TIME });
+    updateUser({ isAdmin: user.isAdmin });
+  };
+
   const changeMutation = useMutation({
     mutationFn: ({ account, change }: { account: Account; change: AccountChange }) =>
       accountChangeFn(account.id, change),
-    onSuccess: (_, { change }) => {
+    onSuccess: (_, { account, change }) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.admin.accountLists });
       snackbar.success(CHANGE_MESSAGES[change]);
       confirmDialog.close();
+      // Their own admin removed: the signed-in user is read again, so the sidebar drops Admin and this page sends them
+      // to their dashboard
+      if (account.id === ownId && change === "removeAdmin") void refreshOwnUser();
     },
     onError: (error) => snackbar.error(error, "Failed to change the account"),
   });
