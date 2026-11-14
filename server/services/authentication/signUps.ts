@@ -28,20 +28,21 @@ async function hasPendingInvite(tx: Db, emailAddress: string) {
 
 /**
  * Checks that an address (`emailAddress`) may make an account on the instance, under its settings' lock, which a new
- * account's write takes first: an instance without an admin takes it, which becomes its admin (`isAdmin`); otherwise
- * its sign-up setting decides (anyone, an address an invite was sent to, or nobody). Every write that makes an account
- * asks it: a sign-up, a Google account's first sign-in.
+ * account's write takes first: an instance without an admin who can sign in (`Users.count`) takes it; otherwise its
+ * sign-up setting decides (anyone, an address an invite was sent to, or nobody). Every write that makes an account asks
+ * it: a sign-up, a Google account's first sign-in. Answers whether the instance has no such admin (`noAdmin`): an
+ * account made verified (a Google account's) then becomes its admin; an email's, once it's verified (`markAdminIfNone`).
  */
-export async function checkSignUp(tx: Db, emailAddress: string): Promise<{ isAdmin: boolean }> {
+export async function checkSignUp(tx: Db, emailAddress: string): Promise<{ noAdmin: boolean }> {
   await lockInstanceSettings(tx);
-  if ((await Users.count(tx, { isAdmin: true })) === 0) return { isAdmin: true };
+  if ((await Users.count(tx, { isAdmin: true })) === 0) return { noAdmin: true };
 
   const settings = await InstanceSettings.findOne(tx);
   if (!settings) throw new InternalError("The instance's settings are missing");
   if (settings.signUpPolicy === "Closed") throw new ForbiddenError(CLOSED_MESSAGE);
   if (settings.signUpPolicy === "Invite Only" && !(await hasPendingInvite(tx, emailAddress)))
     throw new ForbiddenError(INVITE_ONLY_MESSAGE);
-  return { isAdmin: false };
+  return { noAdmin: false };
 }
 
 /**
@@ -51,4 +52,17 @@ export async function checkSignUp(tx: Db, emailAddress: string): Promise<{ isAdm
 export async function isClosedToSignUps(db: Db) {
   const settings = await InstanceSettings.findOne(db);
   return settings?.signUpPolicy === "Closed" && (await Users.count(db, { isAdmin: true })) > 0;
+}
+
+/**
+ * Makes an account whose email was just verified (`userId`: an email sign-up's verification, a Google account's link
+ * to an unverified one) the instance's admin, when it has none who can sign in, under its settings' lock: an account
+ * becomes admin only once it can sign in, so a first sign-up that never verifies blocks nobody. Answers the account it
+ * made admin, none when the instance has one.
+ */
+export async function markAdminIfNone(tx: Db, userId: string) {
+  await lockInstanceSettings(tx);
+  if ((await Users.count(tx, { isAdmin: true })) > 0) return undefined;
+  const [admin] = await Users.update(tx, { isAdmin: true }, { id: userId });
+  return admin;
 }

@@ -1,4 +1,4 @@
-import { and, count, eq, type InferInsertModel, isNull } from "drizzle-orm";
+import { and, count, eq, type InferInsertModel, isNotNull, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { usersInAccount } from "@/drizzle/schema.ts";
@@ -45,13 +45,21 @@ class UsersRepository extends include(BaseRepository<typeof usersInAccount>, Pag
       .returning();
   }
 
-  /** The instance's admins who can act (`isAdmin`): their accounts neither deleted nor deactivated. */
+  /**
+   * The instance's admins who can act (`isAdmin`): their accounts neither deleted nor deactivated, and their email
+   * verified, so they can sign in.
+   */
   async count(db: Db, where: { isAdmin: true }) {
     const [row] = await db
       .select({ count: count() })
       .from(this.table)
       .where(
-        and(eq(this.table.isAdmin, where.isAdmin), isNull(this.table.deletedAt), isNull(this.table.deactivatedAt)),
+        and(
+          eq(this.table.isAdmin, where.isAdmin),
+          isNull(this.table.deletedAt),
+          isNull(this.table.deactivatedAt),
+          isNotNull(this.table.emailVerifiedAt),
+        ),
       );
     return row?.count ?? 0;
   }

@@ -63,7 +63,7 @@ describe("the instance's accounts", () => {
   });
 
   test("an admin makes another account an admin, which can then administer, and takes it back", async () => {
-    const { user, session } = await createTestUser("promoted");
+    const { user, session } = await createVerifiedUser("promoted");
     expect((await InstanceService.setAccountAdmin(admin, user.id, true)).isAdmin).toBe(true);
     expect(await InstanceService.getSettings(session)).toEqual({ signUpPolicy: "Open" });
     expect((await InstanceService.setAccountAdmin(admin, user.id, false)).isAdmin).toBe(false);
@@ -74,7 +74,11 @@ describe("the instance's accounts", () => {
     expect(InstanceService.setAccountAdmin(admin, SEED_USER_ID, false)).rejects.toEqual(
       new ConflictError("This Arkyvree needs an admin: make another account an admin first"),
     );
-    const { user } = await createTestUser("second");
+    // An unverified admin can't sign in: it counts for none
+    const { user: unverified } = await createTestUser("unverified");
+    await InstanceService.setAccountAdmin(admin, unverified.id, true);
+    expect(InstanceService.setAccountAdmin(admin, SEED_USER_ID, false)).rejects.toThrow(ConflictError);
+    const { user } = await createVerifiedUser("second");
     await InstanceService.setAccountAdmin(admin, user.id, true);
     expect((await InstanceService.setAccountAdmin(admin, SEED_USER_ID, false)).isAdmin).toBe(false);
   });

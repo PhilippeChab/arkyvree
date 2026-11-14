@@ -5,9 +5,13 @@ import type { Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
 
-/** An account of the instance as an admin's check reads it: whether it's an admin, and whether it's deactivated. */
+/**
+ * An account of the instance as an admin's check reads it: whether it's an admin, whether it's deactivated, and whether
+ * its email is verified (an admin who can't sign in counts for none).
+ */
 interface InstanceAccount {
   deactivatedAt: string | null;
+  emailVerifiedAt: string | null;
   id: string;
   isAdmin: boolean;
 }
@@ -15,7 +19,7 @@ interface InstanceAccount {
 /**
  * A session's rights on the instance: its settings (who may make an account) and its accounts (`entity`, the one a
  * check is about), which its admins alone change. An admin is an account marked so that's neither deleted nor
- * deactivated; the instance keeps one at least.
+ * deactivated, its email verified (one that can sign in); the instance keeps one at least.
  */
 export default class InstancePolicy extends BasePolicy<InstanceAccount | undefined> {
   constructor(
@@ -29,7 +33,7 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
   /** The session's policy on the instance, on one of its accounts (`account`) when a check is about one. */
   static async for(db: Db, session: Session, account?: InstanceAccount): Promise<InstancePolicy> {
     const user = await Users.findOne(db, { id: session.userId });
-    return new InstancePolicy(session, account, !!user?.isAdmin && !user.deactivatedAt);
+    return new InstancePolicy(session, account, !!user?.isAdmin && !user.deactivatedAt && !!user.emailVerifiedAt);
   }
 
   /** Reading or changing the instance's settings and its accounts: its admins'; anyone else a 403. */
@@ -56,7 +60,8 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
    */
   canSetAdmin(isAdmin: boolean, { activeAdmins }: { activeAdmins: number }) {
     this.canAdminister();
-    const isLastAdmin = !!this.entity?.isAdmin && !this.entity.deactivatedAt && activeAdmins <= 1;
+    const entity = this.entity;
+    const isLastAdmin = !!entity?.isAdmin && !entity.deactivatedAt && !!entity.emailVerifiedAt && activeAdmins <= 1;
     if (!isAdmin && isLastAdmin)
       throw new ConflictError("This Arkyvree needs an admin: make another account an admin first");
 

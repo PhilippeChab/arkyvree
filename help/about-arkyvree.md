@@ -55,7 +55,7 @@ Then ask it what you'd ask the app: "what's my character's armor class?", "add a
 
 ## Who can sign up?
 
-Each Arkyvree has admins: the first account made on it is its first admin. An admin opens **Admin** in the sidebar and chooses who can make an account:
+Each Arkyvree has admins: the first account on it to verify its email (or to sign in with Google) becomes its first admin. An admin opens **Admin** in the sidebar and chooses who can make an account:
 
 - **Open:** anyone who reaches its address.
 - **Invite Only:** someone invited to a campaign, a ruleset or a character, with the address the invite went to. Anyone on it can send that invite.

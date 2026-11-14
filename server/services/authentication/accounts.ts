@@ -29,7 +29,7 @@ import { BUSY_ACCOUNT_MESSAGE, withAccountFoundBy } from "@/server/services/writ
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { User } from "@/shared/relations.ts";
 
-import { checkSignUp } from "./signUps.ts";
+import { checkSignUp, markAdminIfNone } from "./signUps.ts";
 
 /** A field that's one account's alone: its email address or its username. */
 type AccountField = "emailAddress" | "username";
@@ -120,6 +120,8 @@ async function signInGoogleOnce(payload: { email: string; sub: string }) {
             { id: found.id },
           );
           await EmailVerifications.archive(tx, { userId: found.id });
+          // Verified now: an instance with no admin who can sign in makes it its admin
+          linkedUser = (await markAdminIfNone(tx, found.id)) ?? linkedUser;
         }
 
         const session = await openSession(tx, found, "signIn", { provider: "google" });
@@ -128,9 +130,10 @@ async function signInGoogleOnce(payload: { email: string; sub: string }) {
 
       // Case 3: New user. Another first sign-in of the address that commits its account first refuses this one's on
       // its index, which the rerun finds and signs in to as its returning user
-      const { isAdmin } = await checkSignUp(tx, email);
+      // Made verified: an instance with no admin who can sign in makes it its admin
+      const { noAdmin } = await checkSignUp(tx, email);
       const userRows = await withUniqueRefusal(
-        () => Users.create(tx, { emailAddress: email, isAdmin }),
+        () => Users.create(tx, { emailAddress: email, isAdmin: noAdmin }),
         (index) => (index === "users_email" ? toRerun(toTakenError("emailAddress").message) : undefined),
       );
       if (!userRows[0]) throw new InternalError("Could not create user");

@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { usersInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
@@ -22,7 +22,7 @@ import { runWhileCommitting } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+import { createTestUser, findVerificationCode } from "@/tests/support/users.ts";
 
 const pool = createTestPool();
 
@@ -41,9 +41,9 @@ function googleAccount() {
   return { email: `google-${id}@example.com`, sub: `google-${id}` };
 }
 
-/** The instance as the test reads it: its seeded admin no longer one, so it has none. */
+/** The instance as the test reads it: no account an admin (its seeded one, and those a probe committed), so it has none. */
 async function removeAdmins() {
-  await Users.update(db, { isAdmin: false }, { id: SEED_USER_ID });
+  await db.update(usersInAccount).set({ isAdmin: false });
 }
 
 /** Sets who may make an account on the instance, within the test's transaction. */
@@ -57,18 +57,51 @@ afterAll(async () => {
 });
 
 describe("who may make an account", () => {
-  test("the first account of an instance without an admin becomes its admin, whatever its setting", async () => {
+  test("the first account of an instance without an admin becomes its admin once it's verified, whatever its setting", async () => {
     await removeAdmins();
     await setPolicy("Closed");
     const account = credentials();
     const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
-    expect(user.isAdmin).toBe(true);
+    expect(user.isAdmin).toBe(false);
+    const verified = await AuthenticationService.verifyEmail(account.emailAddress, await findVerificationCode(user.id));
+    expect(verified.user.isAdmin).toBe(true);
 
     // The next one meets the setting
     const next = credentials();
     expect(AuthenticationService.signUp(next.emailAddress, next.password)).rejects.toEqual(
       new ForbiddenError(CLOSED_MESSAGE),
     );
+  });
+
+  test("a first sign-up that never verifies blocks nobody: the next that verifies becomes admin, alone", async () => {
+    await removeAdmins();
+    await setPolicy("Closed");
+    const first = credentials();
+    const second = credentials();
+    const { user: unverified } = await AuthenticationService.signUp(first.emailAddress, first.password);
+    // Without an admin who can sign in, the instance still takes accounts
+    const { user } = await AuthenticationService.signUp(second.emailAddress, second.password);
+    const { user: admin } = await AuthenticationService.verifyEmail(
+      second.emailAddress,
+      await findVerificationCode(user.id),
+    );
+    expect(admin.isAdmin).toBe(true);
+
+    // The first, verified later, finds an admin: it's no second one
+    const { user: later } = await AuthenticationService.verifyEmail(
+      first.emailAddress,
+      await findVerificationCode(unverified.id),
+    );
+    expect(later.isAdmin).toBe(false);
+    expect(await Users.count(db, { isAdmin: true })).toBe(1);
+  });
+
+  test("a Google account linked to an unverified first sign-up verifies it, and makes it the admin", async () => {
+    await removeAdmins();
+    const account = credentials();
+    const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
+    const linked = await signInAsGoogleAccount({ email: account.emailAddress, sub: `google-${uniqueId()}` });
+    expect(linked.user).toMatchObject({ id: user.id, isAdmin: true });
   });
 
   test("a Google account's first sign-in on an instance without an admin makes its admin", async () => {
@@ -177,15 +210,39 @@ describe("who may make an account", () => {
 describe("the instance's first sign-ups at once", () => {
   test("make one admin: the second waits for the first, then finds it", async () => {
     await removeAdmins();
-    const account = credentials();
-    // Another first sign-up holds the settings, makes its admin and commits: this one's waits, then counts it
+    // Another first account, made verified, holds the settings, becomes the admin and commits: this Google account's
+    // first sign-in, made verified too, waits, then counts it
     const { user } = await runWhileCommitting(
       pool,
       (blockerDb) => Locks.lockSettings(blockerDb, "no key update"),
-      () => AuthenticationService.signUp(account.emailAddress, account.password),
+      () => signInAsGoogleAccount(googleAccount()),
       async ({ blockerDb }) => {
         const [first] = await Users.create(blockerDb, {
           emailAddress: `first-${uniqueId()}@example.com`,
+          emailVerifiedAt: new Date().toISOString(),
+          isAdmin: true,
+        });
+        users.add(first.id);
+      },
+    );
+    expect(user.isAdmin).toBe(false);
+  });
+
+  test("a verification that waits for another to become the admin isn't a second one", async () => {
+    await removeAdmins();
+    // An unverified account and its code, made without the sign-up's lock of the settings, which the test would hold
+    const { user: signedUp } = await createTestUser("waiting");
+    await AuthenticationService.resendVerification(signedUp.emailAddress);
+    const account = { emailAddress: signedUp.emailAddress };
+    const code = await findVerificationCode(signedUp.id);
+    const { user } = await runWhileCommitting(
+      pool,
+      (blockerDb) => Locks.lockSettings(blockerDb, "no key update"),
+      () => AuthenticationService.verifyEmail(account.emailAddress, code),
+      async ({ blockerDb }) => {
+        const [first] = await Users.create(blockerDb, {
+          emailAddress: `first-${uniqueId()}@example.com`,
+          emailVerifiedAt: new Date().toISOString(),
           isAdmin: true,
         });
         users.add(first.id);

@@ -25,7 +25,7 @@ import {
 } from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
-import { checkSignUp } from "./signUps.ts";
+import { checkSignUp, markAdminIfNone } from "./signUps.ts";
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
 
@@ -170,10 +170,11 @@ class AuthenticationService {
 
   async signUp(emailAddress: string, password: string) {
     const { user, code } = await withNewAccount(async (tx) => {
-      const { isAdmin } = await checkSignUp(tx, emailAddress);
+      // Never an admin yet: it becomes one once its email is verified, if the instance has none by then
+      await checkSignUp(tx, emailAddress);
       await assertNotTaken(tx, { emailAddress });
 
-      const rows = await withTakenRefusal(() => Users.create(tx, { emailAddress, isAdmin, password }));
+      const rows = await withTakenRefusal(() => Users.create(tx, { emailAddress, password }));
       const user = rows[0];
       if (!user) throw new InternalError("Could not create user");
 
@@ -208,11 +209,12 @@ class AuthenticationService {
         "Verification code expired",
       );
 
-      await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
+      const [verified] = await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
       await EmailVerifications.archive(tx, { id: verification.id });
+      const account = (await markAdminIfNone(tx, user.id)) ?? verified;
 
-      const session = await openSession(tx, user, "signUp");
-      return { session, user: toSafeUser(user) };
+      const session = await openSession(tx, account, "signUp");
+      return { session, user: toSafeUser(account) };
     });
   }
 }
