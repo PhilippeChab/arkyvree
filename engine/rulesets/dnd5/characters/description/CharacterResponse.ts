@@ -2,7 +2,7 @@ import type { SheetStat } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
-import { formatSigned, stripSeparators } from "@/shared/text.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
 import SheetBlocks from "./SheetBlocks.ts";
@@ -83,7 +83,7 @@ export default class CharacterResponse {
    * The character's passive Perception: 10 and its Perception's total, none in a ruleset without a Perception skill.
    */
   private static passivePerceptionOf(built: DetailedCharacter): number | null {
-    const perception = built.components.skills.getSkills()[stripSeparators("Perception")];
+    const perception = built.components.skills.getPassiveSkill();
     return perception ? PASSIVE_CHECK_BASE + perception.total : null;
   }
 

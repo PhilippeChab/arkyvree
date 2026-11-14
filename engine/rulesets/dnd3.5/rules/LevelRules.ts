@@ -1,4 +1,4 @@
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { countProgressionAt } from "@/shared/customization/progression.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -63,6 +63,14 @@ export default class LevelRules {
     let next = 1;
     while (held.has(next)) next++;
     return next;
+  }
+
+  /**
+   * The pool the general feats count toward, as a view has it: the one the rules call General, whatever the ruleset
+   * calls it now (`RulesetData.named`). None in a ruleset that deleted it.
+   */
+  static generalFeatsPool(rulesetData: RulesetData) {
+    return rulesetData.named("aptitudes", GENERAL_FEATS_APTITUDE);
   }
 
   /** Whether class level `classLevel` is its class's next for a character with `levels` (`findNextClassLevel`). */

@@ -258,12 +258,22 @@ export default class Dnd35View {
     return this.declared.rows("mechanics");
   }
 
+  /** The view's entity the rules' own words name, whatever the ruleset calls it (`RulesetData.named`). */
+  named(type: string, name: string, partition?: string) {
+    return this.rulesetData.named(type, name, partition);
+  }
+
   get races(): Race[] {
     return this.declared.rows("races");
   }
 
   get racesById(): Map<string, Race> {
     return this.declared.byId("races");
+  }
+
+  /** The name the rules know an entity of the view by (`RulesetData.rulesNameOf`). */
+  rulesNameOf(type: string, entity: { id: string; name: string }): string {
+    return this.rulesetData.rulesNameOf(type, entity);
   }
 
   get saves(): RulesetSave[] {

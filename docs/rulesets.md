@@ -247,6 +247,20 @@ If a hidden ancestor's local copy was deleted, its snapshot is a tombstone, and
 renamed entity takes over none. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
+### What the rules know by name
+
+A few of a system's rules name an entity in their own words: the skill size weighs on
+(3.5's Hide, Pathfinder's Stealth and Fly), the skill whose ranks are languages (3.5's
+Speak Language), 5e's passive Perception, the pools general feats and racial picks count
+toward, a familiar's or a companion's stat block (its race, its feats, its skills, its
+saves). The engine finds each by the name it was made under (`RulesetData.named`), never
+by the name the view shows: a ruleset built on the base rules renames its copy of it,
+and the rules keep finding it, as a translation needs. The reverse, the name the rules
+know an entity by (`rulesNameOf`), keys a stat block's table. A ruleset can't rename the
+General pool where it made it (a base rules'), where its name is the rules' own.
+`tests/engine/rulesets/rulesNames.test.ts` renames every entity of each kind in a fork
+of each base rules and checks that no character's sheet changes.
+
 ### Restoring an override
 
 A fork's **Restore Parent Version** (`RulesetChangesService.revertOverride`) reverts

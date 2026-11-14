@@ -33,10 +33,10 @@ type BondedCreaturePlan = { removedId?: string } & (
 function buildCreature(
   master: Character,
   kind: BondedKind,
-  race: { id: string; name: string },
+  race: { id: string; name: string; rulesName: string },
   abilities: Dnd35View["abilities"],
 ): NewChild {
-  const stats = BondedRaceData.getStats(race.name);
+  const stats = BondedRaceData.getStats(race.rulesName);
   const own = CharacterValues.fieldsOf(master);
   return {
     links: {
@@ -59,7 +59,12 @@ function buildCreature(
 
 /** What a master's bonded creatures become as its levels make them. */
 export default class BondedPlans {
-  constructor(private readonly view: Pick<Dnd35View, "abilities" | "classes" | "classLevelsByClass" | "races">) {}
+  constructor(
+    private readonly view: Pick<
+      Dnd35View,
+      "abilities" | "classes" | "classLevelsByClass" | "named" | "races" | "rulesNameOf"
+    >,
+  ) {}
 
   /**
    * What the master's creature of `kind` becomes, from the one it has (`existing`): refused when the ruleset lacks the
@@ -78,13 +83,18 @@ export default class BondedPlans {
     const race = view.races.find((r) => r.name === raceName && r.partition === kind);
     if (!race) throw new RulesError("invalid", `Bonded ${kind} race "${raceName}" not found in ruleset`);
     const { className } = BONDED_KIND_BY_SLUG[kind];
-    const klass = view.classes.find((k) => k.name === className && k.partition === kind);
+    // The class the rules name, whatever the ruleset calls it
+    const named = view.named("classes", className, kind);
+    const klass = named && view.classes.find((k) => k.id === named.id);
     if (!klass) throw new RulesError("invalid", `${className} class not found in ruleset — content seed missing`);
     // Each grant feat adds to bonded.<kind>.level by a template (a druid's `{{ [classes.druid.level] }}`, a ranger's
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
     const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), classId: klass.id };
     if (existing && existing.links[RACE_ROLE] === race.id) return { keptId: existing.id, levels };
-    return { created: buildCreature(record, kind, race, view.abilities), levels, removedId: existing?.id };
+    // Its stat block is its race's, by the name the rules know the race by, whatever the ruleset calls it
+    const rulesName = view.rulesNameOf("races", race);
+    const created = buildCreature(record, kind, { ...race, rulesName }, view.abilities);
+    return { created, levels, removedId: existing?.id };
   }
 
   /**

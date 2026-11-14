@@ -4,7 +4,8 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
 import type { Aptitude, Klass } from "@/engine/rulesets/pf1/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/pf1/feats.ts";
+
+import LevelRules from "./LevelRules.ts";
 
 /**
  * A class's own feature pool: its id (none while the ruleset has none), its name ("Witch Class Feature"), and what a
@@ -56,7 +57,7 @@ export default class ClassOffers {
    */
   private featurePoolsOf(pools: readonly Aptitude[], own: OwnFeaturePool): Aptitude[] {
     const through = this.grantedThrough();
-    const general = this.pf1.aptitudeIdBySlug.get(stripSeparators(GENERAL_FEATS_APTITUDE));
+    const general = LevelRules.generalFeatsPool(this.view.rulesetData)?.id;
     return pools.filter((pool) => pool.id === own.id || through.has(pool.id) || pool.id === general);
   }
 

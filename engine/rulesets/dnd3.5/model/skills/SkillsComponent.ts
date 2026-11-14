@@ -14,7 +14,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
-import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
+import { SIZE_HIDE_MOD, SIZE_MODIFIED_SKILL } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
 interface SkillBudget {
@@ -85,6 +85,9 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
 
   private readonly skills: SkillsData = {} as SkillsData;
 
+  /** The skill a creature's size weighs on: the one the rules call Hide, whatever the ruleset calls it. */
+  private sizedSkillId: string | undefined;
+
   private skillPointAbilityId: string | null = null;
 
   private skillPointClassLevelFields: Map<string, { bab: number; skills: number }> = new Map();
@@ -103,6 +106,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     { rulesetData }: RulesetView,
   ) {
     const rulesetSkills = Dnd35View.of(rulesetData).skills;
+    this.sizedSkillId = rulesetData.named("skills", SIZE_MODIFIED_SKILL)?.id;
     this.skillPointAbilityId = skillPointAbilityId;
     this.skillPointClassLevelFields = classLevelFields;
     const classes = this.classes.getClasses();
@@ -195,7 +199,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     const invested = this.rankBySkillId.get(skill.id) ?? 0;
     // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
     const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
-    const sizeOfRace = () => (skill.name === "Hide" ? (SIZE_HIDE_MOD[raceSize()] ?? 0) : 0);
+    const sizeOfRace = () => (skill.id === this.sizedSkillId ? (SIZE_HIDE_MOD[raceSize()] ?? 0) : 0);
     let sizeBonus = 0;
     return {
       name: skill.name,

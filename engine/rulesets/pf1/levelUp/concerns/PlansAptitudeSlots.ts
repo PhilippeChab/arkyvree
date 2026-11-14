@@ -82,14 +82,13 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       spellSlots: SpellSlots,
     ): SlotDeltas {
       const deltas: SlotDeltas = { allKnown: new Set(), feats: {}, spells: {} };
-      const { aptitudeIdBySlug } = this.pf1;
       const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
 
       add(modifiersBySource.get(classLevelId) ?? []);
       for (const grant of autoFeatRecords) add(modifiersBySource.get(grant.toId) ?? []);
 
-      const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
+      const generalAptId = LevelRules.generalFeatsPool(this.rulesetData)?.id;
       if (generalAptId && featSlots[generalAptId] && generalFeats > 0)
         deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalFeats;
       return deltas;
