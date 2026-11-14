@@ -97,7 +97,8 @@ Requirements use a dotted level numbering system for hierarchy:
   never both (`requirements_check`): an edit may turn one into the other, and stores the new kind's columns with the
   old kind's cleared, a condition's name bindings going with its text (`RequirementEdits.planEdit`). A chain node with
   requirements under it is refused (409) as it turns into a condition, which groups nothing: the evaluation would drop
-  them; its children are deleted first
+  them; its children are deleted first. The service counts the rows its entity stores under it
+  (`RequirementsService`), not only those its page lists
 - An entity holds one requirement per level (`requirements_entity_id_entity_type_level_key`): a requirement created at a level its entity already holds, or edited onto one, is refused with a 409, on the copy an inherited entity's save makes too (`RequirementsService`; an edit started from a stale version is told so first)
 
 ### Requirement Builder Helpers

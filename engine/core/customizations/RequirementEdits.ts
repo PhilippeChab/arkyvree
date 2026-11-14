@@ -1,6 +1,5 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
@@ -90,21 +89,18 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /**
    * An edit of one of the entity's requirements: the entity and the requirement, and the row it stores, and the names
-   * its text binds (`bindings`: none to change, `null`, when it changes no text; none at all once it's a group). A group
-   * turned into a condition is refused while requirements sit under it, which a condition can't group: the evaluation
-   * would drop them.
+   * its text binds (`bindings`: none to change, `null`, when it changes no text; none at all once it's a group), and
+   * the level of a group it turns into a condition (`ungroupedLevel`, none otherwise), which the server refuses while
+   * it stores requirements under that level, the view's or not: a condition groups none, and the evaluation would drop
+   * them.
    */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
     // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
     const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
-    const plan = { ...this.planDelete(requirementId), levels };
-    const { level } = plan.requirement;
-    if (body.target && plan.requirement.chainingOperator && levels.some((other) => other.startsWith(`${level}.`))) {
-      throw new RulesError(
-        "conflict",
-        "A group with requirements under it can't become a condition: delete the requirements under it first",
-      );
-    }
+    const deleted = this.planDelete(requirementId);
+    // A group it turns into a condition: its level, which the server refuses while it stores requirements under it
+    const ungroupedLevel = body.target && deleted.requirement.chainingOperator ? deleted.requirement.level : null;
+    const plan = { ...deleted, levels, ungroupedLevel };
     const sent = this.toRow(targetPaths, catalogs, body, plan.requirement);
     // A value it keeps is stored as the view reads it, the text its names are read from
     const kept = sent.target !== undefined && sent.value === undefined ? plan.requirement.value : undefined;
