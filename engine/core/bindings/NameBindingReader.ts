@@ -1,8 +1,9 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
+import type { NamedSegment } from "@/engine/core/paths/PathCategory.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { NameBinding } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import { stripSeparators, stripSeparatorsDroppingAccents } from "@/shared/text.ts";
 
 import TemplatePaths from "./TemplatePaths.ts";
 
@@ -49,7 +50,8 @@ export default class NameBindingReader {
   /**
    * Whether a binding no longer matches its row's text (the text was changed past it: a fix written straight to the
    * database): the name it was made from isn't what its place holds any more. Such a binding is left aside when read,
-   * and replaced by a fill.
+   * and replaced by a fill. A text saved while keys left accented letters out still holds the name's key as it was then
+   * (`stripSeparatorsDroppingAccents`), which matches too, until `scripts/db/rekey-names.ts` rewrites it.
    */
   static isStale(row: BoundRow, binding: NameBinding, paths?: Pick<TargetPaths, "nameSegments">): boolean {
     const field = binding.field === "value" ? "value" : "target";
@@ -61,7 +63,18 @@ export default class NameBindingReader {
     if (path === undefined || held === undefined) return true;
     if (binding.kind !== "entity") return stripSeparators(held) !== binding.name;
     const named = paths?.nameSegments(path).find((candidate) => candidate.segment === binding.segment);
-    return held !== (named?.slugOf ?? stripSeparators)(binding.name);
+    return (
+      held !== NameBindingReader.slugOf(named, binding.name) &&
+      held !== NameBindingReader.slugOf(named, binding.name, stripSeparatorsDroppingAccents)
+    );
+  }
+
+  /**
+   * How a path's segment (`named`, as its category describes it) writes an entity's name: its category's way, or the
+   * name's plain slug, by a slug's function (`keyOf`).
+   */
+  static slugOf(named: NamedSegment | undefined, name: string, keyOf: (text: string) => string = stripSeparators) {
+    return named?.slugOf ? named.slugOf(name, keyOf) : keyOf(name);
   }
 
   /** The name the view shows a bound entity under: what stands for it, or its namesake for one out of the chain. */
@@ -79,7 +92,7 @@ export default class NameBindingReader {
   /** How a path's segment writes an entity's name: its category's way, or the name's plain slug. */
   private slugAt(path: string, segment: number, name: string): string {
     const named = this.shown.paths?.nameSegments(path).find((candidate) => candidate.segment === segment);
-    return (named?.slugOf ?? stripSeparators)(name);
+    return NameBindingReader.slugOf(named, name);
   }
 
   /**

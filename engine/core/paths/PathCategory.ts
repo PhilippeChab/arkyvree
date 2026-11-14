@@ -15,12 +15,12 @@ type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key
 
 /**
  * A segment of a path that names an entity: its place, its entities' kind, and how their name is written there when
- * not as its plain slug (a spell list's short name).
+ * not as its plain slug (a spell list's short name), by a slug's function (`keyOf`: `stripSeparators` unless given).
  */
 export interface NamedSegment {
   entityType: string;
   segment: number;
-  slugOf?(name: string): string;
+  slugOf?(name: string, keyOf?: (text: string) => string): string;
 }
 
 /** What a value names: its entities' kind, and their partition when the kind has several (a race's). */

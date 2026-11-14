@@ -35,6 +35,23 @@ describe("the aptitudes' target grammar", () => {
       expect(AptitudeTargets.parsePool(`aptitudes.${stripSeparators(name)}.allowed`)).toBe(stripSeparators(name));
   });
 
+  test("read a list whose name has accented Latin letters by its slug, which writes them plain", () => {
+    for (const name of ["Dons généraux", "Sorts de prêtre", "Straße", "Żółć"])
+      expect(AptitudeTargets.parsePool(`aptitudes.${stripSeparators(name)}.allowed`)).toBe(stripSeparators(name));
+    expect(AptitudeTargets.parseSpellLevel(`aptitudes.${stripSeparators("Sorts de prêtre")}.2.uses`)).toEqual({
+      list: "sortsdepretre",
+      level: 2,
+      field: "uses",
+    });
+  });
+
+  test("tell at once a target that isn't theirs, however long its list's slug", () => {
+    const started = performance.now();
+    for (let index = 0; index < 50; index++)
+      AptitudeTargets.parseSpellLevel(`aptitudes.${"wizardspellsandmore".repeat(3)}.allowed`);
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
   test("tell the shapes apart: a pool is no spell level, a slot's uses no pool or slot allowed, a join neither", () => {
     expect(AptitudeTargets.parsePool("aptitudes.wizardspells.3.allowed")).toBeUndefined();
     expect(AptitudeTargets.parseSpellLevel("aptitudes.general.allowed")).toBeUndefined();
@@ -49,7 +66,7 @@ describe("the aptitudes' target grammar", () => {
       "aptitudes.wizard_spells.1.allowed",
       "aptitudes.wizard.1e1.allowed",
       "aptitudes.wizard. 3.allowed",
-      "aptitudes.é.allowed",
+      "aptitudes.É.allowed",
       "aptitudes.Общие.allowed",
     ]) {
       expect([target, AptitudeTargets.parsePool(target) ?? AptitudeTargets.parseSpellLevel(target)]).toEqual([

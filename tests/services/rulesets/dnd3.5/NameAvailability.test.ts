@@ -446,13 +446,13 @@ test("a name another save took since the check, which meets the index, is refuse
   expect(await Entities.findMany(db, { entityType: "aptitudes", rulesetIds: [rulesetId] })).toHaveLength(1);
 });
 
-test("a name that differs from one the view shows only in case or punctuation is refused, which the rules read as one", async () => {
+test("a name that differs from one the view shows only in case, accents or punctuation is refused: the rules read it as one", async () => {
   const { session, fork, general, baseFeat } = await setup();
   const feat = (name: string) =>
     EntitiesService.createEntity(session, fork.id, "feats", { name, links: { listedIn: [{ toId: general.id }] } });
   const keyError = (name: string, taken: string) =>
     new ConflictError(
-      `"${name}" and "${taken}" read as one name to the rules: they differ only in case, spaces or signs`,
+      `"${name}" and "${taken}" read as one name to the rules: they differ only in case, accents, spaces or signs`,
     );
 
   // A homebrew "dodge" would pass for the core Dodge, Mobility's prerequisite
@@ -462,6 +462,9 @@ test("a name that differs from one the view shows only in case or punctuation is
     keyError("Power-Attack", "Power Attack"),
   );
   expect(feat("Gizmo-Strike")).rejects.toEqual(keyError("Gizmo-Strike", "Gizmo Strike"));
+  // An accent, written on its letter or apart, is read past as well: "Dodgé" would pass for Dodge
+  expect(feat("Dodgé")).rejects.toEqual(keyError("Dodgé", "Dodge"));
+  expect(feat("Gizmo Strike\u0301")).rejects.toEqual(keyError("Gizmo Strike\u0301", "Gizmo Strike"));
 
   // A new case of an entity's own name keeps its key: its own, an inherited one's (whose first edit copies it) too
   expect(await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "GIZMO STRIKE" })).toMatchObject(
@@ -488,7 +491,7 @@ test("restoring a copy whose source's name another feat now has under its key is
 
   expect(RulesetChangesService.revertOverride(session, fork.id, "feats", source.id)).rejects.toEqual(
     new ConflictError(
-      `"Alertness" and "alertness" read as one name to the rules: they differ only in case, spaces or signs`,
+      `"Alertness" and "alertness" read as one name to the rules: they differ only in case, accents, spaces or signs`,
     ),
   );
 });

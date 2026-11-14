@@ -58,6 +58,19 @@ describe("A template's path in another script", () => {
       "tracks.𠀋.level",
     ]);
   });
+
+  test("reads a name written with its accents, and a letter's mark written apart, bare as bracketed", () => {
+    const readable = new Map([
+      ["stats.dextérité.modifier", "number"],
+      ["tracks.i̇x̄.level", "number"],
+    ]);
+    expect(extractTemplatePath("{{ stats.dextérité.modifier }}")).toBe("stats.dextérité.modifier");
+    expect(findTemplateError("floor(tracks.i̇x̄.level / 2) + stats.dextérité.modifier", readable, "number")).toBeNull();
+    expect(findTemplatePaths("max(stats.dextérité.modifier, [tracks.żółć.level])").map(({ path }) => path)).toEqual([
+      "stats.dextérité.modifier",
+      "tracks.żółć.level",
+    ]);
+  });
 });
 
 describe("A template's error", () => {

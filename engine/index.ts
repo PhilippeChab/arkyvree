@@ -10,6 +10,7 @@ export { default as Engine } from "./api/Engine.ts";
 export type { Accepted, EntityKinds } from "./api/Modules.ts";
 export type { ProgressionForm } from "./api/RulesetEngine.ts";
 export type { default as StorageEngine } from "./api/StorageEngine.ts";
+export type { KeyClash, KeysRekey, UnsettledKey } from "./core/bindings/index.ts";
 export type { CowData, CowRows, RulesetSources } from "./core/cow/index.ts";
 export type { EntityAction } from "./core/entities/index.ts";
 export type {

@@ -60,6 +60,16 @@ export const entityLinks = z.custom<EntityLinkValues>(
   "Expected an object of the entity's links",
 );
 
+/**
+ * An entity's name, canonically composed as it's stored (NFC, which changes no character it shows), so a name typed
+ * with an accent apart from its letter is the name typed with the letter whole, which another entity can't take: not
+ * empty.
+ */
+export const entityName = z
+  .string()
+  .overwrite((name) => name.normalize("NFC"))
+  .min(1);
+
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 

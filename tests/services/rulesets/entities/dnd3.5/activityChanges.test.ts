@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { RulesetAbility, RulesetSave } from "@/engine/rulesets/dnd3.5/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import type { Feat, RulesetAbility, RulesetSave } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -12,6 +13,7 @@ import {
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
   FEAT_FAMILY,
+  FEAT_GENERATED,
   ITEM_COST_GP,
   ITEM_TYPE,
   RACE_QUADRUPED,
@@ -122,6 +124,32 @@ describe("An update's activity", () => {
       { field: SPELL_DESCRIPTOR, label: "Descriptors", from: "Fire" },
       { field: SPELL_TARGET, label: "Target", from: "You" },
     ]);
+  });
+
+  test("of a name stored with an accent apart from its letter, sent composed, keeps it: no rename, its lock passes", async () => {
+    const { rulesetId, session } = await setup();
+    // A generated feat, whose name is locked, saved before names were stored composed
+    const stored = "Gizmo Fe\u0301nix";
+    const [feat] = await Entities.create<Feat>(db, DND35_BASE_RULES, "feats", {
+      name: stored,
+      rulesetId,
+      fields: { [FEAT_GENERATED]: true },
+    });
+
+    // The route composes the name its edit sends (NFC): "Gizmo Fénix", the stored one whole
+    const updated = await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
+      name: stored.normalize("NFC"),
+      description: "Rewritten",
+    });
+
+    expect([updated.name, updated.description]).toEqual([stored, "Rewritten"]);
+    expect(await changesOf(session.userId, feat.id)).toEqual([{ field: "description", label: "Description" }]);
+    // A name another than its own is still refused
+    expect(
+      EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
+        name: "Gizmo Phoenix",
+      }),
+    ).rejects.toEqual(new RulesError("invalid", "A generated feat keeps its name"));
   });
 
   test("of a feat records its name, its pools added and removed, and its declared fields", async () => {

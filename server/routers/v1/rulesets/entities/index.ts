@@ -3,7 +3,14 @@ import { z } from "zod";
 
 import { Engine } from "@/engine/index.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { entityFields, entityLinks, entityOrderBy, idParam, orderDirAsc } from "@/server/routers/api/validation.ts";
+import {
+  entityFields,
+  entityLinks,
+  entityName,
+  entityOrderBy,
+  idParam,
+  orderDirAsc,
+} from "@/server/routers/api/validation.ts";
 import {
   v1Entity,
   v1EntityGroupPage,
@@ -38,7 +45,7 @@ const entityBody = z.strictObject({
     .transform((value) => value || null),
   fields: entityFields.optional().meta({ description: "Its fields, by the names its rules declare them" }),
   links: entityLinks.optional().meta({ description: "The entities it names, by role" }),
-  name: z.string().min(1),
+  name: entityName,
   updatedAt: z.string().optional().meta({ description: "When it was read: an update's, refused if it changed (409)" }),
 });
 
@@ -328,7 +335,7 @@ export default new Hono<ApiKeyContext>()
                 .string()
                 .optional()
                 .transform((value) => value || null),
-              name: z.string().min(1),
+              name: entityName,
             }),
           )
           .min(1),

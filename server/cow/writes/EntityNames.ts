@@ -23,11 +23,12 @@ const NAME_INDEX = "entities_name_unique_idx";
 
 /**
  * The refusal of a name (`name`) whose key (`stripSeparators`) is another's the view shows (`taken`): a path names an
- * entity by its key, so the rules read both as one name.
+ * entity by its key, which reads an accented letter as its plain letter, so the rules read both as one name ("Côte"
+ * and "Cote").
  */
 function toKeyError(name: string, taken: string) {
   return new ConflictError(
-    `"${name}" and "${taken}" read as one name to the rules: they differ only in case, spaces or signs`,
+    `"${name}" and "${taken}" read as one name to the rules: they differ only in case, accents, spaces or signs`,
   );
 }
 
