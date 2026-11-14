@@ -4,6 +4,9 @@ import { APP_NAME } from "@/client/src/lib/brand.ts";
 
 import { SourceLink } from "./SourceLink.tsx";
 
+/** The copyright year, read once as the app loads. */
+const YEAR = new Date().getFullYear();
+
 export function Footer() {
   return (
     <Stack
@@ -21,7 +24,7 @@ export function Footer() {
       }}
     >
       <Typography variant="caption">
-        © {new Date().getFullYear()} {APP_NAME}
+        © {YEAR} {APP_NAME}
       </Typography>
       <SourceLink variant="caption" />
     </Stack>
