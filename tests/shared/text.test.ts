@@ -58,7 +58,7 @@ describe("Text", () => {
     expect(stripSeparators("Potion ½ (Kai²)")).toBe("potionkai");
   });
 
-  test("keeps the key it had for every character but a Latin letter past ASCII, beside Latin and another script", () => {
+  test("keeps the key it had for every character but a Latin-script letter or digit past ASCII, beside Latin and another", () => {
     const latinPastAscii = /^(?=\p{scx=Latin})[\p{L}\p{N}]$/u;
     const changed: string[] = [];
     // Every plane a script is written in: the Basic and Supplementary ones (CJK's) and the special purpose one (tags,
@@ -144,16 +144,20 @@ describe("Text", () => {
       "d",
       "th",
     ]);
-    // A compatibility form and a ligature are taken apart; a letter none reduces stays, lowercased
-    expect(["Ｚｅｌｄａ", "ĳssel", "ﬁre", "ǅemal", "Ŀlum", "Ŋ", "Ə"].map(stripSeparators)).toEqual([
+    // A compatibility form, a ligature, a numeral and an ordinal are taken apart; a letter none reduces stays, lowercased
+    expect(["Ｚｅｌｄａ", "ĳssel", "ﬁre", "ǅemal", "Ŀlum", "Rank Ⅳ", "1ª", "Ŋ", "Ə"].map(stripSeparators)).toEqual([
       "zelda",
       "ijssel",
       "fire",
       "dzemal",
       "llum",
+      "rankiv",
+      "1a",
       "ŋ",
       "ə",
     ]);
+    // Which a key once left out
+    expect(["Rank Ⅳ", "1ª", "Ｚｅｌｄａ"].map(stripSeparatorsDroppingAccents)).toEqual(["rank", "1", ""]);
   });
 
   test("reads a Latin name's accented letters as plain beside another script's, which keeps its own", () => {

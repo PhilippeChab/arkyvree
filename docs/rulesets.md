@@ -309,8 +309,10 @@ path names it with its accents or without; and its letters, digits and signs of 
 script with the marks that follow them (a Hindi or Thai vowel sign), each word of them
 lowercased whole ("Лазание" is `лазание`, Greek "ΟΔΟΣ" and "Οδος" are one), none of them
 read past its marks ("й" isn't "и", "ビ" isn't "ヒ"), so a name in any script has a key of
-its own. Signs every script shares ("²", "½") are left out. Only a Latin letter past ASCII
-reads otherwise than it once did: a key dropped those (`discrtion`,
+its own. Signs every script shares ("²", "½") are left out. Only a Latin-script letter or
+digit past ASCII reads otherwise than it once did, an accented letter or a form of the
+Latin script's own (a numeral "Ⅳ" is `iv`, an ordinal "ª" `a`, a fullwidth "Ａ" `a`, a
+ligature "ﬁ" `fi`): a key dropped those (`discrtion`,
 `stripSeparatorsDroppingAccents`), and the rules saved then are rewritten by hand once,
 after the deploy that reads them plain (see [What a rule's names
 mean](./customization.md#what-a-rules-names-mean)). Two entities of a kind a path names (an ability, a save, a

@@ -721,15 +721,17 @@ export default class EntityWriter {
       policy.canUpdateEntity();
 
       const planned = await plan(scope, { tx });
-      await new EntityNames(scope).assertRenameAvailable(tx, this.type, planned.entity, body.name);
+      // The name its plan writes: the one sent, or the stored one, which an edit sending it composed otherwise keeps
+      const name = planned.row.name ?? body.name;
+      await new EntityNames(scope).assertRenameAvailable(tx, this.type, planned.entity, name);
       const target = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.entity);
-      const row = await EntityNames.withNameRefusal(body.name, () =>
+      const row = await EntityNames.withNameRefusal(name, () =>
         EntityWriter.updateRow(tx, scope.ruleset.baseRules, this.type, planned.row, target, body.updatedAt),
       );
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: this.type }, planned, true);
 
       await EntityWriter.recordActivity(tx, scope.ruleset, session, "update", this.type, target.id, {
-        entityName: body.name,
+        entityName: name,
         // What its plan writes another value of, as its rules label it
         changedFields: planned.changes,
       });

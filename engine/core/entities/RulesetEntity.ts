@@ -147,6 +147,18 @@ export default abstract class RulesetEntity<
   protected static readonly tiered: boolean = false;
 
   /**
+   * An edit's form (`sent`) with the entity's stored name (`stored`) when it sends that name composed otherwise (one
+   * stored before names were stored composed, NFC, which the route composes): the edit renames nothing, then, records
+   * no change of name, and passes a locked name's check.
+   */
+  private static keptName(sent: EntityForm, stored: string | null): EntityForm {
+    const { name } = sent;
+    if (name === undefined || stored === null || name === stored) return sent;
+    if (name.normalize("NFC") !== stored.normalize("NFC")) return sent;
+    return { ...sent, name: stored };
+  }
+
+  /**
    * Its list's filters, by query key, each one at a time: its pool's role, its tier (`tier`), its partition
    * (`partition`), then its own (`listFilters`). A query's issues follow their order.
    */
@@ -556,14 +568,14 @@ export default abstract class RulesetEntity<
 
   /**
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the fields it
-   * doesn't give as they are, and refuses a new name its kind locks, `lockedName`), what it writes beside it, and what
-   * its activity records it changes (`changes`: each field, single link and list of links it writes another value of,
-   * labeled as declared, `EntityChanges`).
+   * doesn't give as they are, keeps its stored name when it sends it composed otherwise, `keptName`, and refuses a new
+   * name its kind locks, `lockedName`), what it writes beside it, and what its activity records it changes (`changes`:
+   * each field, single link and list of links it writes another value of, labeled as declared, `EntityChanges`).
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<V[K]> {
     this.checkAction("update");
     const entity = this.find(id);
-    const { body, given } = this.readForm(sent, entity);
+    const { body, given } = this.readForm(RulesetEntity.keptName(sent, entity.name), entity);
     this.checkLockedName(body, entity);
     this.checkForm(body, given, entity);
     const plan = this.planWrite(body, given, entity);

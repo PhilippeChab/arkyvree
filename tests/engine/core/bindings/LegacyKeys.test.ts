@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { LegacyKeys } from "@/engine/core/bindings/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import type { NameBinding } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { composeView, rawRows } from "@/tests/support/composedViews.ts";
 
 /** The made-up ruleset's owners: no two of one key. */
@@ -31,7 +32,7 @@ const PATHS: Pick<TargetPaths, "namedKinds" | "nameSegments"> = {
         {
           entityType: "targets",
           segment: 1,
-          slugOf: (name, keyOf = (text) => text) => keyOf(name.replace(/ Lore$/, "")),
+          slugOf: (name, keyOf = stripSeparators) => keyOf(name.replace(/ Lore$/, "")),
         },
         { entityType: "owners", segment: 2 },
       ];

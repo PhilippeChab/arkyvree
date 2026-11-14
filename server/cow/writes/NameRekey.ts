@@ -47,21 +47,29 @@ export default class NameRekey {
       requirementIds: requirements.map((requirement) => requirement.id),
     });
     const rows: RekeyedRow[] = [...modifiers, ...set, ...requirements];
-    const characterOf = new Map(set.map((modifier) => [modifier.id, modifier.sourceId]));
-    return { bindings, characterOf, modifierIds: new Set(modifierIds), rows };
+    // Each character's modifier's character, and its master's: a bonded creature's write touches its master
+    const charactersOf = new Map(
+      set.map(({ id, parentCharacterId, sourceId }) => [
+        id,
+        parentCharacterId ? [parentCharacterId, sourceId] : [sourceId],
+      ]),
+    );
+    return { bindings, charactersOf, modifierIds: new Set(modifierIds), rows };
   }
 
   /**
    * Rewrites the ruleset's rows saved under the old keys (`rulesetId`), in `tx`: what it did. It locks as every write
-   * does (`Locks`), the ruleset before anything else, then the characters whose own modifiers it rewrites, then their
-   * rows, so a save beside it waits its turn rather than deadlock.
+   * does (`Locks`), the ruleset before anything else, then the characters whose own modifiers it rewrites and their
+   * masters (a bonded creature's modifier written touches its master), masters first, then their rows, so a save
+   * beside it waits its turn rather than deadlock.
    */
   static async rekey(tx: Db, rulesetId: string): Promise<RekeyResult> {
     await Locks.lockRulesets(tx, { ids: [rulesetId] }, "update");
     return await withRulesetScope(tx, rulesetId, async (scope) => {
-      const { bindings, characterOf, modifierIds, rows } = await NameRekey.readRows(tx, rulesetId);
+      const { bindings, charactersOf, modifierIds, rows } = await NameRekey.readRows(tx, rulesetId);
       const plan = Engine.for(scope).planRekeyedNames(rows, bindings);
-      const characterIds = [...plan.rows.keys()].flatMap((id) => characterOf.get(id) ?? []);
+      // Masters before their children, as `Locks` orders them
+      const characterIds = [...plan.rows.keys()].flatMap((id) => charactersOf.get(id) ?? []);
       await Locks.lockCharacters(tx, { ids: [...new Set(characterIds)] }, "no key update");
       const written = new Set<string>();
       for (const row of rows) {

@@ -72,8 +72,9 @@ found: `/v1`'s key (`index.ts`), or the MCP server's, whose tools call them in t
   which writes an accented Latin letter as its plain letter. It once left those letters out: a ruleset that named a
   skill "Discrétion" answered `skills.discrtion.misc`, and answers `skills.discretion.misc` since ("Élan": `lan`, then
   `elan`; "Straße": `strae`, then `strasse`). An integration that kept a target, a formula or a sheet's key from before
-  reads and writes the new spelling: the old one names nothing any more. A name without such a letter keeps its key,
-  in any script.
+  reads and writes the new spelling: the old one names nothing any more. The same goes for the Latin script's other
+  forms past ASCII, which the old key left out too: a numeral ("Ⅳ", `iv`), an ordinal ("ª", `a`), a fullwidth letter,
+  a ligature ("ﬁ", `fi`). A name with none of those keeps its key, in any script.
 - The routers follow the app's, a resource each (`characters/inventory/`, `characters/advancements/`,
   `rulesets/changes/`, `rulesets/customization/modifiers/`…), each route its reads and its writes together.
 - A character's sheet answers its columns, what the rules find wrong with it (`validation`), what the user may do with

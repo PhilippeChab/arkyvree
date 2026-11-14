@@ -248,6 +248,44 @@ describe("a rule saved while a name's key left its accented letters out", () => 
     ]);
   });
 
+  test("locks a bonded creature's master before it, whose modifier it rewrites, as every write does: no deadlock", async () => {
+    // A seeded bonded creature, and its master, which another connection can lock; its ruleset calls Hide "Discrétion"
+    const { rulesetId, skillMap } = await getSeedCtx();
+    const bonded = await db.execute<{ id: string; master: string }>(sql`
+      select id, parent_character_id as master from character.characters
+      where ruleset_id = ${rulesetId} and parent_character_id is not null order by id limit 1
+    `);
+    const { id: creatureId, master } = bonded.rows[0];
+    await db.execute(sql`update rules.entities set name = 'Discrétion' where id = ${skillMap.Hide}`);
+    // Written without touching the master, which another connection then couldn't lock past this test's transaction
+    await db.execute(sql`select set_config('arkyvree.registry_sync', 'on', true)`);
+    const own = await db.execute<{ id: string }>(sql`
+      insert into customization.modifiers (source_id, source_type, target, value, value_type, operator)
+      values (${creatureId}, 'characters', 'skills.discrtion.misc', '5', 'number', 'add') returning id
+    `);
+    await db.execute(sql`select set_config('arkyvree.registry_sync', 'off', true)`);
+    RulesetViews.invalidate(rulesetId);
+    // The ruleset's view composed once, so the rekey reaches its locks within the wait the check allows
+    await readView(rulesetId);
+    RulesetViews.invalidate(rulesetId);
+    let waitedAt = "";
+
+    // A write of the master holds it: the rekey waits for it before it writes the creature's modifier, which touches it
+    const update = await runWhileLocked(
+      pool,
+      (blockerDb) => Locks.lockCharacters(blockerDb, { ids: [master] }, "update"),
+      () => updateNameKeys(db, [rulesetId]),
+      ({ waiting }) => {
+        waitedAt = waiting;
+      },
+    );
+
+    expect(waitedAt).toContain('"character"."characters"');
+    expect(waitedAt).toContain("for no key update");
+    expect(update.failed).toEqual([]);
+    expect((await Modifiers.findOne(db, { id: own.rows[0].id }))?.target).toBe("skills.discretion.misc");
+  });
+
   test("waits for a write that holds its ruleset before it locks any row, as every write does: no deadlock", async () => {
     const { rulesetId } = await getSeedCtx();
     const held = await db.execute<{ id: string }>(sql`

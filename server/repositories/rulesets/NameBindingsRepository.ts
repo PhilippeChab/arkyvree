@@ -155,26 +155,25 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
 
   /**
    * The modifiers set on the characters of a ruleset (`rulesetId`), archived ones' too, with their character
-   * (`sourceId`), their text and their version: what a rekey reads (`NameRekey`).
+   * (`sourceId`) and its master's (`parentCharacterId`: a bonded creature's, whose write touches its master), their
+   * text and their version: what a rekey reads (`NameRekey`).
    */
   async findOfCharacters(db: Db, where: { rulesetId: string }) {
-    const characters = db
-      .select({ id: charactersInCharacter.id })
-      .from(charactersInCharacter)
-      .where(eq(charactersInCharacter.rulesetId, where.rulesetId));
     return await db
       .select({
         id: modifiersInCustomization.id,
+        parentCharacterId: charactersInCharacter.parentCharacterId,
         sourceId: modifiersInCustomization.sourceId,
         target: modifiersInCustomization.target,
         updatedAt: modifiersInCustomization.updatedAt,
         value: modifiersInCustomization.value,
       })
       .from(modifiersInCustomization)
+      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, modifiersInCustomization.sourceId))
       .where(
         and(
           eq(modifiersInCustomization.sourceType, "characters"),
-          inArray(modifiersInCustomization.sourceId, characters),
+          eq(charactersInCharacter.rulesetId, where.rulesetId),
         ),
       )
       .orderBy(modifiersInCustomization.createdAt, modifiersInCustomization.id);

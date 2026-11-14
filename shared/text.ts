@@ -119,9 +119,10 @@ export function sanitizeText(text: string) {
  * (Cyrillic, Greek, Hindi, Japanese…), with the marks that follow it (a Hindi or Thai vowel sign), each word of them
  * lowercased whole (a Greek word's final sigma: "ΟΔΟΣ" and "Οδος" are "οδος"), so a name in any script has a slug of
  * its own ("Лазание" → "лазание", "й" isn't "и", "ビール" isn't "ビル"); anything else left out: spaces, punctuation, a
- * sign every script shares ("²", "½"). Only a Latin letter past ASCII reads otherwise than it did before keys read
- * accents so (`stripSeparatorsDroppingAccents`): a name without one keeps its key, "Weapon Focus: Longsword" →
- * "weaponfocuslongsword".
+ * sign every script shares ("²", "½"). Only a Latin-script letter or digit past ASCII reads otherwise than it did
+ * before keys read accents so (`stripSeparatorsDroppingAccents`), which it left out: an accented letter, and a form of
+ * the Latin script's own, a numeral ("Ⅳ" → "iv"), an ordinal ("ª" → "a"), a fullwidth letter ("Ａ" → "a"), a ligature
+ * ("ﬁ" → "fi"). A name without one keeps its key, "Weapon Focus: Longsword" → "weaponfocuslongsword".
  */
 export function stripSeparators(s: string) {
   const text = String(s);
