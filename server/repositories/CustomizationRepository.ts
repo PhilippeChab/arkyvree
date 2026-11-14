@@ -22,6 +22,18 @@ abstract class CustomizationRepository<T extends CustomizationTable> extends Cus
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
   declare protected readonly table: T;
 
+  /**
+   * Rewrites a row's text as a data step does (`NameRekey`: a name's key moved), its version (`updatedAt`) kept, since
+   * no edit made it: a dialog open on it still saves. None when a write changed the row since that version.
+   */
+  async backfillText(db: Db, values: Partial<InferInsertModel<T>>, where: { id: string; updatedAt: string }) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: where.updatedAt })
+      .where(this.where([eq(this.table.id, where.id), eq(this.table.updatedAt, where.updatedAt)]))
+      .returning();
+  }
+
   /** How many of the rows `ids` names exist, at their version (`updatedAt`) when it's given. */
   async count(db: Db, where: { ids: string[]; updatedAt?: string }) {
     if (where.ids.length === 0) return 0;

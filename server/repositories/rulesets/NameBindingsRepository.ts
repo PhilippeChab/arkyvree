@@ -69,6 +69,23 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
     )!;
   }
 
+  /** Renames a binding (`id`). */
+  private async rename(db: Db, name: string, id: string) {
+    return await db.update(this.table).set({ name }).where(eq(this.table.id, id)).returning();
+  }
+
+  /** Points the bindings of a ruleset's rows that name an entity (`where`) at another (`entityId`). */
+  private async repoint(db: Db, entityId: string, where: { entityId: string; rulesetId: string }) {
+    return await db
+      .update(this.table)
+      .set({
+        entityId,
+        rulesetId: sql`(SELECT ${entitiesInRules.rulesetId} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`,
+      })
+      .where(and(eq(this.table.entityId, where.entityId), this.ownedBy(db, where.rulesetId)))
+      .returning();
+  }
+
   /** Stores bindings, each with the ruleset its entity is in, as stored now. */
   async createMany(db: Db, values: NewNameBinding[]) {
     if (values.length === 0) return [];
@@ -134,6 +151,32 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
       .from(this.table)
       .where(and(inArray(this.table.entityId, where.entityIds), this.ownedBy(db, where.rulesetId)));
     return rows.flatMap((row) => row.entityId ?? []);
+  }
+
+  /**
+   * The modifiers set on the characters of a ruleset (`rulesetId`), archived ones' too, with their text and their
+   * version: what a rekey reads (`NameRekey`).
+   */
+  async findOfCharacters(db: Db, where: { rulesetId: string }) {
+    const characters = db
+      .select({ id: charactersInCharacter.id })
+      .from(charactersInCharacter)
+      .where(eq(charactersInCharacter.rulesetId, where.rulesetId));
+    return await db
+      .select({
+        id: modifiersInCustomization.id,
+        target: modifiersInCustomization.target,
+        updatedAt: modifiersInCustomization.updatedAt,
+        value: modifiersInCustomization.value,
+      })
+      .from(modifiersInCustomization)
+      .where(
+        and(
+          eq(modifiersInCustomization.sourceType, "characters"),
+          inArray(modifiersInCustomization.sourceId, characters),
+        ),
+      )
+      .orderBy(modifiersInCustomization.createdAt, modifiersInCustomization.id);
   }
 
   /**
@@ -224,17 +267,17 @@ class NameBindingsRepository extends BaseRepository<typeof nameBindingsInCustomi
 
   /**
    * Points the bindings of a ruleset's rows (`rulesetId`) that name `where.entityId` at `values.entityId`, which
-   * stands in its place once it leaves the ruleset's view, in the ruleset the new entity is in.
+   * stands in its place once it leaves the ruleset's view, in the ruleset the new entity is in; or renames a group's
+   * binding (`id`) as its text now writes it (`name`: a rekey's, `NameRekey`).
    */
-  async update(db: Db, values: { entityId: string }, where: { entityId: string; rulesetId: string }) {
-    return await db
-      .update(this.table)
-      .set({
-        entityId: values.entityId,
-        rulesetId: sql`(SELECT ${entitiesInRules.rulesetId} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${values.entityId})`,
-      })
-      .where(and(eq(this.table.entityId, where.entityId), this.ownedBy(db, where.rulesetId)))
-      .returning();
+  async update(
+    db: Db,
+    values: { entityId: string } | { name: string },
+    where: { entityId: string; rulesetId: string } | { id: string },
+  ) {
+    if ("name" in values && "id" in where) return await this.rename(db, values.name, where.id);
+    if ("entityId" in values && "entityId" in where) return await this.repoint(db, values.entityId, where);
+    throw new Error("A binding's entity is repointed in a ruleset's rows, its name updated by its id");
   }
 }
 

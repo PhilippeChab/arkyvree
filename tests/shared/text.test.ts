@@ -7,7 +7,9 @@ import {
   formatSigned,
   sanitizeName,
   sanitizeText,
+  SLUG_CHARACTER,
   stripSeparators,
+  stripSeparatorsDroppingAccents,
   toSentenceCase,
 } from "@/shared/text.ts";
 
@@ -45,10 +47,60 @@ describe("Text", () => {
     expect(stripSeparators("Two-Bladed Sword +1")).toBe("twobladedsword1");
   });
 
-  test("leaves out an accented Latin letter and a sign every script shares, as it always did", () => {
-    expect(stripSeparators("Discrétion")).toBe("discrtion");
-    expect(stripSeparators("Weapon Focus: Longsword")).toBe("weaponfocuslongsword");
+  test("keeps a plain ASCII name's slug as it always was, and leaves out a sign every script shares", () => {
+    const names = [
+      "Weapon Focus: Longsword",
+      "Knowledge (the planes)",
+      "Spell Focus (Evocation)",
+      "Two-Bladed Sword +1",
+    ];
+    for (const name of names) expect(stripSeparators(name)).toBe(stripSeparatorsDroppingAccents(name));
     expect(stripSeparators("Potion ½ (Kai²)")).toBe("potionkai");
+  });
+
+  test("keeps an accented Latin letter, lowercased, in French, German, Spanish, Polish and Vietnamese names", () => {
+    expect(stripSeparators("Discrétion")).toBe("discrétion");
+    expect(stripSeparators("Arme de prédilection (Épée longue)")).toBe("armedeprédilectionépéelongue");
+    expect(stripSeparators("Überlebenskunst")).toBe("überlebenskunst");
+    expect(stripSeparators("Fertigkeitsfokus: Schlösser öffnen")).toBe("fertigkeitsfokusschlösseröffnen");
+    expect(stripSeparators("Señuelo (Niño)")).toBe("señueloniño");
+    expect(stripSeparators("Żółć Łódź")).toBe("żółćłódź");
+    expect(stripSeparators("Tiếng Việt")).toBe("tiếngviệt");
+    // Names that differ by an accent alone have keys of their own
+    expect(stripSeparators("Résistance")).not.toBe(stripSeparators("Resistance"));
+  });
+
+  test("is one key however an accented letter is written: whole, or a letter and its accent apart", () => {
+    expect(stripSeparators("Discre\u0301tion")).toBe(stripSeparators("Discr\u00E9tion"));
+    expect(stripSeparators("Tie\u0302\u0301ng")).toBe(stripSeparators("Tiếng"));
+    expect(stripSeparators("DISCRÉTION")).toBe("discrétion");
+  });
+
+  test("keeps a letter of its own and a ligature as letters, lowercased", () => {
+    const keys = ["Straße", "ẞ", "Æsir", "Œuvre", "Ørn", "Đạo", "ı", "İ"].map(stripSeparators);
+    expect(keys).toEqual(["straße", "ß", "æsir", "œuvre", "ørn", "đạo", "ı", "i\u0307"]);
+    expect(stripSeparators("Straße")).not.toBe(stripSeparators("Strasse"));
+  });
+
+  test("keeps a Latin name's accented letters beside another script's", () => {
+    expect(stripSeparators("Épée Лазание ΟΔΟΣ")).toBe("épéeлазаниеοδος");
+    expect(stripSeparators("Bàrd 火球")).toBe("bàrd火球");
+  });
+
+  test("is written in the characters a path's grammar reads, and is its own key", () => {
+    const pattern = new RegExp(`^${SLUG_CHARACTER}+$`, "u");
+    const names = ["Discrétion", "Straße", "İ", "Đạo", "Ｚｅｌｄａ", "x\u0304", "Лазание", "ΟΔΟΣ", "कला", "ビール"];
+    for (const name of names) {
+      const key = stripSeparators(name);
+      expect(pattern.test(key)).toBe(true);
+      expect(stripSeparators(key)).toBe(key);
+    }
+  });
+
+  test("had a key that left accented Latin letters out, which the rules saved before then still hold", () => {
+    expect(stripSeparatorsDroppingAccents("Discrétion")).toBe("discrtion");
+    expect(stripSeparatorsDroppingAccents("Discre\u0301tion")).toBe("discretion");
+    expect(stripSeparatorsDroppingAccents("Лазание")).toBe("лазание");
   });
 
   test("keeps a letter of another script, lowercased, so each name has a slug of its own", () => {
@@ -68,8 +120,6 @@ describe("Text", () => {
     ];
     for (const [one, other] of pairs) expect(stripSeparators(one)).not.toBe(stripSeparators(other));
     expect(stripSeparators("ビール")).toBe("ビール");
-    // A Latin letter's mark stays out, as it always did: written apart, its letter stays
-    expect([stripSeparators("Discre\u0301tion"), stripSeparators("Discrétion")]).toEqual(["discretion", "discrtion"]);
   });
 
   test("lowercases a word of another script whole: a Greek name's final sigma is one letter, however it's cased", () => {

@@ -11,7 +11,8 @@
  *   entity in use across the rulesets built on it (`EntityUses`), the copy of an inherited entity (`EntityCopy`) and its
  *   revert to the source (`EntityRevert`), what a ruleset keeps of an extension it unsubscribes from
  *   (`ExtensionDeparture`), an entity's customizations read and copied (`CustomizationCopies`), and the
- *   owned entities of two owners paired by position (`findOwnedPairs`).
+ *   owned entities of two owners paired by position (`findOwnedPairs`); what a ruleset's rules' names mean, kept beside
+ *   their text (`NameBindingFill`), and that text moved to the keys that keep accented letters (`NameRekey`).
  */
 export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetChanges } from "./views/RulesetChanges.ts";
@@ -36,4 +37,5 @@ export { default as EntityRevert } from "./writes/EntityRevert.ts";
 export { default as EntityUses } from "./writes/EntityUses.ts";
 export { default as ExtensionDeparture } from "./writes/ExtensionDeparture.ts";
 export { default as NameBindingFill } from "./writes/NameBindingFill.ts";
+export { default as NameRekey } from "./writes/NameRekey.ts";
 export { findOwnedPairs } from "./writes/ownedPairs.ts";

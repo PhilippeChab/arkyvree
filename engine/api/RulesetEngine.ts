@@ -1,4 +1,4 @@
-import { NameBinder, NameBindingReader } from "@/engine/core/bindings/index.ts";
+import { LegacyKeys, NameBinder, NameBindingReader } from "@/engine/core/bindings/index.ts";
 import type {
   EntityAction,
   EntityLinks,
@@ -156,6 +156,19 @@ export default class RulesetEngine {
   planNameBindings(rows: { id: string; operator: string | null; target: string | null; value: string | null }[]) {
     const binder = new NameBinder(this.view.rulesetData, this.module.targetPaths);
     return new Map(rows.map((row) => [row.id, binder.bind(row)]));
+  }
+
+  /**
+   * The text of rows saved before a name's key kept its accented Latin letters (`rows`: modifiers or requirements, a
+   * character's own modifiers, as stored, with their `bindings`), moved to the keys that keep them, in the ruleset's
+   * view (`LegacyKeys`): each row whose text changes, the group bindings whose names follow it, and the old keys
+   * several names now have keys for, which it leaves.
+   */
+  planRekeyedNames(
+    rows: { id: string; target: string | null; value: string | null }[],
+    bindings: readonly NameBinding[],
+  ) {
+    return new LegacyKeys(this.view.rulesetData, this.module.targetPaths).plan(rows, bindings);
   }
 
   /**

@@ -22,10 +22,11 @@ export default class SpellLists {
 
   /**
    * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
-   * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
+   * → "wizard", "Knowledge Domain Spells" → "knowledgedomain"), by a slug's function (`keyOf`:
+   * `stripSeparators` unless given).
    */
-  static toSpellPossessionSlug(aptitudeName: string) {
-    return stripSeparators(aptitudeName.replace(/ Spells$/, ""));
+  static toSpellPossessionSlug(aptitudeName: string, keyOf: (text: string) => string = stripSeparators) {
+    return keyOf(aptitudeName.replace(/ Spells$/, ""));
   }
 
   /** What it derived, each the first time it's read. */

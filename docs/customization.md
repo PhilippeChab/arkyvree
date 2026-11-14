@@ -86,6 +86,19 @@ has that name when it's read. Each row therefore stores, beside its text, the en
   rulesets once it has installed or updated a package (`applyPackages`), so a seeded database's rules have theirs. A
   database whose rules were saved before their names were kept runs it once on every ruleset, by hand, after the
   migration that makes the table (`scripts/db/fill-name-bindings.ts`), as it does after SQL that writes rules.
+- **Keys that kept their accents**: a name's key dropped its accented Latin letters once ("Discrétion" was
+  `discrtion`), and the rules saved then still hold that key in their text. A binding reads either key as its entity's
+  (`NameBindingReader.isStale`, with `stripSeparatorsDroppingAccents`), so a rule bound to its entity keeps working,
+  and no fill drops its bindings, between the deploy that keeps accents and the step that rewrites the text:
+  `scripts/db/rekey-names.ts`, run once by hand on a database whose rules were saved before (`updateNameKeys`,
+  `NameRekey`, `LegacyKeys`). For each ruleset, its sources first, it rewrites each of its modifiers' and requirements'
+  text, and its characters' own modifiers', to the new keys: a bound name to the key of the name it was bound under,
+  an unbound one (or a group's, its binding renamed with it) to the key of the one name of the view that had its old
+  key, a wildcard's prefix to the new key of the same start. It keeps every row's version (`updatedAt`) and its
+  entity bindings, bumps the content version of each ruleset it changed, prints how many rows it rewrote, and lists
+  the old keys several names had, which it leaves for a person to settle. A second run changes nothing. A text that
+  isn't bound to its entity (a family, a wildcard, a row written past a save) reads by its new key only, so it waits
+  for the step.
 
 A category declares the names its paths carry (`PathCategory.names`, `nameSegments`, `valueNames`); a word the paths
 use themselves (`skills.budget`, `languages.extrapicks`) names none.
@@ -172,9 +185,11 @@ The seeds write these with the content's builders (`content/dnd3.5/builders/lang
 
 ## Normalization
 
-All entity names in paths use `stripSeparators()` from `shared/text.ts`.
+All entity names in paths use `stripSeparators()` from `shared/text.ts`, their key: spaces and signs left out, letters
+lowercased, accented letters kept.
 
-Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficiencybattleaxe"`
+Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficiencybattleaxe"`, `"Discrétion"` →
+`"discrétion"`
 
 ## Auto-Generated Customization
 
