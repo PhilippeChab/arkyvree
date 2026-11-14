@@ -30,22 +30,23 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
    * A modifier's edit on a source of `sourceType`: the row it stores and the bindings of the fields it writes
    * (`rebound`, `ConditionEdit`), and the modifier as it reads once edited (`condition`), checked against its path
    * (`targetPaths`, among `catalogs`). A field it isn't sent keeps its text as the view reads the modifier (`current`,
-   * under its entities' names there), and what its names mean. `bind` reads what a condition's names mean in the view.
+   * under its entities' names there), and what its stored bindings (`bound`) mean. `bind` reads what a condition's
+   * names mean in the view.
    */
   static planChange(
     targetPaths: TargetPaths,
     catalogs: TargetCatalogs,
     sourceType: string,
-    edit: { body: ModifierEditBody; current: ModifierBody },
+    edit: { body: ModifierEditBody; bound: readonly { field: string }[]; current: ModifierBody },
     bind: (condition: ModifierBody) => NameBindingDraft[],
   ) {
-    const { body, current } = edit;
+    const { body, bound, current } = edit;
     const condition = ModifierEdits.rowOf(targetPaths, catalogs, sourceType, {
       operator: body.operator,
       target: body.target ?? current.target,
       value: body.value ?? current.value,
     });
-    const change = new ConditionEdit(body);
+    const change = new ConditionEdit({ bound, sent: body, value: current.value });
     return { bindings: change.pick(bind(condition)), condition, rebound: change.rebound, row: change.store(condition) };
   }
 
@@ -116,11 +117,17 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
 
   /**
    * An edit of one of the entity's modifiers: the entity and the modifier, the row it stores, checked, and the bindings
-   * of the fields it writes (`planChange`).
+   * of the fields it writes (`planChange`), by what its stored bindings (`bound`) are of.
    */
-  planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierEditBody) {
+  planEdit(
+    targetPaths: TargetPaths,
+    catalogs: TargetCatalogs,
+    modifierId: string,
+    body: ModifierEditBody,
+    bound: readonly { field: string }[],
+  ) {
     const plan = this.planDelete(modifierId);
-    const edit = { body, current: plan.modifier };
+    const edit = { body, bound, current: plan.modifier };
     const bind = (condition: ModifierBody) => this.bind(targetPaths, condition);
     return { ...plan, ...ModifierEdits.planChange(targetPaths, catalogs, this.entityType, edit, bind) };
   }

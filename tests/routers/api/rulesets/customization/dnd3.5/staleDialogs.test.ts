@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
+import { sql } from "drizzle-orm";
+
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createSignedInUser, expectOk } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
+import { bumpContentVersion, createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The kinds these tests rename: a feat, a skill, a class, a race. */
@@ -30,6 +34,18 @@ async function createRace(session: Session, rulesetId: string, name: string) {
 async function createSkill(session: Session, rulesetId: string, name: string) {
   const strength = Dnd35View.of(await readView(rulesetId)).abilities.find((ability) => ability.name === "Strength")!;
   return await EntitiesService.createEntity(session, rulesetId, "skills", { name, links: { keyAbility: strength.id } });
+}
+
+/**
+ * Drops a row's bindings, as a row written past a save has none until a fill (SQL, a script), and tells the ruleset's
+ * views (`rulesetId`).
+ */
+async function dropBindings(rulesetId: string, row: { modifierId: string } | { requirementId: string }) {
+  if ("modifierId" in row)
+    await db.execute(sql`delete from customization.name_bindings where modifier_id = ${row.modifierId}`);
+  else await db.execute(sql`delete from customization.name_bindings where requirement_id = ${row.requirementId}`);
+  await bumpContentVersion(rulesetId);
+  RulesetViews.invalidate(rulesetId);
 }
 
 /** The entity of a kind and a name the fork's view shows (a player's race, not a familiar's). */
@@ -310,5 +326,137 @@ describe("a character's own modifier's dialog opened before a rename", () => {
     );
     await rename(session, fork.id, "skills", "Climb", "Bouldering");
     expect(await expectOk(modifiers.$get({ param }))).toMatchObject([{ target: "skills.bouldering.misc", value: "6" }]);
+  });
+});
+
+describe("a row written past a save, which holds no binding yet", () => {
+  test("a modifier's new value binds its target too, which then follows its skill", async () => {
+    const { api, fork, session } = await setUp();
+    const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
+    const holder = await createFeat(session, fork.id, "Sure Grip");
+    const param = { id: fork.id, entityType: "feats", entityId: holder.id };
+    const created = await expectOk(
+      modifiers.$post({ param, json: { operator: "add", target: "skills.climb.misc", value: "2" } }),
+    );
+    await dropBindings(fork.id, { modifierId: created.id });
+
+    await expectOk(
+      modifiers[":modifierId"].$put({
+        param: { ...param, modifierId: created.id },
+        json: { operator: "add", value: "{{ [skills.jump.rank] }}" },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Climb", "Scaling");
+    await rename(session, fork.id, "skills", "Jump", "Leap");
+
+    expect(await expectOk(modifiers.$get({ param }))).toMatchObject([
+      { target: "skills.scaling.misc", value: "{{ [skills.leap.rank] }}" },
+    ]);
+  });
+
+  test("a requirement's new value binds its target too, which then follows its skill", async () => {
+    const { api, fork, session } = await setUp();
+    const requirements = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements;
+    const holder = await createFeat(session, fork.id, "Wall Runner");
+    const param = { id: fork.id, entityType: "feats", entityId: holder.id };
+    const created = await expectOk(
+      requirements.$post({
+        param,
+        json: { level: "1", operator: "greater_than", target: "skills.climb.rank", value: "4" },
+      }),
+    );
+    await dropBindings(fork.id, { requirementId: created.id });
+
+    await expectOk(
+      requirements[":requirementId"].$put({
+        param: { ...param, requirementId: created.id },
+        json: { level: "1", value: "{{ [skills.jump.rank] }}" },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Climb", "Scaling");
+
+    expect(await expectOk(requirements.$get({ param }))).toMatchObject([
+      { target: "skills.scaling.rank", value: "{{ [skills.jump.rank] }}" },
+    ]);
+  });
+
+  test("a character's own modifier's new value binds its target too", async () => {
+    const { api, fork, session, user } = await setUp();
+    const character = await createTestCharacter(user.id, { rulesetId: fork.id });
+    const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
+    const param = { characterId: character.id };
+    const created = await expectOk(
+      modifiers.$post({ param, json: { operator: "add", target: "skills.climb.misc", value: "5" } }),
+    );
+    await dropBindings(fork.id, { modifierId: created.id });
+
+    await expectOk(
+      modifiers[":modifierId"].$put({
+        param: { ...param, modifierId: created.id },
+        json: { operator: "add", value: "6" },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Climb", "Scaling");
+
+    expect(await expectOk(modifiers.$get({ param }))).toMatchObject([{ target: "skills.scaling.misc", value: "6" }]);
+  });
+});
+
+describe("a new target, its formula value left as it was", () => {
+  test("keeps the skill the formula names, not another whose name reads the same in a path", async () => {
+    const { api, fork, session } = await setUp();
+    const modifiers = api.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers;
+    // A skill whose name reads as the formula's will once its skill is renamed, made first so a reading finds it first
+    await createSkill(session, fork.id, "Sca Ling");
+    await createSkill(session, fork.id, "Rope Work");
+    const holder = await createFeat(session, fork.id, "Sure Grip");
+    const param = { id: fork.id, entityType: "feats", entityId: holder.id };
+    const created = await expectOk(
+      modifiers.$post({
+        param,
+        json: { operator: "add", target: "abilities.strength.misc", value: "{{ [skills.ropework.rank] }}" },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Rope Work", "Scaling");
+
+    await expectOk(
+      modifiers[":modifierId"].$put({
+        param: { ...param, modifierId: created.id },
+        json: { operator: "add", target: "abilities.dexterity.misc", updatedAt: created.updatedAt },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Scaling", "Knots");
+
+    expect(await expectOk(modifiers.$get({ param }))).toMatchObject([
+      { target: "abilities.dexterity.misc", value: "{{ [skills.knots.rank] }}" },
+    ]);
+  });
+
+  test("on a character's own modifier, keeps the skill the formula names", async () => {
+    const { api, fork, session, user } = await setUp();
+    await createSkill(session, fork.id, "Sca Ling");
+    await createSkill(session, fork.id, "Rope Work");
+    const character = await createTestCharacter(user.id, { rulesetId: fork.id });
+    const modifiers = api.api.characters.modifiers[":characterId"].modifiers;
+    const param = { characterId: character.id };
+    const created = await expectOk(
+      modifiers.$post({
+        param,
+        json: { operator: "add", target: "abilities.strength.misc", value: "{{ [skills.ropework.rank] }}" },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Rope Work", "Scaling");
+
+    await expectOk(
+      modifiers[":modifierId"].$put({
+        param: { ...param, modifierId: created.id },
+        json: { operator: "add", target: "abilities.dexterity.misc", updatedAt: created.updatedAt },
+      }),
+    );
+    await rename(session, fork.id, "skills", "Scaling", "Knots");
+
+    expect(await expectOk(modifiers.$get({ param }))).toMatchObject([
+      { target: "abilities.dexterity.misc", value: "{{ [skills.knots.rank] }}" },
+    ]);
   });
 });

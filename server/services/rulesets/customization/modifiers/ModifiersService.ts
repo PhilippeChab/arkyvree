@@ -155,7 +155,9 @@ class ModifiersService {
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const { updatedAt, ...fields } = body;
       const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-      const { bindings, condition, entity, rebound, row } = modifiers.planEdit(catalogs, modifierId, fields);
+      // What its names mean as stored, which a field it isn't sent keeps
+      const bound = await NameBindings.findMany(tx, { modifierIds: [modifierId], requirementIds: [] });
+      const { bindings, condition, entity, rebound, row } = modifiers.planEdit(catalogs, modifierId, fields, bound);
 
       // COW the owning entity if this modifier is inherited
       const edit = new CustomizationEdit(scope);

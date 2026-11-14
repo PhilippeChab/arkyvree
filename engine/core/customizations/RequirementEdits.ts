@@ -88,9 +88,15 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
    * An edit of one of the entity's requirements: the entity and the requirement, the row it stores, the bindings of
    * the fields it writes (`rebound`, `ConditionEdit`), and the condition as it reads once edited (`condition`). A
    * condition's target and value are sent only where they changed: one it isn't sent keeps its text as the view reads
-   * it, checked with what it's sent, and what its names mean.
+   * it, checked with what it's sent, and what its stored bindings (`bound`) mean.
    */
-  planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
+  planEdit(
+    targetPaths: TargetPaths,
+    catalogs: TargetCatalogs,
+    requirementId: string,
+    body: RequirementBody,
+    bound: readonly { field: string }[],
+  ) {
     // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
     const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
     const plan = { ...this.planDelete(requirementId), levels };
@@ -107,7 +113,7 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       target: body.target ?? requirement.target!,
       value: body.value ?? requirement.value ?? undefined,
     });
-    const edit = new ConditionEdit(body);
+    const edit = new ConditionEdit({ bound, sent: body, value: requirement.value });
     const bindings = edit.pick(this.bind(targetPaths, condition));
     return {
       ...plan,

@@ -177,7 +177,9 @@ class RequirementsService {
 
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
         const requirements = Engine.for(scope).requirements(entityType, entityId);
-        const plan = requirements.planEdit(catalogs, requirementId, body);
+        // What its names mean as stored, which a field it isn't sent keeps
+        const bound = await NameBindings.findMany(tx, { modifierIds: [], requirementIds: [requirementId] });
+        const plan = requirements.planEdit(catalogs, requirementId, body, bound);
         const { bindings, condition, entity, levels, rebound, row: sent } = plan;
 
         // COW the owning entity if this requirement is inherited

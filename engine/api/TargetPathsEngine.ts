@@ -70,7 +70,7 @@ export default class TargetPathsEngine {
   ) {
     const binder = new NameBinder(this.view.rulesetData, this.module.targetPaths);
     const [current] = this.view.rulesetData.readRows([edit.stored], edit.bindings, true);
-    const change = { body: edit.body, current };
+    const change = { body: edit.body, bound: edit.bindings, current };
     const bind = (condition: ModifierBody) => binder.bind(condition);
     return ModifierEdits.planChange(this.module.targetPaths, catalogs, sourceType, change, bind);
   }

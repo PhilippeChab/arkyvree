@@ -2,6 +2,7 @@ import { ModifierEdits } from "@/engine/core/customizations/index.ts";
 import type { TargetCatalogs } from "@/engine/core/paths/CategoryPaths.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
+import type { NameBinding } from "@/shared/relations.ts";
 
 import type { Module } from "./Modules.ts";
 
@@ -51,9 +52,9 @@ export default class ModifiersEngine {
 
   /**
    * One of the entity's own modifiers' edit: the entity, the modifier, the row it stores, checked, and the bindings of
-   * the fields it writes; a field it isn't sent keeps its text and what its names mean.
+   * the fields it writes; a field it isn't sent keeps its text and what its stored bindings (`bound`) mean.
    */
-  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierEditBody) {
-    return this.modifiers.planEdit(this.module.targetPaths, catalogs, modifierId, body);
+  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierEditBody, bound: readonly NameBinding[]) {
+    return this.modifiers.planEdit(this.module.targetPaths, catalogs, modifierId, body, bound);
   }
 }

@@ -50,9 +50,10 @@ export const modifierEditFields = {
   target: modifierFields.target
     .optional()
     .meta({ description: "The target path it changes; left out, it keeps its path and the entities that path names" }),
-  value: modifierFields.value
-    .optional()
-    .meta({ description: "Left out, it keeps its value and the entity a value names (a race)" }),
+  value: modifierFields.value.optional().meta({
+    description:
+      "Left out, it keeps its value; a new target reads a plain value (a race's name) anew, under its current name",
+  }),
 };
 
 /** A page of a list: which, and how many to a page. */
