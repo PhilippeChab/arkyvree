@@ -414,8 +414,10 @@ export default class RulesetData {
       links = this.composeLinksOf(id);
       this.linksById.set(id, links);
     }
-    if (role === undefined) return links;
-    return links.filter((link) => link.role === role && (toType === undefined || link.toType === toType));
+    if (role === undefined && toType === undefined) return links;
+    return links.filter(
+      (link) => (role === undefined || link.role === role) && (toType === undefined || link.toType === toType),
+    );
   }
 
   /**

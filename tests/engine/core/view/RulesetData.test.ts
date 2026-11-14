@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { CowData } from "@/engine/core/cow/index.ts";
 import { RulesetComposition, type ViewSchema } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { NO_FIELDS, rawRows } from "@/tests/support/composedViews.ts";
+import { composeView, linkOf, NO_FIELDS, rawRows } from "@/tests/support/composedViews.ts";
 
 /**
  * A made-up module whose characters carry satchels: a kind its inventory holds, a satchel a template when its flag says,
@@ -57,6 +57,21 @@ describe("RulesetData", () => {
     // An entry naming no entity of the kinds the inventory holds is left out, as one naming none at all
     const entries = [{ itemId: "patterned" }, { itemId: "trinket" }, { itemId: "gone" }];
     expect(view.entriesWithItems(entries).map(({ item }) => item.id)).toEqual(["patterned"]);
+  });
+
+  test("reads an entity's links of a role, to a kind, or both", () => {
+    const [ally, rival, friend] = [
+      linkOf("o1", "ally", "t1"),
+      linkOf("o1", "rival", "s1", "sides"),
+      linkOf("o1", "ally", "s2", "sides"),
+    ];
+    const view = composeView([rawRows({ owners: [{ id: "o1" }] }, [{ type: "owners", links: [ally, rival, friend] }])]);
+
+    expect(view.linksOf("o1")).toEqual([ally, rival, friend]);
+    expect(view.linksOf("o1", "ally")).toEqual([ally, friend]);
+    // A kind alone, of any role
+    expect(view.linksOf("o1", undefined, "sides")).toEqual([rival, friend]);
+    expect(view.linksOf("o1", "ally", "sides")).toEqual([friend]);
   });
 
   test("splits an entity's requirements by its kind's template flag and the role it reads its template through", () => {

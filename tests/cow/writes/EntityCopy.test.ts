@@ -36,6 +36,16 @@ interface Granting {
   grantedId: string;
 }
 
+/** What a first edit came to in a base rules: made, or why not (no class to make it on, or its refusal's words). */
+interface Outcome {
+  name: string;
+  outcome: string;
+  rules: BaseRules;
+}
+
+/** The first edits every base rules' classes take between them, by name. */
+const FIRST_EDITS = ["class skill", "level", "modifier"];
+
 /** The most levels a base class has: a prestige class has fewer, and takes one past its last. */
 const MOST_LEVELS = 20;
 
@@ -197,7 +207,7 @@ describe("a first edit of a class that names an entity deleted since", () => {
   });
 
   test("takes a modifier, a class skill and a level, in every base rules", async () => {
-    const made = new Set<string>();
+    const outcomes: Outcome[] = [];
     for (const base of await findBases()) {
       const view = await readView((await forkBase(base.id)).fork.id);
       const [modifier] = view.modifiersById.values();
@@ -247,19 +257,35 @@ describe("a first edit of a class that names an entity deleted since", () => {
           ({ classId }) => takes?.(shown, classId) ?? true,
         );
         const deleted = await deleteGranted(session, fork.id, "feats", grantings);
-        if (!deleted) continue;
-        const { classId } = deleted;
-        const refused = await run(session, fork.id, classId).then(
+        if (!deleted) {
+          const outcome =
+            grantings.length === 0
+              ? "no class that grants a feat takes it"
+              : `no feat the ${grantings.length} classes that take it grant could be deleted`;
+          outcomes.push({ name, outcome, rules: base.baseRules });
+          continue;
+        }
+        const refused = await run(session, fork.id, deleted.classId).then(
           () => undefined,
           (error: unknown) => error,
         );
         // A kind of edit the rules don't take (5e's classes edit no skills) is theirs to refuse, not the copy's
-        if (refused instanceof RulesError && refused.refusal === "not-found") continue;
+        if (refused instanceof RulesError && refused.refusal === "not-found") {
+          outcomes.push({ name, outcome: refused.message, rules: base.baseRules });
+          continue;
+        }
         expect({ rules: base.baseRules, name, refused }).toEqual({ rules: base.baseRules, name, refused: undefined });
-        made.add(name);
+        outcomes.push({ name, outcome: "made", rules: base.baseRules });
       }
     }
-    expect([...made].toSorted()).toEqual(["class skill", "level", "modifier"]);
+    // An edit no base rules made fails with what each base rules came to instead
+    const unmade = FIRST_EDITS.filter(
+      (name) => !outcomes.some((each) => each.name === name && each.outcome === "made"),
+    );
+    expect({ unmade, outcomes: outcomes.filter(({ name }) => unmade.includes(name)) }).toEqual({
+      unmade: [],
+      outcomes: [],
+    });
   });
 
   test("saves a subscriber's class whose level grants an entity its book deleted, in every base rules", async () => {
