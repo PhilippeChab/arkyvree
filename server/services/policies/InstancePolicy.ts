@@ -68,10 +68,11 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
    * the instance would take any next account as its admin, whatever its sign-up setting.
    */
   canDeleteAccount({ activeAdmins }: { activeAdmins: number }) {
-    if (this.isLastAdmin(activeAdmins))
+    if (this.isLastAdmin(activeAdmins)) {
       throw new ConflictError(
         "You're this Arkyvree's only admin: make someone else admin before deleting your account.",
       );
+    }
 
     return true;
   }
