@@ -66,6 +66,9 @@ const wordmark: CSSProperties = {
   textAlign: "center",
 };
 
+/** The footer's copyright year: the year the worker started, which a deploy renews. */
+const YEAR = new Date().getFullYear();
+
 export function EmailLayout({ preview, children }: EmailLayoutProps) {
   return (
     <Html>
@@ -80,7 +83,7 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
           <Hr style={accentBar} />
           {children}
           <Hr style={divider} />
-          <Text style={footer}>© {new Date().getFullYear()} Arkyvree · Happy adventuring</Text>
+          <Text style={footer}>© {YEAR} Arkyvree · Happy adventuring</Text>
         </Container>
       </Body>
     </Html>
