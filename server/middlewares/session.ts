@@ -46,8 +46,8 @@ export function setSessionCookie(c: Context, sessionId: string) {
 
 /**
  * The session a request's cookie (`sessionId`, `getSessionCookie`'s) signs in, and its user: refused when there's none,
- * or when the session has expired. What every signed-in request takes; a route that also serves a signed-out visitor
- * (the websocket) takes `findSignedIn`.
+ * when the session has expired, or when an admin deactivated its account. What every signed-in request takes; a route
+ * that also serves a signed-out visitor (the websocket) takes `findSignedIn`.
  */
 export async function findRequestSession(sessionId: string | undefined): Promise<{ session: SessionRow; user: User }> {
   if (!sessionId) throw new UnauthorizedError("Invalid session");
@@ -56,8 +56,9 @@ export async function findRequestSession(sessionId: string | undefined): Promise
   if (!session) throw new UnauthorizedError("Invalid session");
   if (new Date(session.expiresAt) < new Date()) throw new UnauthorizedError("Session expired");
 
+  // An account an admin deactivated signs in nowhere, its sessions ended with it
   const user = await Users.findOne(db, { id: session.userId });
-  if (!user) throw new UnauthorizedError("Invalid session");
+  if (!user || user.deactivatedAt) throw new UnauthorizedError("Invalid session");
 
   return { session, user };
 }

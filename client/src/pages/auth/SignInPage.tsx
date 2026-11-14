@@ -1,4 +1,5 @@
 import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import { AuthPage, authPagePath, type AuthPageState, useAuthRedirect } from "@/c
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { emailNotVerified, errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { signUpPolicyQuery } from "@/client/src/lib/queries.ts";
 import { PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -20,6 +22,9 @@ export default function SignInPage() {
   const navigate = useNavigate();
   const redirect = useAuthRedirect();
   const auth = useAuthRequests();
+  // Who may sign up: a failed read offers sign-up, whose page shows the failure
+  const { data: signUp, error: signUpError } = useQuery(signUpPolicyQuery());
+  const closed = !signUpError && !!signUp?.hasAdmin && signUp.signUpPolicy === "Closed";
 
   const { control, handleSubmit } = useFormWith<SignInFormData>({
     emailAddress: "",
@@ -67,14 +72,17 @@ export default function SignInPage() {
             disabled={auth.pending}
             onError={(error) => setError(errorMessage(error, "Failed to sign in with Google"))}
           />
-          <Box sx={{ textAlign: "center" }}>
-            <Typography variant="body2">
-              Don't have an account?{" "}
-              <MuiLink component={Link} to={authPagePath("/sign-up", redirect)} underline="hover">
-                Sign up
-              </MuiLink>
-            </Typography>
-          </Box>
+          {/* An instance closed to new accounts offers none */}
+          {!closed && (
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="body2">
+                Don't have an account?{" "}
+                <MuiLink component={Link} to={authPagePath("/sign-up", redirect)} underline="hover">
+                  Sign up
+                </MuiLink>
+              </Typography>
+            </Box>
+          )}
         </Stack>
       </Stack>
     </AuthPage>

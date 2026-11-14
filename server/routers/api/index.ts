@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import activities from "./activities/index.ts";
+import admin from "./admin/index.ts";
 import attachments from "./attachments/index.ts";
 import campaigns from "./campaigns/index.ts";
 import characters from "./characters/index.tsx";
@@ -15,6 +16,7 @@ export default new Hono()
   // Mount API routes with proper chaining for type safety
   .route("/shared", shared)
   .route("/activities", activities)
+  .route("/admin", admin)
   .route("/attachments", attachments)
   .route("/characters", characters)
   .route("/dashboard", dashboard)

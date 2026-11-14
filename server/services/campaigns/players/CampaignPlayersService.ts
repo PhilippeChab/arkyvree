@@ -15,7 +15,7 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import { redactArchivedPlayer, redactPlayerAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
 import { countGameMasters, isLastGameMaster, isLastGameMasterOf } from "@/server/services/campaigns/lastGameMaster.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
-import { getInviteNames } from "@/server/services/invites/index.ts";
+import { checkInviteeCanSignUp, getInviteNames } from "@/server/services/invites/index.ts";
 import { type CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { withCampaignWrite } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -82,7 +82,8 @@ class CampaignPlayersService {
       });
       if (existingPendingInvite) throw new ConflictError("User already has a pending invite for this campaign");
     } else {
-      // For email-only invites, check by email across the campaign
+      // An address no account holds: an instance closed to new accounts refuses it, then by email across the campaign
+      await checkInviteeCanSignUp(tx);
       const campaignPlayers = await Players.findMany(tx, {
         campaignId: player.campaignId,
       });

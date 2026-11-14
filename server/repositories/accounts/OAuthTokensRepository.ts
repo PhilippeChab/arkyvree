@@ -43,7 +43,8 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
 
   /**
    * The pair a refresh token's digest names, or an access token's (a revocation's), with its grant, expired or used
-   * already (its caller decides): none when its user's account is deleted or the app was disconnected.
+   * already (its caller decides): none when its user's account is deleted or deactivated, or the app was
+   * disconnected.
    */
   async findOne(db: Db, where: { accessDigest: string } | { refreshDigest: string }) {
     const [tokens] = await db
@@ -57,7 +58,11 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
       .innerJoin(oauthGrantsInAccount, eq(oauthGrantsInAccount.id, this.table.grantId))
       .innerJoin(
         usersInAccount,
-        and(eq(usersInAccount.id, oauthGrantsInAccount.userId), isNull(usersInAccount.deletedAt)),
+        and(
+          eq(usersInAccount.id, oauthGrantsInAccount.userId),
+          isNull(usersInAccount.deletedAt),
+          isNull(usersInAccount.deactivatedAt),
+        ),
       )
       .where(
         this.branchWhere([
@@ -69,8 +74,8 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
   }
 
   /**
-   * The grant an access token's digest names, unless the token expired: none when its user's account is deleted or the
-   * app was disconnected.
+   * The grant an access token's digest names, unless the token expired: none when its user's account is deleted or
+   * deactivated, or the app was disconnected.
    */
   async findOneWithUser(db: Db, where: { accessDigest: string }) {
     const [grant] = await db
@@ -79,7 +84,11 @@ class OAuthTokensRepository extends BaseRepository<typeof oauthTokensInAccount> 
       .innerJoin(oauthGrantsInAccount, eq(oauthGrantsInAccount.id, this.table.grantId))
       .innerJoin(
         usersInAccount,
-        and(eq(usersInAccount.id, oauthGrantsInAccount.userId), isNull(usersInAccount.deletedAt)),
+        and(
+          eq(usersInAccount.id, oauthGrantsInAccount.userId),
+          isNull(usersInAccount.deletedAt),
+          isNull(usersInAccount.deactivatedAt),
+        ),
       )
       .where(
         and(eq(this.table.accessDigest, where.accessDigest), gt(this.table.accessExpiresAt, new Date().toISOString())),

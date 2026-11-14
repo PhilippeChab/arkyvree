@@ -35,7 +35,8 @@ import {
   withTakenRefusal,
 } from "@/server/services/authentication/accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
-import { withAccountDeletion, withAccountWrite } from "@/server/services/writes/index.ts";
+import { InstancePolicy } from "@/server/services/policies/index.ts";
+import { lockInstanceSettings, withAccountDeletion, withAccountWrite } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorStatus } from "@/shared/enums.ts";
 import type { Player, Session, SessionRow, User } from "@/shared/relations.ts";
@@ -174,6 +175,11 @@ class AccountService {
       // A deletion that ran meanwhile (another tab's) leaves it nothing to delete: its session went with it
       const account = await Users.findOne(tx, { id: userId });
       if (!account) throw new UnauthorizedError("Invalid session");
+      // The instance's settings locked after the accounts, as every change of who its admins are takes them: its last
+      // admin stays, and two admins' deletions don't leave it none
+      await lockInstanceSettings(tx);
+      const activeAdmins = await Users.count(tx, { isAdmin: true });
+      (await InstancePolicy.for(tx, session, account)).canDeleteAccount({ activeAdmins });
       await Rulesets.orphan(tx, { userId });
 
       // Drop the avatar's attachment row so the sweep can reclaim its S3 object: archiving the user leaves it in place,

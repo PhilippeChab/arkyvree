@@ -1,7 +1,7 @@
 import { and, eq, getTableColumns, ilike, inArray, type InferInsertModel, isNull, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
+import { campaignsInCampaign, invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { toDeletedAddress } from "@/server/repositories/accounts/deletedAddress.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
@@ -54,6 +54,31 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
   // Hard delete — used when intentionally removing a player from a campaign
   async delete(db: Db, where: { playerId: string }) {
     return await db.delete(this.table).where(eq(this.table.playerId, where.playerId)).returning();
+  }
+
+  /**
+   * Whether an address (`pendingEmail`) holds a pending invite no sign-in claimed (the ones `backfillUserId` gives its
+   * account) to a live seat of a campaign that isn't archived: what lets it make an account on an instance that takes
+   * invites alone.
+   */
+  async exists(db: Db, where: { pendingEmail: string }) {
+    const [row] = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(playersInCampaign, eq(playersInCampaign.id, this.table.playerId))
+      .innerJoin(campaignsInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
+      .where(
+        and(
+          eq(this.table.email, where.pendingEmail),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          isNull(this.table.deletedAt),
+          isNull(playersInCampaign.deletedAt),
+          isNull(campaignsInCampaign.deletedAt),
+        ),
+      )
+      .limit(1);
+    return !!row;
   }
 
   async findMany(

@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
+import { instanceSettingsInAccount, sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 
 /** The seeded users' password digest ("LocalTest123!"), which the e2e run's users share. */
 export const PASSWORD_DIGEST = "6fc914e8107f52a500ae8d6f5fd9b7ca677440c2fea38b2a9ec6b3143eb91c2b";
@@ -43,7 +43,8 @@ export default async function seed(db: Db) {
 
   // The first entry (LocalUser) keeps the original onboarding-not-set state so
   // the dev account hits the onboarding wizard locally; everyone else has it
-  // pre-completed so journey tests skip the wizard.
+  // pre-completed so journey tests skip the wizard. LocalUser is the instance's
+  // admin, as a new instance's first account is.
   await db.insert(usersInAccount).values(
     seeded.map((u, i) => ({
       id: u.id,
@@ -51,9 +52,11 @@ export default async function seed(db: Db) {
       passwordDigest: PASSWORD_DIGEST,
       username: u.username,
       emailVerifiedAt: now,
-      ...(i === 0 ? {} : { onboardingCompletedAt: now }),
+      ...(i === 0 ? { isAdmin: true } : { onboardingCompletedAt: now }),
     })),
   );
+  // Anyone may sign up on the dev and test instances, whose journeys make accounts of their own
+  await db.update(instanceSettingsInAccount).set({ signUpPolicy: "Open" });
 
   await db.insert(sessionsInAccount).values(seeded.map((u) => ({ id: u.sessionId, userId: u.id, expiresAt })));
 }

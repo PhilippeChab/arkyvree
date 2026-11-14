@@ -6,8 +6,12 @@ import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.t
 import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
-/** What a signed-out user does: sign up, verify their email, sign in, reset their password. */
+/**
+ * What a signed-out user does: read who may sign up, sign up, verify their email, sign in, reset their password.
+ */
 export default new Hono()
+  // Who may make an account here: what the sign-up and sign-in pages show
+  .get("/sign-up-policy", async (c) => c.json(await AuthenticationService.getSignUpPolicy(), 200))
   .post(
     "/forgot-password",
     authRateLimit,

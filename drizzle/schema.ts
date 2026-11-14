@@ -44,6 +44,8 @@ export const usersInAccount = account.table(
     emailVerifiedAt: timestamp("email_verified_at", { mode: "string", withTimezone: true }),
     pendingEmailAddress: text("pending_email_address"),
     onboardingCompletedAt: timestamp("onboarding_completed_at", { mode: "string", withTimezone: true }),
+    isAdmin: boolean("is_admin").default(false).notNull(),
+    deactivatedAt: timestamp("deactivated_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
     uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast()),
@@ -1278,6 +1280,18 @@ export const fieldsInCharacter = character.table(
     check("fields_ordinal_check", sql`ordinal >= 0`),
     check("fields_owner_type_check", sql`owner_type = 'characters'::text`),
   ],
+);
+
+export const signUpPolicy = pgEnum("sign_up_policy", ["Open", "Invite Only", "Closed"]);
+
+export const instanceSettingsInAccount = account.table(
+  "instance_settings",
+  {
+    id: boolean().default(true).primaryKey().notNull(),
+    signUpPolicy: signUpPolicy("sign_up_policy").default("Invite Only").notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  },
+  () => [check("instance_settings_one_row_check", sql`id`)],
 );
 
 export const itemTypesInCharacter = character.table(

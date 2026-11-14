@@ -8,6 +8,7 @@ export {
   withInviteCharacter,
   withLockedCharacter,
 } from "./characterWrites.ts";
+export { lockInstanceSettings, withAdministeredAccount, withInstanceWrite } from "./instanceWrites.ts";
 export { BUSY_RULESET_MESSAGE, withContributorsRuleset, withLockedRuleset, withRulesetWrite } from "./rulesetWrites.ts";
 export {
   BUSY_ACCOUNT_MESSAGE,

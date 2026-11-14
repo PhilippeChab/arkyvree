@@ -25,6 +25,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
 import {
   AccountCircleIcon,
+  AdminIcon,
   CampaignIcon,
   ChangelogIcon,
   CharacterIcon,
@@ -118,6 +119,15 @@ const SIDEBAR_ITEMS = [
     icon: <NotificationsIcon />,
     description: "Updates from collaborators",
     path: "/notifications",
+  },
+  {
+    id: "admin",
+    label: "Admin",
+    icon: <AdminIcon />,
+    description: "Who may sign up, and the accounts",
+    path: "/admin",
+    // Shown to the instance's admins alone (`isAdmin`)
+    adminOnly: true,
   },
   {
     id: "help",
@@ -296,7 +306,7 @@ export function Layout() {
         <Toolbar />
         <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
           <Stack component={List} spacing={1} sx={{ flex: 1, pt: 2, pb: 2, px: 1.5 }}>
-            {SIDEBAR_ITEMS.map((item) => (
+            {SIDEBAR_ITEMS.filter((item) => !("adminOnly" in item) || user?.isAdmin).map((item) => (
               <ListItem key={item.id} disablePadding>
                 {/* A collapsed sidebar shows its items' icons alone, each named in its tooltip */}
                 <Tooltip title={isMobile || effectiveExpanded ? "" : item.label} placement="right" describeChild>

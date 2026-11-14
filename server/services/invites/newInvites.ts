@@ -2,8 +2,9 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
+import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Users } from "@/server/repositories/index.ts";
+import { CLOSED_INVITE_MESSAGE, isClosedToSignUps } from "@/server/services/authentication/index.ts";
 import type { ContributorStatus } from "@/shared/enums.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
@@ -25,6 +26,15 @@ const EMAIL_INDEXES = new Set(["contributors_ruleset_email_unique", "character_c
 
 /** The unique indexes that keep a user one live invite or role of a ruleset or a character (`drizzle/schema.ts`). */
 const USER_INDEXES = new Set(["contributors_ruleset_user_unique", "character_contributors_character_user_unique"]);
+
+/**
+ * Checks that an address no account holds may be invited, whatever to (a campaign's seat, a ruleset, a character): an
+ * instance closed to new accounts refuses it (422) as it's sent, since nobody could sign up to answer it. An address
+ * that has an account is invited as ever.
+ */
+export async function checkInviteeCanSignUp(tx: Db) {
+  if (await isClosedToSignUps(tx)) throw new UnprocessableEntityError(CLOSED_INVITE_MESSAGE);
+}
 
 /**
  * Whether `email` may be invited to contribute to `parent` (its key and id: `{ rulesetId }`, `{ characterId }`): its
@@ -51,6 +61,7 @@ export async function checkNewContributor<P extends object>(
     const pending = await contributions.findOne(tx, { ...parent, userId: invitee.id, status: "Pending" });
     if (pending) throw new ConflictError("User already has a pending invite");
   } else {
+    await checkInviteeCanSignUp(tx);
     const pending = await contributions.findOne(tx, { ...parent, email, status: "Pending" });
     if (pending) throw new ConflictError("This email already has a pending invite");
   }

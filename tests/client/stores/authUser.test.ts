@@ -10,7 +10,10 @@ describe("A user as storage held it", () => {
       username: "Ann",
       pendingEmailAddress: null,
       onboardingCompletedAt: null,
+      isAdmin: false,
     });
+    expect(readAuthUser({ id: "u1", emailAddress: "a@b.c", isAdmin: true })?.isAdmin).toBe(true);
+    expect(readAuthUser({ id: "u1", emailAddress: "a@b.c", isAdmin: "yes" })?.isAdmin).toBe(false);
   });
 
   test("is none when it isn't one: no id, no email address, or not an object", () => {

@@ -5,6 +5,7 @@ import { RULESET_LOCK_ORDER } from "@/drizzle/lockOrder.ts";
 import {
   campaignsInCampaign,
   charactersInCharacter,
+  instanceSettingsInAccount,
   invitesInCampaign,
   playersInCampaign,
   rulesetsInRules,
@@ -181,6 +182,20 @@ class Locks {
       .orderBy(RULESET_LOCK_ORDER)
       .for(mode);
     return new Map(rows.map((row) => [row.id, row.contentVersion]));
+  }
+
+  /**
+   * The instance's settings, its one row, after every aggregate a write locks: what makes the writes that read who its
+   * admins are, or who may make an account, take turns (a new account, an admin's change of one), so two first
+   * sign-ups don't both become its admin, nor two admins leave it with none.
+   */
+  async lockSettings(tx: Db, mode: LockMode): Promise<void> {
+    this.take(tx, "row");
+    await tx
+      .select({ id: instanceSettingsInAccount.id })
+      .from(instanceSettingsInAccount)
+      .where(eq(instanceSettingsInAccount.id, true))
+      .for(mode);
   }
 
   /** A user's account row (`id`), archived or not: none when there's no such account. */

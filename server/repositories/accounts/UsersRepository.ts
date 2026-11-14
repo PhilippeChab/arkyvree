@@ -1,13 +1,27 @@
-import { and, eq, type InferInsertModel, isNull } from "drizzle-orm";
+import { and, count, eq, type InferInsertModel, isNotNull, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { usersInAccount } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import { hashPassword } from "@/server/password.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 import { toDeletedAddress } from "./deletedAddress.ts";
 
-class UsersRepository extends BaseRepository<typeof usersInAccount> {
+/** What the instance's admins see of an account in its list: never its password's digest. */
+const LISTED_COLUMNS = {
+  createdAt: usersInAccount.createdAt,
+  deactivatedAt: usersInAccount.deactivatedAt,
+  emailAddress: usersInAccount.emailAddress,
+  emailVerifiedAt: usersInAccount.emailVerifiedAt,
+  id: usersInAccount.id,
+  isAdmin: usersInAccount.isAdmin,
+  username: usersInAccount.username,
+};
+
+class UsersRepository extends include(BaseRepository<typeof usersInAccount>, Paginates, Searches) {
   constructor() {
     super(usersInAccount);
   }
@@ -31,11 +45,31 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
       .returning();
   }
 
+  /**
+   * The instance's admins who can act (`isAdmin`): their accounts neither deleted nor deactivated, and their email
+   * verified, so they can sign in.
+   */
+  async count(db: Db, where: { isAdmin: true }) {
+    const [row] = await db
+      .select({ count: count() })
+      .from(this.table)
+      .where(
+        and(
+          eq(this.table.isAdmin, where.isAdmin),
+          isNull(this.table.deletedAt),
+          isNull(this.table.deactivatedAt),
+          isNotNull(this.table.emailVerifiedAt),
+        ),
+      );
+    return row?.count ?? 0;
+  }
+
   async create(
     db: Db,
     values: {
       emailAddress: string;
       emailVerifiedAt?: string;
+      isAdmin?: boolean;
       password?: string;
       username?: string;
     },
@@ -48,6 +82,7 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
         emailAddress: values.emailAddress,
         ...(passwordDigest ? { passwordDigest } : {}),
         ...(values.emailVerifiedAt ? { emailVerifiedAt: values.emailVerifiedAt } : {}),
+        ...(values.isAdmin ? { isAdmin: true } : {}),
       })
       .returning();
   }
@@ -67,6 +102,27 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
         [this.visibility(visibility)],
       ),
     });
+  }
+
+  /**
+   * The instance's accounts, as its admins list them (`LISTED_COLUMNS`), the newest first: their deleted ones aside,
+   * those whose address or username holds `search`.
+   */
+  async findPage(db: Db, where: { search?: string }, pagination: Pagination) {
+    return await this.withPagination(pagination, async ({ limit, offset }) =>
+      db
+        .select(LISTED_COLUMNS)
+        .from(this.table)
+        .where(
+          and(
+            isNull(this.table.deletedAt),
+            this.search(where.search, [this.table.emailAddress, this.table.username]) || undefined,
+          ),
+        )
+        .orderBy(...this.pageOrder(this.orderBy(this.table.createdAt, "desc")))
+        .limit(limit)
+        .offset(offset),
+    );
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof usersInAccount>>, where: { id: string }) {

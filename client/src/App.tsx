@@ -13,6 +13,7 @@ import SignInPage from "./pages/auth/SignInPage.tsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
 
 const ActivitiesPage = lazy(() => import("./pages/activities/ActivitiesPage.tsx"));
+const AdminPage = lazy(() => import("./pages/admin/AdminPage.tsx"));
 const CampaignCharacterPage = lazy(() => import("./pages/campaigns/CampaignCharacterPage.tsx"));
 const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/CampaignDetailsPage.tsx"));
 const CampaignDocumentPage = lazy(() => import("./pages/campaigns/CampaignDocumentPage.tsx"));
@@ -78,6 +79,8 @@ const router = createBrowserRouter(
           <Route path="characters" element={<CharactersPage />} />
           <Route path="characters/:id" element={<CharacterDetailsPage />} />
           <Route path="activities" element={<ActivitiesPage />} />
+          {/* The instance's admins' page: anyone else goes to their dashboard */}
+          <Route path="admin" element={<AdminPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />

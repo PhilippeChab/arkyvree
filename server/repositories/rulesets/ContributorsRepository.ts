@@ -1,13 +1,34 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { contributorsInRules } from "@/drizzle/schema.ts";
+import { contributorsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import ContributionRepository from "@/server/repositories/ContributionRepository.ts";
 import type { ContributorStatus } from "@/shared/enums.ts";
 
 class ContributorsRepository extends ContributionRepository<typeof contributorsInRules, "rulesetId"> {
   constructor() {
     super(contributorsInRules, "rulesetId");
+  }
+
+  /**
+   * Whether an address (`pendingEmail`) holds a pending invite no sign-in claimed (the ones `backfillUserId` gives its
+   * account) to a ruleset that isn't archived: what lets it make an account on an instance that takes invites alone.
+   */
+  async exists(db: Db, where: { pendingEmail: string }) {
+    const [row] = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, this.table.rulesetId))
+      .where(
+        and(
+          eq(this.table.email, where.pendingEmail),
+          eq(this.table.status, "Pending"),
+          isNull(this.table.userId),
+          ne(rulesetsInRules.status, "Archived"),
+        ),
+      )
+      .limit(1);
+    return !!row;
   }
 
   /**
