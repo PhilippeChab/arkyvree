@@ -4,6 +4,7 @@ import {
   extractTemplateExpression,
   extractTemplatePath,
   findTemplateError,
+  findTemplatePaths,
   isTemplateValue,
 } from "@/shared/customization/templateExpression.ts";
 
@@ -37,6 +38,25 @@ describe("A template value", () => {
         "a.b",
       ].map(extractTemplatePath),
     ).toEqual(["stats.presence.modifier", "stats.presence.modifier", null, null, null]);
+  });
+});
+
+describe("A template's path in another script", () => {
+  test("reads by its text, bracketed or bare, as a Latin one does", () => {
+    const readable = new Map([
+      ["stats.сила.modifier", "number"],
+      ["tracks.разведчик.level", "number"],
+      ["perks.уклонение.possessed", "boolean"],
+    ]);
+    expect(extractTemplatePath("{{ stats.сила.modifier }}")).toBe("stats.сила.modifier");
+    expect(
+      findTemplateError("floor(tracks.разведчик.level / 2) + [stats.сила.modifier]", readable, "number"),
+    ).toBeNull();
+    expect(findTemplateError("perks.уклонение.possessed", readable, "boolean")).toBeNull();
+    expect(findTemplatePaths("max(stats.сила.modifier, [tracks.𠀋.level])").map(({ path }) => path)).toEqual([
+      "stats.сила.modifier",
+      "tracks.𠀋.level",
+    ]);
   });
 });
 

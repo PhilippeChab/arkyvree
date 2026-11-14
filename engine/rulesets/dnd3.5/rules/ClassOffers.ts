@@ -3,7 +3,6 @@
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 import LevelRules from "./LevelRules.ts";
 
@@ -73,15 +72,40 @@ export default class ClassOffers {
     return new Set(levels.flatMap((level) => dnd35.grantedFeatsOf(level.id).flatMap(({ viaId }) => viaId ?? [])));
   }
 
-  /** Whether a pool is a class's own feature pool ("Fighter Class Feature", by its slug), its class named as it is. */
+  /**
+   * Whether a pool is a class's own feature pool (`owner`'s, `ownPoolOf`), named after the class's name or the one the
+   * rules know it by.
+   */
   private isFeaturePool(pool: Aptitude, owner: Klass | undefined): boolean {
-    return !!owner && stripSeparators(pool.name) === stripSeparators(`${owner.name} ${FEATURE_POOL_SUFFIX}`);
+    return !!owner && this.ownPoolOf(owner)?.id === pool.id;
   }
 
-  /** The class each pool (`pools`) is named after: the one with the longest name that starts it, followed by a space. */
+  /**
+   * The class each pool (`pools`) is named after: the one with the longest name that starts it, followed by a space,
+   * by the class's name or the one the rules know it by, and the pool's (`RulesetData.namesOf`): "Rogue Class Feature"
+   * is the rogue's, whatever a ruleset calls either.
+   */
   private ownersOf(pools: readonly Aptitude[]): Map<string, Klass | undefined> {
-    const classes = this.dnd35.classes.toSorted((a, b) => b.name.length - a.name.length);
-    return new Map(pools.map((pool) => [pool.id, classes.find((klass) => pool.name.startsWith(`${klass.name} `))]));
+    const { rulesetData } = this.view;
+    const named = this.dnd35.classes
+      .flatMap((klass) => rulesetData.namesOf("classes", klass).map((name) => ({ klass, name })))
+      .toSorted((a, b) => b.name.length - a.name.length);
+    return new Map(
+      pools.map((pool) => {
+        const poolNames = rulesetData.namesOf("aptitudes", pool);
+        const owner = named.find(({ name }) => poolNames.some((poolName) => poolName.startsWith(`${name} `)));
+        return [pool.id, owner?.klass];
+      }),
+    );
+  }
+
+  /**
+   * A class's own feature pool, as the view has it: the pool named after the class (`RulesetData.namedAfter`), by its
+   * name ("Witch Class Feature", the one a page makes) or by the one the rules know it by (a translation's Roublard
+   * keeps the rogue's "Rogue Class Feature", whatever it calls it). None while the ruleset has none.
+   */
+  private ownPoolOf(klass: Klass) {
+    return this.view.rulesetData.namedAfter("aptitudes", "classes", klass, (name) => `${name} ${FEATURE_POOL_SUFFIX}`);
   }
 
   /**
@@ -152,9 +176,8 @@ export default class ClassOffers {
    * none, and what a feature made in it is named ("{name} (Witch)").
    */
   describeOwnFeaturePool(): OwnFeaturePool {
-    const name = `${this.klass.name} ${FEATURE_POOL_SUFFIX}`;
-    // By its slug, as a spell list's own is found: "Witch class feature" is the Witch's too
-    const id = this.dnd35.aptitudeIdBySlug.get(stripSeparators(name));
-    return { featureName: `{name} (${this.klass.name})`, id: id ?? null, name };
+    const pool = this.ownPoolOf(this.klass);
+    const name = pool?.name ?? `${this.klass.name} ${FEATURE_POOL_SUFFIX}`;
+    return { featureName: `{name} (${this.klass.name})`, id: pool?.id ?? null, name };
   }
 }

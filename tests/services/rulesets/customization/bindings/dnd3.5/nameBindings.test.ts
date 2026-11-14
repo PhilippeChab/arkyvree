@@ -442,11 +442,11 @@ describe("a path that names two things, and a value that names one", () => {
     const spell = view.spells.find((candidate) => candidate.name === "Fireball")!;
 
     await EntitiesService.updateEntity(session, fork.id, "aptitudes", list.id, { name: "Mage Spells" });
-    await EntitiesService.updateEntity(session, fork.id, "spells", spell.id, { name: "Firestorm" });
+    await EntitiesService.updateEntity(session, fork.id, "spells", spell.id, { name: "Orbe de feu" });
 
     const after = await readView(fork.id);
     expect((after.modifiersBySource.get(holder.id) ?? []).map((m) => m.target)).toEqual([
-      "spells.firestorm.mage.known",
+      "spells.orbedefeu.mage.known",
     ]);
     const slots = [...after.modifiersById.values()]
       .map((m) => m.target)

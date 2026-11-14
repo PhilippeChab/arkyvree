@@ -27,12 +27,12 @@ function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
  */
 function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
   const lists = [...(SpellLists.of(rulesetData).classListsByClass.get(klass.id) ?? [])];
-  // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
-  const own = `${stripSeparators(klass.name)}spells`;
+  // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own: the one
+  // named after it, or after the name the rules know it by
+  const own = rulesetData.namedAfter("aptitudes", "classes", klass, (name) => `${name} Spells`)?.id;
   const { aptitudeIdBySlug } = Dnd5View.of(rulesetData);
-  return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(
-    (list) => aptitudeIdBySlug.get(list) ?? [],
-  );
+  const ids = lists.flatMap((list) => aptitudeIdBySlug.get(list) ?? []);
+  return [...ids.filter((id) => id === own), ...ids.filter((id) => id !== own)];
 }
 
 /**
@@ -104,9 +104,13 @@ export default class ClassTable {
    */
   describeOwnList(): { id: string | null; name: string } {
     const name = `${this.klass.name} Spells`;
-    const { aptitudeIdBySlug, aptitudesById } = Dnd5View.of(this.view.rulesetData);
-    const aptitude = aptitudesById.get(aptitudeIdBySlug.get(stripSeparators(name)) ?? "");
-    return aptitude ? { id: aptitude.id, name: aptitude.name } : { id: null, name };
+    const list = this.view.rulesetData.namedAfter(
+      "aptitudes",
+      "classes",
+      this.klass,
+      (klassName) => `${klassName} Spells`,
+    );
+    return list ? { id: list.id, name: list.name } : { id: null, name };
   }
 
   /**

@@ -44,6 +44,21 @@ describe("Text", () => {
     expect(stripSeparators("Knowledge (the planes)")).toBe("knowledgetheplanes");
     expect(stripSeparators("Two-Bladed Sword +1")).toBe("twobladedsword1");
   });
+
+  test("leaves out an accented Latin letter and a sign every script shares, as it always did", () => {
+    expect(stripSeparators("Discrétion")).toBe("discrtion");
+    expect(stripSeparators("Weapon Focus: Longsword")).toBe("weaponfocuslongsword");
+    expect(stripSeparators("Potion ½ (Kai²)")).toBe("potionkai");
+  });
+
+  test("keeps a letter of another script, lowercased, so each name has a slug of its own", () => {
+    const names = ["Лазание", "Плавание", "Прыжок", "Πήδημα", "火球"];
+    const slugs = names.map(stripSeparators);
+    expect(slugs).toEqual(["лазание", "плавание", "прыжок", "πήδημα", "火球"]);
+    expect(new Set(slugs).size).toBe(names.length);
+    expect(stripSeparators("ЛАЗАНИЕ")).toBe(stripSeparators("лазание"));
+    expect(stripSeparators("Лазание (Скалы)")).toBe("лазаниескалы");
+  });
 });
 
 describe("A value", () => {

@@ -5,11 +5,11 @@ import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 const CLIMB = "climb";
 /** A ruleset's skills, in its order: two with a subtype, one nested. */
 const SKILLS = [
-  { id: "craft", name: "Craft" },
-  { id: "armorsmithing", name: "Craft (Armorsmithing)" },
-  { id: "ancient", name: "Knowledge (Arcana) (Ancient)" },
-  { id: "arcana", name: "Knowledge (Arcana)" },
-  { id: "climb", name: "Climb" },
+  { id: "craft", names: ["Craft"] },
+  { id: "armorsmithing", names: ["Craft (Armorsmithing)"] },
+  { id: "ancient", names: ["Knowledge (Arcana) (Ancient)"] },
+  { id: "arcana", names: ["Knowledge (Arcana)"] },
+  { id: "climb", names: ["Climb"] },
 ];
 
 /** Levels by whether Climb is a class skill at them, with the skill points each gives. */
@@ -69,6 +69,16 @@ describe("a class's class skills", () => {
       ["ancient", "arcana", "armorsmithing", "craft"].sort(),
     );
     expect(SkillRules.classSkillIds([], SKILLS).size).toBe(0);
+  });
+
+  test("are its links' subtypes by any of their names: a translated Craft keeps a Craft (Alchemy) of its own", () => {
+    const translated = [
+      { id: "craft", names: ["Artisanat", "Craft"] },
+      { id: "alchemy", names: ["Craft (Alchemy)"] },
+      { id: "armorsmithing", names: ["Artisanat (Armurerie)", "Craft (Armorsmithing)"] },
+      { id: "spotlight", names: ["Craftsmanship"] },
+    ];
+    expect([...SkillRules.classSkillIds(["craft"], translated)]).toEqual(["craft", "alchemy", "armorsmithing"]);
   });
 
   test("come in the ruleset's order, whatever the links' order", () => {

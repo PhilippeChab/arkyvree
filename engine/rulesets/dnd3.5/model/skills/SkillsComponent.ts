@@ -83,6 +83,9 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     };
   })();
 
+  /** The names each skill goes by, by its slug: its own, then the rules' when the ruleset renamed it. */
+  private readonly skillNamesBySlug = new Map<string, readonly string[]>();
+
   private readonly skills: SkillsData = {} as SkillsData;
 
   /** The skill a creature's size weighs on: the one the rules call Hide, whatever the ruleset calls it. */
@@ -105,7 +108,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     }: Pick<LoadedCharacterData, "classLevelFields" | "skillFields" | "skillPointAbilityId">,
     { rulesetData }: RulesetView,
   ) {
-    const rulesetSkills = Dnd35View.of(rulesetData).skills;
+    const { skillNames, skills: rulesetSkills } = Dnd35View.of(rulesetData);
     this.sizedSkillId = rulesetData.named("skills", SIZE_MODIFIED_SKILL)?.id;
     this.skillPointAbilityId = skillPointAbilityId;
     this.skillPointClassLevelFields = classLevelFields;
@@ -118,11 +121,12 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         klass,
         SkillRules.classSkillIds(
           klass.classSkillLinks.map((link) => link.toId),
-          rulesetSkills,
+          skillNames,
         ),
       ]),
     );
     for (const ids of classSkillsOf.values()) for (const id of ids) this.innateSkillIds.add(id);
+    for (const { name, names } of skillNames) this.skillNamesBySlug.set(stripSeparators(name), names);
 
     // Convert stored points to actual ranks per class-level: a class skill's (for that class) at a rank a point, a
     // cross-class one's at half a rank a point
@@ -258,6 +262,14 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
         currentRank: skillData?.rank || 0,
       };
     });
+  }
+
+  /**
+   * The names a skill of the sheet goes by (`key`, its slug): its own, then the rules' when the ruleset renamed it.
+   * What a family's path reads its members by (`skills.knowledge.rank`: "Connaissances (Arcana)" is Knowledge's).
+   */
+  getEntryNames(key: string): readonly string[] | undefined {
+    return this.skillNamesBySlug.get(key);
   }
 
   /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */

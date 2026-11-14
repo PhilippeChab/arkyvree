@@ -36,6 +36,16 @@ export type TemplateNode =
   | { left: TemplateNode; op: "+" | "-" | "*" | "/"; right: TemplateNode; type: "binop" }
   | { arg: TemplateNode; op: "-"; type: "unary" };
 
+/** A bare path, whole: a name and its dotted segments. */
+const BARE_PATH = /^[\p{L}_][\p{L}\p{N}_.]*$/u;
+/** What a bare name goes on with: a letter or a digit of any script, an underscore, or a dot between its segments. */
+const NAME_PART = /^[\p{L}\p{N}_.]$/u;
+/**
+ * What a bare name starts with: a letter of any script (a key keeps those of another script than Latin:
+ * `stripSeparators`), or an underscore.
+ */
+const NAME_START = /^[\p{L}_]$/u;
+
 /** The functions a template calls, each on numbers. */
 export const TEMPLATE_FUNCTIONS: Record<string, (...args: number[]) => number> = {
   min: Math.min,
@@ -44,6 +54,22 @@ export const TEMPLATE_FUNCTIONS: Record<string, (...args: number[]) => number> =
   ceil: Math.ceil,
   abs: Math.abs,
 };
+
+/** The character of `text` at `pos`, whole: one past the Basic Multilingual Plane takes two code units. */
+function characterAt(text: string, pos: number) {
+  return String.fromCodePoint(text.codePointAt(pos) ?? 0);
+}
+
+/**
+ * Where a bare name of `text` ends, or `start` when none starts there (`NAME_START`, then `NAME_PART`): an
+ * unbracketed path, `abilities.charisma.modifier`, `skills.лазание.rank`, or a function's name.
+ */
+function findNameEnd(text: string, start: number) {
+  if (start >= text.length || !NAME_START.test(characterAt(text, start))) return start;
+  let end = start + characterAt(text, start).length;
+  while (end < text.length && NAME_PART.test(characterAt(text, end))) end += characterAt(text, end).length;
+  return end;
+}
 
 /** The first path or function of a compound expression a template can't compute a number with, if any. */
 function numericError(node: TemplateNode, readable: ReadonlyMap<string, string>): string | null {
@@ -103,11 +129,9 @@ class Tokenizer {
         this.pos = end;
         continue;
       }
-      if (/[a-zA-Z_]/.test(ch)) {
-        let end = this.pos + 1;
-        // Identifiers include dots, so an unbracketed path like
-        // {{ abilities.charisma.modifier }} reads as a bare path.
-        while (end < this.src.length && /[a-zA-Z0-9_.]/.test(this.src[end])) end++;
+      // Identifiers include dots, so an unbracketed path like {{ abilities.charisma.modifier }} reads as a bare path
+      const end = findNameEnd(this.src, this.pos);
+      if (end > this.pos) {
         tokens.push({ type: "IDENT", value: this.src.slice(this.pos, end) });
         this.pos = end;
         continue;
@@ -242,7 +266,7 @@ export function extractTemplatePath(value: string): string | null {
   const candidate = (unbracketed ? unbracketed[1] : inner).trim();
   // Only treat as a bare path if it's pure identifier-with-dots — no
   // operators, function calls, brackets, etc.
-  if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(candidate)) return null;
+  if (!BARE_PATH.test(candidate)) return null;
   return candidate;
 }
 
@@ -284,9 +308,8 @@ export function findTemplatePaths(expression: string): TemplatePathSpan[] {
       const path = expression.slice(pos + 1, close).trim();
       if (path) spans.push({ bracketed: true, end: close + 1, path, start: pos });
       pos = close + 1;
-    } else if (/[a-zA-Z_]/.test(ch)) {
-      let end = pos + 1;
-      while (end < expression.length && /[a-zA-Z0-9_.]/.test(expression[end])) end++;
+    } else if (findNameEnd(expression, pos) > pos) {
+      const end = findNameEnd(expression, pos);
       if (!/^\s*\(/.test(expression.slice(end)))
         spans.push({ bracketed: false, end, path: expression.slice(pos, end), start: pos });
       pos = end;

@@ -8,7 +8,11 @@ import SpellLists from "@/engine/rulesets/dnd5/rules/SpellLists.ts";
 import Dnd5View from "@/engine/rulesets/dnd5/view/Dnd5View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
+import { SLUG_CHARACTER } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5/spells.ts";
+
+/** A list's casting ability, by the list's slug: `aptitudes.<list>.ability`. */
+const ABILITY_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)\.ability$`, "u");
 
 /** The spells a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
@@ -166,7 +170,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       // The levels each list's ability was picked at, by the list: those holding a feat that sets it
       const pickedAt = new Map<string, Set<string>>();
       for (const modifier of appliedModifiers) {
-        const list = /^aptitudes\.([a-z0-9]+)\.ability$/.exec(modifier.target)?.[1];
+        const list = ABILITY_TARGET.exec(modifier.target)?.[1];
         if (list === undefined || modifier.sourceType !== "feats") continue;
         const levels = pickedAt.get(list) ?? new Set<string>();
         for (const { classLevelId, entity } of feats)

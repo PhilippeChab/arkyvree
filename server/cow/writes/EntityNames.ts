@@ -6,6 +6,7 @@ import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import type ExtensionDeparture from "./ExtensionDeparture.ts";
 
@@ -19,6 +20,16 @@ interface NamedEntity {
 /** The unique index that keeps an entity's name its own among its ruleset's entities of its kind (`drizzle/schema.ts`). */
 const NAME_INDEX = "entities_name_unique_idx";
 
+/**
+ * The refusal of a name (`name`) whose key (`stripSeparators`) is another's the view shows (`taken`): the rules read
+ * both as one name.
+ */
+function toKeyError(name: string, taken: string) {
+  return new ConflictError(
+    `"${name}" differs from "${taken}" only in case, spaces or punctuation: the rules would read them as one name`,
+  );
+}
+
 /** The refusal of a name an entity of the ruleset's own has, whichever path asks. */
 function toOwnNameError(name: string) {
   return new ConflictError(`Name already exists in this ruleset: ${name}`);
@@ -30,7 +41,8 @@ function toOwnNameError(name: string) {
  * shows again take a name only when no other entity of their kind the view shows has it, the ruleset's own or an
  * inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one
  * whose local copy was deleted left a tombstone snapshot, which a new entity of its name takes over
- * (`repointTombstone`), so the inherited one stays hidden. Its instance methods take the transaction; its static
+ * (`repointTombstone`), so the inherited one stays hidden. Nor does it show two names of one key, which the rules
+ * read entities by (`stripSeparators`: "Dodge" and "dodge"). Its instance methods take the transaction; its static
  * `withNameRefusal` runs a write that takes a name, answering the name index as the checks do.
  */
 export default class EntityNames {
@@ -150,6 +162,36 @@ export default class EntityNames {
   }
 
   /**
+   * Refuses names (`names`, of `entityType`) whose key (`stripSeparators`: "dodge" for "Dodge" and "dodge") another
+   * entity the view shows has under another name, the ruleset's own or a visible inherited one, but those of `ignored`
+   * (by id); and two of `names` of one key. A name of no key (a mark alone) is left to the other checks.
+   */
+  private async refuseKeys(
+    tx: Db,
+    entityType: RulesetEntityType,
+    names: string[],
+    ignored: ReadonlySet<string> = new Set(),
+  ) {
+    const byKey = new Map<string, string>();
+    for (const name of names) {
+      const key = stripSeparators(name);
+      const given = byKey.get(key);
+      if (key && given !== undefined && given !== name) throw toKeyError(name, given);
+      if (key) byKey.set(key, name);
+    }
+    if (byKey.size === 0) return;
+    const entities = await RulesetEntities.findNames(tx, {
+      entityType,
+      rulesetIds: [this.ruleset.id, ...this.cow.sourceChain],
+    });
+    for (const entity of entities) {
+      if (ignored.has(entity.id) || (entity.rulesetId !== this.ruleset.id && this.cow.isHidden(entity.id))) continue;
+      const name = byKey.get(stripSeparators(entity.name));
+      if (name !== undefined && name !== entity.name) throw toKeyError(name, entity.name);
+    }
+  }
+
+  /**
    * Refuses subscribing the ruleset to new extensions (`extensionIds`) when its view would then show more entities of a
    * kind under a name than once, and than it shows now (`refuseChainNames`, with `CowData` read as the view would read
    * it once subscribed): an extension's entity (its own, or its copy of an inherited one, by its name) named as one the
@@ -186,21 +228,22 @@ export default class EntityNames {
   /**
    * Refuses new entities' names (`names`): one given twice among them (a list of variants), and one the view shows: one
    * the ruleset has, or a visible inherited entity has (the source chain's, an ancestor's or a subscribed extension's),
-   * named in the refusal. Returns, by name, the closest hidden ancestor whose local copy was deleted (a tombstone), which
-   * a new entity of that name takes over (`repointTombstone`).
+   * named in the refusal, or under its key (`refuseKeys`). Returns, by name, the closest hidden ancestor whose local copy
+   * was deleted (a tombstone), which a new entity of that name takes over (`repointTombstone`).
    */
   async assertNamesAvailable(tx: Db, entityType: RulesetEntityType, names: string[]): Promise<Map<string, string>> {
     if (new Set(names).size !== names.length) throw new ConflictError("A name is given twice in the list");
     const named = await this.findNamed(tx, entityType, names);
     this.refuseShown(named);
+    await this.refuseKeys(tx, entityType, names);
     return await this.findTombstones(tx, entityType, named);
   }
 
   /**
-   * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows, as a create's is: the name it
-   * keeps is its own, whoever else has it (an inherited entity's first edit copies it under its name). A renamed entity
-   * takes over no tombstone: the copy it may be keeps its own snapshot, and the hidden ancestor of its new name stays
-   * hidden. An inherited entity the same write renamed before (`vacated`, by its id) no longer shows its name: the copy
+   * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows, or to its key, as a create's is:
+   * the name it keeps is its own, and so is a new case of it ("Dodge" to "DODGE"), whoever else has it (an inherited
+   * entity's first edit copies it under its name). A renamed entity takes over no tombstone: the copy it may be keeps its
+   * own snapshot, and the hidden ancestor of its new name stays hidden. An inherited entity the same write renamed before (`vacated`, by its id) no longer shows its name: the copy
    * the write made of it hides it, which the view read before the write doesn't know yet.
    */
   async assertRenameAvailable(
@@ -213,12 +256,14 @@ export default class EntityNames {
     if (name === entity.name) return;
     const named = await this.findNamed(tx, entityType, [name]);
     this.refuseShown(named.filter((other) => !vacated.has(other.id)));
+    // A new case of its own name keeps its key, whatever else has it
+    if (stripSeparators(name) !== stripSeparators(entity.name)) await this.refuseKeys(tx, entityType, [name], vacated);
   }
 
   /**
    * Refuses restoring an inherited entity (`sourceEntityId`) in place of the ruleset's copy of it (`copyId`, gone when
-   * the copy was deleted: a tombstone) when the view shows another entity of the source's name: a restore renames the
-   * view's entity back to its source's name, or shows a deleted one again, as a rename or a create would.
+   * the copy was deleted: a tombstone) when the view shows another entity of the source's name or its key: a restore
+   * renames the view's entity back to its source's name, or shows a deleted one again, as a rename or a create would.
    */
   async assertRestoreAvailable(
     tx: Db,
@@ -229,7 +274,9 @@ export default class EntityNames {
     const entities = await RulesetEntities.findNames(tx, { entityType, ids: [sourceEntityId, copyId] });
     const source = entities.find((entity) => entity.id === sourceEntityId);
     const copy = entities.find((entity) => entity.id === copyId);
-    if (source && copy?.name !== source.name) this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
+    if (!source || copy?.name === source.name) return;
+    this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
+    await this.refuseKeys(tx, entityType, [source.name], new Set([sourceEntityId, copyId]));
   }
 
   /**

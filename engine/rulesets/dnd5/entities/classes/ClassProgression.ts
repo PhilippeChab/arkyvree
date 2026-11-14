@@ -188,12 +188,13 @@ export default class ClassProgression {
   private lists?: { id: string; name: string }[];
 
   /**
-   * Refuses spell tables a save empties of every modifier on the class's list when the list isn't named for the class
-   * ("Blackguard Spells", a templar's): its levels' modifiers are all that tie the class to it.
+   * Refuses spell tables a save empties of every modifier on the class's list when the list isn't the class's own
+   * (`ClassTable.describeOwnList`: "Blackguard Spells", a templar's): its levels' modifiers are all that tie the class
+   * to it.
    */
   private checkListKept(working: Map<string, LevelModifier[]>) {
     const list = this.spellList;
-    if (!list || list.slug === `${stripSeparators(this.klass.name)}spells`) return;
+    if (!list || list.id === this.table.describeOwnList().id) return;
     const onList = (modifier: LevelModifier) => modifier.target.startsWith(`aptitudes.${list.slug}.`);
     const lost = `Emptied, ${this.klass.name}'s spell tables would lose ${list.name}: keep a count on one`;
     if (![...working.values()].some((modifiers) => modifiers.some(onList))) throw new RulesError("invalid", lost);

@@ -4,6 +4,7 @@ import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { SpellPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { SPECIALIST_SPELL_LIST } from "@/vocabulary/dnd3.5/spells.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 
@@ -35,10 +36,13 @@ export default class SpellPicker extends LevelPicker {
     return { ids: Dnd35View.of(this.rulesetData).listSpellIds({ toId: aptitudeId, tier: spellLevel }), excludeIds };
   }
 
-  /** The wizard's spells of the schools its specialization prohibits: none for another pool. */
+  /**
+   * The wizard's spells of the schools its specialization prohibits: none for another pool. The wizard's list is the one
+   * the rules call Wizard Spells, whatever the ruleset calls it (`RulesetData.named`).
+   */
   private getProhibitedSpellIds(aptitudeId: string): string[] {
-    const aptitude = Dnd35View.of(this.rulesetData).aptitudesById.get(aptitudeId);
-    if (aptitude?.name !== "Wizard Spells") return [];
+    const wizardList = this.rulesetData.named("aptitudes", SPECIALIST_SPELL_LIST);
+    if (wizardList === undefined || wizardList.id !== this.rulesetData.canonicalize(aptitudeId)) return [];
 
     const prohibitedSchools = new Set(
       this.character.getHeldFeats().flatMap(({ entity }) => FEAT_FIELDS.read(entity).prohibitedSchools),

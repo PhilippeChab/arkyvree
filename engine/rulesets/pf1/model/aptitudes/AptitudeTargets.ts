@@ -1,22 +1,23 @@
 /**
- * The aptitudes' target grammar, as the listing writes it: a list's slug (`[a-z0-9]+`), a whole spell level, an anchored
- * field, and the setting that makes a spell level all known. A leaf of the ruleset, which reads only the core's
- * `LiteralValue`: the listing (`AptitudesPaths`) reads the spell lists (`SpellLists.ts`), which read targets, and both
- * read this.
+ * The aptitudes' target grammar, as the listing writes it: a list's slug (its lowercase letters and digits, of any
+ * script: `stripSeparators`), a whole spell level, an anchored field, and the setting that makes a spell level all
+ * known. A leaf of the ruleset, which reads only the core's `LiteralValue`: the listing (`AptitudesPaths`) reads the
+ * spell lists (`SpellLists.ts`), which read targets, and both read this.
  */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import { SLUG_CHARACTER } from "@/shared/text.ts";
 
 /** A list's pool or one of its spell levels' slots, by the list's slug: `aptitudes.<list>(.<level>).allowed`. */
-const ALLOWED_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.\d+)?\.allowed$/;
+const ALLOWED_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)(?:\.\d+)?\.allowed$`, "u");
 /** Its spells joining its class's list: `aptitudes.<list>.joinsclasslist`. */
-const JOIN_TARGET = /^aptitudes\.([a-z0-9]+)\.joinsclasslist$/;
+const JOIN_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)\.joinsclasslist$`, "u");
 /** Any path of a list: `aptitudes.<list>` and what follows. */
-const LIST_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.|$)/;
+const LIST_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)(?:\.|$)`, "u");
 /** A list's pool: `aptitudes.<list>.allowed`. */
-const POOL_TARGET = /^aptitudes\.([a-z0-9]+)\.allowed$/;
+const POOL_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)\.allowed$`, "u");
 /** A list's spell level: `aptitudes.<list>.<level>.allowed` or `.uses`. */
-const SPELL_LEVEL_TARGET = /^aptitudes\.([a-z0-9]+)\.(\d+)\.(allowed|uses)$/;
+const SPELL_LEVEL_TARGET = new RegExp(String.raw`^aptitudes\.(${SLUG_CHARACTER}+)\.(\d+)\.(allowed|uses)$`, "u");
 
 /**
  * A spell level's spells known once every spell of its list is (`aptitudes.<list>.<level>.allowed`): "all spells known",

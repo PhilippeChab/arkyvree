@@ -230,6 +230,9 @@ export default class RulesetData {
 
   private readonly requirements: Requirement[];
 
+  /** A kind's entities by their name's slug, by its type, once read (`named`). */
+  private readonly rowsBySlug = new Map<string, Map<string, ViewEntity[]>>();
+
   /** Each ruleset's of its chain own Settings, by its id. */
   private readonly settings: ReadonlyMap<string, StoredValues>;
 
@@ -276,6 +279,16 @@ export default class RulesetData {
         return typeof value === "function" ? value.bind(target) : value;
       },
     });
+  }
+
+  /** A kind's entities by their name's slug (`type`), the view's order kept among those of a slug: built once. */
+  private slugIndexOf(type: string) {
+    let bySlug = this.rowsBySlug.get(type);
+    if (!bySlug) {
+      bySlug = Map.groupBy(this.rows(type), (row) => stripSeparators(row.name));
+      this.rowsBySlug.set(type, bySlug);
+    }
+    return bySlug;
   }
 
   /** A kind's entities by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
@@ -429,11 +442,32 @@ export default class RulesetData {
     const key = `${type}|${partition ?? ""}|${slug}`;
     if (this.namedEntities.has(key)) return this.namedEntities.get(key);
     const originalId = this.originalOf(type, slug, partition);
-    const isNamed = (row: ViewEntity) =>
-      stripSeparators(row.name) === slug && (partition === undefined || row.partition === partition);
-    const entity = originalId === undefined ? this.rows(type).find(isNamed) : this.byId(type).get(originalId);
+    const entity =
+      originalId === undefined
+        ? this.slugIndexOf(type)
+            .get(slug)
+            ?.find((row) => partition === undefined || row.partition === partition)
+        : this.byId(type).get(originalId);
     this.namedEntities.set(key, entity);
     return entity;
+  }
+
+  /**
+   * The view's entity named after another (`owner`, of `ownerType`), its name built from the owner's (`nameOf`: a
+   * class's own feature pool, "Rogue Class Feature"): the one named after the owner's name in the view (`named`, which
+   * finds the pool a page made for a class the ruleset renamed, "Roublard Class Feature"), else the one named after
+   * the name the rules know the owner by (`rulesNameOf`: "Rogue Class Feature", whatever the ruleset calls it now).
+   */
+  namedAfter(
+    type: string,
+    ownerType: string,
+    owner: { id: string; name: string },
+    nameOf: (ownerName: string) => string,
+  ): ViewEntity | undefined {
+    const own = this.named(type, nameOf(owner.name));
+    if (own) return own;
+    const rulesName = this.rulesNameOf(ownerType, owner);
+    return rulesName === owner.name ? undefined : this.named(type, nameOf(rulesName));
   }
 
   /**
@@ -445,6 +479,16 @@ export default class RulesetData {
       const target = this.find(link.toType, link.toId);
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
+  }
+
+  /**
+   * The names an entity of the view (`entity`, of `type`) goes by: its own, then the one the rules know it by when the
+   * ruleset renamed it (`rulesNameOf`). What a family's name is read in: a skill is Knowledge's whether the ruleset
+   * calls it "Knowledge (Arcana)" or "Connaissances (Arcana)".
+   */
+  namesOf(type: string, entity: { id: string; name: string }): string[] {
+    const rulesName = this.rulesNameOf(type, entity);
+    return rulesName === entity.name ? [entity.name] : [entity.name, rulesName];
   }
 
   /**

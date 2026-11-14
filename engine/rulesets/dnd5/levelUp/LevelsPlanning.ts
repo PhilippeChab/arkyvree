@@ -11,7 +11,7 @@ import ClassLevels from "@/engine/rulesets/dnd5/characters/ClassLevels.ts";
 import LevelRules from "@/engine/rulesets/dnd5/rules/LevelRules.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd5/view/rows.ts";
 import type { Requirement } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import { SLUG_CHARACTER, stripSeparators } from "@/shared/text.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase, { type PlannedClassLevel } from "./LevelUpBase.ts";
@@ -36,6 +36,9 @@ export interface CheckedCharacter extends HoldingCharacter {
   getUnmetRequirementIssues(groups: Requirement[][]): RulesIssue[];
   validate(): ValidationResult;
 }
+
+/** A requirement's line on an ability's score, by the ability's slug: `abilities.<ability>.total >= <score>`. */
+const ABILITY_SCORE_CONDITION = new RegExp(String.raw`^abilities\.(${SLUG_CHARACTER}+)\.total >= (\d+)$`, "u");
 
 /**
  * A character's levels saved, from its rows: a level-up's levels, or a saved level's edit, checked in one order, over
@@ -238,7 +241,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       .filter((line) => line.endsWith("[UNMET]"))
       .map((line) => {
         const condition = line.replace(/\s*\[UNMET\]$/, "");
-        const score = /^abilities\.(\w+)\.total >= (\d+)$/.exec(condition);
+        const score = ABILITY_SCORE_CONDITION.exec(condition);
         const ability = score && abilities.get(score[1]);
         return ability ? `${ability} ${score[2]}` : condition;
       })

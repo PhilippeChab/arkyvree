@@ -445,3 +445,50 @@ test("a name another save took since the check, which meets the index, is refuse
   expect(EntityNames.withNameRefusal(name, () => Promise.reject(unrelated))).rejects.toBe(unrelated);
   expect(await Entities.findMany(db, { entityType: "aptitudes", rulesetIds: [rulesetId] })).toHaveLength(1);
 });
+
+test("a name that differs from one the view shows only in case or punctuation is refused, which the rules read as one", async () => {
+  const { session, fork, general, baseFeat } = await setup();
+  const feat = (name: string) =>
+    EntitiesService.createEntity(session, fork.id, "feats", { name, links: { listedIn: [{ toId: general.id }] } });
+  const keyError = (name: string, taken: string) =>
+    new ConflictError(
+      `"${name}" differs from "${taken}" only in case, spaces or punctuation: the rules would read them as one name`,
+    );
+
+  // A homebrew "dodge" would pass for the core Dodge, Mobility's prerequisite
+  expect(feat("dodge")).rejects.toEqual(keyError("dodge", "Dodge"));
+  const own = await feat("Gizmo Strike");
+  expect(EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "Power-Attack" })).rejects.toEqual(
+    keyError("Power-Attack", "Power Attack"),
+  );
+  expect(feat("Gizmo-Strike")).rejects.toEqual(keyError("Gizmo-Strike", "Gizmo Strike"));
+
+  // A new case of an entity's own name keeps its key: its own, an inherited one's (whose first edit copies it) too
+  expect(await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "GIZMO STRIKE" })).toMatchObject(
+    {
+      name: "GIZMO STRIKE",
+    },
+  );
+  const dodge = await baseFeat("Dodge");
+  expect(await EntitiesService.updateEntity(session, fork.id, "feats", dodge.id, { name: "DODGE" })).toMatchObject({
+    name: "DODGE",
+  });
+  // Names in another script each have a key of their own
+  for (const name of ["Лазание", "Плавание", "Прыжок"]) expect(await feat(name)).toMatchObject({ name });
+});
+
+test("restoring a copy whose source's name another feat now has under its key is refused", async () => {
+  const { session, fork, general, baseFeat } = await setup();
+  const source = await baseFeat("Alertness");
+  await EntitiesService.updateEntity(session, fork.id, "feats", source.id, { name: "Vigilance" });
+  await EntitiesService.createEntity(session, fork.id, "feats", {
+    name: "alertness",
+    links: { listedIn: [{ toId: general.id }] },
+  });
+
+  expect(RulesetChangesService.revertOverride(session, fork.id, "feats", source.id)).rejects.toEqual(
+    new ConflictError(
+      `"Alertness" differs from "alertness" only in case, spaces or punctuation: the rules would read them as one name`,
+    ),
+  );
+});

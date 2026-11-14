@@ -210,7 +210,7 @@ export default class SpellsPaths implements PathCategory<Pf1Components> {
     for (const { field, value } of rulesetData.kindValues("spells")) {
       fallbacks[field] ??= formatFieldName(field);
       const slug = stripSeparators(value);
-      if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
+      if (/\p{L}/u.test(slug)) fallbacks[slug] ??= value;
     }
     return { fallbacks, names: deriveNameLabels(pf1.spells.map(({ name }) => name)) };
   }

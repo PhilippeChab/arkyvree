@@ -21,6 +21,16 @@ describe("the aptitudes' target grammar", () => {
     expect(AptitudeTargets.parseList("aptitudes.luckdomain.joinsclasslist")).toBe("luckdomain");
   });
 
+  test("read a list named in another script by its slug, which keeps that script's letters", () => {
+    expect(AptitudeTargets.parsePool("aptitudes.общиечерты.allowed")).toBe("общиечерты");
+    expect(AptitudeTargets.parseSpellLevel("aptitudes.заклинаниямага.3.allowed")).toEqual({
+      list: "заклинаниямага",
+      level: 3,
+      field: "allowed",
+    });
+    expect(AptitudeTargets.parseJoin("aptitudes.魔法.joinsclasslist")).toBe("魔法");
+  });
+
   test("tell the shapes apart: a pool is no spell level, a slot's uses no pool or slot allowed, a join neither", () => {
     expect(AptitudeTargets.parsePool("aptitudes.wizardspells.3.allowed")).toBeUndefined();
     expect(AptitudeTargets.parseSpellLevel("aptitudes.general.allowed")).toBeUndefined();
@@ -36,6 +46,7 @@ describe("the aptitudes' target grammar", () => {
       "aptitudes.wizard.1e1.allowed",
       "aptitudes.wizard. 3.allowed",
       "aptitudes.é.allowed",
+      "aptitudes.Общие.allowed",
     ]) {
       expect([target, AptitudeTargets.parsePool(target) ?? AptitudeTargets.parseSpellLevel(target)]).toEqual([
         target,

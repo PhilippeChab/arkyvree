@@ -24,16 +24,16 @@ describe("EntitiesService: languages", () => {
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "languages", created.id, {
       name: "Draconic",
       description: "Common among kobolds",
-      fields: { [LANGUAGE_TYPE]: "Standard" },
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
-    expect(updated).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Standard" }, description: "Common among kobolds" });
+    expect(updated).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Common" }, description: "Common among kobolds" });
   });
 
   test("refuses to delete a language that a character of a subscribing ruleset speaks", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
     const language = await EntitiesService.createEntity(session, extension.id, "languages", {
       name: "Extension Tongue",
-      fields: { [LANGUAGE_TYPE]: "Standard" },
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
     const host = await createTestRuleset(user.id);
     await subscribeTestRuleset(host.id, [extension.id]);

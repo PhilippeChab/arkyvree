@@ -261,6 +261,38 @@ General pool where it made it (a base rules'), where its name is the rules' own.
 `tests/engine/rulesets/rulesNames.test.ts` renames every entity of each kind in a fork
 of each base rules and checks that no character's sheet changes.
 
+The wizard's list a specialist's prohibited schools leave spells out of (3.5's Wizard
+Spells) and 5e's Ability Score Improvement pool are found the same way. A class's own
+feature pool ("Rogue Class Feature", 5e's "Rogue Features") and its own spell list
+("Wizard Spells") are named after it (`RulesetData.namedAfter`): first the one named
+after the class's name in the view, then the one named after the name the rules know
+the class by. A fork that calls its rogue "Roublard" keeps its "Rogue Class Feature",
+whatever it calls that pool; a pool a page makes for a class the fork made, or renamed
+before the pool existed, takes the class's name ("Witch Class Feature"), which the first
+lookup finds the next time.
+
+A skill's subtypes and its family go by every name a skill goes by: its own and the
+rules' (`RulesetData.namesOf`). A class's class skill Craft keeps the "Craft (Alchemy)" a
+fork made once it calls Craft "Artisanat", and `skills.knowledge.rank` keeps reaching
+the Knowledge skills a translation calls "Connaissances (…)". A subtype is a skill named
+"<family> (<variant>)", never one whose name merely starts as another's ("Spotlight
+Operation" is no Spot).
+
+What a rule reads in a value, not a name, is a fixed list a save checks, so that no
+translation can make the rule miss it: a weapon's size (`SIZE_OPTIONS`: Large and past
+it take both hands, Tiny and Small are light) and a language's type (`LANGUAGE_TYPES`: a
+Secret one no pick takes, 5e's Rare one only an extra pick takes). Their forms offer the
+list's values alone, and the API refuses another.
+
+The rules read an entity by its name's key, its slug (`stripSeparators`): its unaccented
+Latin letters and its digits, lowercased, and its letters of another script, lowercased
+too ("Лазание" is `лазание`), so a name in Cyrillic, Greek or Chinese has a key of its
+own, and every key a Latin name had before stays as it was. Two entities of a kind whose
+names share a key would be one to the rules ("dodge" would pass for Dodge), so a create,
+a rename or a restore whose name has the key of another the view shows is refused
+(`EntityNames`), but a new case of an entity's own name ("DODGE"). The paths' grammar
+reads a key's letters of any script (`SLUG_CHARACTER`, a template's bare names).
+
 ### Restoring an override
 
 A fork's **Restore Parent Version** (`RulesetChangesService.revertOverride`) reverts

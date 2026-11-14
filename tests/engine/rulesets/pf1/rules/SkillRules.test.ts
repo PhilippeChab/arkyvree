@@ -39,3 +39,16 @@ describe("a level's skill points", () => {
     ]).toEqual([3, 4, 0, 1]);
   });
 });
+
+describe("a class's class skills", () => {
+  test("are its links' subtypes by any of their names: a translated Craft keeps a Craft (Alchemy) of its own", () => {
+    const skills = [
+      { id: "craft", names: ["Artisanat", "Craft"] },
+      { id: "alchemy", names: ["Craft (Alchemy)"] },
+      { id: "bows", names: ["Artisanat (Arcs)", "Craft (Bows)"] },
+      { id: "crafty", names: ["Craftsmanship"] },
+    ];
+    expect([...SkillRules.classSkillIds(["craft"], skills)]).toEqual(["craft", "alchemy", "bows"]);
+    expect(SkillRules.classSkillIds([], skills).size).toBe(0);
+  });
+});

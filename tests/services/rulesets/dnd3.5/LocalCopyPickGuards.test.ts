@@ -99,7 +99,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
   const local = await EntitiesService.updateEntity(session, fork.id, "languages", language.id, {
     name: language.name,
     description: "Local",
-    fields: { [LANGUAGE_TYPE]: language.type },
+    fields: { [LANGUAGE_TYPE]: language.fields[LANGUAGE_TYPE] },
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "languages", local.id)).rejects.toThrow("in use by characters");
