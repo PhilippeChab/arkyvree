@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine, type UnsettledKey } from "@/engine/index.ts";
+import { Engine, type KeyClash, type UnsettledKey } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/views/scope.ts";
 import { Entities, Locks, Modifiers, NameBindings, Requirements } from "@/server/repositories/index.ts";
 
@@ -13,21 +13,24 @@ interface RekeyedRow {
 
 /**
  * What a rekey did in a ruleset: how many rows' text it rewrote, how many group bindings' names it moved with them, how
- * many rows a write changed before it could (left for a run again), and the old keys several names now have keys for.
+ * many rows a write changed before it could (left for a run again), the old keys it left, and the names the new keys
+ * read as one.
  */
 interface RekeyResult {
   changedMeanwhile: number;
+  clashes: KeyClash[];
   groups: number;
   rewritten: number;
   unsettled: UnsettledKey[];
 }
 
 /**
- * The rekey of the rows saved before a name's key kept its accented Latin letters: in a ruleset, each of its own
- * modifiers and requirements, and each modifier set on its characters, has its text moved to the keys that keep them
- * (`skills.discrtion.misc` → `skills.discrétion.misc`), as the ruleset's view reads it (`LegacyKeys`). A segment bound
- * to an entity keeps its binding, which reads either key; a group's binding takes its text's new key. A row whose text
- * holds no old key is left as it is, so it runs again without harm.
+ * The rekey of the rows saved while a name's key left its accented Latin letters out: in a ruleset, each of its own
+ * modifiers and requirements, and each modifier set on its characters, has its text moved to the keys that read them
+ * as plain letters (`skills.discrtion.misc` → `skills.discretion.misc`), as the ruleset's view reads it (`LegacyKeys`).
+ * A segment bound to an entity keeps its binding, which reads either key; a group's binding takes its text's new key.
+ * An old key it can't move to one name's key alone is left, and listed. A row whose text holds no old key is left as it
+ * is, so it runs again without harm.
  */
 export default class NameRekey {
   /** The ruleset's own rows that carry paths, and the modifiers set on its characters: ids by kind, and their text. */
@@ -77,6 +80,7 @@ export default class NameRekey {
       for (const group of groups) await NameBindings.update(tx, { name: plan.groups.get(group.id)! }, { id: group.id });
       return {
         changedMeanwhile: plan.rows.size - written.size,
+        clashes: plan.clashes,
         groups: groups.length,
         rewritten: written.size,
         unsettled: plan.unsettled,

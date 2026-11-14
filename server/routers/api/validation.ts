@@ -61,8 +61,9 @@ export const entityLinks = z.custom<EntityLinkValues>(
 );
 
 /**
- * An entity's name, canonically composed as it's stored (NFC, which changes no character it shows), so an accent typed
- * apart from its letter gives the name's key the letter whole (`stripSeparators`): not empty.
+ * An entity's name, canonically composed as it's stored (NFC, which changes no character it shows), so a name typed
+ * with an accent apart from its letter is the name typed with the letter whole, which another entity can't take: not
+ * empty.
  */
 export const entityName = z
   .string()

@@ -7,7 +7,8 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { NameBindingFill, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
-import { Locks, Modifiers, NameBindings, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { Entities, Locks, Modifiers, NameBindings, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -17,18 +18,27 @@ import { createTestCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.
 import { createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 const pool = createTestPool();
 
 /**
  * A fork that calls Hide "Discrétion", whose rules name it: a feat's bonus to it, gated on its misc bonus, and a formula
- * reading it; a requirement on the feat; and a character's own bonus to it, who has the feat.
+ * reading it; a requirement on the feat; another feat's bonus to a family of the fork's own skills, "Représentation"
+ * (a group: no skill has its name); and a character's own bonus to it, who has the first feat.
  */
 async function setUp() {
   const { session, user } = await createTestUser();
   const fork = await createSeededTestRuleset(user.id);
+  const { abilityMap } = await getSeedCtx();
   const hide = Dnd35View.of(await readView(fork.id)).skills.find((skill) => skill.name === "Hide")!;
   await EntitiesService.updateEntity(session, fork.id, "skills", hide.id, { name: "Discrétion" });
+  for (const name of ["Représentation (Chant)", "Représentation (Danse)"]) {
+    await EntitiesService.createEntity(session, fork.id, "skills", {
+      name,
+      links: { keyAbility: abilityMap.Charisma },
+    });
+  }
   const general = Dnd35View.of(await readView(fork.id)).aptitudes.find((aptitude) => aptitude.name === "General")!;
   const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Ombre",
@@ -36,24 +46,34 @@ async function setUp() {
   });
   const bonus = await ModifiersService.createModifier(session, fork.id, "feats", feat.id, {
     operator: "add",
-    target: "skills.discrétion.misc",
+    target: "skills.discretion.misc",
     value: "2",
   });
   const formula = await ModifiersService.createModifier(session, fork.id, "feats", feat.id, {
     operator: "add",
     target: "abilities.strength.misc",
-    value: "{{ floor(skills.discrétion.misc / 7) + [skills.discrétion.rank] }}",
+    value: "{{ floor(skills.discretion.misc / 7) + [skills.discretion.rank] }}",
+  });
+  // A feat the character doesn't have: its family's text, bound to no skill, waits for the rekey to be read
+  const singer = await EntitiesService.createEntity(session, fork.id, "feats", {
+    name: "Chanteur",
+    links: { listedIn: [{ toId: general.id }] },
+  });
+  const family = await ModifiersService.createModifier(session, fork.id, "feats", singer.id, {
+    operator: "add",
+    target: "skills.representation.misc",
+    value: "1",
   });
   const gate = await RequirementsService.createRequirement(session, fork.id, "modifiers", bonus.id, {
     level: "1",
     operator: "greater_than_or_equal",
-    target: "skills.discrétion.misc",
+    target: "skills.discretion.misc",
     value: "5",
   });
   const prerequisite = await RequirementsService.createRequirement(session, fork.id, "feats", feat.id, {
     level: "1",
     operator: "greater_than_or_equal",
-    target: "skills.discrétion.rank",
+    target: "skills.discretion.rank",
     value: "0",
   });
   const character = await createTestCharacter(user.id, { rulesetId: fork.id });
@@ -64,13 +84,13 @@ async function setUp() {
   });
   const own = await CharacterModifiersService.createModifier(session, character.id, {
     operator: "add",
-    target: "skills.discrétion.misc",
+    target: "skills.discretion.misc",
     value: "5",
   });
   return {
     character,
     fork,
-    modifierIds: [bonus.id, formula.id, own.id],
+    modifierIds: [bonus.id, formula.id, family.id, own.id],
     requirementIds: [gate.id, prerequisite.id],
   };
 }
@@ -89,30 +109,42 @@ async function storedOf({ modifierIds, requirementIds }: { modifierIds: string[]
   return { bindings: await NameBindings.findMany(db, { modifierIds, requirementIds }), texts };
 }
 
-/** Writes the rows' text back as it was saved before keys kept accented letters, straight in the database. */
+/**
+ * Writes the rows' text back as it was saved while keys left accented letters out, straight in the database, and the
+ * family's group binding under its old key, as a save then bound it.
+ */
 async function writeOldKeys(rulesetId: string) {
-  for (const table of [sql`customization.modifiers`, sql`customization.requirements`]) {
-    await db.execute(sql`
-      update ${table}
-      set target = replace(target, 'discrétion', 'discrtion'), value = replace(value, 'discrétion', 'discrtion')
-      where target like '%discrétion%' or value like '%discrétion%'
-    `);
+  for (const [key, old] of [
+    ["discretion", "discrtion"],
+    ["representation", "reprsentation"],
+  ]) {
+    for (const table of [sql`customization.modifiers`, sql`customization.requirements`]) {
+      await db.execute(sql`
+        update ${table}
+        set target = replace(target, ${key}, ${old}), value = replace(value, ${key}, ${old})
+        where target like ${`%${key}%`} or value like ${`%${key}%`}
+      `);
+    }
   }
+  await db.execute(sql`
+    update customization.name_bindings set name = 'reprsentation' where name = 'representation' and kind = 'group'
+  `);
   RulesetViews.invalidate(rulesetId);
 }
 
-describe("a rule saved before a name's key kept its accented letters", () => {
+describe("a rule saved while a name's key left its accented letters out", () => {
   test("is read as the new key until the rekey rewrites it, which a second run leaves, its bindings and sheet unchanged", async () => {
     const rows = await setUp();
     const { character, fork } = rows;
     const sheet = await sheetOf(character.id);
     const saved = await storedOf(rows);
     expect(saved.texts).toEqual([
-      ["skills.discrétion.misc", "2"],
-      ["abilities.strength.misc", "{{ floor(skills.discrétion.misc / 7) + [skills.discrétion.rank] }}"],
-      ["skills.discrétion.misc", "5"],
-      ["skills.discrétion.misc", "5"],
-      ["skills.discrétion.rank", "0"],
+      ["skills.discretion.misc", "2"],
+      ["abilities.strength.misc", "{{ floor(skills.discretion.misc / 7) + [skills.discretion.rank] }}"],
+      ["skills.representation.misc", "1"],
+      ["skills.discretion.misc", "5"],
+      ["skills.discretion.misc", "5"],
+      ["skills.discretion.rank", "0"],
     ]);
     // Each name, a formula's bare and bracketed paths among them, is bound to the skill
     const named = saved.bindings.filter((binding) => binding.kind === "entity" && binding.name === "Discrétion");
@@ -124,21 +156,38 @@ describe("a rule saved before a name's key kept its accented letters", () => {
       "value 0",
       "value 1",
     ]);
+    // The family, which no skill's name is, is bound as a group under its key
+    expect(saved.bindings.filter((binding) => binding.kind === "group").map(({ name }) => name)).toEqual([
+      "representation",
+    ]);
 
     await writeOldKeys(fork.id);
-    expect((await storedOf(rows)).texts.map(([target]) => target)).toContain("skills.discrtion.misc");
+    const old = await storedOf(rows);
+    expect(old.texts.map(([target]) => target)).toEqual([
+      "skills.discrtion.misc",
+      "abilities.strength.misc",
+      "skills.reprsentation.misc",
+      "skills.discrtion.misc",
+      "skills.discrtion.misc",
+      "skills.discrtion.rank",
+    ]);
+    expect(old.bindings.filter((binding) => binding.kind === "group").map(({ name }) => name)).toEqual([
+      "reprsentation",
+    ]);
 
-    // Between the deploy and the rekey: the sheet reads the old text as the new, and a fill keeps the bindings
+    // Between the deploy and the rekey: the sheet reads the old text bound to its skill as the new, and a fill keeps
+    // the bindings
     expect(await sheetOf(character.id)).toEqual(sheet);
     expect((await NameBindingFill.fill(db, fork.id)).dropped).toBe(0);
-    expect((await storedOf(rows)).bindings).toEqual(saved.bindings);
+    expect((await storedOf(rows)).bindings).toEqual(old.bindings);
 
     const before = (await Rulesets.findVersions(db, { ids: [fork.id] })).get(fork.id)!;
     const first = await updateNameKeys(db, [fork.id]);
     RulesetViews.invalidate(fork.id);
 
     expect(await storedOf(rows)).toEqual(saved);
-    expect(first.rewritten).toBe(5);
+    // Its six rows, and the bonuses of the Skill Focus feats the two new skills made, which name them
+    expect([first.rewritten, first.groups, first.unsettled, first.clashes]).toEqual([8, 1, [], []]);
     expect(first.failed).toEqual([]);
     expect((await Rulesets.findVersions(db, { ids: [fork.id] })).get(fork.id)).toBe(before + 1);
     expect(await sheetOf(character.id)).toEqual(sheet);
@@ -162,6 +211,41 @@ describe("a rule saved before a name's key kept its accented letters", () => {
 
     expect((await storedOf(rows)).texts).toEqual(saved.texts);
     expect(await sheetOf(character.id)).toEqual(sheet);
+  });
+
+  test("whose old key would move to a key two feats now share, is left as it is, and listed with both", async () => {
+    const { session, user } = await createTestUser();
+    const fork = await createSeededTestRuleset(user.id);
+    const general = Dnd35View.of(await readView(fork.id)).aptitudes.find((aptitude) => aptitude.name === "General")!;
+    const feat = (name: string) =>
+      EntitiesService.createEntity(session, fork.id, "feats", { name, links: { listedIn: [{ toId: general.id }] } });
+    await feat("Côte");
+    const holder = await feat("Gizmo Holder");
+    const grant = await ModifiersService.createModifier(session, fork.id, "feats", holder.id, {
+      operator: "set",
+      target: "feats.cote.possessed",
+      value: "true",
+    });
+    // A "Cote" saved while its key told it apart from "Côte"'s ("cte" then), which a save refuses now
+    expect(feat("Cote")).rejects.toEqual(
+      new ConflictError(
+        '"Cote" and "Côte" read as one name to the rules: they differ only in case, accents, spaces or signs',
+      ),
+    );
+    await Entities.create(db, DND35_BASE_RULES, "feats", { name: "Cote", description: "", rulesetId: fork.id });
+    await db.execute(sql`update customization.modifiers set target = 'feats.cte.possessed' where id = ${grant.id}`);
+    RulesetViews.invalidate(fork.id);
+
+    const update = await updateNameKeys(db, [fork.id]);
+
+    expect((await Modifiers.findOne(db, { id: grant.id }))?.target).toBe("feats.cte.possessed");
+    expect(update.rewritten).toBe(0);
+    expect(
+      update.unsettled.map(({ held, keys, names, rowId }) => ({ held, keys, names: names?.toSorted(), rowId })),
+    ).toEqual([{ held: "cte", keys: ["cote"], names: ["Cote", "Côte"], rowId: grant.id }]);
+    expect(update.clashes.map(({ entityType, key, names }) => ({ entityType, key, names: names.toSorted() }))).toEqual([
+      { entityType: "feats", key: "cote", names: ["Cote", "Côte"] },
+    ]);
   });
 
   test("waits for a write that holds its ruleset before it locks any row, as every write does: no deadlock", async () => {

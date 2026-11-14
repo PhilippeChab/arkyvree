@@ -68,11 +68,12 @@ found: `/v1`'s key (`index.ts`), or the MCP server's, whose tools call them in t
   `Engine.rules().standaloneKinds()`), whatever the kind: their columns, their fields under `fields` by the names the
   ruleset declares, and their links with their targets' names. A kind adds what its rules describe: its modifiers and
   requirements, where a character may place it.
-- A modifier's or a requirement's target and a formula name an entity by its name's key (`skills.discrétion.misc`),
-  which keeps a name's accented letters. It once left them out: a ruleset that named a skill "Discrétion" answered
-  `skills.discrtion.misc`, and answers `skills.discrétion.misc` since. An integration that kept a target, a formula or a
-  sheet's key from before reads and writes the new spelling: the old one names nothing any more. A name of plain ASCII
-  keeps its key.
+- A modifier's or a requirement's target and a formula name an entity by its name's key (`skills.discretion.misc`),
+  which writes an accented Latin letter as its plain letter. It once left those letters out: a ruleset that named a
+  skill "Discrétion" answered `skills.discrtion.misc`, and answers `skills.discretion.misc` since ("Élan": `lan`, then
+  `elan`; "Straße": `strae`, then `strasse`). An integration that kept a target, a formula or a sheet's key from before
+  reads and writes the new spelling: the old one names nothing any more. A name without such a letter keeps its key,
+  in any script.
 - The routers follow the app's, a resource each (`characters/inventory/`, `characters/advancements/`,
   `rulesets/changes/`, `rulesets/customization/modifiers/`…), each route its reads and its writes together.
 - A character's sheet answers its columns, what the rules find wrong with it (`validation`), what the user may do with

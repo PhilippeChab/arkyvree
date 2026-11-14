@@ -2,12 +2,14 @@ import { eq, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { UnsettledKey } from "@/engine/index.ts";
+import type { KeyClash, UnsettledKey } from "@/engine/index.ts";
 import { NameBindingFill, NameRekey } from "@/server/cow/index.ts";
 
 /** What a rekey of every ruleset did, ruleset by ruleset (`updateNameKeys`). */
 interface KeysUpdate {
   changedMeanwhile: number;
+  /** The names the new keys read as one, each once, in the first ruleset whose view shows them */
+  clashes: (KeyClash & { rulesetId: string })[];
   /** The rulesets whose rekey failed, rolled back, by id */
   failed: string[];
   groups: number;
@@ -39,15 +41,25 @@ async function findRulesets(db: Db, which: "all" | "system") {
 }
 
 /**
- * Moves the text of every ruleset's rules saved before a name's key kept its accented Latin letters to the keys that
- * keep them (`NameRekey`): each ruleset in turn, its sources before it, each in a transaction of its own that locks the
- * ruleset first, as every write does, its content version bumped (under that lock) only when it changed, so the views
- * of the rulesets it leaves stay cached. Its bindings stay as they are. A row whose text holds no old key is left as it is, so
- * it runs again without harm: a second run changes nothing. Every ruleset, or those `only` names. What it did, and the
- * old keys it left.
+ * Moves the text of every ruleset's rules saved while a name's key left its accented Latin letters out to the keys
+ * that read them as plain letters (`NameRekey`): each ruleset in turn, its sources before it, each in a transaction of
+ * its own that locks the ruleset first, as every write does, its content version bumped (under that lock) only when it
+ * changed, so the views of the rulesets it leaves stay cached. Its bindings stay as they are. A row whose text holds no
+ * old key is left as it is, so it runs again without harm: a second run changes nothing. Every ruleset, or those `only`
+ * names. What it did, the old keys it left, and the names the new keys read as one (a ruleset built on another shows
+ * its names too: each is listed once).
  */
 export async function updateNameKeys(db: Db, only?: readonly string[]): Promise<KeysUpdate> {
-  const update: KeysUpdate = { changedMeanwhile: 0, failed: [], groups: 0, rewritten: 0, rulesets: 0, unsettled: [] };
+  const update: KeysUpdate = {
+    changedMeanwhile: 0,
+    clashes: [],
+    failed: [],
+    groups: 0,
+    rewritten: 0,
+    rulesets: 0,
+    unsettled: [],
+  };
+  const clashed = new Set<string>();
   const rulesets = (await findRulesets(db, "all")).filter((ruleset) => !only || only.includes(ruleset.id));
   for (const ruleset of rulesets) {
     try {
@@ -61,6 +73,11 @@ export async function updateNameKeys(db: Db, only?: readonly string[]): Promise<
       update.groups += rekeyed.groups;
       update.changedMeanwhile += rekeyed.changedMeanwhile;
       update.unsettled.push(...rekeyed.unsettled.map((key) => ({ ...key, rulesetId: ruleset.id })));
+      for (const clash of rekeyed.clashes) {
+        const id = [clash.entityType, ...clash.names.toSorted()].join("\u0000");
+        if (!clashed.has(id)) update.clashes.push({ ...clash, rulesetId: ruleset.id });
+        clashed.add(id);
+      }
     } catch (error) {
       console.error(`Names not rekeyed for ruleset ${ruleset.id}:`, error);
       update.failed.push(ruleset.id);

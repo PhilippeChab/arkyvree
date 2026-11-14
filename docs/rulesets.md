@@ -300,25 +300,33 @@ it take both hands, Tiny and Small are light) and a language's type (`LANGUAGE_T
 Secret one no pick takes, 5e's Rare one only an extra pick takes). Their forms offer the
 list's values alone, and the API refuses another.
 
-The rules read an entity by its name's key, its slug (`stripSeparators`): canonically
-composed first (NFC: an "é" typed as "e" and an accent is one "é"), then its Latin letters
-and its digits, accented or not, lowercased ("Discrétion" is `discrétion`, a letter of its
-own and a ligature kept as letters: "ß", "æ", "œ", "ø", "đ", "ı"), and its letters, digits
-and signs of another script with the marks that follow them (a Hindi or Thai vowel sign),
-each word of them lowercased whole ("Лазание" is `лазание`, Greek "ΟΔΟΣ" and "Οδος" are
-one), so a name in any script has a key of its own, and every key a plain ASCII name had
-before stays as it was. Signs every script shares ("²", "½") are left out. A key dropped
-accented Latin letters once (`discrtion`): the rules saved then are rewritten by hand
-once, after the deploy that keeps them (see [What a rule's names
+The rules read an entity by its name's key, its slug (`stripSeparators`): its Latin
+letters and its digits, lowercased, an accented letter as its plain letter, its accent
+written on it or apart ("Discrétion" is `discretion`, "Élan" `elan`), a letter of its own
+or a ligature as its plain letters ("ß" is `ss`, "æ" `ae`, "œ" `oe`, "ø" `o`, "ł" `l`, "đ"
+and "ð" `d`, "þ" `th`, "ı" `i`; a Latin letter none of those reduce, "ŋ", stays), so a
+path names it with its accents or without; and its letters, digits and signs of another
+script with the marks that follow them (a Hindi or Thai vowel sign), each word of them
+lowercased whole ("Лазание" is `лазание`, Greek "ΟΔΟΣ" and "Οδος" are one), none of them
+read past its marks ("й" isn't "и", "ビ" isn't "ヒ"), so a name in any script has a key of
+its own. Signs every script shares ("²", "½") are left out. Only a Latin letter past ASCII
+reads otherwise than it once did: a key dropped those (`discrtion`,
+`stripSeparatorsDroppingAccents`), and the rules saved then are rewritten by hand once,
+after the deploy that reads them plain (see [What a rule's names
 mean](./customization.md#what-a-rules-names-mean)). Two entities of a kind a path names (an ability, a save, a
 class, a feat, a skill, a language, a pool, a spell: `pathNamedKindsOf`) whose names
-share a key would be one to the rules ("dodge" would pass for Dodge), so a create, a
-rename or a restore whose name has the key of another the view shows, in any partition,
-is refused (`EntityNames`), but a new case of an entity's own name ("DODGE"). No path
-names an item, so two items may differ by a sign alone ("+2" and "-2"). A subscribe or
-an unsubscribe compares exact names only: a book's "dodge" beside a fork's "Dodge" gets
-through. The paths' grammar reads a key's characters of any script, accented Latin letters
-and marks among them (`SLUG_CHARACTER`, a template's bare names).
+share a key would be one to the rules ("dodge" would pass for Dodge, "Cote" for "Côte"),
+so a create, a rename or a restore whose name has the key of another the view shows, in
+any partition, is refused (`EntityNames`), but a new case of an entity's own name
+("DODGE"). Two names a ruleset held before keys read accents plain may share one since
+("Cote" and "Côte"): the rules then read the key as either, and the rekey lists them, for
+a rename to tell apart. No path names an item, so two items may differ by a sign alone
+("+2" and "-2"). A subscribe or an unsubscribe compares exact names only: a book's
+"dodge" beside a fork's "Dodge" gets through. The paths' grammar reads a key's characters
+of any script, and an accented Latin letter, which a key never holds, so a target written
+with one names no list (`SLUG_CHARACTER`, a template's bare names). A save checks a path
+against the paths its ruleset lists, which write a name by its key: a target or a
+formula is saved as `skills.discretion.misc`, never `skills.discrétion.misc`.
 
 ### Restoring an override
 

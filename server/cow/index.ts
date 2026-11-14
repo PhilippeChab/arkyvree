@@ -12,7 +12,7 @@
  *   revert to the source (`EntityRevert`), what a ruleset keeps of an extension it unsubscribes from
  *   (`ExtensionDeparture`), an entity's customizations read and copied (`CustomizationCopies`), and the
  *   owned entities of two owners paired by position (`findOwnedPairs`); what a ruleset's rules' names mean, kept beside
- *   their text (`NameBindingFill`), and that text moved to the keys that keep accented letters (`NameRekey`).
+ *   their text (`NameBindingFill`), and that text moved to the keys that read accented letters plain (`NameRekey`).
  */
 export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetChanges } from "./views/RulesetChanges.ts";

@@ -59,7 +59,7 @@ describe("A template's path in another script", () => {
     ]);
   });
 
-  test("reads an accented Latin key, and a letter's mark written apart, bare as bracketed", () => {
+  test("reads a name written with its accents, and a letter's mark written apart, bare as bracketed", () => {
     const readable = new Map([
       ["stats.dextérité.modifier", "number"],
       ["tracks.i̇x̄.level", "number"],

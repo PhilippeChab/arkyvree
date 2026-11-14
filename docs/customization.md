@@ -86,19 +86,23 @@ has that name when it's read. Each row therefore stores, beside its text, the en
   rulesets once it has installed or updated a package (`applyPackages`), so a seeded database's rules have theirs. A
   database whose rules were saved before their names were kept runs it once on every ruleset, by hand, after the
   migration that makes the table (`scripts/db/fill-name-bindings.ts`), as it does after SQL that writes rules.
-- **Keys that kept their accents**: a name's key dropped its accented Latin letters once ("Discrétion" was
-  `discrtion`), and the rules saved then still hold that key in their text. A binding reads either key as its entity's
+- **Keys that read accents plain**: a name's key dropped its accented Latin letters once ("Discrétion" was
+  `discrtion`, "Élan" was `lan`), and reads each as its plain letter now (`discretion`, `elan`); the rules saved
+  before still hold the old key in their text. A binding reads either key as its entity's
   (`NameBindingReader.isStale`, with `stripSeparatorsDroppingAccents`), so a rule bound to its entity keeps working,
-  and no fill drops its bindings, between the deploy that keeps accents and the step that rewrites the text:
+  and no fill drops its bindings, between the deploy that changes the keys and the step that rewrites the text:
   `scripts/db/rekey-names.ts`, run once by hand on a database whose rules were saved before (`updateNameKeys`,
   `NameRekey`, `LegacyKeys`). For each ruleset, its sources first, it rewrites each of its modifiers' and requirements'
   text, and its characters' own modifiers', to the new keys: a bound name to the key of the name it was bound under,
   an unbound one (or a group's, its binding renamed with it) to the key of the one name of the view that had its old
   key, a wildcard's prefix to the new key of the same start. It keeps every row's version (`updatedAt`) and its
-  entity bindings, bumps the content version of each ruleset it changed, prints how many rows it rewrote, and lists
-  the old keys several names had, which it leaves for a person to settle. A second run changes nothing. A text that
-  isn't bound to its entity (a family, a wildcard, a row written past a save) reads by its new key only, so it waits
-  for the step.
+  entity bindings, bumps the content version of each ruleset it changed, and prints how many rows it rewrote. It
+  leaves for a person to settle, and lists: an old key several names had ("lan", once both "Lan"'s and "Élan"'s), an
+  old key whose new key several names share now ("cte", "Côte"'s, would be `cote`, which "Cote" has too), and the
+  names of a kind a path names that the new keys read as one, which their old keys told apart ("Côte" and "Cote"):
+  the rules read such a key as either, so a rename of one settles it. A second run changes nothing. A text that isn't
+  bound to its entity (a family, a wildcard, a row written past a save) reads by its new key only, so it waits for the
+  step.
 
 A category declares the names its paths carry (`PathCategory.names`, `nameSegments`, `valueNames`); a word the paths
 use themselves (`skills.budget`, `languages.extrapicks`) names none.
@@ -186,10 +190,10 @@ The seeds write these with the content's builders (`content/dnd3.5/builders/lang
 ## Normalization
 
 All entity names in paths use `stripSeparators()` from `shared/text.ts`, their key: spaces and signs left out, letters
-lowercased, accented letters kept.
+lowercased, an accented Latin letter as its plain letter.
 
 Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficiencybattleaxe"`, `"Discrétion"` →
-`"discrétion"`
+`"discretion"`, `"Straße"` → `"strasse"`, `"Лазание"` → `"лазание"`
 
 ## Auto-Generated Customization
 

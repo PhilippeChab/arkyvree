@@ -39,11 +39,11 @@ export type TemplateNode =
 /** A bare path, whole: a name and its dotted segments. */
 const BARE_PATH = /^[\p{L}_][\p{L}\p{M}\p{N}_.]*$/u;
 /**
- * What a bare name goes on with: a letter, a mark or a digit of any script (`skills.discrétion.rank`, a Hindi vowel
- * sign), an underscore, or a dot between its segments.
+ * What a bare name goes on with: a letter, a mark or a digit of any script (a Hindi vowel sign, a name written with
+ * its accents: `skills.discrétion.rank`), an underscore, or a dot between its segments.
  */
 const NAME_PART = /^[\p{L}\p{M}\p{N}_.]$/u;
-/** What a bare name starts with: a letter of any script (a key keeps them all: `stripSeparators`), or an underscore. */
+/** What a bare name starts with: a letter of any script (a key keeps every script's: `stripSeparators`), or an underscore. */
 const NAME_START = /^[\p{L}_]$/u;
 
 /** The functions a template calls, each on numbers. */

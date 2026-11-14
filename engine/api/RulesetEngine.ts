@@ -159,10 +159,10 @@ export default class RulesetEngine {
   }
 
   /**
-   * The text of rows saved before a name's key kept its accented Latin letters (`rows`: modifiers or requirements, a
-   * character's own modifiers, as stored, with their `bindings`), moved to the keys that keep them, in the ruleset's
-   * view (`LegacyKeys`): each row whose text changes, the group bindings whose names follow it, and the old keys
-   * several names now have keys for, which it leaves.
+   * The text of rows saved while a name's key left its accented Latin letters out (`rows`: modifiers or requirements, a
+   * character's own modifiers, as stored, with their `bindings`), moved to the keys that read them as plain letters, in
+   * the ruleset's view (`LegacyKeys`): each row whose text changes, the group bindings whose names follow it, the old
+   * keys it leaves (several names had one, or several share its new key), and the names the new keys read as one.
    */
   planRekeyedNames(
     rows: { id: string; target: string | null; value: string | null }[],

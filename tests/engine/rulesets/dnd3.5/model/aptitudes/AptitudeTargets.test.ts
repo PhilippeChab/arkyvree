@@ -35,11 +35,11 @@ describe("the aptitudes' target grammar", () => {
       expect(AptitudeTargets.parsePool(`aptitudes.${stripSeparators(name)}.allowed`)).toBe(stripSeparators(name));
   });
 
-  test("read a list whose name has accented Latin letters by its slug, which keeps them", () => {
+  test("read a list whose name has accented Latin letters by its slug, which writes them plain", () => {
     for (const name of ["Dons généraux", "Sorts de prêtre", "Straße", "Żółć"])
       expect(AptitudeTargets.parsePool(`aptitudes.${stripSeparators(name)}.allowed`)).toBe(stripSeparators(name));
-    expect(AptitudeTargets.parseSpellLevel("aptitudes.sortsdeprêtre.2.uses")).toEqual({
-      list: "sortsdeprêtre",
+    expect(AptitudeTargets.parseSpellLevel(`aptitudes.${stripSeparators("Sorts de prêtre")}.2.uses`)).toEqual({
+      list: "sortsdepretre",
       level: 2,
       field: "uses",
     });

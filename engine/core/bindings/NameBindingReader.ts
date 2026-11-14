@@ -50,7 +50,7 @@ export default class NameBindingReader {
   /**
    * Whether a binding no longer matches its row's text (the text was changed past it: a fix written straight to the
    * database): the name it was made from isn't what its place holds any more. Such a binding is left aside when read,
-   * and replaced by a fill. A text saved before keys kept accented letters still holds the name's key as it was then
+   * and replaced by a fill. A text saved while keys left accented letters out still holds the name's key as it was then
    * (`stripSeparatorsDroppingAccents`), which matches too, until `scripts/db/rekey-names.ts` rewrites it.
    */
   static isStale(row: BoundRow, binding: NameBinding, paths?: Pick<TargetPaths, "nameSegments">): boolean {

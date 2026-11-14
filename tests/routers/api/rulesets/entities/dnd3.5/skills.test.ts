@@ -49,7 +49,7 @@ describe("rulesets entities: skills", () => {
     expect(copied.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Dexterity"], toName: "Dexterity" }]);
   });
 
-  test("stores a name composed, so an accent typed apart from its letter can't make a second skill of one key", async () => {
+  test("stores a name composed, so an accent typed apart from its letter can't make a second skill of one name", async () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const json = (name: string) => ({ name, links: { keyAbility: abilityMap["Dexterity"] } });

@@ -3,7 +3,7 @@
 ## Unreleased
 
 - A modifier or a requirement keeps following the feat, skill, class, spell, language or race it names when that's renamed, in the ruleset that renames it and in those built on it
-- Paths, formulas and sheets keep a name's accented letters: a skill named Discrétion is `skills.discrétion`, where it was `skills.discrtion`; the public API and the MCP server read and write the new spelling
+- Paths, formulas and sheets write a name's accented letters as plain letters: a skill named Discrétion is `skills.discretion`, where it was `skills.discrtion`; the public API and the MCP server read and write the new spelling
 - A skill's Skill Focus (5e: its Skill Proficiency and Expertise) is renamed and restored with its skill, keeping who picked it
 - Campaign documents: a Game Master's folders, uploaded files (pictures, PDFs and text files) and notes, each Private, Public or shown to selected players
 - A campaign's Party View: its characters' sheets in brief, side by side over the whole screen

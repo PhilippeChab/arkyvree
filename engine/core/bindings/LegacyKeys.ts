@@ -7,7 +7,7 @@ import { stripSeparators, stripSeparatorsDroppingAccents } from "@/shared/text.t
 import NameBindingReader from "./NameBindingReader.ts";
 import TemplatePaths from "./TemplatePaths.ts";
 
-/** What a row's text becomes under the keys that keep accented letters, and what it can't settle alone. */
+/** What a row's text becomes under the keys that read accented letters plain, and what it can't settle alone. */
 interface RowRekey {
   /** The new name of each group binding at a place whose text changed, by the binding's id */
   groups: Map<string, string>;
@@ -23,25 +23,45 @@ interface StoredRow {
   value: string | null;
 }
 
-/** A row's rewrites under the keys that keep accented letters: each row whose text changes, and what none settles. */
+/**
+ * Names of a kind a path names that the view's keys read as one since they read accented letters plain ("Côte" and
+ * "Cote", `cote`), which their old keys told apart (`cte`, `cote`): its kind, the key, and the names.
+ */
+export interface KeyClash {
+  entityType: string;
+  key: string;
+  names: string[];
+}
+
+/**
+ * A row's rewrites under the keys that read accented letters plain: each row whose text changes, what none settles, and
+ * the names those keys read as one.
+ */
 export interface KeysRekey {
+  /** The names of a kind a path names that the new keys read as one, which their old keys told apart */
+  clashes: KeyClash[];
   /** The new name of each group binding at a place whose text changed, by the binding's id */
   groups: Map<string, string>;
   /** Each row whose text changes, by its id: its new target and value */
   rows: Map<string, { target: string | null; value: string | null }>;
-  /** The old keys several names now have keys for, which a rekey leaves as they are */
+  /** The old keys a rekey leaves as they are, which a person settles */
   unsettled: UnsettledKey[];
 }
 
-/** An old key a row's text holds that several names of the view had, each with its own key now. */
+/**
+ * An old key a row's text holds that a rekey can't move alone: several names of the view had it, each with its own key
+ * now (`keys`), or the one key it would take is several names' now (`keys`, that key, and `names`, theirs).
+ */
 export interface UnsettledKey {
   field: "target" | "value";
   held: string;
   keys: string[];
+  /** The view's names its one new key reads as one, when that's why it's left */
+  names?: string[];
   rowId: string;
 }
 
-/** A Latin letter past ASCII ("é", "ß"): a text that holds one is written under the new keys, which an old key never is. */
+/** A Latin letter past ASCII ("é", "ß"): a text that holds one holds no old key, which never held one. */
 const ACCENTED_LATIN = /(?!\p{ASCII})\p{scx=Latin}/u;
 /** The fields of a row a key sits in. */
 const FIELDS = ["target", "value"] as const;
@@ -54,18 +74,20 @@ function familiesOf(name: string): string[] {
 }
 
 /**
- * The text of the rows saved before a name's key kept its accented Latin letters, moved to the keys that keep them
- * ("skills.discrtion.misc" → "skills.discrétion.misc"), in a ruleset's view (`rulesetData`), by what its paths say
- * names an entity (`paths`). A segment bound to an entity takes the key of the name it was bound under, which its old
- * text held (`NameBindingReader.isStale` reads that name either way), so its bindings stay as they are. Any other
- * (unbound, or bound to a group: a family, a name a wildcard follows) takes the key of the one name of the view whose
- * old key it holds, when it names nothing under the new keys; a prefix a wildcard ends ("armedeprdilection*") the new
- * key of the same start of those names. An old key several names now have keys for is left, and listed.
+ * The text of the rows saved while a name's key left its accented Latin letters out, moved to the keys that read them
+ * as their plain letters ("skills.discrtion.misc" → "skills.discretion.misc"), in a ruleset's view (`rulesetData`), by
+ * what its paths say names an entity (`paths`). A segment bound to an entity takes the key of the name it was bound
+ * under, which its old text held (`NameBindingReader.isStale` reads that name either way), so its bindings stay as they
+ * are. Any other (unbound, or bound to a group: a family, a name a wildcard follows) takes the key of the one name of
+ * the view whose old key it holds, when it names nothing under the new keys; a prefix a wildcard ends
+ * ("armedeprdilection*") the new key of the same start of those names. An old key several names now have keys for is
+ * left, and listed; so is one whose new key several names of the view share ("Côte" beside "Cote"), which the rules
+ * would read as either. It lists those names too, of every kind a path names.
  */
 export default class LegacyKeys {
   constructor(
     private readonly rulesetData: RulesetData,
-    private readonly paths: Pick<TargetPaths, "nameSegments">,
+    private readonly paths: Pick<TargetPaths, "namedKinds" | "nameSegments">,
   ) {}
 
   /** A bound entity's segment: the key of its name when its text holds that name's old key, which differs. */
@@ -73,6 +95,19 @@ export default class LegacyKeys {
     const legacy = NameBindingReader.slugOf(named, binding.name, stripSeparatorsDroppingAccents);
     const key = NameBindingReader.slugOf(named, binding.name);
     return held === legacy && legacy !== key ? key : undefined;
+  }
+
+  /** The names of the view's entities of a kind a path names that the new keys read as one, and their old keys didn't. */
+  private clashes(): KeyClash[] {
+    const clashes: KeyClash[] = [];
+    for (const entityType of this.paths.namedKinds()) {
+      const names = new Set(this.rulesetData.rows(entityType).map((row) => row.name));
+      for (const [key, same] of Map.groupBy(names, (name) => stripSeparators(name))) {
+        const legacy = new Set(same.map((name) => stripSeparatorsDroppingAccents(name)));
+        if (key && legacy.size > 1) clashes.push({ entityType, key, names: same });
+      }
+    }
+    return clashes;
   }
 
   /** The new keys of the names of a kind (and their families) whose old key `matches`, against what they are now. */
@@ -85,6 +120,12 @@ export default class LegacyKeys {
       }
     }
     return keys;
+  }
+
+  /** The names of the view's entities of a segment's kind whose key, as the segment writes it, is `key`. */
+  private namesOf(named: NamedSegment, key: string): string[] {
+    const names = this.rulesetData.rows(named.entityType).map((row) => row.name);
+    return [...new Set(names.filter((name) => NameBindingReader.slugOf(named, name) === key))];
   }
 
   /**
@@ -130,6 +171,12 @@ export default class LegacyKeys {
         rekey.unsettled.push({ field, held, keys: key, rowId: row.id });
         continue;
       }
+      // A key several names now share: the rules would read it as either, whatever the binding says
+      const names = key.endsWith("*") ? [] : this.namesOf(named, key);
+      if (names.length > 1) {
+        rekey.unsettled.push({ field, held, keys: [key], names, rowId: row.id });
+        continue;
+      }
       segments[named.segment] = key;
       changed = true;
       if (binding?.kind === "group") rekey.groups.set(binding.id, stripSeparators(key));
@@ -150,10 +197,11 @@ export default class LegacyKeys {
   /**
    * An unbound segment's (or a group's) new key: the one name of the view whose old key it holds, its family's too,
    * when it names nothing under the new keys; several when several did, or when it names an entity now as well. None
-   * for one written under the new keys (an accented letter in it), which a second run leaves as it is.
+   * for one that holds an accented letter, which no old key held, and for one a second run reads (the new key, which no
+   * other name's old key is but one of its own key).
    */
   private textKey(named: NamedSegment, held: string): string | string[] | undefined {
-    // Written under the new keys already (after the deploy): never an old key, whatever it names now
+    // Never an old key, whatever it names now
     if (ACCENTED_LATIN.test(held)) return undefined;
     if (held.endsWith("*")) return this.prefixKey(named, held.slice(0, -1));
     if (held.includes("*")) return undefined;
@@ -164,17 +212,20 @@ export default class LegacyKeys {
     );
     keys.delete(slug);
     const shown = this.keysOf(named, (name) => NameBindingReader.slugOf(named, name));
-    // One that names an entity now, and was an accented name's old key too ("lan", "Élan"'s, beside a skill "Lan"): the
-    // person's to settle
+    // One that names an entity now, and was an accented name's old key too ("lan", "Élan"'s, beside a skill "Lan", whose
+    // keys are "elan" and "lan" now): the person's to settle
     if (shown.has(slug)) return keys.size === 0 ? undefined : [slug, ...keys];
     if (keys.size === 0) return undefined;
     return keys.size === 1 ? [...keys][0] : [...keys];
   }
 
-  /** The rows' (`rows`, as stored, with their `bindings`) text under the new keys: what changes, and what none settles. */
+  /**
+   * The rows' (`rows`, as stored, with their `bindings`) text under the new keys: what changes, what none settles, and
+   * the names the new keys read as one.
+   */
   plan(rows: readonly StoredRow[], bindings: readonly NameBinding[]): KeysRekey {
     const byRow = Map.groupBy(bindings, (binding) => (binding.modifierId ?? binding.requirementId)!);
-    const plan: KeysRekey = { groups: new Map(), rows: new Map(), unsettled: [] };
+    const plan: KeysRekey = { clashes: this.clashes(), groups: new Map(), rows: new Map(), unsettled: [] };
     for (const row of rows) {
       const { groups, target, unsettled, value } = this.rekeyRow(row, byRow.get(row.id) ?? []);
       plan.unsettled.push(...unsettled);
