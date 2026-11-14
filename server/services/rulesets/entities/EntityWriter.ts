@@ -18,6 +18,7 @@ import {
 import {
   CustomizationCopies,
   type EditTarget,
+  EntityCopy,
   EntityEdit,
   EntityNames,
   EntityRevert,
@@ -144,37 +145,20 @@ export default class EntityWriter {
   ) {}
 
   /**
-   * What an entity holds past its name and description, as stored, in one text two entities compare by: its fields,
-   * its links (by the entities they stand for), its modifiers and its requirements, and its modifiers' own. A copy
-   * holds its source's, word for word, until its author changes one.
+   * Whether the ruleset's copy (`copyId`, of `type`) would hold, once a restore renames it (`restored`: its name and
+   * description then), what the view shows in its place without it: the copies it took the place of merged, as a copy
+   * of them would hold them (`EntityCopy.readContent`, `CowData.restoredGroupOf`): its author changed nothing of it.
    */
-  private static async findContent(
+  private static async isUntouched(
     tx: Db,
-    { rulesetData: { cow } }: LockedRulesetScope,
-    entity: { fields: Record<string, unknown>; id: string },
+    scope: LockedRulesetScope,
+    type: RulesetEntityType,
+    copyId: string,
+    restored: { description: string | null; name: string },
   ) {
-    const modifiers = await Modifiers.findMany(tx, { sourceIds: [entity.id] });
-    const requirements = await Requirements.findMany(tx, {
-      entityIds: [entity.id, ...modifiers.map((modifier) => modifier.id)],
-    });
-    const links = await EntityLinks.findOwn(tx, entity.id);
-    const signOf = new Map(modifiers.map((m) => [m.id, [m.target, m.operator, m.value, m.valueType].join("|")]));
-    const fields = Object.entries(entity.fields).toSorted(([a], [b]) => a.localeCompare(b));
-    return JSON.stringify({
-      fields,
-      // A link by the entity it stands for: a copy's may name the ruleset's copy of a pool its source names itself
-      links: links
-        .map(({ role, tier, toId, viaId }) =>
-          [role, cow.originalOf(toId), viaId ? cow.originalOf(viaId) : null, tier ?? null].join("|"),
-        )
-        .toSorted(),
-      modifiers: [...signOf.values()].toSorted(),
-      requirements: requirements
-        .map((r) =>
-          [signOf.get(r.entityId) ?? "", r.level, r.chainingOperator, r.target, r.operator, r.value].join("|"),
-        )
-        .toSorted(),
-    });
+    const source = await EntityCopy.readContent(tx, scope, type, scope.rulesetData.cow.restoredGroupOf(copyId));
+    if (!source || source.name !== restored.name || source.description !== restored.description) return false;
+    return (await EntityCopy.readContent(tx, scope, type, [copyId]))?.content === source.content;
   }
 
   /**
@@ -234,8 +218,11 @@ export default class EntityWriter {
    */
   private static async prepareRename(tx: Db, scope: LockedRulesetScope, renamed: EntityRename, vacated: Vacated) {
     const type = entityTypeOf(scope.ruleset.baseRules, renamed.type);
-    const stored = await Entities.findOne(tx, { entityType: type, id: scope.rulesetData.cow.resolve(renamed.id) });
-    if (!stored) return undefined;
+    const cow = scope.rulesetData.cow;
+    const row = await Entities.findOne(tx, { entityType: type, id: cow.resolve(renamed.id) });
+    if (!row) return undefined;
+    // As the view shows it: a winner under the texts a sibling copy gave it
+    const stored = { ...row, ...cow.getShownTexts(row.id) };
     const { name } = renamed;
     const description = stored.description === renamed.previousDescription ? renamed.description : stored.description;
     // One that changes nothing writes nothing: no copy made of an inherited entity for it
@@ -243,16 +230,11 @@ export default class EntityWriter {
     const names = new EntityNames(scope);
     // (unless the same plan freed that name before it: the view read before it still shows it taken)
     const restoring = renamed.restoring && !vacated.removed && !vacated.names.has(name);
-    const sourceId = restoring ? scope.rulesetData.cow.sourceOf(stored.id) : undefined;
-    const source = sourceId && (await Entities.findOne(tx, { entityType: type, id: sourceId }));
-    const untouched =
-      source &&
-      source.name === name &&
-      stored.rulesetId === scope.ruleset.id &&
-      stored.description === renamed.previousDescription &&
-      (await EntityWriter.findContent(tx, scope, stored)) === (await EntityWriter.findContent(tx, scope, source));
-    if (source && untouched) {
-      await EntityRevert.revert(tx, type, source.id, scope, names);
+    // A copy whose source is gone is the ruleset's own, which no restore removes
+    const sourceId = restoring && stored.rulesetId === scope.ruleset.id ? cow.sourceOf(stored.id) : undefined;
+    const restorable = sourceId !== undefined && (await Entities.has(tx, { entityType: type, id: sourceId }));
+    if (restorable && (await EntityWriter.isUntouched(tx, scope, type, stored.id, { description, name }))) {
+      await EntityRevert.revert(tx, type, sourceId!, scope, names);
       return undefined;
     }
     await names.assertRenameAvailable(

@@ -1,5 +1,7 @@
 import type { BaseRules } from "@/shared/enums.ts";
 
+import type { CopyTexts } from "./CowData.ts";
+
 /**
  * How a module's kinds pair in a ruleset's chain, by its storage: those a name is the identity of (`identities`: 3.5's
  * pools), those a book reprints, which pair by name when no copy pairs them (`reprints`: 3.5's feats and spells), those
@@ -18,7 +20,8 @@ export interface CowKinds {
  * `CowSources.getReads` says: its snapshots, and its source chain's, the owned entities of the owners it copied or its
  * own entities hide (`owned`: each its kind, its owner and its position in it), the chain's native namesakes of the
  * kinds a book reprints, the ruleset's entities and its extensions' of a name both have (each with its partition), and
- * the entities of the kinds a name is the identity of, its own and the chain's (`identities`).
+ * the entities of the kinds a name is the identity of, its own and the chain's (`identities`), and the copies among the
+ * snapshots whose name or description differs from what they copied, each with what it changed (`texts`).
  */
 export interface CowRows {
   identities: { entityType: string; id: string; name: string; rulesetId: string }[];
@@ -26,6 +29,7 @@ export interface CowRows {
   owned: { entityType: string; id: string; ownerId: string; position: number }[];
   ownNamesakes: { entityType: string; id: string; name: string; partition: string; rulesetId: string }[];
   snapshots: { forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
+  texts?: ({ forkedEntityId: string } & CopyTexts)[];
 }
 
 /**

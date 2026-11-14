@@ -376,13 +376,13 @@ test("subscribing to an extension with an entity of a renamed copy's name is ref
 
 // An unsubscribe shows again what the extension stood in for (a core entity it copied), under its name: refused while
 // the fork shows another entity of it, as a subscribe is (#699)
-test("unsubscribing from an extension whose copy of a core feat the fork renamed, once it named a feat as the core one, is refused", async () => {
+test("unsubscribing from an extension whose copy of a core feat its author renamed, once the fork named a feat as the core one, is refused", async () => {
   const { session, fork, general, baseFeat } = await setup();
   const extension = await createSeededTestRuleset(session.userId);
   const bookCopy = await copyEntity(db, "feats", (await baseFeat("Dodge")).id, extension);
+  await EntitiesService.updateEntity(session, extension.id, "feats", bookCopy.id as string, { name: "Dodge (Book)" });
   await publishExtension(extension.id);
   await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
-  await EntitiesService.updateEntity(session, fork.id, "feats", bookCopy.id as string, { name: "Dodge (Local)" });
   const own = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Dodge",
     links: { listedIn: [{ toId: general.id }] },
@@ -399,7 +399,26 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
   await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "Probe Dodge" });
   await RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id);
   expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
-  expect(await countNamed(fork.id, "feats", "Dodge (Local)")).toBe(0);
+  expect(await countNamed(fork.id, "feats", "Dodge (Book)")).toBe(0);
+});
+
+// The fork's own edit of the extension's copy stays a copy of the core feat: nothing shows again
+test("unsubscribing from an extension whose copy of a core feat the fork renamed keeps the fork's copy, beside a feat named as the core one", async () => {
+  const { session, fork, general, baseFeat } = await setup();
+  const extension = await createSeededTestRuleset(session.userId);
+  const bookCopy = await copyEntity(db, "feats", (await baseFeat("Dodge")).id, extension);
+  await publishExtension(extension.id);
+  await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
+  await EntitiesService.updateEntity(session, fork.id, "feats", bookCopy.id as string, { name: "Dodge (Local)" });
+  await EntitiesService.createEntity(session, fork.id, "feats", {
+    name: "Dodge",
+    links: { listedIn: [{ toId: general.id }] },
+  });
+
+  await RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id);
+
+  expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
+  expect(await countNamed(fork.id, "feats", "Dodge (Local)")).toBe(1);
 });
 
 test("subscribing to an extension that shows a name its view shows twice no more often, or unsubscribing, is no clash", async () => {

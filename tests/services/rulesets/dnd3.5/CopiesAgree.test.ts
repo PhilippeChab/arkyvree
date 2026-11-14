@@ -15,9 +15,13 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+
+/** A first page of a list. */
+const FIRST_PAGE = { limit: 50, page: 1 };
 
 /** A published book of a new author's, a fork of the seeded 3.5 core, and its author. */
 async function createBook(edit: (author: Session, bookId: string) => Promise<unknown>) {
@@ -67,6 +71,16 @@ async function subscriberOf(...bookIds: string[]) {
   const fork = await forkCore(session);
   for (const bookId of bookIds) await RulesetExtensionsService.subscribeExtension(session, fork.id, [bookId]);
   return { fork, session };
+}
+
+/** A book that renames Appraise to Bravo, and a new user's fork subscribed to Complete Adventurer, then to it. */
+async function subscribeToRenamedAppraise() {
+  const adventurer = await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME);
+  const { author, book } = await createBook(async (author, bookId) => {
+    const appraise = await skillOf(bookId, "Appraise");
+    await EntitiesService.updateEntity(author, bookId, "skills", appraise.id, { name: "Bravo" });
+  });
+  return { author, book, ...(await subscriberOf(adventurer.id, book.id)) };
 }
 
 describe("two books' copies of a skill's Skill Focus", () => {
@@ -132,4 +146,44 @@ describe("two books' copies of a skill's Skill Focus", () => {
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
     },
   );
+
+  test("show their name and text in the list a later book's rename gives them, which a search finds", async () => {
+    const { fork, session } = await subscribeToRenamedAppraise();
+
+    const { items } = await EntitiesService.getEntities(session, fork.id, "feats", { search: "Bravo" }, FIRST_PAGE);
+
+    expect(items.map((feat) => feat.name)).toContain("Skill Focus: Bravo");
+    const listed = items.find((feat) => feat.name === "Skill Focus: Bravo")!;
+    expect(listed.description).toBe((await featOf(fork.id, "Skill Focus: Bravo")).description);
+    expect(listed.description).toContain("Bravo");
+  });
+
+  test("keep the name a later book's rename gives them from another feat, and leave the old one free", async () => {
+    const { fork, session } = await subscribeToRenamedAppraise();
+    const [general] = Dnd35View.of(await readView(fork.id)).aptitudes.filter((aptitude) => aptitude.name === "General");
+    const feat = (name: string) => ({ name, links: { listedIn: [{ toId: general.id }] } });
+
+    await expectRefusedWith(EntitiesService.createEntity(session, fork.id, "feats", feat("Skill Focus: Bravo")), 409);
+    await EntitiesService.createEntity(session, fork.id, "feats", feat("Skill Focus: Appraise"));
+
+    expect(await givingTo(fork.id, "Bravo")).toEqual(["Skill Focus: Bravo"]);
+  });
+
+  test("leave no change once a subscriber of a book that rewrote its text renames the skill, then restores it", async () => {
+    const { book } = await createBook(async (author, bookId) => {
+      const focus = await featOf(bookId, "Skill Focus: Climb");
+      await EntitiesService.updateEntity(author, bookId, "feats", focus.id, {
+        name: focus.name,
+        description: "The book's own words",
+      });
+    });
+    const { fork, session } = await subscriberOf(book.id);
+    const climb = await skillOf(fork.id, "Climb");
+    await EntitiesService.updateEntity(session, fork.id, "skills", climb.id, { name: "Scale" });
+
+    await RulesetChangesService.revertOverride(session, fork.id, "skills", climb.id);
+
+    expect((await featOf(fork.id, "Skill Focus: Climb")).description).toBe("The book's own words");
+    expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
+  });
 });

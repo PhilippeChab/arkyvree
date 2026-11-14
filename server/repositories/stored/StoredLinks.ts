@@ -1,4 +1,4 @@
-import { and, eq, inArray, max } from "drizzle-orm";
+import { and, eq, inArray, max, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { entityLinksInRules } from "@/drizzle/schema.ts";
@@ -36,6 +36,20 @@ const WRITE_BATCH = 2000;
 class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
   constructor() {
     super(entityLinksInRules);
+  }
+
+  /** Entities' links (`fromIds`) to one of `toIds`, or through one, removed (`delete`'s), as they were. */
+  private async deleteNaming(db: Db, where: { fromIds: string[]; toIds: string[] }): Promise<ViewLink[]> {
+    if (where.fromIds.length === 0 || where.toIds.length === 0) return [];
+    return await db
+      .delete(entityLinksInRules)
+      .where(
+        and(
+          inArray(entityLinksInRules.fromId, where.fromIds),
+          or(inArray(entityLinksInRules.toId, where.toIds), inArray(entityLinksInRules.viaId, where.toIds)),
+        ),
+      )
+      .returning(LINK_COLUMNS);
   }
 
   /**
@@ -89,9 +103,14 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
 
   /**
    * Removes an entity's links of a role (`fromId`, `role`), those to a kind (`toType`) or to an entity (`toId`) when it
-   * says: answers them as they were.
+   * says; or entities' links (`fromIds`) to one of `toIds`, or through one (its `viaId`): an unsubscribe's, of the copies
+   * it keeps, to what leaves with the extension. Answers them as they were.
    */
-  async delete(db: Db, where: { fromId: string; role: string; toId?: string; toType?: string }): Promise<ViewLink[]> {
+  async delete(
+    db: Db,
+    where: { fromId: string; role: string; toId?: string; toType?: string } | { fromIds: string[]; toIds: string[] },
+  ): Promise<ViewLink[]> {
+    if ("fromIds" in where) return await this.deleteNaming(db, where);
     return await db
       .delete(entityLinksInRules)
       .where(

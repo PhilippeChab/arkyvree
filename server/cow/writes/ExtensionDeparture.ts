@@ -5,7 +5,10 @@ import RulesetChanges from "@/server/cow/views/RulesetChanges.ts";
 import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Entities,
+  EntityLinks,
   EntityReferences,
+  EntitySnapshots,
   NameBindings,
   type ReferencedType,
   RulesetEntities,
@@ -19,11 +22,20 @@ import { findOwnedPairs } from "./ownedPairs.ts";
 /** The ruleset's copies of the extension's entities, by entity type: what the unsubscribe reverts, their rows with them. */
 type Copies = ReadonlyMap<string, string[]>;
 
+/** The ruleset's snapshots of the extension's entities (`RulesetChanges.copiesOf`): a copy's, or a tombstone's. */
+type CopySnapshots = Awaited<ReturnType<typeof RulesetChanges.copiesOf>>;
+
 /**
  * What leaves the ruleset with the extension, by entity type: each id, with the id its view shows in its place once the
  * extension is gone, or `undefined` when nothing stands there.
  */
 type Departures = ReadonlyMap<ReferencedType, ReadonlyMap<string, string | undefined>>;
+
+/**
+ * The ruleset's copies of the extension's entities that stay (`ExtensionDeparture`'s `kept`), each with its snapshot
+ * and the entity it copies once the extension is gone (`sourceEntityId`, what stands in its source's place).
+ */
+type Kept = (CopySnapshots[number] & { rebasedTo: string })[];
 
 /** How many lost references the refusal names. */
 const NAMED_LOSSES = 10;
@@ -40,25 +52,56 @@ const NAMED_LOSSES = 10;
  * characters keep that names one names what stands in its place instead (`repoint`). What names one with nothing in
  * its place refuses the unsubscribe: a character's pick (`isInUse`), or one of the ruleset's rows (a link to a list no
  * other extension has, an item's template, a class's skill or granted feat…).
+ *
+ * A copy the ruleset made of an extension's entity that stands for one the view keeps showing once the extension is gone
+ * (its copy of a core feat, a reprint, a list another book has too) stays, the ruleset's edit with it: it copies what
+ * stands in its source's place instead (`kept`), and so does its delete of one (a tombstone), so the entity it deleted
+ * doesn't show again. Its own links to what only the extension has go with the extension (`repoint`).
  */
 export default class ExtensionDeparture {
   private constructor(
     private readonly scope: LockedRulesetScope,
     /** The ruleset's copies of the extension's entities, each with its source's type and id: what the unsubscribe reverts. */
-    readonly snapshots: Awaited<ReturnType<typeof RulesetChanges.copiesOf>>,
-    /** The ruleset's view once the extension is gone. */
+    readonly snapshots: CopySnapshots,
+    /** The ruleset's copies of the extension's entities that stay, each copying what stands in its source's place. */
+    readonly kept: Kept,
+    /** The ruleset's view once the extension is gone, its kept copies copying what they copy then. */
     readonly after: CowData,
     private readonly copies: Copies,
     private readonly departures: Departures,
   ) {}
 
+  /** The ruleset's copies its snapshots record (`snapshots`), by entity type. */
+  private static groupCopies(snapshots: CopySnapshots): Copies {
+    return new Map(
+      [...Map.groupBy(snapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
+        type,
+        snaps.map((snap) => snap.forkedEntityId),
+      ]),
+    );
+  }
+
   /**
-   * What leaves with the extension (`extensionId`), by entity type: its entities and the ruleset's copies of them
-   * (`copies`), and what they own (their classes' levels), each with what the view shows in its place once the
-   * extension is gone. That is the first of the ids the view (`before`) shows it for (`CowData.getEquivalentIds`: the
-   * entity a copy stands for, the other extensions' copies of it and the namesakes paired with it) that stays, as the
-   * view without the extension (`after`) resolves it, when that view shows it: a copy the ruleset deleted shows nothing.
-   * Its kinds are its ruleset's base rules' (`baseRules`).
+   * The owned entities of what leaves (`departures`, the kinds no other owns), each with its fallback owner's of its
+   * position (`findOwnedPairs`): their classes' levels. Of its ruleset's base rules (`baseRules`).
+   */
+  private static async addOwned(tx: Db, baseRules: BaseRules, departures: Departures): Promise<Departures> {
+    const withOwned = new Map(departures);
+    const storage = Engine.forRules(baseRules).storage();
+    for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
+      const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
+      withOwned.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
+    }
+    return withOwned;
+  }
+
+  /**
+   * What leaves with the extension (`extensionId`), by entity type, of the kinds no other owns: its entities and the
+   * ruleset's copies of them (`copies`), each with what the view shows in its place once the extension is gone. That is
+   * the first of the ids the view (`before`) shows it for (`CowData.getEquivalentIds`: the entity a copy stands for, the
+   * other extensions' copies of it and the namesakes paired with it) that stays, as the view without the extension
+   * (`after`) resolves it, when that view shows it: a copy the ruleset deleted shows nothing. Its kinds are its
+   * ruleset's base rules' (`baseRules`).
    */
   private static async findDepartures(
     tx: Db,
@@ -96,40 +139,70 @@ export default class ExtensionDeparture {
     const departures = new Map<ReferencedType, ReadonlyMap<string, string | undefined>>();
     for (const [type, ids] of leaving)
       departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
-    const storage = Engine.forRules(baseRules).storage();
-    for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
-      const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
-      departures.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
-    }
     return departures;
   }
 
   /**
+   * The ruleset's copies of the extension's entities (`snapshots`, a tombstone's among them) that stay: those of an
+   * entity something stands in place of once the extension is gone (`departures`), which they copy instead. One
+   * whose stand-in is the ruleset's own, or one it already copied, goes.
+   */
+  private static async findKept(
+    tx: Db,
+    rulesetId: string,
+    snapshots: CopySnapshots,
+    departures: Departures,
+  ): Promise<Kept> {
+    const standIns = snapshots.map((snap) => departures.get(snap.entityType)?.get(snap.forkedEntityId));
+    const ids = [...new Set(standIns.filter((id) => id !== undefined))];
+    const own = new Set(
+      (await RulesetEntities.findNames(tx, { ids }))
+        .filter((entity) => entity.rulesetId === rulesetId)
+        .map((entity) => entity.id),
+    );
+    const copied = new Set(
+      (await EntitySnapshots.findMany(tx, { rulesetId, sourceEntityIds: ids })).map((snap) => snap.sourceEntityId),
+    );
+    return snapshots.flatMap((snap, index) => {
+      const rebasedTo = standIns[index];
+      return rebasedTo === undefined || own.has(rebasedTo) || copied.has(rebasedTo) ? [] : [{ ...snap, rebasedTo }];
+    });
+  }
+
+  /**
    * What leaves the scope's ruleset with the extension (`extensionId`), its copies of the extension's entities as
-   * copy-on-write reads its snapshots (`RulesetChanges.copiesOf`), and its view without the extension.
+   * copy-on-write reads its snapshots (`RulesetChanges.copiesOf`), those of them that stay (`findKept`), and its view
+   * without the extension, its kept copies copying what stands in their sources' place.
    */
   static async read(tx: Db, scope: LockedRulesetScope, extensionId: string): Promise<ExtensionDeparture> {
     const { ruleset, sources } = scope;
     const snapshots = await RulesetChanges.copiesOf(tx, sources.id, extensionId);
-    const after = await CowDataReader.read(tx, {
-      ...sources,
-      extensionIds: sources.extensionIds.filter((id) => id !== extensionId),
+    const without = { ...sources, extensionIds: sources.extensionIds.filter((id) => id !== extensionId) };
+    // What stands in place of what leaves: its view without the extension, nor the ruleset's copies of it, which a view
+    // reads as its own entities otherwise (`CowData.isShadowed`)
+    const bare = await CowDataReader.read(tx, without, {
+      dropped: new Set(snapshots.map((snap) => snap.forkedEntityId)),
     });
-    const copies: Copies = new Map(
-      [...Map.groupBy(snapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
-        type,
-        snaps.map((snap) => snap.forkedEntityId),
-      ]),
-    );
     const departures = await ExtensionDeparture.findDepartures(
       tx,
       ruleset.baseRules,
       scope.rulesetData.cow,
-      after,
+      bare,
       extensionId,
-      copies,
+      ExtensionDeparture.groupCopies(snapshots),
     );
-    return new ExtensionDeparture(scope, snapshots, after, copies, departures);
+    const kept = await ExtensionDeparture.findKept(tx, sources.id, snapshots, departures);
+    // What stays leaves nothing: what names it keeps naming it
+    const keptIds = new Set(kept.map((snap) => snap.forkedEntityId));
+    const reverted = snapshots.filter((snap) => !keptIds.has(snap.forkedEntityId));
+    const leaving = new Map(
+      [...departures].map(([type, fallbacks]) => [type, new Map([...fallbacks].filter(([id]) => !keptIds.has(id)))]),
+    );
+    const after = await CowDataReader.read(tx, without, {
+      rebased: new Map(kept.map((snap) => [snap.forkedEntityId, snap.rebasedTo])),
+    });
+    const withOwned = await ExtensionDeparture.addOwned(tx, ruleset.baseRules, leaving);
+    return new ExtensionDeparture(scope, reverted, kept, after, ExtensionDeparture.groupCopies(reverted), withOwned);
   }
 
   /** The ids of what leaves with nothing in its place. */
@@ -154,16 +227,33 @@ export default class ExtensionDeparture {
   }
 
   /**
+   * The ids of the ruleset's kept copies (`kept`) and of what they own (a class's levels), whose rows (their links)
+   * stay with them.
+   */
+  private async findKeptIds(tx: Db): Promise<string[]> {
+    const keptIds = this.kept.map((snap) => snap.forkedEntityId);
+    const storage = Engine.forRules(this.scope.ruleset.baseRules).storage();
+    const ownedIds: string[] = [];
+    for (const ownedType of new Set(this.kept.flatMap((snap) => storage.ownedKinds(snap.entityType)))) {
+      const owned = await Entities.findPositions(tx, { entityType: ownedType, ownerIds: keptIds });
+      ownedIds.push(...owned.map((entity) => entity.id));
+    }
+    return [...keptIds, ...ownedIds];
+  }
+
+  /**
    * The ruleset's rows naming what leaves with nothing in its place (`EntityReferences.findMany`), as the refusal names
    * them: a link to a list no other extension has, or a row naming another of the extension's entities (an item's
-   * template, a class's skill or granted feat…). The copies' own rows, which go with them, are left out, and so are
-   * the rows naming what the ruleset deleted (`findDeleted`): they name nothing its view shows, before or after.
+   * template, a class's skill or granted feat…). The copies' own rows, which go with them, are left out, a kept copy's
+   * too, which go with the extension, and so are the rows naming what the ruleset deleted (`findDeleted`): they name
+   * nothing its view shows, before or after.
    */
   private async findLostReferences(tx: Db): Promise<string[]> {
     const typeOf = new Map<string, RulesetEntityType>();
     for (const type of Engine.forRules(this.scope.ruleset.baseRules).storage().standaloneKinds())
       for (const [id, fallbackId] of this.departures.get(type) ?? []) if (!fallbackId) typeOf.set(id, type);
-    const deleted = new Set(this.copyIds);
+    // The copies' own rows go with them, or with the extension, a kept copy's (`repoint`)
+    const deleted = new Set([...this.copyIds, ...this.kept.map((snap) => snap.forkedEntityId)]);
     const gone = await this.findDeleted(tx, [...typeOf.keys()]);
     const references = (
       await EntityReferences.findMany(tx, { rulesetId: this.scope.sources.id, entityIds: [...typeOf.keys()] })
@@ -195,9 +285,20 @@ export default class ExtensionDeparture {
   }
 
   /**
+   * Points the ruleset's kept copies of the extension's entities (`kept`, a tombstone's among them) at what stands in
+   * their sources' place: each stays, a copy of that, which its view shows in place of what it copied before.
+   */
+  async keep(tx: Db): Promise<void> {
+    const rulesetId = this.scope.sources.id;
+    for (const { rebasedTo, sourceEntityId } of this.kept)
+      await EntitySnapshots.update(tx, { sourceEntityId: rebasedTo }, { rulesetId, sourceEntityId });
+  }
+
+  /**
    * Points what the ruleset and its characters keep that names what leaves with the extension at what stands in its
    * place, or refuses when one of the ruleset's rows names one with nothing in its place (a `ConflictError` naming
-   * them), before anything changes. The copies' own rows go with them.
+   * them), before anything changes. The copies' own rows go with them, and a kept copy's links to what leaves with
+   * nothing in its place (a list only the extension has) with the extension.
    */
   async repoint(tx: Db): Promise<void> {
     const rulesetId = this.scope.sources.id;
@@ -208,6 +309,8 @@ export default class ExtensionDeparture {
         `Cannot unsubscribe: this ruleset's content uses what only this extension has: ${lost.slice(0, NAMED_LOSSES).join("; ")}${more}`,
       );
     }
+    if (this.kept.length > 0)
+      await EntityLinks.delete(tx, { fromIds: await this.findKeptIds(tx), toIds: this.stranded });
 
     const replaced = [...this.departures.values()].flatMap((fallbacks) =>
       [...fallbacks].filter(([, fallbackId]) => fallbackId).map(([id]) => id),
