@@ -1,4 +1,5 @@
-import { logs, metrics } from "@opentelemetry/api";
+import { metrics } from "@opentelemetry/api";
+import { logs } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { HostMetrics } from "@opentelemetry/host-metrics";
