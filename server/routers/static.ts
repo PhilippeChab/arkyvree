@@ -145,7 +145,8 @@ export default new Hono()
     }),
   )
   .get("/sitemap.xml", (c) => {
-    // Only list pages Googlebot can actually render: "/", /rulesets and /rulesets/:id sit behind PrivateRoute (auth).
+    // Only list the sign-up page: "/" and the app's pages sit behind PrivateRoute (auth), and /sign-in is a utility page
+    // marked noindex.
     const staticUrls = ["/sign-up"];
     const entries = staticUrls.map((path) => `  <url><loc>${APP_URL}${path}</loc></url>`).join("\n");
 
