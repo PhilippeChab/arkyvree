@@ -106,7 +106,11 @@ async function storedOf({ modifierIds, requirementIds }: { modifierIds: string[]
     const { target, value } = (await Requirements.findOne(db, { id }))!;
     texts.push([target, value]);
   }
-  return { bindings: await NameBindings.findMany(db, { modifierIds, requirementIds }), texts };
+  // In a fixed order, as the database returns them in none
+  const bindings = (await NameBindings.findMany(db, { modifierIds, requirementIds })).toSorted((a, b) =>
+    a.id.localeCompare(b.id),
+  );
+  return { bindings, texts };
 }
 
 /**
