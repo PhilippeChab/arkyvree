@@ -191,8 +191,10 @@ class RequirementsService {
 
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
         const requirements = Engine.for(scope).requirements(entityType, entityId);
-        const plan = requirements.planEdit(catalogs, requirementId, body);
-        const { bindings, entity, levels, row: sent, ungroupedLevel } = plan;
+        // What its names mean as stored, which a field it isn't sent keeps
+        const bound = await NameBindings.findMany(tx, { modifierIds: [], requirementIds: [requirementId] });
+        const plan = requirements.planEdit(catalogs, requirementId, body, bound);
+        const { bindings, condition, entity, levels, rebound, row: sent, ungroupedLevel } = plan;
 
         // COW the owning entity if this requirement is inherited
         const edit = new CustomizationEdit(scope);
@@ -218,21 +220,19 @@ class RequirementsService {
 
         const updatedRequirement = rows[0];
         if (!updatedRequirement) throw new InternalError("Failed to update requirement");
-        // Its names are kept anew, with the text it now stores; a save that changed no text keeps them
-        if (bindings) {
-          await NameBindings.delete(tx, { requirementId: updatedRequirement.id });
-          await NameBindings.createMany(
-            tx,
-            bindings.map((binding) => ({ ...binding, requirementId: updatedRequirement.id })),
-          );
-        }
+        // The fields it wrote take their names anew, with the text they now store; the others keep what they meant
+        await NameBindings.delete(tx, { fields: rebound, requirementId: updatedRequirement.id });
+        await NameBindings.createMany(
+          tx,
+          bindings.map((binding) => ({ ...binding, requirementId: updatedRequirement.id })),
+        );
 
         await createContentActivityWithNotifications(tx, scope.ruleset, {
           userId: session.userId,
           targetId: updatedRequirement.id,
           targetType: TARGET_TYPES.requirements,
           type: "updateRequirement",
-          data: { entityName: entity.name, ...conditionOf(row) },
+          data: { entityName: entity.name, ...conditionOf(condition) },
         });
 
         return { ...updatedRequirement, resolvedEntityId };

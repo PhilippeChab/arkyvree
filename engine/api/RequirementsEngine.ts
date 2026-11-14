@@ -2,6 +2,7 @@ import { RequirementEdits } from "@/engine/core/customizations/index.ts";
 import type { TargetCatalogs } from "@/engine/core/paths/CategoryPaths.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
+import type { NameBinding } from "@/shared/relations.ts";
 
 import type { Module } from "./Modules.ts";
 
@@ -37,8 +38,11 @@ export default class RequirementsEngine {
     return this.requirements.planDelete(requirementId);
   }
 
-  /** One of the entity's own requirements' edit: the entity, the requirement, and its new row, checked. */
-  planEdit(catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
-    return this.requirements.planEdit(this.module.targetPaths, catalogs, requirementId, body);
+  /**
+   * One of the entity's own requirements' edit: the entity, the requirement, its new row, checked, and the bindings of
+   * the fields it writes; a field it isn't sent keeps its text and what its stored bindings (`bound`) mean.
+   */
+  planEdit(catalogs: TargetCatalogs, requirementId: string, body: RequirementBody, bound: readonly NameBinding[]) {
+    return this.requirements.planEdit(this.module.targetPaths, catalogs, requirementId, body, bound);
   }
 }

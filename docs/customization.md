@@ -54,8 +54,17 @@ has that name when it's read. Each row therefore stores, beside its text, the en
 `engine/core/bindings/`), always the original entity's id, never a ruleset's copy of it.
 
 - **Saved**: a row's names are read in the view its write leaves (`NameBindingFill.fillWritten`, under every ruleset
-  write), so one that names an entity the same write made is bound to it. An edit binds anew; a save that sends no
-  path keeps what the row meant.
+  write), so one that names an entity the same write made is bound to it. An edit binds what it's sent anew, and
+  keeps what it isn't sent (`ConditionEdit`, `engine/core/customizations/`): a dialog sends a target and a value only
+  when its author changed them, so one opened before an entity was renamed saves a new operator or value without
+  reading the old name again, which names nothing since or another entity that took it. A new value is bound beside
+  the target the row keeps, and checked against it. A new target keeps a formula value's paths as they are, which
+  don't depend on it, and reads a plain value anew, under the name the view shows it by, since whether it's an
+  entity's name (a race's) is the target's to say. A field the row holds no binding of yet (written past a save,
+  before a fill) is bound from its text with the edit, so a fill never misses it.
+- **Edited formula**: a formula is read whole when its value is saved: each name in it is read anew, an old name of
+  another entity among them too, as a new formula's are. The dialog's Template switch writes the expression back as
+  `{{ x }}`, so turning it off and on again changes a value stored as `{{x}}`, and the save reads it anew.
 - **Read**: a view reads each row through its bindings (`NameBindingReader`, in `RulesetComposition`) and writes its
   text with the name the entity has there: a rule follows its entity through a rename, in the ruleset that renamed it
   and in those built on it, and a name another entity takes later is that other entity's, not the rule's.

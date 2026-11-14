@@ -1,9 +1,11 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
+import type { NameBindingPlace } from "@/shared/customization/nameBindings.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
+import ConditionEdit from "./ConditionEdit.ts";
 import CustomizationEdits from "./CustomizationEdits.ts";
 import TargetLabels from "./TargetLabels.ts";
 
@@ -14,6 +16,16 @@ interface RequirementBody {
   operator?: string;
   target?: string;
   value?: string;
+}
+
+/** What a requirement's save stores: a condition's target, operator, value and value type, or a group's chaining operator. */
+interface RequirementRow {
+  chainingOperator?: string;
+  level: string;
+  operator?: string;
+  target?: string;
+  value?: string;
+  valueType?: string;
 }
 
 /** An entity's requirements: as its page lists them, and what their saves store, checked against their paths. */
@@ -27,36 +39,20 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
   }
 
   /**
-   * The row a requirement's save stores: a condition's target, operator, value (a number as the sheet reads it: "05" is
-   * "5") and value type, checked against its path, its chaining operator cleared; or a group's chaining operator, its
-   * condition's columns cleared: an edit that turns one into the other leaves nothing of the other (the database holds
-   * a row to one). A save that sends neither (its level alone) changes neither.
+   * A condition as a requirement's save stores it: its target, operator, value (a number as the sheet reads it: "05" is
+   * "5") and value type, checked against its path.
    */
-  private toRow(
+  private toCondition(
     targetPaths: TargetPaths,
     catalogs: TargetCatalogs,
-    body: RequirementBody,
-    kept?: { operator: string | null; value: string | null },
+    condition: { operator?: string; target: string; value?: string },
   ) {
-    if (!body.target) {
-      if (body.chainingOperator === undefined) return { level: body.level };
-      const condition = { operator: null, target: null, value: null, valueType: null };
-      return { chainingOperator: body.chainingOperator, level: body.level, ...condition };
-    }
-    // An update without a value keeps the stored one, checked against the target's type all the same
-    const valueType = targetPaths.checkValue(catalogs, {
-      kind: "requirement",
-      operator: body.operator ?? kept?.operator ?? undefined,
-      target: body.target,
-      value: body.value ?? kept?.value ?? undefined,
-    });
-    const value = body.value === undefined ? undefined : LiteralValue.normalize(body.value, valueType);
+    const { operator, target, value } = condition;
+    const valueType = targetPaths.checkValue(catalogs, { kind: "requirement", operator, target, value });
     return {
-      chainingOperator: null,
-      level: body.level,
-      operator: body.operator,
-      target: body.target,
-      value,
+      operator,
+      target,
+      value: value === undefined ? undefined : LiteralValue.normalize(value, valueType),
       valueType,
     };
   }
@@ -74,7 +70,9 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
 
   /** A new requirement on the entity: the entity as the view has it, and the row it stores. */
   planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: RequirementBody) {
-    const row = this.toRow(targetPaths, catalogs, body);
+    const row: RequirementRow = body.target
+      ? { level: body.level, ...this.toCondition(targetPaths, catalogs, { ...body, target: body.target }) }
+      : { chainingOperator: body.chainingOperator, level: body.level };
     const { entity } = this;
     // The levels its page lists: a level a condition the view leaves out holds is one the client can't see
     const levels = this.rowsOf(entity.id).map((requirement) => requirement.level);
@@ -88,34 +86,55 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
   }
 
   /**
-   * An edit of one of the entity's requirements: the entity and the requirement, and the row it stores, and the names
-   * its text binds (`bindings`: none to change, `null`, when it changes no text; none at all once it's a group), and
-   * the level of a group it turns into a condition (`ungroupedLevel`, none otherwise), which the server refuses while
-   * it stores requirements under that level, the view's or not: a condition groups none, and the evaluation would drop
-   * them.
+   * An edit of one of the entity's requirements: the entity and the requirement, the row it stores, the bindings of
+   * the fields it writes (`rebound`, `ConditionEdit`), the condition as it reads once edited (`condition`), and the
+   * level of a group it turns into a condition (`ungroupedLevel`, none otherwise), which the server refuses while it
+   * stores requirements under that level, the view's or not: a condition groups none, and the evaluation would drop
+   * them. A condition's target and value are sent only where they changed: one it isn't sent keeps its text as the
+   * view reads it, checked with what it's sent, and what its stored bindings (`bound`) mean. An edit that turns one
+   * type into the other leaves nothing of the other (the database holds a row to one): a condition made a group loses
+   * its text and its bindings, a group made a condition its chaining operator.
    */
-  planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
+  planEdit(
+    targetPaths: TargetPaths,
+    catalogs: TargetCatalogs,
+    requirementId: string,
+    body: RequirementBody,
+    bound: readonly { field: string }[],
+  ) {
     // The levels its page lists, as a create reads them: one a condition the view leaves out holds isn't the client's
     const levels = this.rowsOf(this.entity.id).map((requirement) => requirement.level);
     const deleted = this.planDelete(requirementId);
+    const { requirement } = deleted;
     // A group it turns into a condition: its level, which the server refuses while it stores requirements under it
-    const ungroupedLevel = body.target && deleted.requirement.chainingOperator ? deleted.requirement.level : null;
+    const ungroupedLevel = body.target && requirement.chainingOperator ? requirement.level : null;
     const plan = { ...deleted, levels, ungroupedLevel };
-    const sent = this.toRow(targetPaths, catalogs, body, plan.requirement);
-    // A value it keeps is stored as the view reads it, the text its names are read from
-    const kept = sent.target !== undefined && sent.value === undefined ? plan.requirement.value : undefined;
-    const row = kept === undefined || kept === null ? sent : { ...sent, value: kept };
-    // The row stores the text it's sent, the view's: its names are read anew with it, so text and meaning agree.
-    // A value it keeps is read with it
-    // A group holds no text: the names its condition read go
-    if (row.target === null) return { ...plan, bindings: [], row };
-    // A save that sends no target (its level alone) changes no text: what its names mean stays as it is
-    if (row.target === undefined && plan.requirement.target !== null) return { ...plan, bindings: null, row };
-    const bound = {
-      operator: row.operator ?? plan.requirement.operator,
-      target: row.target,
-      value: row.value ?? plan.requirement.value,
+    const unchanged = { bindings: [], condition: {}, rebound: [] };
+    if (body.target === undefined) {
+      // A group's save, or a condition made a group: its chaining operator, and no condition's text or names
+      if (body.chainingOperator !== undefined) {
+        const cleared = { operator: null, target: null, value: null, valueType: null };
+        const row = { chainingOperator: body.chainingOperator, level: body.level, ...cleared };
+        const rebound: NameBindingPlace["field"][] = ["target", "value"];
+        return { ...plan, ...unchanged, rebound, row };
+      }
+      // A save of its level alone (a group's, or a condition's without a new operator or value) changes no text
+      if (requirement.target === null || (body.operator === undefined && body.value === undefined))
+        return { ...plan, ...unchanged, row: { level: body.level } };
+    }
+    const condition = this.toCondition(targetPaths, catalogs, {
+      operator: body.operator ?? requirement.operator ?? undefined,
+      target: body.target ?? requirement.target!,
+      value: body.value ?? requirement.value ?? undefined,
+    });
+    const edit = new ConditionEdit({ bound, sent: body, value: requirement.value });
+    const bindings = edit.pick(this.bind(targetPaths, condition));
+    return {
+      ...plan,
+      bindings,
+      condition,
+      rebound: edit.rebound,
+      row: { chainingOperator: null, level: body.level, ...edit.store(condition) },
     };
-    return { ...plan, bindings: this.bind(targetPaths, bound), row };
   }
 }

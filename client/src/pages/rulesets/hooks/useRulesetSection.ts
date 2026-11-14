@@ -37,8 +37,11 @@ type RulesetSectionConfig<
   onUpdateSuccess?: (data: TUpdated) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   rulesetId: string;
-  /** Saves a row's edit, `updatedAt` its stale-edit token: the row's, as its edit dialog opened on it. */
-  updateFn?: (id: string, data: TFormData, updatedAt: string | undefined) => Promise<TUpdated>;
+  /**
+   * Saves a row's edit: the row as its edit dialog opened on it (its id, its stale-edit token `updatedAt`, and what the
+   * form opened on, which says what the edit changed), and the form's values.
+   */
+  updateFn?: (row: TData, data: TFormData) => Promise<TUpdated>;
 };
 
 /** Where a section's rows are cached, which its saves refresh */
@@ -112,8 +115,8 @@ export function useRulesetSection<
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data, updatedAt }: { data: TFormData; id: string; updatedAt?: string }) =>
-      updateFn ? updateFn(id, data, updatedAt) : Promise.reject(new Error(`${label} can't be updated here`)),
+    mutationFn: ({ row, data }: { data: TFormData; row: TData }) =>
+      updateFn ? updateFn(row, data) : Promise.reject(new Error(`${label} can't be updated here`)),
     onSuccess: (data) => {
       snackbar.success(`${label} updated`);
       invalidateOnMutation();
@@ -196,10 +199,9 @@ export function useRulesetSection<
       open: editDialog.open,
       onClose: editDialog.close,
       form: editForm,
-      // Under the row's token, as its dialog opened on it
+      // The row as its dialog opened on it: its token, and what the edit changed
       onSubmit: (data: TFormData) => {
-        if (editDialog.target)
-          updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt });
+        if (editDialog.target) updateMutation.mutate({ row: editDialog.target, data });
       },
       pending: updateMutation.isPending,
     },

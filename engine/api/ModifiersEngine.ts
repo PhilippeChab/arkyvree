@@ -2,11 +2,15 @@ import { ModifierEdits } from "@/engine/core/customizations/index.ts";
 import type { TargetCatalogs } from "@/engine/core/paths/CategoryPaths.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
+import type { NameBinding } from "@/shared/relations.ts";
 
 import type { Module } from "./Modules.ts";
 
 /** A modifier's save, as its form sends it. */
 type ModifierBody = Parameters<ModifierEdits["planCreate"]>[2];
+
+/** A modifier's edit, as its form sends it: its target and its value only where they changed. */
+type ModifierEditBody = Parameters<ModifierEdits["planEdit"]>[3];
 
 /** The engine bound to an entity's modifiers (`entityType`, `entityId`): described, and what their saves store. */
 export default class ModifiersEngine {
@@ -46,8 +50,11 @@ export default class ModifiersEngine {
     return this.modifiers.planDelete(modifierId);
   }
 
-  /** One of the entity's own modifiers' edit: the entity, the modifier, and the row it stores, checked. */
-  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
-    return this.modifiers.planEdit(this.module.targetPaths, catalogs, modifierId, body);
+  /**
+   * One of the entity's own modifiers' edit: the entity, the modifier, the row it stores, checked, and the bindings of
+   * the fields it writes; a field it isn't sent keeps its text and what its stored bindings (`bound`) mean.
+   */
+  planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierEditBody, bound: readonly NameBinding[]) {
+    return this.modifiers.planEdit(this.module.targetPaths, catalogs, modifierId, body, bound);
   }
 }

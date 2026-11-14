@@ -143,9 +143,9 @@ class ModifiersService {
     modifierId: string,
     body: {
       operator: string;
-      target: string;
+      target?: string;
       updatedAt?: string;
-      value: string;
+      value?: string;
     },
   ) {
     return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
@@ -155,7 +155,9 @@ class ModifiersService {
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const { updatedAt, ...fields } = body;
       const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-      const { bindings, entity, row } = modifiers.planEdit(catalogs, modifierId, fields);
+      // What its names mean as stored, which a field it isn't sent keeps
+      const bound = await NameBindings.findMany(tx, { modifierIds: [modifierId], requirementIds: [] });
+      const { bindings, condition, entity, rebound, row } = modifiers.planEdit(catalogs, modifierId, fields, bound);
 
       // COW the owning entity if this modifier is inherited
       const edit = new CustomizationEdit(scope);
@@ -172,8 +174,8 @@ class ModifiersService {
       if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedModifier = rows[0];
-      // Its names are kept anew, with the text it now stores
-      await NameBindings.delete(tx, { modifierId: updatedModifier.id });
+      // The fields it wrote take their names anew, with the text they now store; the others keep what they meant
+      await NameBindings.delete(tx, { fields: rebound, modifierId: updatedModifier.id });
       await NameBindings.createMany(
         tx,
         bindings.map((binding) => ({ ...binding, modifierId: updatedModifier.id })),
@@ -184,7 +186,12 @@ class ModifiersService {
         targetId: updatedModifier.id,
         targetType: TARGET_TYPES.modifiers,
         type: "updateModifier",
-        data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
+        data: {
+          entityName: entity.name,
+          target: condition.target,
+          value: condition.value,
+          operator: condition.operator,
+        },
       });
 
       return { ...updatedModifier, resolvedEntityId };

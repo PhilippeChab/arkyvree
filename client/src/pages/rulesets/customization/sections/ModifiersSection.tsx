@@ -18,6 +18,7 @@ import {
   ModifierOperatorCell,
   ModifierTargetCell,
   ModifierValueCell,
+  toConditionEdit,
 } from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useCustomizationPages, useRulesetPermissions } from "@/client/src/hooks/index.ts";
@@ -111,12 +112,13 @@ export function ModifiersSection({
           }),
         ),
       ),
-    updateFn: async (modifierId: string, data: ModifierFormData, updatedAt: string | undefined) =>
+    // Its target and its value only where they changed: one it doesn't send keeps what it means, renamed since or not
+    updateFn: async (modifier: Modifier, data: ModifierFormData) =>
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].$put({
-            param: { ...entityParam, modifierId },
-            json: { ...data, updatedAt },
+            param: { ...entityParam, modifierId: modifier.id },
+            json: { ...toConditionEdit(data, modifierForm(modifier)), updatedAt: modifier.updatedAt },
           }),
         ),
       ),

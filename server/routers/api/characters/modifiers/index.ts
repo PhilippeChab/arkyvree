@@ -35,9 +35,10 @@ export default new Hono<SessionContext>()
     validate("param", modifierParams),
     validate(
       "json",
+      // Its target and its value only where its author changed them: one it isn't sent keeps what its names mean
       z.object({
-        target: z.string().min(1),
-        value: z.string().min(1),
+        target: z.string().min(1).optional(),
+        value: z.string().min(1).optional(),
         operator: modifierOperator,
         updatedAt: z.string().optional(),
       }),

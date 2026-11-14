@@ -4,7 +4,7 @@ import { z } from "zod";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { v1LabeledModifiers } from "@/server/routers/v1/schemas/entities.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { customizedParams, modifierFields } from "@/server/routers/v1/validation.ts";
+import { customizedParams, modifierEditFields, modifierFields } from "@/server/routers/v1/validation.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 
 const modifierParams = customizedParams.extend({ modifierId: z.string().uuid() });
@@ -49,7 +49,7 @@ export default new Hono<ApiKeyContext>()
     validate(
       "json",
       z.object({
-        ...modifierFields,
+        ...modifierEditFields,
         updatedAt: z.string().optional().meta({ description: "When it was read: refused if it changed since (409)" }),
       }),
     ),

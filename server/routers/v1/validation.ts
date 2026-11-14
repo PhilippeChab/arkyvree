@@ -41,6 +41,21 @@ export const modifierFields = {
   value: z.string().min(1),
 };
 
+/**
+ * What a modifier's edit says: how it changes its target, and its target and its value where they change. One it
+ * leaves out keeps its text and the entities it names, whatever they're called since.
+ */
+export const modifierEditFields = {
+  ...modifierFields,
+  target: modifierFields.target
+    .optional()
+    .meta({ description: "The target path it changes; left out, it keeps its path and the entities that path names" }),
+  value: modifierFields.value.optional().meta({
+    description:
+      "Left out, it keeps its value; a new target reads a plain value (a race's name) anew, under its current name",
+  }),
+};
+
 /** A page of a list: which, and how many to a page. */
 export const PAGE_FILTERS = {
   limit: limit.meta({ description: "How many to a page: 10 unless it says, 100 at most" }),

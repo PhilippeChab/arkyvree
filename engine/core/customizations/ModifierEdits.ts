@@ -1,9 +1,11 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
+import type { NameBindingDraft } from "@/shared/customization/nameBindings.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
+import ConditionEdit from "./ConditionEdit.ts";
 import CustomizationEdits from "./CustomizationEdits.ts";
 import CustomizedEntity from "./CustomizedEntity.ts";
 import TargetLabels from "./TargetLabels.ts";
@@ -15,8 +17,39 @@ interface ModifierBody {
   value: string;
 }
 
+/** A modifier's edit, as its form sends it: its operator, and its target and its value only where they changed. */
+interface ModifierEditBody {
+  operator: string;
+  target?: string;
+  value?: string;
+}
+
 /** An entity's modifiers: as its page lists them, and what their saves store, checked against their paths. */
 export default class ModifierEdits extends CustomizationEdits<Modifier> {
+  /**
+   * A modifier's edit on a source of `sourceType`: the row it stores and the bindings of the fields it writes
+   * (`rebound`, `ConditionEdit`), and the modifier as it reads once edited (`condition`), checked against its path
+   * (`targetPaths`, among `catalogs`). A field it isn't sent keeps its text as the view reads the modifier (`current`,
+   * under its entities' names there), and what its stored bindings (`bound`) mean. `bind` reads what a condition's
+   * names mean in the view.
+   */
+  static planChange(
+    targetPaths: TargetPaths,
+    catalogs: TargetCatalogs,
+    sourceType: string,
+    edit: { body: ModifierEditBody; bound: readonly { field: string }[]; current: ModifierBody },
+    bind: (condition: ModifierBody) => NameBindingDraft[],
+  ) {
+    const { body, bound, current } = edit;
+    const condition = ModifierEdits.rowOf(targetPaths, catalogs, sourceType, {
+      operator: body.operator,
+      target: body.target ?? current.target,
+      value: body.value ?? current.value,
+    });
+    const change = new ConditionEdit({ bound, sent: body, value: current.value });
+    return { bindings: change.pick(bind(condition)), condition, rebound: change.rebound, row: change.store(condition) };
+  }
+
   /**
    * The row a modifier's save stores on a source of `sourceType`: its target, its operator, and its value as the sheet
    * reads it (a number normalized: "02" is "2"), with their value type, checked against its path (`targetPaths`, among
@@ -82,11 +115,20 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
     return { entity, modifier: this.findOwn(entity.id, modifierId) };
   }
 
-  /** An edit of one of the entity's modifiers: the entity and the modifier, and the row it stores, checked. */
-  planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
-    const row = ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body);
+  /**
+   * An edit of one of the entity's modifiers: the entity and the modifier, the row it stores, checked, and the bindings
+   * of the fields it writes (`planChange`), by what its stored bindings (`bound`) are of.
+   */
+  planEdit(
+    targetPaths: TargetPaths,
+    catalogs: TargetCatalogs,
+    modifierId: string,
+    body: ModifierEditBody,
+    bound: readonly { field: string }[],
+  ) {
     const plan = this.planDelete(modifierId);
-    // The row stores the text it's sent, the view's: its names are read anew with it, so text and meaning agree
-    return { ...plan, bindings: this.bind(targetPaths, row), row };
+    const edit = { body, bound, current: plan.modifier };
+    const bind = (condition: ModifierBody) => this.bind(targetPaths, condition);
+    return { ...plan, ...ModifierEdits.planChange(targetPaths, catalogs, this.entityType, edit, bind) };
   }
 }

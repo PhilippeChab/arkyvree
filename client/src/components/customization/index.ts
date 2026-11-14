@@ -1,3 +1,4 @@
+export { toConditionEdit } from "./conditionEdits.ts";
 export { EMPTY_MODIFIER, EMPTY_REQUIREMENT } from "./emptyForms.ts";
 export { ModifierOperatorCell, ModifierTargetCell, ModifierValueCell } from "./ModifierCells.tsx";
 export { type ModifierFormData, ModifierFormFields } from "./ModifierFormFields.tsx";
