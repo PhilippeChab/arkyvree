@@ -8,14 +8,18 @@ import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 describe("A repoint of what names an entity, an unsubscribe's or a revert's", () => {
   test("numbers a level's repeated picks of the entity after those of the one it points them at", async () => {
-    const [pick] = (
-      await db.execute<{ advancement_id: string; via_id: string }>(sql`
-        SELECT advancement_id, via_id FROM character.advancement_picks
-        WHERE step = 'feats' AND via_id IS NOT NULL LIMIT 1`)
-    ).rows;
     const [from, to] = (
       await db.execute<{ id: string }>(sql`SELECT id FROM rules.entities WHERE type = 'feats' ORDER BY id LIMIT 2`)
     ).rows.map((feat) => feat.id);
+    // A level that holds neither feat yet, whatever the tests before this one picked
+    const [pick] = (
+      await db.execute<{ advancement_id: string; via_id: string }>(sql`
+        SELECT advancement_id, via_id FROM character.advancement_picks AS pick
+        WHERE step = 'feats' AND via_id IS NOT NULL AND NOT EXISTS (
+          SELECT 1 FROM character.advancement_picks AS held
+          WHERE held.advancement_id = pick.advancement_id AND held.entity_id IN (${from}, ${to}))
+        ORDER BY advancement_id LIMIT 1`)
+    ).rows;
     // The level picked `from` twice (a stackable feat), and `to` once
     const at = { advancementId: pick.advancement_id, step: "feats", viaId: pick.via_id };
     await Picks.createMany(db, DND35_BASE_RULES, [
