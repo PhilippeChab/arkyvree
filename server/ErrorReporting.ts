@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/bun";
 
+import { sentryDataCollection } from "@/shared/sentryDataCollection.ts";
+
 import { getEnvironmentName, readEnv } from "./environment.ts";
 import { timingStorage } from "./timing.ts";
 
@@ -21,7 +23,7 @@ class ErrorReporting {
       environment: getEnvironmentName(),
       release: readEnv("FLY_MACHINE_VERSION"),
       tracesSampleRate: Number(readEnv("SENTRY_TRACES_SAMPLE_RATE") || "0"),
-      sendDefaultPii: false,
+      dataCollection: sentryDataCollection,
       // Disable Sentry's default unhandled-rejection capture so the handler
       // below can attach request-scope context (whether the rejection
       // originated inside a Hono handler, the request's active query count,

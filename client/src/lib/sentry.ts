@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/react";
 
+import { sentryDataCollection } from "@/shared/sentryDataCollection.ts";
+
 /**
  * Initializes the browser Sentry SDK from the server-injected APP_CONFIG, once, as the app starts (`main.tsx`). The DSN
  * is read at runtime (not via build-time VITE_*) so the same bundle works across environments — see
@@ -13,6 +15,6 @@ export function initSentry() {
     dsn,
     environment: sentryEnvironment ?? undefined,
     release: sentryRelease ?? undefined,
-    sendDefaultPii: false,
+    dataCollection: sentryDataCollection,
   });
 }
