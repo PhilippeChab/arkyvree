@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { campaignName, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 
@@ -48,7 +48,6 @@ export default new Hono()
   })
   .post(
     "/",
-    denyDemoUser,
     validate(
       "json",
       z.object({

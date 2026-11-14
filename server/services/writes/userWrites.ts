@@ -18,6 +18,20 @@ const BUSY_INVITEE_MESSAGE = "The invited account is being changed by another sa
 export const BUSY_ACCOUNT_MESSAGE = "Your account is being changed by another save; try again";
 
 /**
+ * Locks accounts (`userIds`) and what they own, in the order every write takes them, in a write that deletes or
+ * empties them (an account's deletion): their rows, then their rulesets, then the campaigns they hold a
+ * seat or an invite in, then their characters, masters first, so the write waits on each one's writes and none on it
+ * in a cycle. Their characters are read after the wait on their campaigns: what another account's deletion in one of
+ * those campaigns handed them as it held it is theirs by then, and locked with the rest.
+ */
+async function lockAccounts(tx: Db, userIds: string[]) {
+  await Locks.lockUsers(tx, userIds, "no key update");
+  await Locks.lockRulesets(tx, { userIds }, "no key update");
+  await Locks.lockCampaigns(tx, { userIds }, "no key update");
+  await Locks.lockCharacters(tx, { userIds }, "no key update");
+}
+
+/**
  * Checks, under the locks a write took after its account's (`account`, locked as `lockAccount` answered: `lockedId`),
  * that an address still names the account it locked: one that moved to another account, or that an account took
  * meanwhile, is refused as busy (409), so the write never makes a row for an account it didn't lock.
@@ -46,22 +60,8 @@ export async function lockAccount(tx: Db, account: NamedAccount): Promise<string
 }
 
 /**
- * Locks accounts (`userIds`) and what they own, in the order every write takes them, in a write that deletes or
- * empties them (an account's deletion, a demo's purge): their rows, then their rulesets, then the campaigns they hold a
- * seat or an invite in, then their characters, masters first, so the write waits on each one's writes and none on it
- * in a cycle. Their characters are read after the wait on their campaigns: what another account's deletion in one of
- * those campaigns handed them as it held it is theirs by then, and locked with the rest.
- */
-export async function lockAccounts(tx: Db, userIds: string[]) {
-  await Locks.lockUsers(tx, userIds, "no key update");
-  await Locks.lockRulesets(tx, { userIds }, "no key update");
-  await Locks.lockCampaigns(tx, { userIds }, "no key update");
-  await Locks.lockCharacters(tx, { userIds }, "no key update");
-}
-
-/**
- * Runs a write of accounts that deletes or empties them (`userIds`: an account's deletion, a demo's purge, the cleanup
- * of expired demos), everything they own locked first (`lockAccounts`).
+ * Runs a write of accounts that deletes or empties them (`userIds`: an account's deletion), everything they own locked
+ * first (`lockAccounts`).
  */
 export async function withAccountDeletion<T>(userIds: string[], write: (tx: Db) => Promise<T>): Promise<T> {
   return await withWrite(async (tx) => {
@@ -114,7 +114,7 @@ export async function withAccountWrite<T>(userId: string, write: (tx: Db, user: 
 }
 
 /**
- * Runs a write that makes a new account (`write`: a sign-up, a demo), which locks none: its address's unique index
+ * Runs a write that makes a new account (`write`: a sign-up), which locks none: its address's unique index
  * refuses a second one of it (`withTakenRefusal`).
  */
 export async function withNewAccount<T>(write: (tx: Db) => Promise<T>): Promise<T> {

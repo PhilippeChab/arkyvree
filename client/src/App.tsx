@@ -21,7 +21,6 @@ const CharacterDetailsPage = lazy(() => import("./pages/characters/details/Chara
 const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"));
 const ConsentPage = lazy(() => import("./pages/oauth/ConsentPage.tsx"));
 const CustomizationPage = lazy(() => import("./pages/rulesets/customization/CustomizationPage.tsx"));
-const DemoExpiredPage = lazy(() => import("./pages/demo-expired/DemoExpiredPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.tsx"));
 const InvitePage = lazy(() => import("./pages/invites/InvitePage.tsx"));
 const KindEntityPage = lazy(() => import("./pages/rulesets/details/KindEntityPage.tsx"));
@@ -49,7 +48,6 @@ const router = createBrowserRouter(
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/demo-expired" element={<DemoExpiredPage />} />
       </Route>
 
       <Route element={<PublicLayout />}>

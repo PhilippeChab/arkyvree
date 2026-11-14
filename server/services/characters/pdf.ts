@@ -77,11 +77,11 @@ export async function enqueueCharacterPdf(
 
 /**
  * The character `session` may export as a PDF, and how its export reads its private notes (`notes`), or null: as its
- * policy says (`CharactersPolicy.canExport`: its editors, while they may edit it, but a demo's; `isPrivateNotesReader`).
+ * policy says (`CharactersPolicy.canExport`: its editors, while they may edit it; `isPrivateNotesReader`).
  * Through `campaignId`, the character must be linked to that campaign, which they may read (`findReadableCampaign`: a
  * member), and the campaign's policy says (`CampaignsPolicy.canExportCharacter`: its Game Master too;
- * `isPrivateNotesReader`). Checked when the export is queued and again when the worker runs it (as its user: a demo's
- * export is never queued), so access revoked in between is honored.
+ * `isPrivateNotesReader`). Checked when the export is queued and again when the worker runs it (as its user), so access
+ * revoked in between is honored.
  */
 export async function findExportableCharacter(session: Session, characterId: string, campaignId?: string) {
   // Through a campaign, its link and the campaign come first, so a non-member gets no further

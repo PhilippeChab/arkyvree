@@ -44,8 +44,6 @@ interface BoxShadows {
   action: string;
   /** An archived card that opens, hovered */
   archivedCardHover: string;
-  /** The demo banner, floating over the page */
-  banner: string;
   /** A card that opens, hovered */
   cardHover: string;
   /** The sidebar, over the page */
@@ -186,7 +184,6 @@ export function createAppTheme(darkMode: boolean): Theme {
       boxShadows: {
         action: `0 4px 14px 0 ${palette.primary.main}40`,
         archivedCardHover: `0 8px 24px ${palette.warning.main}20`,
-        banner: darkMode ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
         cardHover: `0 4px 16px ${palette.secondary.main}25, 0 8px 32px ${palette.secondary.main}15`,
         drawer: darkMode ? "2px 0 8px rgba(0,0,0,0.3)" : "2px 0 8px rgba(0,0,0,0.08)",
         glow: (color) => `0px 8px 24px ${color}60`,

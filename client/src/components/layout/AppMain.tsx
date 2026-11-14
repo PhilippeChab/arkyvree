@@ -1,5 +1,5 @@
 import { Box, Stack } from "@mui/material";
-import { type ReactNode, Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { LoadError, PageLoader } from "@/client/src/components/common/index.ts";
@@ -12,7 +12,6 @@ import { pastInset, SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from "@/client/src/them
 import { Footer } from "./Footer.tsx";
 
 interface AppMainProps {
-  banner?: ReactNode;
   /** Width of a permanent side rail to keep clear; an expanded drawer still overlays the page. */
   railWidth?: number;
 }
@@ -32,7 +31,7 @@ const SCROLLBAR_ROOM = 17;
  * forms' fields, their tabs), which load once and are kept: should they fail,
  * it says so with a retry in place of the page, which never shows without them.
  */
-export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
+export function AppMain({ railWidth = 0 }: AppMainProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const { pathname, state } = useLocation();
   // Read as the address changes, not a reason to scroll of its own: the state changes under one address too
@@ -91,7 +90,6 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
         },
       ]}
     >
-      {banner}
       <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>
         {/* The app's page width, every page's: each brings its own gutter (its Container, whose own width is this) */}
         <Box sx={{ width: "100%", maxWidth: PAGE_WIDTH, flex: 1 }}>

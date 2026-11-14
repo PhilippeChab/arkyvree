@@ -4,7 +4,7 @@ import { CardTitle, OptionToggle, PageHeader, PageTransition, Panel } from "@/cl
 import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/src/components/icons/index.ts";
 import { type ThemeMode } from "@/client/src/contexts/themeModeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
-import { useIsDemo, usePageTitle } from "@/client/src/hooks/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 
 import { ApiKeysPanel, ConnectedAppsPanel } from "./components/index.ts";
@@ -18,8 +18,6 @@ const THEME_MODE_OPTIONS = [
 export default function SettingsPage() {
   usePageTitle("Settings");
   const { themeMode, setThemeMode } = useThemeMode();
-  // A demo account has no access to the public API
-  const isDemo = useIsDemo();
 
   return (
     <PageTransition>
@@ -45,8 +43,8 @@ export default function SettingsPage() {
             </Stack>
           </Panel>
 
-          {!isDemo && <ConnectedAppsPanel />}
-          {!isDemo && <ApiKeysPanel />}
+          <ConnectedAppsPanel />
+          <ApiKeysPanel />
         </Stack>
       </Container>
     </PageTransition>

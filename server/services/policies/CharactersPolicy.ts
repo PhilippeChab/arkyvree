@@ -198,15 +198,14 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   /**
    * Changing the character's portrait: its readers (`isReadable`), anyone else the 404 an unknown character gets; of
    * them, a player character's owner alone (its contributors and its campaign's Game Masters edit the sheet, not it)
-   * and a child's editors, but a demo's, which stores no file (`canUseSignedUpFeatures`), each a 403; while neither it
-   * nor a child's parent is archived, a refusal on its state (a 409), as its edit's (`canEdit`).
+   * and a child's editors, each a 403; while neither it nor a child's parent is archived, a refusal on its state (a
+   * 409), as its edit's (`canEdit`).
    */
   canEditPortrait() {
     if (!this.isReadable()) throw new NotFoundError("Character not found");
 
     if (this.isPlayerCharacter && !this.isOwner) throw new ForbiddenError("Only the owner can change the portrait");
 
-    this.canUseSignedUpFeatures();
     return this.checkUnarchived();
   }
 
@@ -224,12 +223,12 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * Exporting the character as a PDF: its editors', while they may edit it (`isEditable`: neither it nor a child's
-   * parent is archived), but a demo's (`canUseSignedUpFeatures`). Anyone else gets the 404 an unknown character gets.
+   * parent is archived). Anyone else gets the 404 an unknown character gets.
    */
   canExport() {
     if (!this.isEditable()) throw new NotFoundError("Character not found");
 
-    return this.canUseSignedUpFeatures();
+    return true;
   }
 
   /** `inActiveCampaign`: the character is linked to a campaign that isn't archived. */
@@ -299,15 +298,14 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * Managing its contributors, what inviting and revoking one start with: its owner's, among those who read its own
-   * rows (`canReadRows`; its contributors and its campaign's Game Master a 403), but a demo's
-   * (`canUseSignedUpFeatures`).
+   * rows (`canReadRows`; its contributors and its campaign's Game Master a 403).
    */
   canManageContributors() {
     this.canReadRows();
 
     if (!this.isOwner) throw new ForbiddenError("Only the owner can manage contributors");
 
-    return this.canUseSignedUpFeatures();
+    return true;
   }
 
   /**
@@ -348,12 +346,11 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Creating and revoking its share link: its owner's (`canOwn`), but a demo's (`canUseSignedUpFeatures`), while it
-   * isn't archived, which puts it out of the link's reach as an unknown character is.
+   * Creating and revoking its share link: its owner's (`canOwn`), while it isn't archived, which puts it out of the
+   * link's reach as an unknown character is.
    */
   canShare() {
     this.canOwn();
-    this.canUseSignedUpFeatures();
 
     if (this.entity.deletedAt) throw new NotFoundError("Character not found");
 
@@ -396,7 +393,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /**
    * Whether the session may change the character's portrait (`canEditPortrait`): a player character's owner, a child's
-   * editors, while neither it nor a child's parent is archived, never a demo's.
+   * editors, while neither it nor a child's parent is archived.
    */
   isPortraitEditable() {
     return isAllowed(() => this.canEditPortrait());

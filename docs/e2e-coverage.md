@@ -6,8 +6,7 @@
 
 **Multi-tab / multi-user flows.** Invite, share and contributor tests open
 a second browser context for the other participant (`signedInPage`, or `openContext` for a guest) —
-never a separate Page in the same context (cookies would leak). The demo's
-cross-tab test is the exception: its two tabs share a context on purpose.
+never a separate Page in the same context (cookies would leak).
 
 **API-response gates.** Tests that depend on async server work
 (`fillNewCharacter` waits for `/creation/race`; `answerInvite` waits for

@@ -45,17 +45,14 @@ export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) 
       return true;
     }
 
-    /**
-     * Managing contributors, archived or not: the owner and Admins, on a ruleset that has an owner, but a demo's
-     * (`canUseSignedUpFeatures`).
-     */
+    /** Managing contributors, archived or not: the owner and Admins, on a ruleset that has an owner. */
     canManageContributors() {
       this.checkOwned("manage contributors on");
 
       if (!this.isOwner && !this.isAdminContributor)
         throw new ForbiddenError("Only the owner or Admin contributors can manage contributors");
 
-      return this.canUseSignedUpFeatures();
+      return true;
     }
 
     canReadContributors() {

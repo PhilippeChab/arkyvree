@@ -30,11 +30,6 @@ describe("findRequestSession", () => {
     const { session } = await createUserWithSession({ sessionExpiresAt: PAST });
     expect(findRequestSession(session.id)).rejects.toThrow("Session expired");
   });
-
-  test("refuses the live session of an expired demo user", async () => {
-    const { session } = await createUserWithSession({ expiresAt: PAST });
-    expect(findRequestSession(session.id)).rejects.toThrow("Session expired");
-  });
 });
 
 describe("getSessionCookie", () => {

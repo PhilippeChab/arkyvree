@@ -26,7 +26,7 @@ const committed: string[] = [];
 
 const pool = createTestPool();
 
-/** The demo users the probes committed, deleted after the campaigns. */
+/** The users the probes committed, deleted after the campaigns. */
 const users = new CommittedUsers(pool);
 
 /**

@@ -35,8 +35,8 @@ const NONE: RulesetPermissions = {
 };
 
 /**
- * What the session may do with a ruleset, as the server's policy answers it (`permissions`, `GET /api/rulesets/:id`),
- * a demo's refusals with it: the client decides none of it.
+ * What the session may do with a ruleset, as the server's policy answers it (`permissions`, `GET /api/rulesets/:id`):
+ * the client decides none of it.
  */
 export function useRulesetPermissions(ruleset: RulesetData | undefined): RulesetPermissions {
   const currentUserId = useAuthStore((state) => state.user?.id);

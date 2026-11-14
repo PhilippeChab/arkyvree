@@ -87,14 +87,11 @@ describe("CampaignDocumentsService", () => {
       ]);
     });
 
-    test("refuses a player, a demo Game Master and an archived campaign", async () => {
+    test("refuses a player and an archived campaign", async () => {
       const { gm, campaign, rogue } = await setup();
       expect(CampaignDocumentsService.createDocument(rogue.session, campaign.id, newDocument())).rejects.toEqual(
         new ForbiddenError("Only the Game Master can edit this campaign"),
       );
-      expect(
-        CampaignDocumentsService.createDocument({ ...gm, isDemo: true }, campaign.id, newDocument()),
-      ).rejects.toEqual(new ForbiddenError("Sign up to use this feature"));
       await CampaignsService.archiveCampaign(gm, campaign.id);
       expect(CampaignDocumentsService.createDocument(gm, campaign.id, newDocument())).rejects.toEqual(
         new ConflictError("This campaign is archived"),

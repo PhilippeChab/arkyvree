@@ -2,8 +2,7 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 /**
  * What the session may do with a character it opened, as the server's policy answers it (`permissions`,
- * `GET /api/characters/:id`), a demo's refusals with it: the client decides none of it; nothing until the character has
- * loaded.
+ * `GET /api/characters/:id`): the client decides none of it; nothing until the character has loaded.
  */
 export function useCharacterPermissions(
   character: Pick<CharacterDetail, "deletedAt" | "parentCharacterId" | "permissions"> | undefined,

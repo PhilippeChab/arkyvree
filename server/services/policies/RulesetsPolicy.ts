@@ -90,15 +90,13 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
 
   /**
    * Publishing the ruleset as `kind` (`facts`: its own kind, for its `permissions`' whether it may be published as it
-   * is): its owner's, but a demo's; as a kind it may take (`canTakeKind`, a 422); while it's a draft (a 409): who, then
+   * is): its owner's; as a kind it may take (`canTakeKind`, a 422); while it's a draft (a 409): who, then
    * its kind, then its state.
    */
   canPublish(facts: KindFacts) {
     this.checkOwned("publish");
 
     if (this.entity.userId !== this.session.userId) throw new ForbiddenError("Cannot publish another user's ruleset");
-
-    this.canUseSignedUpFeatures();
 
     this.canTakeKind(facts);
 

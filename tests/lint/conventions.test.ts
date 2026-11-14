@@ -133,9 +133,9 @@ describe("conventions", () => {
       await lintRepo(
         {
           "server/routers/api/limited.ts":
-            'export const r = app.post("/:id/pdf", denyDemoUser, exportRateLimit, (c) => c).get("/:id/pdfs", (c) => c);\n',
+            'export const r = app.post("/:id/pdf", sessionMiddleware, exportRateLimit, (c) => c).get("/:id/pdfs", (c) => c);\n',
           "server/routers/api/shared.ts": 'export const r = app.get("/characters/:shareToken/pdf", (c) => c);\n',
-          "server/routers/api/queued.ts": 'export const r = app.post("/:id/pdf", denyDemoUser, (c) => c);\n',
+          "server/routers/api/queued.ts": 'export const r = app.post("/:id/pdf", sessionMiddleware, (c) => c);\n',
         },
         ["route-conventions"],
       ),

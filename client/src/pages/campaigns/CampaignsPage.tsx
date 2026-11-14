@@ -20,7 +20,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, CampaignIcon } from "@/client/src/components/icons/index.ts";
-import { useDialogState, useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useDialogState, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
@@ -52,7 +52,6 @@ export default function CampaignsPage() {
     ["name", "createdAt", "updatedAt"],
     CAMPAIGN_LIST_DEFAULTS,
   );
-  const isDemo = useIsDemo();
 
   const view = oneOf(searchParams.get("view"), CAMPAIGN_VIEWS, CAMPAIGN_LIST_DEFAULTS.view);
 
@@ -79,7 +78,7 @@ export default function CampaignsPage() {
             variant="tinted"
             title="Campaigns"
             subtitle="Manage your campaigns and organize your adventuring parties"
-            action={!isDemo && createButton("Create Campaign")}
+            action={createButton("Create Campaign")}
           />
 
           <Stack spacing={3}>
@@ -112,12 +111,8 @@ export default function CampaignsPage() {
                   <BlankState
                     icon={CampaignIcon}
                     title="No campaigns yet"
-                    description={
-                      isDemo
-                        ? "Sign up to create campaigns and run multiplayer sessions."
-                        : "Create your first campaign to start organizing your adventures"
-                    }
-                    action={!isDemo && createButton("Create Your First Campaign")}
+                    description="Create your first campaign to start organizing your adventures"
+                    action={createButton("Create Your First Campaign")}
                   />
                 )
               }

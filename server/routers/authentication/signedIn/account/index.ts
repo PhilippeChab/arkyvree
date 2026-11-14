@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { deleteSessionCookie, denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
+import { deleteSessionCookie, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import {
   checkPasswordConfirmation,
@@ -11,7 +11,7 @@ import {
 import { AccountService } from "@/server/services/authentication/account/index.ts";
 
 export default new Hono<SessionContext>()
-  .post("/cancel-email-change", denyDemoUser, async (c) => {
+  .post("/cancel-email-change", async (c) => {
     await AccountService.cancelEmailChange(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
@@ -19,24 +19,18 @@ export default new Hono<SessionContext>()
     await AccountService.completeOnboarding(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
-  .post(
-    "/delete-account",
-    denyDemoUser,
-    validate("json", z.object({ password: sanitizedText.min(1).optional() })),
-    async (c) => {
-      const { password } = c.req.valid("json");
-      await AccountService.deleteAccount(c.var.requestSession, password);
-      deleteSessionCookie(c);
-      return c.json({ success: true }, 200);
-    },
-  )
-  .post("/resend-email-change", denyDemoUser, async (c) => {
+  .post("/delete-account", validate("json", z.object({ password: sanitizedText.min(1).optional() })), async (c) => {
+    const { password } = c.req.valid("json");
+    await AccountService.deleteAccount(c.var.requestSession, password);
+    deleteSessionCookie(c);
+    return c.json({ success: true }, 200);
+  })
+  .post("/resend-email-change", async (c) => {
     await AccountService.resendEmailChange(c.var.requestSession);
     return c.json({ success: true }, 200);
   })
   .post(
     "/set-password",
-    denyDemoUser,
     validate(
       "json",
       z
@@ -48,13 +42,12 @@ export default new Hono<SessionContext>()
       return c.json(await AccountService.setPassword(c.var.requestSession, newPassword), 200);
     },
   )
-  .post("/verify-email-change", denyDemoUser, validate("json", z.object({ code: sanitizedText })), async (c) => {
+  .post("/verify-email-change", validate("json", z.object({ code: sanitizedText })), async (c) => {
     const { code } = c.req.valid("json");
     return c.json(await AccountService.verifyEmailChange(c.var.requestSession, code), 200);
   })
   .put(
     "/password",
-    denyDemoUser,
     validate(
       "json",
       z
@@ -72,7 +65,6 @@ export default new Hono<SessionContext>()
   )
   .put(
     "/profile",
-    denyDemoUser,
     validate("json", z.object({ username: sanitizedUsername.optional(), emailAddress: sanitizedEmail.optional() })),
     async (c) => {
       const { username, emailAddress } = c.req.valid("json");

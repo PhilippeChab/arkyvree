@@ -8,9 +8,7 @@ as it is today, never a promise that it holds no other key.
 
 ## Keys
 
-- A user makes and revokes keys on the Settings page (`ApiKeysPanel`, through `/auth/api-keys`). A demo account has no
-  access to the public API: every key route refuses it (`denyDemoUser`), its Settings page shows no panel, and a key
-  whose user is a demo signs in nothing.
+- A user makes and revokes keys on the Settings page (`ApiKeysPanel`, through `/auth/api-keys`).
 - A key's token (`ark_` and 32 random bytes, base64url) is shown once, when it's made: the table (`account.api_keys`)
   keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
   (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`).
@@ -28,7 +26,7 @@ as it is today, never a promise that it holds no other key.
   the app's own), so a page on another site can't call it. The CSRF check (`checkCsrf`) skips `/v1`, which reads no
   cookie.
 - A request sends it as `Authorization: Bearer <token>`. `apiKeyMiddleware` (`server/middlewares/apiKey.ts`) refuses
-  one without a key, with a revoked one, or with one whose user is gone (an archived account, a demo), with a 401, and
+  one without a key, with a revoked one, or with one whose user is gone (an archived account), with a 401, and
   marks the key used, at most once a minute.
 - A key acts as its user: `requestSession` is `{ userId }`, the `Session` the services read, so a key sees and
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under

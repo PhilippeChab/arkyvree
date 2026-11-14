@@ -13,11 +13,11 @@ const LAST_USED_PRECISION_MS = 60 * 1000;
 
 /**
  * Whom an OAuth access token signs in (`/oauth/token`'s), and whether it reads alone: none when it's expired, its app
- * was disconnected, or its user is gone (an archived account, a demo). Marks its app used, at most once a minute.
+ * was disconnected, or its user is gone (an archived account). Marks its app used, at most once a minute.
  */
 async function findTokenSignIn(token: string) {
   const grant = await OAuthTokens.findOneWithUser(db, { accessDigest: hashApiKeyToken(token) });
-  if (!grant || grant.userExpiresAt) return undefined;
+  if (!grant) return undefined;
   const since = Date.now() - LAST_USED_PRECISION_MS;
   if (!grant.lastUsedAt || new Date(grant.lastUsedAt).getTime() < since) {
     await withWrite(async (tx) =>

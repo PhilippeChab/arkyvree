@@ -5,7 +5,7 @@ import { test } from "@/tests/e2e/fixtures.ts";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.ts";
 import { createCharacter } from "@/tests/e2e/support/dnd3.5/characters.ts";
-import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
+import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 interface Campaign {
   characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }>;
@@ -203,39 +203,6 @@ test.describe("A campaign character", () => {
       expect(await publicDetails.evaluate((details) => details.scrollHeight > details.clientHeight)).toBe(true);
     } finally {
       await other.context().close();
-    }
-  });
-
-  test("offers a demo player its editing, but not its PDF, which a demo doesn't export", async ({
-    page,
-    browser,
-    ownerUser,
-  }) => {
-    await signIn(page, ownerUser.email, ownerUser.password);
-    const id = await createCampaign(page, `Demo Campaign ${Date.now()}`);
-    const demo = await (await openContext(browser)).newPage();
-    try {
-      const demoApi = apiOf(demo).api;
-      const { emailAddress } = await parseResponse(demoApi.demo.start.$post());
-      const invite = await postPlayerInvite(page, id, emailAddress);
-      await parseResponse(demoApi.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: invite.id } }));
-      const name = `Demo Hero ${Date.now()}`;
-      const characterId = await createCharacter(demo, name);
-      await parseResponse(
-        demoApi.campaigns[":id"].characters.$post({ param: { id }, json: { characterId, visibility: "Public" } }),
-      );
-
-      await demo.goto(`/campaigns/${id}/characters/${characterId}`);
-      await expect(demo.getByText(name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
-      // The menu shows for what it holds: Edit Character alone
-      const actions = demo.getByRole("button", { name: "More Actions" });
-      await expect(actions).toBeVisible();
-      await actions.click();
-      const menu = demo.getByRole("menu");
-      await expect(menu.getByRole("menuitem", { name: "Edit Character" })).toBeVisible();
-      await expect(menu.getByRole("menuitem", { name: "Download PDF" })).toHaveCount(0);
-    } finally {
-      await demo.context().close();
     }
   });
 });

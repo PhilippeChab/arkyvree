@@ -21,14 +21,7 @@ import {
   StatusChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import {
-  useDialogState,
-  useFormSync,
-  useFormWith,
-  useGoogleSignIn,
-  useIsDemo,
-  usePageTitle,
-} from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -77,8 +70,6 @@ function toProfileForm(user: Pick<AuthUser, "username" | "emailAddress">): Profi
 
 export default function ProfilePage() {
   usePageTitle("Profile");
-  // A demo account's own features, its avatar among them, are refused it (`denyDemoUser`): it has none to change
-  const isDemo = useIsDemo();
   const updateUser = useAuthStore((s) => s.updateUser);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -213,7 +204,7 @@ export default function ProfilePage() {
                 spacing={{ xs: 2, sm: 4 }}
                 sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
               >
-                <AttachmentField name="avatar" label="Avatar" recordId={userData.id} readOnly={isDemo} />
+                <AttachmentField name="avatar" label="Avatar" recordId={userData.id} />
 
                 <Box sx={{ flex: 1, width: "100%" }}>
                   <Stack

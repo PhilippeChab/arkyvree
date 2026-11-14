@@ -54,7 +54,7 @@ reference.
   request is answered by a server made for it (`buildMcpServer`), so any of the app's machines answers any request. A
   GET or a DELETE, a 2025 session's, answers 405.
 - **Sign-in** (`mcpSignIn`): an OAuth access token ([OAuth](#oauth)), or the public API's key, as `/v1` reads it
-  (`findKeySignIn`), each acting as its user, a demo's and a revoked one nothing. Without either, a 401 names where the
+  (`findKeySignIn`), each acting as its user, a revoked one nothing. Without either, a 401 names where the
   sign-in starts (`WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"`), which
   Claude and ChatGPT read to send their user to the consent page. A read-only key or app is offered the tools that read
   alone (no `write`, no `remove`), and the server's instructions say why; its calls carry it, so the routes refuse it a

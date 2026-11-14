@@ -15,12 +15,11 @@ export default class UsersPolicy extends BasePolicy<{ id: string }> {
   }
 
   /**
-   * Changing the user's avatar (its upload, attach and removal): its own session's, never a demo's, which stores no
-   * file; anyone else a 403. The user isn't looked up, so an unknown one's id gets that 403 too.
+   * Changing the user's avatar (its upload, attach and removal): its own session's; anyone else a 403. The user isn't
+   * looked up, so an unknown one's id gets that 403 too.
    */
   canEditAvatar() {
-    if (this.session.userId !== this.entity.id || this.session.isDemo)
-      throw new ForbiddenError("Not authorized to attach to this record");
+    if (this.session.userId !== this.entity.id) throw new ForbiddenError("Not authorized to attach to this record");
 
     return true;
   }

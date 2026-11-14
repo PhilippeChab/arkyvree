@@ -1,4 +1,4 @@
-import { and, eq, inArray, type InferInsertModel, isNotNull, isNull, like, lt } from "drizzle-orm";
+import { and, eq, type InferInsertModel, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { usersInAccount } from "@/drizzle/schema.ts";
@@ -10,24 +10,6 @@ import { toDeletedAddress } from "./deletedAddress.ts";
 class UsersRepository extends BaseRepository<typeof usersInAccount> {
   constructor() {
     super(usersInAccount);
-  }
-
-  /** A demo account: one that expires, at the demo's address. */
-  private isDemo() {
-    return and(isNotNull(this.table.expiresAt), like(this.table.emailAddress, "%@demo.invalid"));
-  }
-
-  /** A demo account, by its id: a real one isn't deleted here. */
-  private async deleteDemo(db: Db, id: string) {
-    return await db.delete(this.table).where(and(eq(this.table.id, id), this.isDemo()));
-  }
-
-  /** The demo accounts of `ids` that expired before then: one whose expiry moved since it was found stays. */
-  private async deleteExpiredDemos(db: Db, before: string, ids: string[]) {
-    if (ids.length === 0) return { rowCount: 0 };
-    return await db
-      .delete(this.table)
-      .where(and(inArray(this.table.id, ids), this.isDemo(), lt(this.table.expiresAt, before)));
   }
 
   /**
@@ -54,7 +36,6 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
     values: {
       emailAddress: string;
       emailVerifiedAt?: string;
-      expiresAt?: string;
       password?: string;
       username?: string;
     },
@@ -66,27 +47,9 @@ class UsersRepository extends BaseRepository<typeof usersInAccount> {
       .values({
         emailAddress: values.emailAddress,
         ...(passwordDigest ? { passwordDigest } : {}),
-        ...(values.expiresAt ? { expiresAt: values.expiresAt } : {}),
         ...(values.emailVerifiedAt ? { emailVerifiedAt: values.emailVerifiedAt } : {}),
       })
       .returning();
-  }
-
-  async delete(db: Db, where: { id: string } | { expiredDemosBefore: string; ids: string[] }) {
-    if ("id" in where) return await this.deleteDemo(db, where.id);
-    return await this.deleteExpiredDemos(db, where.expiredDemosBefore, where.ids);
-  }
-
-  /**
-   * The ids of the demo accounts that expired before then (`expiredDemosBefore`), which the cleanup deletes once it
-   * locks them.
-   */
-  async findIds(db: Db, where: { expiredDemosBefore: string }): Promise<string[]> {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .where(and(this.isDemo(), lt(this.table.expiresAt, where.expiredDemosBefore)));
-    return rows.map((row) => row.id);
   }
 
   async findOne(

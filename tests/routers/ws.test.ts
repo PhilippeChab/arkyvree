@@ -35,10 +35,10 @@ describe("ws", () => {
     expect(JSON.parse(opened.message!)).toMatchObject({ type: "app:version" });
   });
 
-  test("refuses an expired demo user's live session, as a request is refused", async () => {
+  test("refuses an expired session, as a request is refused", async () => {
     expect(
       await openWith(
-        `${SESSION_COOKIE_NAME}=${(await createUserWithSession({ prefix: "ws", expiresAt: PAST })).session.id}`,
+        `${SESSION_COOKIE_NAME}=${(await createUserWithSession({ prefix: "ws", sessionExpiresAt: PAST })).session.id}`,
       ),
     ).toEqual({ closed: 4001 });
   });

@@ -14,14 +14,13 @@ describe("UsersPolicy", () => {
     expect((await UsersPolicy.for(db, session, { id: session.userId })).canEditAvatar()).toBe(true);
   });
 
-  test("refuses anyone else, an unknown user's id and a demo's own avatar alike", async () => {
+  test("refuses anyone else and an unknown user's id alike", async () => {
     const { session } = await createTestUser();
     const { session: other } = await createTestUser();
 
     for (const [asking, userId] of [
       [other, session.userId],
       [session, NIL_UUID],
-      [{ ...session, isDemo: true }, session.userId],
     ] as const) {
       const policy = await UsersPolicy.for(db, asking, { id: userId });
       expect(thrownBy(() => policy.canEditAvatar())).toEqual(

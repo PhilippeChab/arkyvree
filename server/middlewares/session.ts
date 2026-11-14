@@ -11,13 +11,10 @@ import type { SessionRow, User } from "@/shared/relations.ts";
 
 export interface SessionContext {
   Variables: {
-    requestSession: RequestSession;
+    requestSession: SessionRow;
     requestUser: User;
   };
 }
-
-/** A signed-in session's row, and whether its user is a demo's, which expires (`Session`'s `isDemo`). */
-export type RequestSession = SessionRow & { isDemo: boolean };
 
 const SESSION_CONTEXT_KEY = "requestSession";
 const USER_CONTEXT_KEY = "requestUser";
@@ -49,13 +46,10 @@ export function setSessionCookie(c: Context, sessionId: string) {
 
 /**
  * The session a request's cookie (`sessionId`, `getSessionCookie`'s) signs in, and its user: refused when there's none,
- * or when the session or its user (a demo's) has expired. A demo's session says so (`isDemo`), which its policies read.
- * What every signed-in request takes; a route that also serves a signed-out visitor (the websocket, a demo's start)
- * takes `findSignedIn`.
+ * or when the session has expired. What every signed-in request takes; a route that also serves a signed-out visitor
+ * (the websocket) takes `findSignedIn`.
  */
-export async function findRequestSession(
-  sessionId: string | undefined,
-): Promise<{ session: RequestSession; user: User }> {
+export async function findRequestSession(sessionId: string | undefined): Promise<{ session: SessionRow; user: User }> {
   if (!sessionId) throw new UnauthorizedError("Invalid session");
 
   const session = await Sessions.findOne(db, { id: sessionId });
@@ -64,9 +58,8 @@ export async function findRequestSession(
 
   const user = await Users.findOne(db, { id: session.userId });
   if (!user) throw new UnauthorizedError("Invalid session");
-  if (user.expiresAt && new Date(user.expiresAt) < new Date()) throw new UnauthorizedError("Session expired");
 
-  return { session: { ...session, isDemo: user.expiresAt !== null }, user };
+  return { session, user };
 }
 
 /** `findRequestSession`'s answer, or null where it refuses: for a route that also serves a signed-out visitor. */

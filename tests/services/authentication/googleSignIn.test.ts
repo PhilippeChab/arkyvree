@@ -13,7 +13,7 @@ import { createTestUser } from "@/tests/support/users.ts";
 
 const pool = createTestPool();
 
-/** The demo users the probes committed, which another connection sees: deleted once every test rolled back. */
+/** The users the probes committed, which another connection sees: deleted once every test rolled back. */
 const users = new CommittedUsers(pool);
 
 afterAll(async () => {
@@ -63,7 +63,7 @@ test("a Google account's link from the settings that another link commits first 
 
 test("two first sign-ins of a new Google account at once make it once: the second signs in to the first's", async () => {
   const id = uniqueId();
-  const email = `google-${id}@demo.invalid`;
+  const email = `google-${id}@example.com`;
   const sub = `google-${id}`;
   let first: { id: string } | undefined;
   // The first sign-in makes the account and its link, not yet committed: this one's account waits on its index
@@ -72,7 +72,6 @@ test("two first sign-ins of a new Google account at once make it once: the secon
     async (blockerDb) => {
       [first] = await Users.create(blockerDb, {
         emailAddress: email,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       });
       users.add(first.id);
       await OauthAccounts.create(blockerDb, { userId: first.id, provider: "google", providerAccountId: sub });
@@ -95,10 +94,9 @@ test("a sign-in whose account's address moves while it waits links the address's
     (blockerDb) => Locks.lockUser(blockerDb, former.id, "no key update"),
     () => signInAsGoogleAccount({ email, sub }),
     async ({ blockerDb }) => {
-      await Users.update(blockerDb, { emailAddress: `moved-${uniqueId()}@demo.invalid` }, { id: former.id });
+      await Users.update(blockerDb, { emailAddress: `moved-${uniqueId()}@example.com` }, { id: former.id });
       [current] = await Users.create(blockerDb, {
         emailAddress: email,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       });
       users.add(current.id);
     },

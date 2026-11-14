@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
 import sessionMiddleware from "@/server/middlewares/session.ts";
-import demo from "@/server/routers/api/demo/index.ts";
 import rules from "@/server/routers/api/rules/index.ts";
 import shared from "@/server/routers/api/shared/index.ts";
 import { application } from "@/server/routers/application.ts";
@@ -12,11 +11,10 @@ import signedOut from "@/server/routers/authentication/signedOut/index.ts";
 const PARAM_VALUES = ["00000000-0000-4000-8000-000000000000", "file.js"];
 
 /**
- * The routers of the API and the account (`/api`, `/auth`) mounted outside the session, by where: a shared sheet, a
- * demo's start, the rules, and signing in.
+ * The routers of the API and the account (`/api`, `/auth`) mounted outside the session, by where: a shared sheet, the
+ * rules, and signing in.
  */
 const PUBLIC_ROUTERS = [
-  { prefix: "/api/demo", router: demo },
   { prefix: "/api/rules", router: rules },
   { prefix: "/api/shared", router: shared },
   { prefix: "/auth", router: signedOut },

@@ -6,7 +6,6 @@ import { PageLoader } from "@/client/src/components/common/index.ts";
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { isDemoExpired } from "@/client/src/stores/demoExpiredStorage.ts";
 
 import { authPagePath } from "./authRedirect.ts";
 import { checkSession } from "./sessionCheck.ts";
@@ -44,11 +43,6 @@ export function PrivateRoute() {
   // The session is being checked: the page loads, as an auth page does meanwhile (`AuthLayoutRoute`)
   if (!checked && !isAuthenticated) return <PageLoader />;
   if (isAuthenticated) return <Outlet />;
-
-  // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
-  // render is unsafe under StrictMode's double-invoke (the second pass would
-  // see an already-cleared flag and fall through to /sign-in).
-  if (isDemoExpired()) return <Navigate to="/demo-expired" replace />;
 
   // Back to the page once signed in, unless the user signed out of it
   const target = location.pathname + location.search;

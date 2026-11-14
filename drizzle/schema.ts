@@ -44,12 +44,10 @@ export const usersInAccount = account.table(
     emailVerifiedAt: timestamp("email_verified_at", { mode: "string", withTimezone: true }),
     pendingEmailAddress: text("pending_email_address"),
     onboardingCompletedAt: timestamp("onboarding_completed_at", { mode: "string", withTimezone: true }),
-    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
   },
   (table) => [
     uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast()),
     uniqueIndex("users_username").using("btree", table.username.asc().nullsLast()),
-    index("users_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
     index("users_search_trgm_idx").using(
       "gin",
       table.username.asc().nullsLast().op("gin_trgm_ops"),

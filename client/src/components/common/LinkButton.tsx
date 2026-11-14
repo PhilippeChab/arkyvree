@@ -15,7 +15,10 @@ interface LinkButtonProps {
   label?: string;
   /** Its click, whose target a popover it opens is anchored to */
   onClick: (event: MouseEvent<HTMLElement>) => void;
-  /** Its type, when it stands on its own (Try the Demo); without one it takes its line's (a sentence's "Resend"). */
+  /**
+   * Its type, when it stands on its own (a ruleset's license notice); without one it takes its line's (a sentence's
+   * "Resend").
+   */
   variant?: LinkProps["variant"];
 }
 
@@ -23,7 +26,7 @@ interface LinkButtonProps {
 const IN_LINE_SX = { font: "inherit", verticalAlign: "baseline" } as const;
 
 /**
- * An action written as a link (Resend, Try the Demo, a class's levels on a sheet's header): a button, underlined on
+ * An action written as a link (Resend, a license notice, a class's levels on a sheet's header): a button, underlined on
  * hover, in its own look.
  */
 export function LinkButton({ children, onClick, disabled, expanded, label, variant }: LinkButtonProps) {
