@@ -89,6 +89,11 @@ export interface PathCategory<C = Components> {
     context?: PathContext,
   ): TraversePathResult[] | null;
   /**
+   * The kinds whose entities `nameSegments` names in its paths' segments (3.5's spells': the spell and its list), which
+   * a category that gives it declares: what tells the kinds whose names a path spells (`CategoryPaths.namedKinds`)
+   */
+  segmentKinds?: readonly string[];
+  /**
    * The kind of entity a value on one of its paths names (`path`: a race's name, of the player's races or a bonded
    * kind's), which a save keeps as it keeps a path's names. None for a path whose value names none
    */

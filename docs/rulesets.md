@@ -161,7 +161,7 @@ own alone.
 
 The engine builds a ruleset's `CowData` (`Engine.forRules(baseRules).copyOnWrite().buildData`, by its `CowDataBuilder`) from the rows the server reads as it says (`forRules(baseRules).copyOnWrite().getReads`, `CowDataReader`): a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
 - **Class levels**: a class's levels aren't snapshotted one by one: the levels of each class another stands for in the view pair by number with that class's (`CowDataBuilder`'s owned pass, over the owned entities of the owners `getPairedOwnerIds` names, each owned kind declaring its owner, `EntityTypeDef.ownerType`, an owned entity naming it, `ownerId`, and its place on its track, `position`): a class a copy of the ruleset or its source chain overrides, followed to the last copy as an entity id is (an extension's copy of a core class, then the ruleset's copy of that copy), and a book's class the ruleset's own of its name hides. So a character's level stored with the core class level's id reads the last copy's level of its number
-- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataReader.read` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
+- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataReader.read` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one). A link whose target or pool resolves to a copy deleted since (a tombstone's, the fork's or its book's: a feat a class level grants, a class skill, the pool a class's features are granted through) keeps the id its source stored (`EntityCopy`'s `readNamed`): a link can't name an entity that's gone, and the stored id resolves to the same deleted copy, so the copy shows what the view showed. A grant whose feat is gone shows nothing, one whose pool is gone still grants its feat, and restoring the feat or the pool brings back every grant naming it. So a class's first edit after the fork, or its book, deleted a feat one of its levels grants saves the class as its page showed it
 - **Detail views**: `CowData.resolveLinks()` remaps an entity's single links in query results
 - **Advancement picks**: an advancement flow's plan request (a plan's answer, a step's picker, an add's or an edit's save) may name a copied entity by its source's id, which the API takes as it takes the copy's the client sends. The advancement handle resolves each id a request names as it enters (`AdvancementsEngine`, by `AdvancementRequests`), as the character's rows are (`CharacterInputs`): its checks, its preview and its save read the copy (a spell at its level in the copy's lists, a feat the character holds as the copy), and a save writes the copy's id, the row the client's request writes. A pick the view has none of is refused, naming it. A row saved before the copy keeps its source's id, which reads resolve
 - **Request ids**: every id a request names is read so, by one class (`RequestIds`, `engine/core/view/`) as the request enters the rules: an advancement flow's (`AdvancementRequests`), a new character's creation picks and scored links (3.5's race and ability scores: `characters().planCreate` and `planStart`, which an import plans its start by), a scored link's edit (`planScores`: 3.5's ability scores), a picked link's edit and its picker's (`character(input).planLinkPicks`, `describeLinkPicks`: 3.5's languages) and an added inventory item (`character(input).planInventoryEntry`, which places the copy, as the view has it); an entity's form, by the roles of the links its fields declare (`FieldCodec.parse`: a save's or a skill's ability, a feat's or a spell's lists, a spell's save, an item's template, a class's bonus spell ability, a class level's granted feats and its saves, and their pools, `viaId`, its own), a class skill's add (`links("classes", classId).planAdd`) and a field's value naming an entity (a `ref` field, which an entity's create and edit read through its codec, `FieldCodec.parse`: a class's bonus spell ability). Each plan names what it writes by the view's id. An id the view has none of (unknown, of an unrelated ruleset, or one the ruleset deleted) is refused as `invalid`, naming it (`Item <id> does not belong to the character's ruleset`, an entity's form `Ability <id> does not belong to this ruleset`, never the foreign key's 500 nor another ruleset's entity stored), and so is one entity named twice where it's given once (an ability's score, a language, a feat's or a spell's list, a class level's save: `Language <id> is given more than once`). A path's id stays a 404 (`find`). Rows stored before a copy keep their source's id: reads resolve them, and nothing rewrites them
@@ -179,8 +179,17 @@ No change makes a view show two entities of a kind under one name. Every entity
 create (`EntityNames.assertNameAvailable`), bulk item variants and every rename
 (`assertRenameAvailable`, from `EntityWriter.update`) check the name against the
 fork's composed view, by one read for every name (`assertNamesAvailable`). A
-local entity, or an inherited one that is still visible, with the same name
-blocks it: a conflict (409) naming the name. Inherited entities hidden by an
+local entity, or an inherited one that is still visible, with the same name in
+the same partition blocks it: a conflict (409) naming the name. A name is kept
+within a partition (what a race or a class is for), as the database's name index
+keeps it: D&D 3.5's Hawk is a familiar's race and an animal companion's, two
+entities, and a fork deletes, renames or restores one without the other. A new
+entity takes its kind's partition (a race's `pc`), so it may share its name with a
+familiar's race. A kind whose entities a target path names by their name alone
+(`Engine.rules().pathNamedKindsOf`: a class, `classes.familiar.level`) keeps a
+name one entity's across its partitions instead: a player's class named
+"Familiar" beside the familiar's class would make that path name two, so it's
+refused. A race is named in a path's value, which carries its partition. Inherited entities hidden by an
 override (`cow.isHidden`: overridden, or a sibling loser) do not. Lists too: a
 fork's list takes a name no list of its view has, though its view pairs lists by
 name
@@ -191,13 +200,13 @@ stays editable. Names compare as written: a case-only change is a new name.
 
 A restore (`assertRestoreAvailable`, from `EntityRevert`) shows the source again
 under its name, as a rename back to it would: refused while the view shows another
-entity of it, unless the copy kept the source's name. A subscribe
+entity of it in its partition, unless the copy kept the source's name. A subscribe
 (`assertExtensionNamesAvailable`) counts the names the new extensions' entities
 have (a renamed copy's too) in the view as it is and as it would be once
 subscribed (its `CowData` read for the new extensions, so what that view pairs
-counts once), and refuses one it would show more often than once and than now: a
-name the view already shows twice (a familiar's race and an animal companion's of
-one name, which a race's kind tells apart) blocks no subscribe that leaves it so.
+counts once), each partition on its own, and refuses one it would show more often
+than once in a partition and than now: a name the view already shows twice there
+blocks no subscribe that leaves it so.
 An unsubscribe (`assertReturningNamesAvailable`, see
 [Unsubscribe](#unsubscribe-unsubscribeextension)) counts, the same way, the names
 of what the view shows again once the extension is gone (a core entity it copied,
@@ -205,11 +214,14 @@ another book's copy or reprint it won over), the fork's copies of the extension'
 entities going with it: refused while the fork has given another entity one of
 those names since (it renamed its copy of the book's copy of a core feat, then
 created a feat of the core feat's name), a conflict (409) naming it. The fork
-renames that entity first. Both count a book's entity the fork's own of its name
+renames that entity first. A book renaming one of two races of a name (a
+familiar's Hawk to "Hawk (Familiar)") blocks no unsubscribe: the Hawk that shows
+again is the only one of its partition. Both count a book's entity the fork's own of its name
 hides (below) as shown: the fork is told of the clash its change makes rather than
 lose the book's entity.
 
-A fork's own entity wins over an extension's of its name, of every kind
+A fork's own entity wins over an extension's of its name in its partition (in any,
+for a kind a path names by its name alone: a class), of every kind
 (`CowDataBuilder`'s own namesakes pass, over `RulesetEntities.findOwnNamesakes`: the
 fork's entities and its extensions' of a name both have; `CowData.isShadowed`). Not
 over its base's, whose entity an unsubscribe would show again is refused instead
@@ -243,8 +255,8 @@ A list pairs with its books' lists of its name instead (see
 its own to merge.
 
 If a hidden ancestor's local copy was deleted, its snapshot is a tombstone, and
-`EntityNames.repointTombstone` moves it to the new entity a create makes; a
-renamed entity takes over none. A live local copy keeps its snapshot even after a
+`EntityNames.repointTombstone` moves it to the new entity of its name and
+partition a create makes; a renamed entity takes over none. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
 ### Restoring an override
@@ -410,7 +422,7 @@ No entities are copied. They become visible immediately via the source chain.
 2. Finds the host's copies of the extension's entities: its snapshots whose `sourceEntityId` belongs to the extension (`ExtensionDeparture.read`, `server/cow/writes/`, which reads steps 3 to 5's view without the extension once), and checks that its view would then show no name more often than once and than it does now (`EntityNames.assertReturningNamesAvailable`, see [Names of entities](#names-of-entities)): what the extension hid shows again (a core entity it copied, another book's copy or reprint it won over), and a `ConflictError` names one the host has given another entity since, before anything changes
 3. **What leaves, and what stands in its place** (`ExtensionDeparture`): the extension's entities, the host's copies of them, and their classes' levels, each with what the host's view shows in its place once the extension is gone, read from its `CowData` with the extension (its scope's, under the write's lock) and without it (`CowDataReader.read`). Of the ids the view shows the entity for (`getEquivalentIds`: the core entity an extension's copy overrides, another book's copy or a namesake it wins over, a list of its name), it's the first that stays, as the view without the extension resolves it, when that view shows it. So the extension's copy of a core feat or spell falls back to the core one (or to another book's copy of it, which wins once this one is gone, as the sibling pairing has it), a list to the list of its name the host or another book has, an entity the host's own of its name hides to that one, and a class's level to the level of its number in the class standing in its class's place, as `CowDataBuilder` pairs a copy's levels. An entity only the extension has, a list no other book has, or a level the class standing in its class's place doesn't have, leaves the view: nothing stands in its place
 4. **In-use check** (`ExtensionDeparture.isInUse`, `EntityUses.isAnyPicked`) — blocks with `ConflictError` if a character on the host picked what leaves the view (`EntityReferences.exists`, every type's picks, a class's by its levels), directly or through the host's copy of it: the pick would dangle. A pick of what something stands in place of doesn't count: step 5 points it there. The check also counts a ruleset built on the host, which has none: fork-of-fork is blocked at policy time, and a host isn't an extension
-5. **Repoints what the host keeps** (`ExtensionDeparture.repoint`): a host row naming what leaves the view (a link to a list no other book has, an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and spells: `EntityReferences.findMany`, the copies' own rows aside, which go with them) refuses the unsubscribe with a `ConflictError` naming them, before anything changes. Then every row of the host and of its characters naming what something stands in place of names that instead (`EntityReferences.findIds`, then `update` given the host): a feat's or a spell's link to the extension's list, a class's grant, a character's pick of a core feat the extension overrides (stored by the copy's id, as a level-up writes the id its view shows: `RequestIds`), the list it's picked from, its level in a class the extension overrides, its race, an item it carries. A row that would then repeat another by its table's primary key goes, as a revert's does. The extension's own rows, and its other subscribers', keep naming its entities
+5. **Repoints what the host keeps** (`ExtensionDeparture.repoint`): a host row naming what leaves the view (a link to a list no other book has, an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and spells: `EntityReferences.findMany`, the copies' own rows aside, which go with them, and the rows naming one the host deleted, which its view shows nothing of, before or after: a copy may keep naming it as its source stored it) refuses the unsubscribe with a `ConflictError` naming them, before anything changes. Then every row of the host and of its characters naming what something stands in place of names that instead (`EntityReferences.findIds`, then `update` given the host): a feat's or a spell's link to the extension's list, a class's grant, a character's pick of a core feat the extension overrides (stored by the copy's id, as a level-up writes the id its view shows: `RequestIds`), the list it's picked from, its level in a class the extension overrides, its race, an item it carries. A row that would then repeat another by its table's primary key goes, as a revert's does. The extension's own rows, and its other subscribers', keep naming its entities
 6. **Reverts the host's copies** (`EntityRevert`, as a restore does: see [Restoring an override](#restoring-an-override)), which deletes them and their snapshots. What names a copy names the extension's entity before the copy goes. By then, only another of the copies names one: step 5 moved the host's own rows and its characters' picks, or refused. So a copy naming another never blocks the other's delete, whatever order the copies go in: an item's copy naming its template's copy (a `madeFrom` link, whose role refuses the delete), a class level's save (`baseBonus`, refuses too). Nor is a subrace's or a subclass's copy deleted with its parent's (`subraceOf`, `subclassOf`, whose roles delete) before its own turn. The host's edit of the extension's copy of a core entity goes too, as its edits of the extension's content do: what named it names what stands in its place, the core entity
 7. Archives the extension's `ruleset_extensions` row, and touches the host's `updatedAt`
 

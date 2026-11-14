@@ -140,18 +140,34 @@ export default class ExtensionDeparture {
   }
 
   /**
+   * The ids among `ids` (the extension's entities, as stored) the ruleset deleted: each resolves, in its view, to its
+   * copy that's gone (a tombstone's). A copy the ruleset made since may still name one as the extension stored it
+   * (`EntityCopy`, which keeps a link to a deleted entity as its source held it), which its view shows no link to.
+   */
+  private async findDeleted(tx: Db, ids: string[]): Promise<Set<string>> {
+    const cow = this.scope.rulesetData.cow;
+    const copied = ids.filter((id) => cow.resolve(id) !== id);
+    const live = new Set(
+      (await RulesetEntities.findNames(tx, { ids: copied.map((id) => cow.resolve(id)) })).map((entity) => entity.id),
+    );
+    return new Set(copied.filter((id) => !live.has(cow.resolve(id))));
+  }
+
+  /**
    * The ruleset's rows naming what leaves with nothing in its place (`EntityReferences.findMany`), as the refusal names
    * them: a link to a list no other extension has, or a row naming another of the extension's entities (an item's
-   * template, a class's skill or granted feat…). The copies' own rows, which go with them, are left out.
+   * template, a class's skill or granted feat…). The copies' own rows, which go with them, are left out, and so are
+   * the rows naming what the ruleset deleted (`findDeleted`): they name nothing its view shows, before or after.
    */
   private async findLostReferences(tx: Db): Promise<string[]> {
     const typeOf = new Map<string, RulesetEntityType>();
     for (const type of Engine.forRules(this.scope.ruleset.baseRules).storage().standaloneKinds())
       for (const [id, fallbackId] of this.departures.get(type) ?? []) if (!fallbackId) typeOf.set(id, type);
     const deleted = new Set(this.copyIds);
+    const gone = await this.findDeleted(tx, [...typeOf.keys()]);
     const references = (
       await EntityReferences.findMany(tx, { rulesetId: this.scope.sources.id, entityIds: [...typeOf.keys()] })
-    ).filter((reference) => !deleted.has(reference.id));
+    ).filter((reference) => !deleted.has(reference.id) && !gone.has(reference.targetId));
     const targetIds = [...new Set(references.map((reference) => reference.targetId))];
     const names = new Map(
       (await RulesetEntities.findNames(tx, { ids: targetIds })).map((entity) => [entity.id, entity.name]),

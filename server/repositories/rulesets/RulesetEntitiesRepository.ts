@@ -14,11 +14,15 @@ type NamesWhere = ({ rulesetId: string } | { ids: string[] } | { names?: string[
   entityType?: RulesetEntityType;
 };
 
-/** An entity's id and name, with its type and its ruleset: what the name queries answer. */
+/**
+ * An entity's id and name, with its type, its partition (what a race or a class is for, within which its name is its
+ * own) and its ruleset: what the name queries answer.
+ */
 const NAMED = {
   entityType: sql<RulesetEntityType>`${entitiesInRules.type}`.as("entity_type"),
   id: entitiesInRules.id,
   name: sql<string>`${entitiesInRules.name}`.as("name"),
+  partition: entitiesInRules.partition,
   rulesetId: entitiesInRules.rulesetId,
 };
 
@@ -36,7 +40,7 @@ class RulesetEntitiesRepository {
     return eq(entitiesInRules.rulesetId, where.rulesetId);
   }
 
-  /** Entities' ids and names, each with its type and its ruleset (`where`: which rows, of which types). */
+  /** Entities' ids and names, each with its type, partition and ruleset (`where`: which rows, of which types). */
   async findNames(db: Db, where: NamesWhere) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
@@ -77,9 +81,9 @@ class RulesetEntitiesRepository {
   }
 
   /**
-   * The entities of every type, by id and name, each with its type and ruleset, of a ruleset (`rulesetId`) and of
-   * these rulesets (`rulesetIds`, its extensions) whose name the ruleset has and one of these has too: its own rows,
-   * copies included (a copy shows under its own name).
+   * The entities of every type, by id and name, each with its type, partition and ruleset, of a ruleset (`rulesetId`)
+   * and of these rulesets (`rulesetIds`, its extensions) whose name the ruleset has and one of these has too, in any
+   * partition: its own rows, copies included (a copy shows under its own name).
    */
   async findOwnNamesakes(db: Db, where: { rulesetId: string; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
