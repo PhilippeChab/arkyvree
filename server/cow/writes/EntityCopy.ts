@@ -69,6 +69,35 @@ export default class EntityCopy {
   }
 
   /**
+   * An entity's content in one text (`readContent`): its fields, its links by the entities they stand for (`cow`), its
+   * modifiers and its requirements, its modifiers' among them, each by its modifier.
+   */
+  private static signatureOf(
+    cow: CowData,
+    fields: Record<string, unknown>,
+    links: Pick<ViewLink, "role" | "tier" | "toId" | "viaId">[],
+    modifiers: Pick<EntityCustomizations["modifiers"][number], "id" | "operator" | "target" | "value" | "valueType">[],
+    requirements: EntityCustomizations["requirements"],
+  ) {
+    const original = (id: string) => cow.originalOf(cow.resolve(id));
+    const signOf = new Map(modifiers.map((m) => [m.id, [m.target, m.operator, m.value, m.valueType].join("|")]));
+    return JSON.stringify({
+      fields: Object.entries(fields).toSorted(([a], [b]) => a.localeCompare(b)),
+      links: links
+        .map(({ role, tier, toId, viaId }) =>
+          [role, original(toId), viaId ? original(viaId) : null, tier ?? null].join("|"),
+        )
+        .toSorted(),
+      modifiers: [...signOf.values()].toSorted(),
+      requirements: requirements
+        .map((r) =>
+          [signOf.get(r.entityId) ?? "", r.level, r.chainingOperator, r.target, r.operator, r.value].join("|"),
+        )
+        .toSorted(),
+    });
+  }
+
+  /**
    * What a copy's links name for the ids they name as stored (`ids`): the entity each resolves to (`cow`: its copy, its
    * winner), as the view shows it, but the stored id itself where that one is gone, a copy the ruleset or its source
    * chain deleted since (a tombstone's). The view shows no link to it (`RulesetData.nameLinks`) and a level-up grants
@@ -110,6 +139,43 @@ export default class EntityCopy {
     const copy = new EntityCopy(scope.sources, entityType, entityId);
     const { entity, made } = await copy.copy(tx);
     return made ? { entity, copiedIds: copy.copiedIds } : { entity };
+  }
+
+  /**
+   * What a copy of copies of one entity (`ids`, of `entityType`: the winner, then its siblings in the order the scope's
+   * `CowData` pairs them; an entity alone) holds, as `create` writes it, its siblings merged in as the view merges
+   * them: its name and its description, and the rest in one text two entities compare by (`content`): its fields, its
+   * links (each by the entity it stands for: a copy's may name the ruleset's copy of a pool its source names itself), its
+   * modifiers and its requirements, and its modifiers' own. A copy holds that, word for word, until its author changes
+   * one: a restore that changes nothing of it removes it. None when the winner is gone.
+   */
+  static async readContent(tx: Db, scope: LockedRulesetScope, entityType: RulesetEntityType, ids: string[]) {
+    const [winnerId, ...siblingIds] = ids;
+    const entity = await Entities.findOne(tx, { entityType, id: winnerId });
+    if (!entity) return undefined;
+    const cow = scope.rulesetData.cow;
+    const copy = new EntityCopy(scope.sources, entityType, winnerId);
+    const values = await copy.mergeValues(tx, entity, siblingIds, cow);
+    const customizations = await copy.customizationCopies.read(tx, ids, entityType);
+    const own = customizations.get(winnerId)!;
+    const taken = Engine.forRules(scope.ruleset.baseRules)
+      .copyOnWrite()
+      .mergeCustomizations(
+        own,
+        siblingIds.flatMap((id) => customizations.get(id) ?? []),
+        winnerId,
+      );
+    const modifiers = [...own.modifiers, ...taken.modifiers];
+    // Its own and its modifiers', each by its modifier (`signatureOf`)
+    const requirements = [own, taken].flatMap((held) => [...held.requirements, ...held.modifierRequirements]);
+    const links = [
+      ...(await EntityLinks.findMany(tx, { fromIds: [winnerId] })),
+      ...(await copy.readTakenLinks(tx, winnerId, siblingIds, cow)),
+    ].map(({ role, tier, toId, viaId }) => ({ role, tier, toId, viaId }));
+    for (const [role, toId] of Object.entries(values.links))
+      if (toId !== undefined) links.push({ role, tier: null, toId, viaId: null });
+    const { description, name } = { ...entity, ...cow.mergeTexts(ids) };
+    return { content: EntityCopy.signatureOf(cow, values.fields, links, modifiers, requirements), description, name };
   }
 
   private readonly copiedIds = new Map<string, string>();
@@ -160,9 +226,10 @@ export default class EntityCopy {
     // leaves out (a book's feat renamed in place, another feat of the book taking its old name)
     const siblingIds = cow.getSiblings(this.entityId).filter((id) => !cow.isOverridden(id));
 
-    // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
-    // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
-    // template, a spell's save), or its stored target where that one is gone (`readNamed`)
+    // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them, its
+    // name and description among them) to the child ruleset, each link to the entity the ruleset shows in its target's
+    // place (a race's parent, an item's template, a spell's save), or its stored target where that one is gone
+    // (`readNamed`)
     const {
       description,
       fields,
@@ -172,6 +239,7 @@ export default class EntityCopy {
     } = {
       ...parentEntity,
       ...(await this.mergeValues(tx, parentEntity, siblingIds, cow)),
+      ...cow.mergeTexts([this.entityId, ...siblingIds]),
     };
     const links = EntityCopy.namedLinks(stored, await EntityCopy.readNamed(tx, cow, Object.values(stored)));
     // Its rows as they're stored, its source's: a copy keeps them as they are
@@ -270,17 +338,7 @@ export default class EntityCopy {
    * (`copyLinksAndOwned`): the losers' links, read by their stored ids.
    */
   private async mergeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
-    const resolve = (id: string) => cow.resolve(id);
-    const own = await EntityLinks.findMany(tx, { fromIds: [targetEntityId] });
-    const siblingLinks = Map.groupBy(await EntityLinks.findMany(tx, { fromIds: siblingIds }), (link) => link.fromId);
-    const links = Engine.forRules(this.ruleset.baseRules)
-      .copyOnWrite()
-      .mergeLinks(
-        own,
-        siblingIds.map((id) => siblingLinks.get(id) ?? []),
-        resolve,
-        this.entityType,
-      );
+    const links = await this.readTakenLinks(tx, targetEntityId, siblingIds, cow);
     const named = await EntityCopy.readNamedLinks(tx, cow, links);
     await EntityLinks.createMany(
       tx,
@@ -334,5 +392,24 @@ export default class EntityCopy {
       own,
       siblings: sources,
     });
+  }
+
+  /**
+   * The links of the roles that merge an entity (`entityId`, as stored) takes of its sibling copies (`siblingIds`, by
+   * their stored ids), as the view merges them (`Engine.forRules(baseRules).copyOnWrite().mergeLinks`): those to
+   * targets it doesn't link to, each target as `cow` resolves it.
+   */
+  private async readTakenLinks(tx: Db, entityId: string, siblingIds: string[], cow: CowData) {
+    if (siblingIds.length === 0) return [];
+    const own = await EntityLinks.findMany(tx, { fromIds: [entityId] });
+    const siblingLinks = Map.groupBy(await EntityLinks.findMany(tx, { fromIds: siblingIds }), (link) => link.fromId);
+    return Engine.forRules(this.ruleset.baseRules)
+      .copyOnWrite()
+      .mergeLinks(
+        own,
+        siblingIds.map((id) => siblingLinks.get(id) ?? []),
+        (id) => cow.resolve(id),
+        this.entityType,
+      );
   }
 }

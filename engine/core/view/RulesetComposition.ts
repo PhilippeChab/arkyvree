@@ -397,7 +397,8 @@ export default class RulesetComposition {
   /**
    * A kind's rows (`rows`, of `type`, as the view shows them), each winner of sibling copies with its losers' fields and
    * single links merged in (`SiblingMerge.mergeValues`, by each field's and role's declared merge, against what each
-   * copied, which `EntityCopy` writes the same way): but a loser a copy overrides or the view leaves out (`leftOut`:
+   * copied, which `EntityCopy` writes the same way), and its name and description as a single value merges
+   * (`CowData.getShownTexts`): but a loser a copy overrides or the view leaves out (`leftOut`:
    * an owned one), which gives none, and neither its source. What each loser gave its winner goes in `taken`, by the
    * loser, and each winner's merged values in `merged`.
    */
@@ -429,7 +430,8 @@ export default class RulesetComposition {
       const merging = SiblingMerge.mergeValues(row, siblings, type, this.declared, sources);
       for (const [index, loserId] of loserIds.entries()) taken.set(loserId, merging.taken[index]);
       merged.set(row.id, merging.values);
-      return { ...row, ...merging.values };
+      // Its name and its description, as a single value merges: the first copy's that changed them
+      return { ...row, ...merging.values, ...this.cow.getShownTexts(row.id) };
     });
   }
 

@@ -75,6 +75,7 @@ export function Plans<B extends Constructor>(Base: B) {
               ...opened.picker.groupFilters,
               search,
               searchFields: opened.searchFields,
+              texts: scope.rulesetData.cow.listFilters.texts,
             };
             const result = await Entities.findOptionGroupPage(db, baseRules, filters, pagination);
             const items = opened.picker.describeGroups(result.items);
@@ -86,6 +87,7 @@ export function Plans<B extends Constructor>(Base: B) {
               ...opened.picker.filters,
               search,
               searchFields: opened.searchFields,
+              texts: scope.rulesetData.cow.listFilters.texts,
             };
             const result = await Entities.findOptionPage(db, baseRules, filters, pagination);
             const items = opened.picker.describeOptions(result.items);

@@ -77,7 +77,7 @@ class RulesetExtensionsService {
       policy.canUnsubscribeExtension({ isSubscribed: scope.sources.extensionIds.includes(extensionId) });
 
       // 2. What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything, and
-      // the fork's copies of its entities, as copy-on-write reads them (`ExtensionDeparture`)
+      // the fork's copies of its entities, as copy-on-write reads them, those that stay among them (`ExtensionDeparture`)
       const departure = await ExtensionDeparture.read(tx, scope, extensionId);
       // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
       await new EntityNames(scope).assertReturningNamesAvailable(tx, departure);
@@ -87,7 +87,11 @@ class RulesetExtensionsService {
       // unsubscribe refuses: before the copies go, what names the fork's copies of the book's entities included
       await departure.repoint(tx);
 
-      // The fork's copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
+      // The fork's copies of what the view keeps showing stay, its edits and deletes with them: each copies what stands
+      // in its source's place instead
+      await departure.keep(tx);
+
+      // The other copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
       // first, so no copy's delete trips another's reference to it (an item's copy naming its template's), in any order
       for (const snap of departure.snapshots)
         await EntityRevert.revert(tx, snap.entityType, snap.sourceEntityId, scope);

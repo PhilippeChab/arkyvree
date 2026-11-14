@@ -355,9 +355,13 @@ them are nobody's, and left as they are.
 - **A new skill named as one the ruleset deleted** stands for it: that skill's feat, restored without it, is its own
   again.
 
-Two books that both carry a skill's feat (Complete Adventurer copies the core Skill Focus feats) agree on its name by
-the first subscribed, as for any entity: a rename one of them makes of its skill shows in a subscriber of both under
-the other's name, the feat still giving to the renamed skill.
+Two books that both carry a skill's feat (Complete Adventurer copies the core Skill Focus feats) agree on its name, as
+copies of any entity do: a rename one of them makes of its skill shows in a subscriber of both under the new name,
+whichever book it subscribed to first, the first book that renamed the feat giving it its name and its text (see
+[Multi-Extension COW](./rulesets.md#multi-extension-cow-sibling-map)). A ruleset that renamed a skill, and so its
+feat, in its copy of a book's copy keeps it when it unsubscribes from the book: its copy then copies the core feat. A
+restore of the skill compares the ruleset's feat with what the view shows without it, every book's copy merged, so a
+feat the ruleset left as the books made it leaves nothing in Local Changes, a book's own words in it among them.
 
 ### Races
 

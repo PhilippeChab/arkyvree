@@ -54,6 +54,16 @@ export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}
 
   /**
+   * The name a view (`cow`'s) shows an entity under (`entity`, as stored): a winner's whose sibling copy renamed it
+   * (`CowData.shownTexts`), its own otherwise, and a hidden one's own; one the ruleset's own entity hides goes by the
+   * name it's hidden under, which a change to the view's books counts as shown.
+   */
+  private static nameIn(cow: CowData, entity: { id: string; name: string }): string {
+    if (cow.isHidden(entity.id) && !cow.isShadowed(entity.id)) return entity.name;
+    return cow.shownTexts.find((shown) => shown.id === entity.id)?.name ?? entity.name;
+  }
+
+  /**
    * The names of `entities`, each once, by their type, in the order their base rules' module declares the types
    * (`baseRules`).
    */
@@ -129,8 +139,9 @@ export default class EntityNames {
   }
 
   /**
-   * The entities of a kind named `names`, the ruleset's own and its source chain's (`chain`: its own, unless given), of
-   * every partition.
+   * The entities of a kind named `names` in the view (`nameIn`: a winner by the name a sibling copy gave it), the
+   * ruleset's own and its source chain's (`chain`: its own, unless given), of every partition, each under that name; a
+   * hidden one by its own.
    */
   private async findNamed(
     tx: Db,
@@ -138,7 +149,32 @@ export default class EntityNames {
     names: string[],
     chain = this.cow.sourceChain,
   ): Promise<NamedEntity[]> {
-    return await RulesetEntities.findNames(tx, { entityType, names, rulesetIds: [this.ruleset.id, ...chain] });
+    const wanted = new Set(names);
+    return (await this.findStored(tx, entityType, names, chain, [this.cow]))
+      .map((entity) => ({ ...entity, name: EntityNames.nameIn(this.cow, entity) }))
+      .filter((entity) => wanted.has(entity.name));
+  }
+
+  /**
+   * The entities of a kind named `names` as stored, or in one of the views given (`cows`: a winner a sibling copy
+   * renamed so), the ruleset's own and its source chain's (`chain`), of every partition, each as stored.
+   */
+  private async findStored(
+    tx: Db,
+    entityType: RulesetEntityType,
+    names: string[],
+    chain: string[],
+    cows: CowData[],
+  ): Promise<NamedEntity[]> {
+    const rulesetIds = [this.ruleset.id, ...chain];
+    const stored = await RulesetEntities.findNames(tx, { entityType, names, rulesetIds });
+    const found = new Set(stored.map((entity) => entity.id));
+    const wanted = new Set(names);
+    const renamedIds = cows.flatMap((cow) =>
+      cow.shownTexts.flatMap(({ id, name }) => (name !== undefined && wanted.has(name) && !found.has(id) ? [id] : [])),
+    );
+    const renamed = await RulesetEntities.findNames(tx, { entityType, ids: [...new Set(renamedIds)] });
+    return [...stored, ...renamed.filter((entity) => rulesetIds.includes(entity.rulesetId))];
   }
 
   /**
@@ -188,14 +224,24 @@ export default class EntityNames {
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
     const chain = [...new Set([...this.cow.sourceChain, ...after.sourceChain])];
     for (const [entityType, typeNames] of names) {
-      const named = await this.findNamed(tx, entityType, typeNames, chain);
-      for (const entities of Map.groupBy(named, (entity) => this.keyOf(entityType, entity)).values()) {
-        const [{ name }] = entities;
-        const shownBefore = entities.filter(({ id, rulesetId }) => before.has(rulesetId) && shown(this.cow, id));
-        const shownAfter = entities.filter(
-          ({ id, rulesetId }) => remaining.has(rulesetId) && !leaving.has(id) && shown(after, id),
+      const wanted = new Set(typeNames);
+      const named = await this.findStored(tx, entityType, typeNames, chain, [this.cow, after]);
+      // Each view's entities of those names, by their key there: a winner under the name a sibling copy gave it
+      const shownIn = (cow: CowData, rulesetIds: ReadonlySet<string>) =>
+        Map.groupBy(
+          named
+            .filter(
+              ({ id, rulesetId }) =>
+                rulesetIds.has(rulesetId) && shown(cow, id) && (cow === this.cow || !leaving.has(id)),
+            )
+            .map((entity) => ({ ...entity, name: EntityNames.nameIn(cow, entity) }))
+            .filter((entity) => wanted.has(entity.name)),
+          (entity) => this.keyOf(entityType, entity),
         );
-        if (shownAfter.length > Math.max(shownBefore.length, 1)) throw new ConflictError(refusal(entityType, name));
+      const shownBefore = shownIn(this.cow, before);
+      for (const [key, entities] of shownIn(after, remaining)) {
+        if (entities.length > Math.max(shownBefore.get(key)?.length ?? 0, 1))
+          throw new ConflictError(refusal(entityType, entities[0].name));
       }
     }
   }
@@ -228,8 +274,9 @@ export default class EntityNames {
     });
     for (const entity of entities) {
       if (ignored.has(entity.id) || (entity.rulesetId !== this.ruleset.id && this.cow.isHidden(entity.id))) continue;
-      const name = byKey.get(stripSeparators(entity.name));
-      if (name !== undefined && name !== entity.name) throw toKeyError(name, entity.name);
+      const shownName = EntityNames.nameIn(this.cow, entity);
+      const name = byKey.get(stripSeparators(shownName));
+      if (name !== undefined && name !== shownName) throw toKeyError(name, shownName);
     }
   }
 
@@ -306,9 +353,10 @@ export default class EntityNames {
 
   /**
    * Refuses restoring an inherited entity (`sourceEntityId`) in place of the ruleset's copy of it (`copyId`, gone when
-   * the copy was deleted: a tombstone) when the view shows another entity of the source's name, or its key, in its
-   * partition: a restore renames the view's entity back to its source's name, or shows a deleted one again, as a rename
-   * or a create would.
+   * the copy was deleted: a tombstone) when the view shows another entity of the name it shows again, or its key, in its
+   * partition: a restore renames the view's entity back to its source's name (the name the copies the view shows in the
+   * copy's place give it once merged, `CowData.restoredGroupOf`), or shows a deleted one again, as a rename or a create
+   * would.
    */
   async assertRestoreAvailable(
     tx: Db,
@@ -316,32 +364,48 @@ export default class EntityNames {
     sourceEntityId: string,
     copyId: string,
   ): Promise<void> {
-    const entities = await RulesetEntities.findNames(tx, { entityType, ids: [sourceEntityId, copyId] });
+    const group = this.cow.restoredGroupOf(copyId);
+    const [winnerId = sourceEntityId] = group;
+    const entities = await RulesetEntities.findNames(tx, { entityType, ids: [sourceEntityId, copyId, winnerId] });
     const source = entities.find((entity) => entity.id === sourceEntityId);
+    const winner = entities.find((entity) => entity.id === winnerId) ?? source;
     const copy = entities.find((entity) => entity.id === copyId);
-    if (!source || copy?.name === source.name) return;
-    this.refuseShown(this.rivalsOf(entityType, await this.findNamed(tx, entityType, [source.name]), source.partition));
-    await this.refuseKeys(tx, entityType, [source.name], new Set([sourceEntityId, copyId]));
+    if (!source || !winner) return;
+    const name = this.cow.mergeTexts(group).name ?? winner.name;
+    if (copy?.name === name) return;
+    this.refuseShown(this.rivalsOf(entityType, await this.findNamed(tx, entityType, [name]), source.partition));
+    await this.refuseKeys(tx, entityType, [name], new Set([sourceEntityId, copyId, ...group]));
   }
 
   /**
    * Refuses unsubscribing the ruleset from an extension (`departure`) when its view would then show more entities of a
    * kind under a name than once, and than it shows now (`refuseChainNames`, with the view it shows once unsubscribed,
    * `departure.after`): what the extension hid shows again under its name (a core entity it copied, its copies'
-   * siblings, a reprint it won over), which the ruleset may have given another entity since. The ruleset's copies of
-   * the extension's entities (`departure.copyIds`) go with it.
+   * siblings, a reprint it won over), or a winner the extension's copy named goes back to its own, which the ruleset
+   * may have given another entity since: its own entity of that name would hide it. The ruleset's copies of the
+   * extension's entities that go with it (`departure.copyIds`) count none.
    */
   async assertReturningNamesAvailable(tx: Db, departure: ExtensionDeparture): Promise<void> {
     const { after, copyIds } = departure;
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
-    const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id));
-    const shown = await RulesetEntities.findNames(tx, { ids: returning });
+    // What shows again, or the ruleset's own entity hides once the extension is gone (a book's copy it won over, which
+    // a fork's own entity of that copy's name hides), and the winners whose name changes with it (a winner the
+    // extension's copy named, which goes back to its own)
+    const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id) || after.isShadowed(id));
+    const renamed = [...this.cow.shownTexts, ...after.shownTexts].map((shown) => shown.id);
+    const entities = await RulesetEntities.findNames(tx, { ids: [...new Set([...returning, ...renamed])] });
+    const returningIds = new Set(returning);
+    const shown = entities.filter(
+      (entity) =>
+        remaining.has(entity.rulesetId) &&
+        (returningIds.has(entity.id) || EntityNames.nameIn(this.cow, entity) !== EntityNames.nameIn(after, entity)),
+    );
     await this.refuseChainNames(
       tx,
       after,
       EntityNames.namesByType(
         this.scope.ruleset.baseRules,
-        shown.filter((entity) => remaining.has(entity.rulesetId)),
+        shown.map((entity) => ({ ...entity, name: EntityNames.nameIn(after, entity) })),
       ),
       new Set(copyIds),
       (entityType, name) =>

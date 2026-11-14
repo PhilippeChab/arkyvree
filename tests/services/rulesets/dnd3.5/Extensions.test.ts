@@ -1339,7 +1339,7 @@ describe("unsubscribing from an extension", () => {
     });
   });
 
-  test("points a pick of the fork's copy of a core feat it overrides at the core feat, the copy going", async () => {
+  test("keeps the fork's copy of a core feat it overrides, a copy of the core feat, and a pick of it", async () => {
     const { user, session, extension: warrior, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
     const { aptMap, featMap } = await getSeedCtx();
@@ -1356,11 +1356,11 @@ describe("unsubscribing from an extension", () => {
     const level = await levelPicking(user.id, draft.id, "feats", mine.id, aptMap["General"]);
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
-    expect(await picksOf("feats", level.id)).toEqual([
-      { entityId: featMap["Spirited Charge"], viaId: aptMap["General"] },
+    expect(await picksOf("feats", level.id)).toEqual([{ entityId: mine.id, viaId: aptMap["General"] }]);
+    expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toMatchObject([
+      { forkedEntityId: mine.id, sourceEntityId: featMap["Spirited Charge"] },
     ]);
-    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: mine.id })).toBeUndefined();
-    expect(await featsNamed(draft.id, "Spirited Charge")).toMatchObject([{ id: featMap["Spirited Charge"] }]);
+    expect(await featsNamed(draft.id, "Spirited Charge")).toMatchObject([{ id: mine.id, description: "Mine" }]);
   });
 
   test("points a pick of the copy of a feat two extensions override at the other one's, which wins once it's gone", async () => {

@@ -1,4 +1,4 @@
-import CowData from "./CowData.ts";
+import CowData, { type CopyTexts } from "./CowData.ts";
 import CowSources, { type CowRows, type RulesetSources } from "./CowSources.ts";
 
 type SnapshotsByRuleset = Map<string, CowRows["snapshots"]>;
@@ -38,7 +38,8 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  *   4. A local copy's siblings become overrides of it.
  *   5. The namesakes of the kinds a name is the identity of (`CowKinds.identities`: 3.5's pools).
  *   6. The ruleset's own entities over its extensions' of their names — an extension's entity of a name the ruleset's
- *      own has is overridden by it (a homebrew feat a book's author named as the ruleset's since it subscribed).
+ *      own has is overridden by it (a homebrew feat a book's author named as the ruleset's since it subscribed), by the
+ *      name the view shows it under (a sibling copy's that renamed it: `CowData.mergeTexts`).
  *   7. The owned entities of an owner another stands for (a copy in the chain, to its last copy; an extension's owner
  *      the ruleset's own hides), paired by position with that owner's (3.5's class levels, by level).
  *
@@ -53,6 +54,11 @@ export default class CowDataBuilder {
     this.rulesetId = ruleset.id;
     this.sourceChain = CowSources.buildSourceChain(ruleset);
     this.extensionIds = ruleset.extensionIds;
+  }
+
+  /** What each copy the rows' snapshots record changed of its texts (`rows.texts`), by its id. */
+  private static textsOf(rows: CowRows): Map<string, CopyTexts> {
+    return new Map((rows.texts ?? []).map(({ forkedEntityId, ...changed }) => [forkedEntityId, changed]));
   }
 
   /**
@@ -105,6 +111,41 @@ export default class CowDataBuilder {
     if (!this.aliases.has(staleId)) this.aliases.set(staleId, id);
   }
 
+  /**
+   * The extensions' entities among `rows.ownNamesakes` under the names the view shows them by, each with its key (its
+   * type, its partition but for a kind a path names, and its name: `name`): a winner by the name its sibling copy gave
+   * it (`CowData.mergeTexts`), which its own row's no longer names, and so by its loser's row that gave it.
+   */
+  private findShownNamesakes(rows: CowRows): { id: string; key: string }[] {
+    const texts = CowDataBuilder.textsOf(rows);
+    const winnerOf = new Map(
+      [...this.siblings].flatMap(([winnerId, loserIds]) => loserIds.map((id) => [id, winnerId])),
+    );
+    const shownName = (id: string) =>
+      CowData.mergeTexts(texts, [
+        id,
+        ...(this.siblings.get(id) ?? []).filter((loserId) => !this.overrides.has(loserId)),
+      ]).name;
+    return rows.ownNamesakes.flatMap((row) => {
+      if (row.rulesetId === this.rulesetId) return [];
+      const winnerId = winnerOf.get(row.id);
+      if (winnerId !== undefined)
+        return shownName(winnerId) === row.name ? [{ id: winnerId, key: this.keyOf(row) }] : [];
+      const shown = shownName(row.id);
+      return shown === undefined || shown === row.name ? [{ id: row.id, key: this.keyOf(row) }] : [];
+    });
+  }
+
+  /**
+   * The key the ruleset's own entity and an extension's of its name share (`row`): its type and its name, within its
+   * partition but for a kind a path names by its name alone (a class).
+   */
+  private keyOf(row: { entityType: string; name: string; partition: string }): string {
+    return this.pathNamed.has(row.entityType)
+      ? `${row.entityType}|${row.name}`
+      : `${row.entityType}|${row.partition}|${row.name}`;
+  }
+
   /** The snapshot, sibling and reprint passes, in order, then a local copy's siblings made its overrides. */
   private load(rows: CowRows) {
     const allRulesetIds = [this.rulesetId, ...this.sourceChain];
@@ -136,26 +177,23 @@ export default class CowDataBuilder {
    * merged: a homebrew entity and a book's of one name may be different things. What stood for it stands for the
    * ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a book's class granting it,
    * a character's pick) reads the ruleset's. An extension's entity the view already hides (one the ruleset copied, a
-   * pool paired by name) stays as it is. Of the ruleset's own entities of a name, the first stands.
+   * pool paired by name) stays as it is. Of the ruleset's own entities of a name, the first stands. An extension's
+   * entity goes by the name the view shows it under (`findShownNamesakes`): a winner by the one its sibling copy gave it.
    */
   private overrideOwnNamesakes(rows: CowRows) {
-    const key = (row: CowRows["ownNamesakes"][number]) =>
-      this.pathNamed.has(row.entityType)
-        ? `${row.entityType}|${row.name}`
-        : `${row.entityType}|${row.partition}|${row.name}`;
     const own = new Map<string, string>();
     for (const row of rows.ownNamesakes)
-      if (row.rulesetId === this.rulesetId && !own.has(key(row))) own.set(key(row), row.id);
+      if (row.rulesetId === this.rulesetId && !own.has(this.keyOf(row))) own.set(this.keyOf(row), row.id);
 
     const loserIds = new Set([...this.siblings.values()].flat());
-    for (const row of rows.ownNamesakes) {
-      const ownId = own.get(key(row));
-      if (!ownId || row.rulesetId === this.rulesetId || this.overrides.has(row.id) || loserIds.has(row.id)) continue;
-      for (const [staleId, id] of this.aliases) if (id === row.id) this.aliases.set(staleId, ownId);
-      for (const [sourceId, copyId] of this.overrides) if (copyId === row.id) this.overrides.set(sourceId, ownId);
-      for (const loserId of this.siblings.get(row.id) ?? []) this.override(loserId, ownId);
-      this.override(row.id, ownId);
-      this.shadows.set(row.id, ownId);
+    for (const { id, key } of this.findShownNamesakes(rows)) {
+      const ownId = own.get(key);
+      if (!ownId || this.overrides.has(id) || loserIds.has(id)) continue;
+      for (const [staleId, aliasedId] of this.aliases) if (aliasedId === id) this.aliases.set(staleId, ownId);
+      for (const [sourceId, copyId] of this.overrides) if (copyId === id) this.overrides.set(sourceId, ownId);
+      for (const loserId of this.siblings.get(id) ?? []) this.override(loserId, ownId);
+      this.override(id, ownId);
+      this.shadows.set(id, ownId);
     }
   }
 
@@ -286,6 +324,7 @@ export default class CowDataBuilder {
 
   private toCowData(rows: CowRows): CowData {
     const sources = new Map(rows.snapshots.map((snap) => [snap.forkedEntityId, snap.sourceEntityId]));
+    const texts = CowDataBuilder.textsOf(rows);
     return new CowData(
       this.sourceChain,
       this.overrides,
@@ -294,6 +333,7 @@ export default class CowDataBuilder {
       new Set(this.shadows.keys()),
       sources,
       [this.rulesetId, ...this.sourceChain],
+      texts,
     );
   }
 }

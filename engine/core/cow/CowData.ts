@@ -1,4 +1,16 @@
 /**
+ * What a copy changed of what it copied of its own texts: its name, its description, each when it differs from its
+ * source's (a description set to none among them).
+ */
+export interface CopyTexts {
+  description?: string | null;
+  name?: string;
+}
+
+/** An entity the view shows under texts other than its own row's: a winner whose sibling copy changed them. */
+export type ShownTexts = CopyTexts & { id: string };
+
+/**
  * A ruleset's copy-on-write state: what reading its stored rows as its view does resolves ids through, built by the engine
  * (`CowDataBuilder`) from the rows copy-on-write's views read. An entity a later ruleset copied is overridden: its copy
  * stands for it, and its customizations are the copy's. So is a book's entity of a name the ruleset's own has: the
@@ -13,7 +25,8 @@ export default class CowData {
    * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
    * ruleset's own of their names stands for. `sources`: each copy the chain's snapshots record, to the entity it
    * copied. `snapshotRulesetIds`: the rulesets whose snapshots override what they copied, the ruleset's and its
-   * chain's, as the builder overrides them.
+   * chain's, as the builder overrides them. `texts`: each copy the chain's snapshots record that changed its name or
+   * its description from what it copied, with what it changed.
    */
   constructor(
     sourceChain: string[],
@@ -23,6 +36,7 @@ export default class CowData {
     shadowedIds: ReadonlySet<string>,
     sources: ReadonlyMap<string, string> = new Map(),
     snapshotRulesetIds: readonly string[] = [],
+    texts: ReadonlyMap<string, CopyTexts> = new Map(),
   ) {
     this.sourceChain = sourceChain;
     this.snapshotRulesetIds = snapshotRulesetIds;
@@ -39,6 +53,29 @@ export default class CowData {
     }
     this.siblings = losersOf;
     this.siblingIds = new Set(this.winners.keys());
+    this.texts = texts;
+    this.shownTexts = [...this.siblings.keys()].flatMap((winnerId) => {
+      const shown = this.getShownTexts(winnerId);
+      return Object.keys(shown).length > 0 ? [{ id: winnerId, ...shown }] : [];
+    });
+  }
+
+  /**
+   * The texts copies merged show (`ids`: the winner, then its siblings in their order) beside the winner's own: each
+   * text, a name or a description, as merged as a single value is (`SiblingMerge.mergeValues`), the first copy's that
+   * changed it from what it copied (`texts`, by copy). None where that's the winner, or no copy changed it: the winner's
+   * own row holds it.
+   */
+  static mergeTexts(texts: ReadonlyMap<string, CopyTexts>, ids: readonly string[]): CopyTexts {
+    const [winnerId, ...siblingIds] = ids;
+    const own = texts.get(winnerId) ?? {};
+    const merged: CopyTexts = {};
+    for (const changed of siblingIds.map((id) => texts.get(id) ?? {})) {
+      if (!("name" in own) && !("name" in merged) && changed.name !== undefined) merged.name = changed.name;
+      if (!("description" in own) && !("description" in merged) && "description" in changed)
+        merged.description = changed.description;
+    }
+    return merged;
   }
 
   private readonly aliases: ReadonlyMap<string, string>;
@@ -53,7 +90,16 @@ export default class CowData {
 
   private readonly sources: ReadonlyMap<string, string>;
 
+  private readonly texts: ReadonlyMap<string, CopyTexts>;
+
   private readonly winners = new Map<string, string>();
+
+  /**
+   * The winners the view shows under texts other than their own rows' (`getShownTexts`), with those texts: what a list
+   * shows, orders and searches them by, and the names a name check reads, one the ruleset's own entity of that name
+   * hides among them.
+   */
+  readonly shownTexts: readonly ShownTexts[];
 
   /** Every sibling loser. */
   readonly siblingIds: ReadonlySet<string>;
@@ -68,6 +114,21 @@ export default class CowData {
     for (const [staleId, resolvedId] of this.aliases) if (resolvedId === target) ids.add(staleId);
 
     return [...ids];
+  }
+
+  /**
+   * The texts the view shows for an entity (`id`, a winner of sibling copies) that its own row doesn't hold: those of
+   * its siblings that give theirs (`mergeTexts`), none for one without siblings, or one a copy overrides (the ruleset's
+   * own copy holds its own). One the ruleset's own entity of its name hides (`isShadowed`) keeps its siblings' texts:
+   * the name it's hidden under.
+   */
+  getShownTexts(id: string): CopyTexts {
+    if (!this.hasSiblings(id) || (this.isOverridden(id) && !this.isShadowed(id))) return {};
+    const siblingIds = this.getSiblings(id);
+    return this.mergeTexts([
+      id,
+      ...(this.isShadowed(id) ? siblingIds : siblingIds.filter((siblingId) => !this.isOverridden(siblingId))),
+    ]);
   }
 
   /** The sibling losers that merge into `winnerId`, in the order they were paired. */
@@ -121,7 +182,8 @@ export default class CowData {
    * without what hides its rows): its source chain's (`sourceChain`), less what the view hides, which it leaves out in
    * the query, so a page keeps its size: what a snapshot overrides (the sources of `snapshotRulesetIds`' snapshots,
    * whichever of the chain copied them), and what none does (`hiddenIds`: the sibling losers, the shadowed books'
-   * entities).
+   * entities); and the texts it shows its entities under that their rows don't hold (`texts`, `shownTexts`), which a
+   * list shows, orders and searches them by.
    */
   get listFilters() {
     return {
@@ -130,7 +192,13 @@ export default class CowData {
         snapshotRulesetIds: [...this.snapshotRulesetIds],
         hiddenIds: [...this.siblingIds, ...this.shadowedIds],
       },
+      texts: this.shownTexts,
     };
+  }
+
+  /** The texts copies merged show (`ids`: the winner, then its siblings in their order): `CowData.mergeTexts`'. */
+  mergeTexts(ids: readonly string[]): CopyTexts {
+    return CowData.mergeTexts(this.texts, ids);
   }
 
   /** The entity an entity stands for: what it copied, and what that copied, to the one that copies none. */
@@ -170,6 +238,18 @@ export default class CowData {
         links: Object.fromEntries(links.map(([role, toId]) => [role, toId === undefined ? toId : this.resolve(toId)])),
       };
     });
+  }
+
+  /**
+   * The copies the view shows in place of the ruleset's copy (`copyId`) once a restore removes it, merged as it merges
+   * them: the copies of the same entity the source chain holds, which the copy took the place of, the winner first; or
+   * what it copied alone.
+   */
+  restoredGroupOf(copyId: string): string[] {
+    const siblings = this.getSiblings(copyId);
+    if (siblings.length > 0) return siblings;
+    const sourceId = this.sourceOf(copyId);
+    return sourceId === undefined ? [] : [sourceId];
   }
 
   /**

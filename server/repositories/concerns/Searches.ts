@@ -17,7 +17,7 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
      * A search over a list's columns, its first its name: what holds the text, or a name the text is a typo of
      * (`NAME_SIMILARITY`).
      */
-    protected fuzzySearch(search: string | undefined, columns: Column[]): SQL | false {
+    protected fuzzySearch(search: string | undefined, columns: (Column | SQL)[]): SQL | false {
       if (!search) return false;
       return or(
         ...columns.map((column) => ilike(column, `%${search}%`)),
@@ -40,7 +40,7 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
       return sql`${id} IN (SELECT ${owner} FROM ${owner.table} WHERE ${and(inArray(key, [...keys]), ilike(text, `%${search}%`))})`;
     }
 
-    protected search(search: string | undefined, columns: Column[]): SQL | false {
+    protected search(search: string | undefined, columns: (Column | SQL)[]): SQL | false {
       if (!search) return false;
       return or(...columns.map((column) => ilike(column, `%${search}%`)))!;
     }
@@ -51,7 +51,12 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
      * row's, else its name): the text itself, then one holding it, in the list's own order (`fallback`), then the
      * closest whole (a typo's: Power Attack before Favored Power Attack).
      */
-    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL, groupName?: SQL): SQL {
+    protected searchOrderBy(
+      search: string | undefined,
+      columns: (Column | SQL)[],
+      fallback: SQL,
+      groupName?: SQL,
+    ): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);
