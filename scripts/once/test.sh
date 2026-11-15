@@ -110,9 +110,9 @@ absolute() {
   if [[ "$1" == /* ]]; then echo "$APP_BASE$1"; else echo "$1"; fi
 }
 
-# Waits until the app itself answers (`/up` answers the updating page's 200 too), up to `$1` seconds
+# Waits until the app itself answers (`/up` answers the updating page's 200 too), up to three minutes
 wait_for_app() {
-  local within="${1:-180}" deadline=$((SECONDS + ${1:-180})) status
+  local within=180 deadline=$((SECONDS + 180)) status=""
   until status=$(curl -s -o "$WORK/policy" -w '%{http_code}' --max-time 5 "$APP_BASE/auth/sign-up-policy") &&
     [[ "$status" == 200 ]] && jq -e 'has("signUpPolicy")' "$WORK/policy" >/dev/null 2>&1; do
     ((SECONDS < deadline)) || die "The app didn't answer within ${within}s (last: $status)"
