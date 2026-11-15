@@ -20,7 +20,7 @@ import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/pf1/spells.ts";
 /**
  * What every Pathfinder ruleset shares: its entity kinds, in its page's order, and their words, its
  * entities' lists, a race or a class is for a player character or a creature
- * bonded to one, a class has 20 levels and a spell 0 to 9, its system rulesets' Core Rulebook content is Open Game Content, and a
+ * bonded to one, a class has up to 40 levels (its levels past 20th) and a spell 0 to 9, its system rulesets' Core Rulebook content is Open Game Content, and a
  * new character's form.
  */
 export const RULES: RulesDeclaration = {

@@ -45,16 +45,16 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * The class levels each class's bonus caster levels reach past its own level, up to the level they add slots from
-     * (`slotLevelOf`), as `classId:level`, with the class's name.
+     * The class levels each class's bonus caster levels reach past its own level, up to its caster level
+     * (`casterLevelOf`), as `classId:level`, with the class's name.
      */
     private bonusLevelClassNames() {
       const classNameByLevel = new Map<string, string>();
       for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
         if (classData.bonuscasterlevel <= 0) continue;
 
-        const slotLevel = this.slotLevelOf(classData);
-        for (let level = classData.level + 1; level <= slotLevel; level++)
+        const casterLevel = this.casterLevelOf(classData);
+        for (let level = classData.level + 1; level <= casterLevel; level++)
           classNameByLevel.set(`${classData.klass.id}:${level}`, className);
       }
       return classNameByLevel;

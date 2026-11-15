@@ -35,7 +35,8 @@ describe("The Pathfinder core rules' levels", () => {
     ]);
     const beyond = new LevelRules({ ...RULESET_FIELDS.defaults, lastLevel: 25 });
     expect([beyond.countLevelsLeft(20), beyond.countLevelsLeft(25), beyond.countLevelsLeft(30)]).toEqual([5, 0, 0]);
-    // No general feat past 20th in the core rules: the book says none, a ruleset's Settings add them
-    expect(beyond.countGeneralFeatsAfter(20)).toBe(0);
+    // The core rules' general feats go on at the odd levels past 20th, and their ability increases every 4th
+    expect([21, 22, 23].map((level) => beyond.countGeneralFeatsAfter(level - 1))).toEqual([1, 0, 1]);
+    expect(beyond.isAbilityIncreaseLevel(23)).toBe(true);
   });
 });

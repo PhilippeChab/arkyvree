@@ -26,8 +26,9 @@ export const DEFAULT_HIT_DIE = 8;
  */
 export const FAVORED_CLASS_BONUS = { hitPoints: 1, skillRanks: 1 } as const;
 /**
- * The character levels whose general feat the core rules give, one a level: every odd level, the first among them
- * (no frequency: a progression's `every` counts levels from a multiple, and an odd level is none's).
+ * The character levels whose general feat the core rules give, one a level: every odd level, the first among them, to
+ * the 39th, its pattern going on past 20th as the ability increases' does, which Beyond 20th Level leaves unsaid (no
+ * frequency: a progression's `every` counts levels from a multiple, and an odd level is none's).
  */
 export const GENERAL_FEAT_LEVELS = [
   { amount: 1, position: 1 },
@@ -40,6 +41,16 @@ export const GENERAL_FEAT_LEVELS = [
   { amount: 1, position: 15 },
   { amount: 1, position: 17 },
   { amount: 1, position: 19 },
+  { amount: 1, position: 21 },
+  { amount: 1, position: 23 },
+  { amount: 1, position: 25 },
+  { amount: 1, position: 27 },
+  { amount: 1, position: 29 },
+  { amount: 1, position: 31 },
+  { amount: 1, position: 33 },
+  { amount: 1, position: 35 },
+  { amount: 1, position: 37 },
+  { amount: 1, position: 39 },
 ] as const;
 /** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
 export const HIT_DIE_LABELS = ["d6", "d8", "d10", "d12"] as const;
@@ -47,7 +58,7 @@ export const HIT_DIE_LABELS = ["d6", "d8", "d10", "d12"] as const;
 export const HIT_DIE_VALUES = [6, 8, 10, 12] as const;
 /**
  * The Core Rulebook's last character level, which a ruleset's Settings default to (`lastLevel`), past which its Beyond
- * 20th Level goes on; and the last class level a class's bonus caster levels add slots from.
+ * 20th Level goes on.
  */
 export const LAST_CORE_LEVEL = 20;
 /**
