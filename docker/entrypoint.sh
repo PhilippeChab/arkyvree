@@ -96,9 +96,13 @@ hold_volume() {
 # The volume's folders, each its owner's: a restored backup's files, or an image whose users' ids changed, come back
 prepare_storage() {
   install -d "$STORAGE_PATH/files" "$STORAGE_PATH/backup"
-  own_tree "$APP_USER" "$STORAGE_PATH/files"
-  own_tree postgres "$STORAGE_PATH/backup"
-  own_tree postgres "$PGDATA_DIR"
+  # A large volume's repair takes a while: a step a stop can interrupt
+  {
+    own_tree "$APP_USER" "$STORAGE_PATH/files"
+    own_tree postgres "$STORAGE_PATH/backup"
+    own_tree postgres "$PGDATA_DIR"
+  } &
+  wait_step $!
 }
 
 # The bundled database, unless DATABASE_URL names another one
@@ -125,6 +129,7 @@ hand_over_port() {
   [[ -n "$PAGE_PID" ]] || return 0
   local tries=0
   until (($(count_listeners) >= 2)); do
+    [[ -z "$STOPPING" ]] || break
     kill -0 "$SERVER_PID" 2>/dev/null || break
     ((tries++ < 600)) || break
     sleep 0.2
@@ -145,7 +150,15 @@ stop_all() {
   stop_postgres
 }
 
-on_signal() { STOPPING=1; }
+# A stop: noted for the start's steps, and passed on at once to the server and the worker once they run, so that the
+# watch below (`wait -n`) ends even when the stop came just before it
+on_signal() {
+  STOPPING=1
+  local pid
+  for pid in "$SERVER_PID" "$WORKER_PID"; do
+    if [[ -n "$pid" ]]; then kill -TERM "$pid" 2>/dev/null || true; fi
+  done
+}
 
 start_processes() {
   if [[ "$ROLE" != worker ]]; then
@@ -153,7 +166,7 @@ start_processes() {
     SERVER_PID=$!
     hand_over_port
   fi
-  if [[ "$ROLE" != web ]]; then
+  if [[ "$ROLE" != web && -z "$STOPPING" ]]; then
     # Below the server's priority: a PDF being drawn leaves the pages responsive
     (run_as "$APP_USER" nice -n 10 ./worker-bin) &
     WORKER_PID=$!
@@ -183,6 +196,12 @@ main() {
     }
   fi
   start_processes
+  if [[ -n "$STOPPING" ]]; then
+    log "Stopping"
+    stop_all
+    log "Stopped"
+    exit 0
+  fi
   local watched=()
   for pid in "$SERVER_PID" "$WORKER_PID" "$PG_PID"; do
     if [[ -n "$pid" ]]; then watched+=("$pid"); fi
