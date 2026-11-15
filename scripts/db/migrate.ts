@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { runMigrations } from "graphile-worker";
 import { Pool } from "pg";
 
 import { applyPackages } from "@/database/packages/runner.ts";
@@ -19,11 +20,20 @@ async function main() {
   // A migration says what it checked and what it found (its `RAISE NOTICE`s): node-postgres drops a notice nothing
   // listens for
   pool.on("connect", (client) => client.on("notice", (notice) => console.log(`  ${notice.message}`)));
+  // An idle connection the database drops ends the run with its error, rather than an unhandled one
+  pool.on("error", (error) => {
+    console.error("Database connection error:", error);
+    process.exit(1);
+  });
 
   try {
     const migrationDb = drizzle(pool);
     await migrate(migrationDb, { migrationsFolder: "./drizzle" });
     console.log("Migrations applied successfully");
+
+    // The job queue's own tables: the web queues jobs before a worker has ever started on a new database
+    await runMigrations({ pgPool: pool });
+    console.log("Job queue schema installed");
 
     const db = drizzle(pool, { schema: { ...schema, ...relations } });
     // The registries follow the modules' declarations: a new type, field, role or step is a code change only

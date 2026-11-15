@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ONCE runs this in the running container before it copies /storage (docs/self-hosting.md): a consistent dump of the
+# bundled database, /storage/backup/arkyvree.dump, which post-restore loads back. With DATABASE_URL naming another
+# database, that database keeps its own backups: nothing to do.
+set -euo pipefail
+
+# shellcheck source=docker/lib.sh
+source /usr/local/lib/arkyvree/lib.sh
+
+if ! uses_bundled_database; then
+  log "pre-backup: DATABASE_URL names another database, which keeps its own backups"
+  exit 0
+fi
+
+backup_dir="${STORAGE_PATH:-/storage}/backup"
+install -d -o postgres -g postgres "$backup_dir"
+(run_as postgres pg_dump -h "$PG_SOCKET_DIR" -U postgres -Fc -f "$backup_dir/arkyvree.dump.tmp" "$APP_DATABASE")
+mv "$backup_dir/arkyvree.dump.tmp" "$backup_dir/arkyvree.dump"
+log "pre-backup: the database is dumped to $backup_dir/arkyvree.dump"

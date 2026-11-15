@@ -36,6 +36,10 @@ const VARIABLES = {
   SMTP_USERNAME: "its user", SMTP_PASSWORD: "its password",
   SMTP_TLS: "how it's reached: `implicit` (port 465's default), `starttls` (production's), or `none`",
   MAILER_FROM_ADDRESS: "who email comes from, `Name <address>` or an address",
+  // Set by the self-hosted image's entrypoint (docker/entrypoint.sh)
+  WORKER_CONCURRENCY: "how many jobs the worker runs at once: 2 unless set, 1 in the self-hosted image",
+  EMAIL_SETUP_PAGE: "`true`: without a working email setup, the server answers a page saying so instead of stopping",
+  UPDATING_PAGE: "`true`: the server answers only a page saying it's updating, while the previous version stops",
 } as const;
 
 /** The variables set on Fly: docs/deployment.md's table lists each (tests/environment.test.ts). */
@@ -67,6 +71,15 @@ export function isDevelopment() {
 
 export function isProduction() {
   return readEnv("NODE_ENV") === "production";
+}
+
+/**
+ * Whether the app is reached over HTTPS: in production, unless its public URL (`APP_URL`) says plain HTTP, as a
+ * self-hosted install without TLS does (ONCE's `DISABLE_SSL`). Its session cookie is secure then, and the canonical
+ * host's redirect goes to https.
+ */
+export function isServedOverHttps() {
+  return isProduction() && !readEnv("APP_URL")?.startsWith("http://");
 }
 
 /**

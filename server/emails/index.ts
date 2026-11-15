@@ -1,6 +1,7 @@
 export {
   checkEmailSetup,
   findEmailSetupProblem,
+  findPendingEmailSetup,
   readEmailDelivery,
   readSender,
   readSmtpHost,

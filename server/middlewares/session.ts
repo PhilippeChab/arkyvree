@@ -4,7 +4,7 @@ import { createMiddleware } from "hono/factory";
 import { z } from "zod";
 
 import { db } from "@/server/database/index.ts";
-import { isProduction } from "@/server/environment.ts";
+import { isServedOverHttps } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
 import type { SessionRow, User } from "@/shared/relations.ts";
@@ -37,7 +37,7 @@ export function getSessionCookie(c: Context): string | undefined {
 export function setSessionCookie(c: Context, sessionId: string) {
   setCookie(c, SESSION_COOKIE_NAME, sessionId, {
     httpOnly: true,
-    secure: isProduction(),
+    secure: isServedOverHttps(),
     sameSite: "Strict",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
