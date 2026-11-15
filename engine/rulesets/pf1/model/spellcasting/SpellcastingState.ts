@@ -10,7 +10,7 @@ import type SpellGroupingsComponent from "@/engine/rulesets/pf1/model/spells/Spe
 import type SpellsComponent from "@/engine/rulesets/pf1/model/spells/SpellsComponent.ts";
 import type { KlassLevel } from "@/engine/rulesets/pf1/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/pf1/classes.ts";
+import { type CasterType, LAST_CORE_LEVEL } from "@/vocabulary/pf1/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/pf1/spells.ts";
 
 /**
@@ -145,10 +145,10 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   /**
    * A class's caster level: its level, and the caster levels other classes add to it (`bonuscasterlevel`, a prestige
-   * class's), up to `MAX_CLASS_LEVEL`. The class level its spells per day are read at.
+   * class's), past 20th too, as the Core Rulebook's Beyond 20th Level has it.
    */
   protected casterLevelOf({ bonuscasterlevel, level }: { bonuscasterlevel: number; level: number }): number {
-    return Math.min(level + bonuscasterlevel, MAX_CLASS_LEVEL);
+    return level + bonuscasterlevel;
   }
 
   /**
@@ -203,6 +203,14 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
       joining.set(list, classNames);
     }
     return joining;
+  }
+
+  /**
+   * The class levels a class's bonus caster levels add slots from: its caster level (`casterLevelOf`) up to 20th
+   * (`LAST_CORE_LEVEL`). The spell slots past 9th level Beyond 20th Level gives aren't modelled.
+   */
+  protected slotLevelOf(classData: { bonuscasterlevel: number; level: number }): number {
+    return Math.min(this.casterLevelOf(classData), LAST_CORE_LEVEL);
   }
 
   /**
