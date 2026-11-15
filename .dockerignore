@@ -16,3 +16,4 @@ docs
 help
 CHANGELOG.md
 .storage
+scripts/once

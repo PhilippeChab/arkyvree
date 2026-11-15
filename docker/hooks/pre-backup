@@ -9,6 +9,30 @@ set -euo pipefail
 # shellcheck source=docker/lib.sh
 source /usr/local/lib/arkyvree/lib.sh
 
+# How long the dump waits for the database to take connections
+READY_WITHIN=90
+
+# Whether the bundled database takes connections, and holds the app's database (a first start makes it just after)
+database_ready() {
+  (run_as postgres pg_isready -q -h "$PG_SOCKET_DIR" -d postgres) 2>/dev/null &&
+    [[ -n "$(psql_admin -c "SELECT 1 FROM pg_database WHERE datname = '$APP_DATABASE'" 2>/dev/null)" ]]
+}
+
+# Waits for the database, up to READY_WITHIN seconds. ONCE's automatic update and its daily backup come due on the same
+# check, so a backup can run seconds after an update, in a container still starting: answering the updating page while
+# the version it replaces lets go of the volume (the entrypoint's hold_volume), then starting PostgreSQL, which recovers
+# from that version's abrupt stop. Its database takes connections only once both are done.
+wait_for_database() {
+  database_ready && return 0
+  log "pre-backup: the container is still starting (an update's handover, PostgreSQL's start): waiting for the database"
+  local deadline=$((SECONDS + READY_WITHIN))
+  until database_ready; do
+    ((SECONDS < deadline)) || die "pre-backup: the database didn't take connections within $READY_WITHIN seconds"
+    sleep 1
+  done
+  log "pre-backup: the database takes connections"
+}
+
 if ! uses_bundled_database; then
   log "pre-backup: DATABASE_URL names another database, which keeps its own backups"
   exit 0
@@ -19,6 +43,7 @@ install -d -o postgres -g postgres "$backup_dir"
 rm -f "$backup_dir/arkyvree.dump" "$backup_dir/arkyvree.dump.tmp"
 # A dump that fails leaves nothing half written
 trap 'rm -f "$backup_dir/arkyvree.dump.tmp"' EXIT
+wait_for_database
 (run_as postgres pg_dump -h "$PG_SOCKET_DIR" -Fc -f "$backup_dir/arkyvree.dump.tmp" "$APP_DATABASE")
 mv "$backup_dir/arkyvree.dump.tmp" "$backup_dir/arkyvree.dump"
 log "pre-backup: the database is dumped to $backup_dir/arkyvree.dump"

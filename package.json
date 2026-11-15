@@ -61,7 +61,9 @@
     "lint:fix": "oxlint --fix --report-unused-disable-directives-severity=error",
     "format": "oxfmt '**/*.{ts,tsx,js,mjs,cjs}'",
     "format:check": "oxfmt --check '**/*.{ts,tsx,js,mjs,cjs}'",
-    "test:pdf-bundle": "bun scripts/check-pdf-bundle.ts"
+    "test:pdf-bundle": "bun scripts/check-pdf-bundle.ts",
+    "test:once": "scripts/once/local.sh test",
+    "once:try": "scripts/once/local.sh try"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -3,7 +3,7 @@
 Arkyvree runs on **Fly.io** as two apps sharing one `Dockerfile`. CI handles build, test, and deploy on push to `main`.
 
 This is the hosted instance's deployment. To run Arkyvree on your own server, see [self-hosting.md](./self-hosting.md):
-the same `Dockerfile`'s `app` target, the server, the worker and PostgreSQL in one container.
+its image, `docker/Dockerfile`, holds the server, the worker and PostgreSQL in one container.
 
 ## Topology
 
@@ -77,7 +77,7 @@ After the Fly side is up:
 ```text
 fly.web.toml        # web app config, build_target = "web"
 fly.worker.toml     # worker app config, build_target = "worker"
-Dockerfile          # shared; two final stages: web and worker
+Dockerfile          # shared; two final stages: web and worker (docker/Dockerfile is the self-hosted image's)
 ```
 
 Both configs use `primary_region = "iad"` to match US-East Neon.

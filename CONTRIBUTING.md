@@ -84,6 +84,22 @@ bun test:e2e tests/e2e/journeys/dnd3.5/rulesets.e2e.ts --project=journeys
 `E2E_COVERAGE=1 bun test:e2e` also reports the client code the journeys run, in
 `coverage/e2e`.
 
+For changes to the self-hosted image (`docker/`, its start, the migrations), test
+it as [ONCE](https://github.com/basecamp/once) runs it, inside a Docker-in-Docker
+container that leaves your own Docker and ports alone and is removed afterwards:
+
+```bash
+bun run test:once      # the image built from your working tree, as CI tests it
+bun run once:try       # a hands-on install, with ONCE's screen open in the terminal
+```
+
+`test:once` installs the latest release, signs up, updates to your image, then
+backs up, restores and restarts it, checking the account and its data at each
+step; `--image <tag>` tests another image. `once:try` serves the app at
+http://arkyvree.localhost:8080 and its emails at http://127.0.0.1:8026 until you
+quit ONCE's screen. [Self-hosting](./docs/self-hosting.md#how-the-image-is-tested)
+describes both.
+
 Describe what you actually ran in your pull request, including any checks you
 could not run. Do not disable or skip failing tests to obtain a green result.
 
