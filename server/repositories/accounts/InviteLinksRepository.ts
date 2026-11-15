@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, isNull, sql } from "drizzle-orm";
+import { eq, getTableColumns, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { inviteLinksInAccount, usersInAccount } from "@/drizzle/schema.ts";
@@ -37,15 +37,17 @@ class InviteLinksRepository extends include(BaseRepository<typeof inviteLinksInA
   }
 
   /**
-   * The instance's links, a page at a time, the newest first, each with who made it and how many accounts signed up
-   * with it (`accounts`, a deleted one left out).
+   * The instance's links, a page at a time, the newest first, each with who made it (whether their account was deleted
+   * since, `creatorDeletedAt`) and how many accounts signed up with it (`accounts`: verified ones, a deleted one left
+   * out).
    */
   async findPage(db: Db, pagination: Pagination) {
     return await this.withPagination(pagination, async ({ limit, offset }) =>
       db
         .select({
           ...SHOWN_COLUMNS,
-          accounts: sql<number>`(SELECT count(*)::int FROM ${usersInAccount} WHERE ${usersInAccount.inviteLinkId} = ${this.table.id} AND ${usersInAccount.deletedAt} IS NULL)`,
+          accounts: sql<number>`(SELECT count(*)::int FROM ${usersInAccount} WHERE ${usersInAccount.inviteLinkId} = ${this.table.id} AND ${usersInAccount.deletedAt} IS NULL AND ${usersInAccount.emailVerifiedAt} IS NOT NULL)`,
+          creatorDeletedAt: usersInAccount.deletedAt,
           creatorEmailAddress: usersInAccount.emailAddress,
           creatorUsername: usersInAccount.username,
         })
@@ -57,12 +59,23 @@ class InviteLinksRepository extends include(BaseRepository<typeof inviteLinksInA
     );
   }
 
-  /** Revokes a link not yet revoked (`revokedAt`): it lets nobody sign up from then on. Nothing when it already is. */
-  async update(db: Db, values: { revokedAt: string }, where: { id: string }) {
+  /**
+   * Revokes a link not yet revoked (`revokedAt`), or every one an admin made (`createdBy`: they're no longer one): it
+   * lets nobody sign up from then on. Nothing when it already is.
+   */
+  async update(db: Db, values: { revokedAt: string }, where: { createdBy: string } | { id: string }) {
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: values.revokedAt })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.revokedAt)))
+      .where(
+        this.branchWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "createdBy" in where && eq(this.table.createdBy, where.createdBy),
+          ],
+          [isNull(this.table.revokedAt)],
+        ),
+      )
       .returning(SHOWN_COLUMNS);
   }
 }

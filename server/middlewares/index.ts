@@ -17,6 +17,7 @@ export {
   exportRateLimit,
   importRateLimit,
   importSourceRateLimit,
+  inviteLinkRateLimit,
   mcpAddressRateLimit,
   oauthAuthorizeRateLimit,
   oauthTokenRateLimit,

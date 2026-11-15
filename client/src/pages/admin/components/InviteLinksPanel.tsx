@@ -37,7 +37,7 @@ type InviteLink = InferResponseType<(typeof rpc.api.admin)["invite-links"]["$get
 const INVITE_LINK_COLUMNS: TableColumn[] = [
   { key: "created", label: "Created" },
   { key: "expires", label: "Expires" },
-  { key: "accounts", label: "Sign-Ups" },
+  { key: "accounts", label: "Verified Sign-Ups" },
   { key: "state", label: "State" },
   { key: "actions", label: "Actions", align: "right" },
 ];
@@ -108,18 +108,19 @@ export function InviteLinksPanel() {
                 <Stack>
                   <Typography variant="body2">{formatDate(link.createdAt)}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    by {link.creatorUsername ?? link.creatorEmailAddress}
+                    by {link.creator ? (link.creator.username ?? link.creator.emailAddress) : "a deleted account"}
                   </Typography>
                 </Stack>
               </DataCell>
               <DataCell slot="labeled" label="Expires">
                 {formatDate(link.expiresAt)}
               </DataCell>
-              <DataCell slot="labeled" label="Sign-Ups">
+              <DataCell slot="labeled" label="Verified Sign-Ups">
                 {link.accounts}
               </DataCell>
               <DataCell slot="labeled" label="State">
-                {STATE_LABELS[link.state]}
+                {/* An active link lets nobody in while sign-ups are closed: paused until they open again */}
+                {closed && link.state === "Valid" ? "Paused" : STATE_LABELS[link.state]}
               </DataCell>
               <DataCell slot="trailing" align="right">
                 <RowActions>

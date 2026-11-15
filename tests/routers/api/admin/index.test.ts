@@ -44,12 +44,12 @@ test("an admin makes an invite link, lists it and revokes it; a visitor reads wh
 
   const { items } = await expectOk(api.api.admin["invite-links"].$get({ query: {} }));
   expect(items.map((item) => item.id)).toEqual([link.id]);
-  expect(await expectOk(guestApi.auth["invite-links"][":token"].$get({ param: { token: link.token } }))).toEqual({
+  expect(await expectOk(guestApi.auth["invite-links"].state.$post({ json: { token: link.token } }))).toEqual({
     state: "Valid",
   });
 
   await expectOk(api.api.admin["invite-links"][":id"].revoke.$post({ param: { id: link.id } }));
-  expect(await expectOk(guestApi.auth["invite-links"][":token"].$get({ param: { token: link.token } }))).toEqual({
+  expect(await expectOk(guestApi.auth["invite-links"].state.$post({ json: { token: link.token } }))).toEqual({
     state: "Revoked",
   });
 });

@@ -67,6 +67,12 @@ export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
 
 /**
+ * What an invite link's token reads as, which every sign-up page opened through a link asks: a table of players on one
+ * address opens it at once, and a token's 256 bits leave nothing to guess, so its own count, looser than a sign-in's.
+ */
+export const inviteLinkRateLimit = limitRate({ windowMs: 15 * MINUTE, limit: 300 });
+
+/**
  * The MCP server's failed requests from an address (a wrong token or none, a lookup by digest each): its successes
  * count nothing, since an app's servers (Claude's, ChatGPT's) send every user's requests from a few addresses.
  */

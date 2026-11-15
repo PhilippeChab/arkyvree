@@ -232,7 +232,7 @@ export function invalidateCharacterListings(queryClient: QueryClient) {
 export function inviteLinkStateQuery(token: string | undefined) {
   return queryOptions({
     queryKey: QUERY_KEYS.auth.inviteLink(token ?? ""),
-    queryFn: token ? () => parseResponse(rpc.auth["invite-links"][":token"].$get({ param: { token } })) : skipToken,
+    queryFn: token ? () => parseResponse(rpc.auth["invite-links"].state.$post({ json: { token } })) : skipToken,
   });
 }
 

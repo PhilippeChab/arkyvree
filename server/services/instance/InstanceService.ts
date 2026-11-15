@@ -10,7 +10,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { signOutEverywhere } from "@/server/services/authentication/index.ts";
 import { InstancePolicy } from "@/server/services/policies/index.ts";
-import { withAdministeredAccount, withInstanceWrite } from "@/server/services/writes/index.ts";
+import { markInviteLinksRevoked, withAdministeredAccount, withInstanceWrite } from "@/server/services/writes/index.ts";
 import type { SignUpPolicy } from "@/shared/enums.ts";
 import { describeInviteLinkState } from "@/shared/inviteLinks.ts";
 import type { Session, User } from "@/shared/relations.ts";
@@ -67,12 +67,18 @@ class InstanceService {
 
   /**
    * The instance's invite links, a page at a time, the newest first: who made each, when it expires, whether it was
-   * revoked, and how many accounts signed up with it. Never their tokens, which the database doesn't keep.
+   * revoked, and how many verified accounts signed up with it. Never their tokens, which the database doesn't keep;
+   * none whose account was deleted (`creator` null).
    */
   async getInviteLinks(session: Session, pagination: Pagination) {
     (await InstancePolicy.for(db, session)).canAdminister();
     const page = await InviteLinks.findPage(db, pagination);
-    return { ...page, items: page.items.map(toListedInviteLink) };
+    // A deleted account's archived address names nobody: its link says so instead
+    const items = page.items.map(({ creatorDeletedAt, creatorEmailAddress, creatorUsername, ...link }) => ({
+      ...toListedInviteLink(link),
+      creator: creatorDeletedAt ? null : { emailAddress: creatorEmailAddress, username: creatorUsername },
+    }));
+    return { ...page, items };
   }
 
   /** Who may make an account on the instance. */
@@ -116,6 +122,8 @@ class InstanceService {
       if (account.isAdmin === isAdmin) return toListedAccount(account);
 
       const [updated] = await Users.update(tx, { isAdmin }, { id: account.id });
+      // No longer an admin: the links they made let nobody in from then on
+      if (!isAdmin) await markInviteLinksRevoked(tx, account.id);
       return toListedAccount(updated);
     });
   }
@@ -136,7 +144,10 @@ class InstanceService {
         { deactivatedAt: deactivated ? new Date().toISOString() : null },
         { id: account.id },
       );
-      if (deactivated) await signOutEverywhere(tx, account.id);
+      if (deactivated) {
+        await signOutEverywhere(tx, account.id);
+        await markInviteLinksRevoked(tx, account.id);
+      }
       return toListedAccount(updated);
     });
   }

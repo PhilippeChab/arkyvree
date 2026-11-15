@@ -75,12 +75,16 @@ function accountChangeFn(id: string, change: AccountChange) {
   }
 }
 
-/** An account's standing, in words: an admin, deactivated, its email unverified. */
+/**
+ * An account's standing, in words: an admin, deactivated, its email unverified, and the invite link it signed up with,
+ * named by the day it was made (which the Invite Links list shows), so an admin finds who came in through one.
+ */
 function describeStanding(account: Account) {
   const parts = [
     account.isAdmin && "Admin",
     account.deactivatedAt && "Deactivated",
     !account.emailVerifiedAt && "Email unverified",
+    account.inviteLinkCreatedAt && `Invite link, ${formatDate(account.inviteLinkCreatedAt)}`,
   ].filter(Boolean);
   return parts.length ? parts.join(" · ") : null;
 }

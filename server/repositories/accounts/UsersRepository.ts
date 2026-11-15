@@ -1,7 +1,7 @@
 import { and, count, eq, type InferInsertModel, isNotNull, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { usersInAccount } from "@/drizzle/schema.ts";
+import { inviteLinksInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { hashPassword } from "@/server/password.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -10,8 +10,12 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 import { toDeletedAddress } from "./deletedAddress.ts";
 
-/** What the instance's admins see of an account in its list: never its password's digest. */
+/**
+ * What the instance's admins see of an account in its list: never its password's digest. When it signed up through an
+ * invite link, that link's creation (`inviteLinkCreatedAt`), which names it on the admin page.
+ */
 const LISTED_COLUMNS = {
+  inviteLinkCreatedAt: inviteLinksInAccount.createdAt,
   createdAt: usersInAccount.createdAt,
   deactivatedAt: usersInAccount.deactivatedAt,
   emailAddress: usersInAccount.emailAddress,
@@ -116,6 +120,7 @@ class UsersRepository extends include(BaseRepository<typeof usersInAccount>, Pag
       db
         .select(LISTED_COLUMNS)
         .from(this.table)
+        .leftJoin(inviteLinksInAccount, eq(inviteLinksInAccount.id, this.table.inviteLinkId))
         .where(
           and(
             isNull(this.table.deletedAt),

@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { authEmailRateLimit, authRateLimit, setSessionCookie, validate } from "@/server/middlewares/index.ts";
+import {
+  authEmailRateLimit,
+  authRateLimit,
+  inviteLinkRateLimit,
+  setSessionCookie,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
@@ -9,19 +15,11 @@ import { AuthenticationService } from "@/server/services/authentication/index.ts
 /** An invite link's token, as its link carries it (`/sign-up?invite=…`). */
 const inviteToken = z.string().min(1).max(200);
 
-/** The route's param that names an invite link: its token. */
-const inviteTokenParam = z.object({ token: inviteToken });
-
 /**
  * What a signed-out user does: read who may sign up and what an invite link lets them do, sign up, verify their email,
  * sign in, reset their password.
  */
 export default new Hono()
-  // What an invite link's token reads as: whether it lets its opener sign up, nothing else of its link
-  .get("/invite-links/:token", authRateLimit, validate("param", inviteTokenParam), async (c) => {
-    const { token } = c.req.valid("param");
-    return c.json(await AuthenticationService.getInviteLinkState(token), 200);
-  })
   // Who may make an account here: what the sign-up and sign-in pages show
   .get("/sign-up-policy", async (c) => c.json(await AuthenticationService.getSignUpPolicy(), 200))
   .post(
@@ -46,6 +44,12 @@ export default new Hono()
       return c.json(user, 200);
     },
   )
+  // What an invite link's token reads as: whether it lets its opener sign up, nothing else of its link. Its token in the
+  // body, never the path, which the request log and an error report keep
+  .post("/invite-links/state", inviteLinkRateLimit, validate("json", z.object({ token: inviteToken })), async (c) => {
+    const { token } = c.req.valid("json");
+    return c.json(await AuthenticationService.getInviteLinkState(token), 200);
+  })
   .post(
     "/resend-verification",
     authRateLimit,

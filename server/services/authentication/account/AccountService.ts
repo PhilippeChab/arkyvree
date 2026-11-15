@@ -36,7 +36,12 @@ import {
 } from "@/server/services/authentication/accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
 import { InstancePolicy } from "@/server/services/policies/index.ts";
-import { lockInstanceSettings, withAccountDeletion, withAccountWrite } from "@/server/services/writes/index.ts";
+import {
+  lockInstanceSettings,
+  markInviteLinksRevoked,
+  withAccountDeletion,
+  withAccountWrite,
+} from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorStatus } from "@/shared/enums.ts";
 import type { Player, Session, SessionRow, User } from "@/shared/relations.ts";
@@ -180,6 +185,8 @@ class AccountService {
       await lockInstanceSettings(tx);
       const activeAdmins = await Users.count(tx, { isAdmin: true });
       (await InstancePolicy.for(tx, session, account)).canDeleteAccount({ activeAdmins });
+      // The invite links it made let nobody in from then on
+      await markInviteLinksRevoked(tx, userId);
       await Rulesets.orphan(tx, { userId });
 
       // Drop the avatar's attachment row so the sweep can reclaim its S3 object: archiving the user leaves it in place,

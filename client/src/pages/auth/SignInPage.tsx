@@ -13,6 +13,7 @@ import { PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { AuthSubmitButton, GoogleSignInSection } from "./components/index.ts";
+import { useInviteToken } from "./useInviteToken.ts";
 
 type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
 
@@ -21,6 +22,8 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const redirect = useAuthRedirect();
+  // The invite link the tab was opened through, if any: a Google sign-in that makes an account carries it
+  const inviteToken = useInviteToken();
   const auth = useAuthRequests();
   // Who may sign up: a failed read offers sign-up, whose page shows the failure
   const { data: signUp, error: signUpError } = useQuery(signUpPolicyQuery());
@@ -68,8 +71,10 @@ export default function SignInPage() {
           <AuthSubmitButton pending={auth.pending}>Sign In</AuthSubmitButton>
         </Stack>
         <Stack spacing={2}>
+          {/* A new address's Google sign-in makes its account: through the invite link the tab kept, if any */}
           <GoogleSignInSection
             disabled={auth.pending}
+            inviteToken={inviteToken}
             onError={(error) => setError(errorMessage(error, "Failed to sign in with Google"))}
           />
           {/* An instance closed to new accounts offers none */}

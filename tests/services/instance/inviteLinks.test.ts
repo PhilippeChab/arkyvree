@@ -8,6 +8,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { hashInviteLinkToken } from "@/server/inviteLinkTokens.ts";
 import { InstanceSettings, InviteLinks, Players, Users } from "@/server/repositories/index.ts";
+import { AccountService } from "@/server/services/authentication/account/index.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { CLOSED_MESSAGE, INVITE_ONLY_MESSAGE } from "@/server/services/authentication/signUps.ts";
 import { InstanceService } from "@/server/services/instance/index.ts";
@@ -15,7 +16,7 @@ import type { SignUpPolicy } from "@/shared/enums.ts";
 import { INVITE_LINK_MESSAGES } from "@/shared/inviteLinks.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
-import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { createTestUser, findVerificationCode, makeSession } from "@/tests/support/users.ts";
 
 /** The seeded admin's session (LocalUser, the dev and test instances' admin). */
 const admin = makeSession(SEED_USER_ID);
@@ -34,6 +35,13 @@ function googleAccount() {
   return { email: `google-invited-${id}@example.com`, sub: `google-invited-${id}` };
 }
 
+/** A verified account made an admin, its session, and an invite link of theirs that works. */
+async function createAdminWithLink() {
+  const { user, session } = await createTestUser("linker");
+  await Users.update(db, { emailVerifiedAt: new Date().toISOString(), isAdmin: true }, { id: user.id });
+  return { link: await InstanceService.createInviteLink(session, 7), session, user };
+}
+
 /** A new link's token, in each state a link reads as: one that lets anyone sign up, expired, or revoked. */
 async function createLink(state: "Expired" | "Revoked" | "Valid" = "Valid") {
   const link = await InstanceService.createInviteLink(admin, 7);
@@ -45,6 +53,11 @@ async function createLink(state: "Expired" | "Revoked" | "Valid" = "Valid") {
   }
   if (state === "Revoked") await InstanceService.revokeInviteLink(admin, link.id);
   return link;
+}
+
+/** What a link reads as now. */
+async function readState(token: string) {
+  return (await AuthenticationService.getInviteLinkState(token)).state;
 }
 
 /** Sets who may make an account on the instance, within the test's transaction. */
@@ -116,7 +129,13 @@ describe("signing up with an invite link", () => {
         await setPolicy("Invite Only");
         const link = await createLink();
         const userId = await signUpWith(path, link.token);
-        expect((await Users.findOne(db, { id: userId }))?.inviteLinkId).toBe(link.id);
+        const user = await Users.findOne(db, { id: userId });
+        expect(user?.inviteLinkId).toBe(link.id);
+        // Counted once its email is verified (a Google account's is as it's made)
+        if (path === "email" && user) {
+          expect((await InstanceService.getInviteLinks(admin, { limit: 10, page: 1 })).items[0]?.accounts).toBe(0);
+          await AuthenticationService.verifyEmail(user.emailAddress, await findVerificationCode(user.id));
+        }
         const { items } = await InstanceService.getInviteLinks(admin, { limit: 10, page: 1 });
         expect(items[0]?.accounts).toBe(1);
       });
@@ -190,5 +209,44 @@ describe("what an invite link's token reads as, to whoever opens it", () => {
     const link = await createLink();
     expect(await InviteLinks.findOne(db, { digest: link.token })).toBeUndefined();
     expect((await InviteLinks.findOne(db, { digest: hashInviteLinkToken(link.token) }))?.id).toBe(link.id);
+  });
+});
+
+describe("an admin who's no longer one", () => {
+  test("loses the links they made as their admin rights are taken away", async () => {
+    const { link, user } = await createAdminWithLink();
+    const other = await createLink();
+    await InstanceService.setAccountAdmin(admin, user.id, false);
+    expect(await readState(link.token)).toBe("Revoked");
+    expect(await readState(other.token)).toBe("Valid");
+  });
+
+  test("loses them as their account is deactivated", async () => {
+    const { link, user } = await createAdminWithLink();
+    await InstanceService.setAccountDeactivated(admin, user.id, true);
+    expect(await readState(link.token)).toBe("Revoked");
+  });
+
+  test("loses them as they delete their account, which the list then names as a deleted one", async () => {
+    const { link, session } = await createAdminWithLink();
+    await AccountService.deleteAccount(session, "password1234");
+    expect(await readState(link.token)).toBe("Revoked");
+    const { items } = await InstanceService.getInviteLinks(admin, { limit: 10, page: 1 });
+    expect(items.find((item) => item.id === link.id)?.creator).toBeNull();
+  });
+});
+
+describe("the accounts an invite link let in", () => {
+  test("are marked in the admins' list with the link they came through", async () => {
+    await setPolicy("Invite Only");
+    const link = await createLink();
+    const account = credentials();
+    await AuthenticationService.signUp(account.emailAddress, account.password, link.token);
+    const { items } = await InstanceService.getAccounts(
+      admin,
+      { search: account.emailAddress },
+      { limit: 10, page: 1 },
+    );
+    expect(items[0]?.inviteLinkCreatedAt).toBe(link.createdAt);
   });
 });
