@@ -35,9 +35,9 @@ import {
   GENERAL_FEAT_LEVEL_INTERVAL,
   HIT_DIE_LABELS,
   HIT_DIE_VALUES,
+  LAST_NONEPIC_LEVEL,
   LEVEL_WORD,
   MAX_CHARACTER_LEVEL,
-  MAX_CLASS_LEVEL,
   MAX_GENERAL_FEATS_PER_LEVEL,
   MAX_SAVE_BASE,
   MAX_TABLE_COUNT,
@@ -90,7 +90,7 @@ import {
 } from "./item.ts";
 import { LANGUAGE_TYPE } from "./language.ts";
 import { RACE_BASE_SPEED, RACE_QUADRUPED, RACE_SIZE, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "./ruleset.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT, RULESET_LAST_LEVEL } from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
 import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
 import {
@@ -197,8 +197,8 @@ const CLASS_LEVEL_FIELDS = {
     description: "Base attack bonus at this class level",
     kind: "number",
     label: "Base Attack Bonus",
-    // A full base attack bonus's at the last level: one never outruns its level
-    max: MAX_CLASS_LEVEL,
+    // A full base attack bonus's at the last nonepic level: one never outruns its level, nor grows past it
+    max: LAST_NONEPIC_LEVEL,
     min: 0,
     field: CLASS_LEVEL_BAB,
     merge: "fallback",
@@ -786,9 +786,9 @@ const RACE_FIELDS = {
 
 /**
  * A ruleset's own fields, its Settings: the ability its characters' skill points come from, which a ruleset always
- * names, and its progression, which every character follows whatever its classes: the feats its levels give it to
- * pick, and the ability increases they give, each a frequency and more at the levels it names, the core rules'
- * without a row.
+ * names, its characters' last level (the core rules' 20th, epic levels past it), and its progression, which every
+ * character follows whatever its classes: the feats its levels give it to pick, and the ability increases they give,
+ * each a frequency and more at the levels it names, the core rules' without a row.
  */
 const RULESET_FIELDS = {
   skillPointAbility: {
@@ -798,6 +798,18 @@ const RULESET_FIELDS = {
     references: "abilities",
     required: true,
     role: "skillPointAbility",
+  },
+  lastLevel: {
+    default: LAST_NONEPIC_LEVEL,
+    description:
+      "The highest level a character can reach, whatever its classes (the core rules: 20). Levels past 20 are epic: they add nothing from their classes to the base attack bonus or the saves, which gain +1 at every odd level (attacks) and every even level (saves) instead, and spells per day stop growing",
+    kind: "number",
+    label: "Last Level",
+    max: MAX_CHARACTER_LEVEL,
+    min: 1,
+    field: RULESET_LAST_LEVEL,
+    merge: "winner",
+    write: "always",
   },
   featAdvancement: {
     default: { every: GENERAL_FEAT_LEVEL_INTERVAL, extra: [{ amount: FIRST_LEVEL_GENERAL_FEATS, position: 1 }] },

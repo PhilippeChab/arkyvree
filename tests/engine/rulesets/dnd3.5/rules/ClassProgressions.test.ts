@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import ClassProgressions from "@/engine/rulesets/dnd3.5/rules/ClassProgressions.ts";
-import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { LAST_NONEPIC_LEVEL, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
 describe("a class's progressions", () => {
   test("give its base attack bonus by level: the level, three quarters of it, or half", () => {
@@ -15,12 +15,14 @@ describe("a class's progressions", () => {
     expect([1, 3, 20].map((level) => ClassProgressions.saveAt("poor", level))).toEqual([0, 1, 6]);
   });
 
-  test("give each one's value at every class level, the best first", () => {
+  test("give each one's value at every class level, the best first, an epic level's the 20th's", () => {
     const { bab, saves } = ClassProgressions.describePresets();
-    const levels = Array.from({ length: MAX_CLASS_LEVEL }, (_, index) => index + 1);
+    const levels = Array.from({ length: MAX_CLASS_LEVEL }, (_, index) => Math.min(index + 1, LAST_NONEPIC_LEVEL));
     expect(Object.keys(bab)).toEqual(["good", "medium", "poor"]);
     expect(Object.keys(saves)).toEqual(["good", "poor"]);
     expect(bab.medium).toEqual(levels.map((level) => ClassProgressions.babAt("medium", level)));
     expect(saves.good).toEqual(levels.map((level) => ClassProgressions.saveAt("good", level)));
+    // A good base attack bonus stops at +20, a good save at +12
+    expect([bab.good[19], bab.good[24], saves.good[29]]).toEqual([20, 20, 12]);
   });
 });

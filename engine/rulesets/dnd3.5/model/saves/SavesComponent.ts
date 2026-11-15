@@ -1,8 +1,9 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
-import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
+import ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -27,12 +28,16 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
 
   private readonly saves: SavesData = {} as SavesData;
 
-  /** Each of the ruleset's saves: its base, the sum of each class's last level's, and its ability's modifier. */
+  /**
+   * Each of the ruleset's saves: its base, the sum of each class's last level's the character took up to 20th
+   * (`ClassesComponent.lastNonepicLevel`) and the epic save bonus its levels past 20th give (`LevelRules.epicSaveBonus`),
+   * which the SRD counts in it wherever a rule reads it; and its ability's modifier.
+   */
   override initialize({ baseBonusLinks }: Pick<LoadedCharacterData, "baseBonusLinks">, { rulesetData }: RulesetView) {
     const saveBaseValues = new Map<string, number>();
     const classes = this.classes.getClasses();
     for (const klass of Object.values(classes)) {
-      const lastLevel = klass.levels.at(-1);
+      const lastLevel = ClassesComponent.lastNonepicLevel(klass);
       if (lastLevel) {
         const levelSaves = baseBonusLinks.filter((link) => link.fromId === lastLevel.classLevel.id);
         for (const link of levelSaves)
@@ -40,10 +45,11 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
       }
     }
 
+    const epicBonus = LevelRules.epicSaveBonus(this.classes.getTotalLevel());
     for (const save of Dnd35View.of(rulesetData).saves) {
       const normalizedName = stripSeparators(save.name);
       const abilityName = (save.links.keyAbility && this.abilities.getAbilityName(save.links.keyAbility)) ?? "";
-      const base = saveBaseValues.get(save.id) ?? 0;
+      const base = (saveBaseValues.get(save.id) ?? 0) + epicBonus;
       const abilities = this.abilities;
 
       // The ability's modifier and the total are computed when read, so they follow the abilities and the parts

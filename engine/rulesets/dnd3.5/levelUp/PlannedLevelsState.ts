@@ -189,13 +189,14 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
 
   /**
    * Each planned level's class and class level, from the composed ruleset: a class the view has is of the character's
-   * ruleset or its source chain. Refused past the rules' bounds (a class's last level, and a character's, counting the
-   * levels it has), and when a class isn't the view's or a player character's, or hasn't that level.
+   * ruleset or its source chain. Refused past the rules' bounds (a class's last level, and a character's, its ruleset's
+   * Settings', counting the levels it has), and when a class isn't the view's or a player character's, or hasn't that level.
    */
   getPlannedClassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
-    // No character past its last level: the planned levels come after those it has
-    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.advancements.length);
-    const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
+    // No character past its last level, its Settings': the planned levels come after those it has
+    const levelRules = LevelRules.of(this.view);
+    const levelsLeft = levelRules.countLevelsLeft(this.character.rows.advancements.length);
+    const message = `A character can't go past level ${levelRules.lastLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ classId, level, abilityIncreases }, i) => {
       // A refusal names the character's level it's about, and a class in its rules' word

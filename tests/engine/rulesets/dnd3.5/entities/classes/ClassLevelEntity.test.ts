@@ -50,7 +50,7 @@ describe("A class's levels", () => {
       expect(issuesOf(() => levels.planCreateMany([{ position: 1 }, { position: 2 }, { position: 1 }]))).toEqual([
         { category: "owned.2.position", message: "Level 1 is listed twice" },
       ]);
-      expect(issuesOf(() => levels.planCreateMany([{ position: 1 }, { position: 21 }]))).toMatchObject([
+      expect(issuesOf(() => levels.planCreateMany([{ position: 1 }, { position: 41 }]))).toMatchObject([
         { category: "owned.1.position" },
       ]);
       // Only the class's next levels: a gap would stop its characters there

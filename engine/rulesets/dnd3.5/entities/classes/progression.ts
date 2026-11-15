@@ -4,7 +4,7 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassProgressions from "@/engine/rulesets/dnd3.5/rules/ClassProgressions.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import { type BabType, MAX_CLASS_LEVEL, type SaveType } from "@/vocabulary/dnd3.5/classes.ts";
+import { type BabType, LAST_NONEPIC_LEVEL, MAX_CLASS_LEVEL, type SaveType } from "@/vocabulary/dnd3.5/classes.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -117,7 +117,7 @@ export const PROGRESSION: ProgressionDeclaration = {
       field: CLASS_LEVEL_BAB,
       key: "bab",
       omittedFor: BONDED_KIND_SLUGS,
-      labels: ProgressionLabels.listLabels(RULESET_LIMITS.classLevel, (bab) => CombatSheet.formatBab(bab)),
+      labels: ProgressionLabels.listLabels(LAST_NONEPIC_LEVEL, (bab) => CombatSheet.formatBab(bab)),
       presets: ProgressionLabels.listPresets(BAB_PRESET_LABELS, LEVEL_PRESETS.bab),
       shortLabel: "BAB",
       source: "field",

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- D&D 3.5: epic levels, as a ruleset's Last Level setting, up to 40
 - Pathfinder 1: levels past 20th, as a ruleset's Last Level setting, up to 40
 
 ## 0.8.0 — 2026-11-14

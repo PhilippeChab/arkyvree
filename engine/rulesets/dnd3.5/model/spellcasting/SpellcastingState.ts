@@ -10,7 +10,7 @@ import type SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/
 import type SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { type CasterType, LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /**
@@ -145,10 +145,10 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   /**
    * A class's caster level: its level, and the caster levels other classes add to it (`bonuscasterlevel`, a prestige
-   * class's), up to `MAX_CLASS_LEVEL`. The class level its spells per day are read at.
+   * class's), past 20th too, as the SRD's epic spellcasters' caster level keeps rising.
    */
   protected casterLevelOf({ bonuscasterlevel, level }: { bonuscasterlevel: number; level: number }): number {
-    return Math.min(level + bonuscasterlevel, MAX_CLASS_LEVEL);
+    return level + bonuscasterlevel;
   }
 
   /**
@@ -203,6 +203,14 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
       joining.set(list, classNames);
     }
     return joining;
+  }
+
+  /**
+   * The class level a class's spells per day are read at: its caster level (`casterLevelOf`) up to 20th
+   * (`LAST_NONEPIC_LEVEL`), past which an epic spellcaster's spells per day don't grow.
+   */
+  protected slotLevelOf(classData: { bonuscasterlevel: number; level: number }): number {
+    return Math.min(this.casterLevelOf(classData), LAST_NONEPIC_LEVEL);
   }
 
   /**

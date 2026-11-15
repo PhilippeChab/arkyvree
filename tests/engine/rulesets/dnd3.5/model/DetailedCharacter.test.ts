@@ -715,6 +715,43 @@ describe("DetailedCharacter", () => {
     });
   });
 
+  describe("epic levels", () => {
+    test("add no class's base attack bonus or saves past 20th, the epic bonuses instead, four attacks at most", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await seedHuman(
+        "Epic Fighter",
+        { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 },
+        { fields: { [CHARACTER_XP]: 231000 } },
+      );
+      const fighterLevels = Array.from({ length: 20 }, (_, index) => index + 1);
+      await addClassLevels(
+        db,
+        ctx,
+        characterId,
+        "Fighter",
+        fighterLevels,
+        fighterLevels.map(() => 10),
+      );
+      const at = async (rogueLevels: number[]) => {
+        if (rogueLevels.length > 0) await addClassLevels(db, ctx, characterId, "Rogue", rogueLevels, [6]);
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const { fortitude, reflex, will } = detailed.components.saves.getSaves();
+        return {
+          // Its unarmed strike's, Strength 10 adding nothing
+          attacks: weaponSet(detailed).mainhand!.tohit.total,
+          bab: detailed.components.combat.getCombat().bab,
+          saves: [fortitude.base, reflex.base, will.base],
+        };
+      };
+      // Fighter 20: +20, good Fortitude +12, poor Reflex and Will +6
+      expect(await at([])).toEqual({ attacks: [20, 15, 10, 5], bab: 20, saves: [12, 6, 6] });
+      // A Rogue 1 at 21st adds neither its +0 nor its good Reflex's +2: the epic attack bonus's +1 alone
+      expect(await at([1])).toEqual({ attacks: [21, 16, 11, 6], bab: 21, saves: [12, 6, 6] });
+      // A Rogue 2 at 22nd: the epic save bonus's +1 on every save
+      expect(await at([2])).toEqual({ attacks: [21, 16, 11, 6], bab: 21, saves: [13, 7, 7] });
+    });
+  });
+
   describe("hit points", () => {
     test("add each level's constitution bonus, with the race's", async () => {
       // A dwarf (CON 16 + 2): +4 at each of 4 levels, on 10 + 8 + 7 + 12 rolled; Toughness adds 3.

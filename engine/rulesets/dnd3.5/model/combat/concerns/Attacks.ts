@@ -1,5 +1,5 @@
 import { ITEM_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
-import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
+import ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import {
   type NaturalAttackKind,
@@ -9,6 +9,7 @@ import {
 } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import {
@@ -242,17 +243,22 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       };
     }
 
+    /**
+     * The base attack bonus: each class's, its last level's the character took up to 20th
+     * (`ClassesComponent.lastNonepicLevel`), and the epic attack bonus its levels past 20th give
+     * (`LevelRules.epicAttackBonus`), which the SRD counts in it wherever a rule reads it.
+     */
     protected initializeBaseAttackBonus(
       classes: ReturnType<ClassesComponent["getClasses"]>,
       classLevelFields: Map<string, { bab: number; skills: number }>,
     ): void {
       const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
+        const lastLevel = ClassesComponent.lastNonepicLevel(klass);
         if (!lastLevel) return acc;
         return acc + (classLevelFields.get(lastLevel.classLevel.id)?.bab ?? 0);
       }, 0);
 
-      this.combat.bab = baseAttackBonusFromClasses;
+      this.combat.bab = baseAttackBonusFromClasses + LevelRules.epicAttackBonus(this.classes.getTotalLevel());
     }
 
     /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */

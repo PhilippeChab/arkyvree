@@ -28,16 +28,18 @@ import {
   CHARACTER_XP,
   RULESET_ABILITY_INCREASES,
   RULESET_FEAT_ADVANCEMENT,
+  RULESET_LAST_LEVEL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The core rules' feats: one every 3 levels, and one more at the first. */
 const CORE_FEATS = { every: 3, extra: [{ amount: 1, position: 1 }] };
 
 /**
- * The core rules' progression, which a fork of theirs reads until it saves its own: its feats, and an ability increase
- * every 4 levels.
+ * The core rules' progression, which a fork of theirs reads until it saves its own: its last level, 20th, its feats,
+ * and an ability increase every 4 levels.
  */
 const CORE_PROGRESSION = {
+  [RULESET_LAST_LEVEL]: 20,
   [RULESET_FEAT_ADVANCEMENT]: CORE_FEATS,
   [RULESET_ABILITY_INCREASES]: { every: 4, extra: [] },
 };

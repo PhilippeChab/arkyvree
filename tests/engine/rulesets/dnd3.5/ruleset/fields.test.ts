@@ -12,12 +12,20 @@ import { findFormValues, heldValues, listValues, writtenValues } from "@/tests/s
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  RULESET_ABILITY_INCREASES,
+  RULESET_FEAT_ADVANCEMENT,
+  RULESET_LAST_LEVEL,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4. */
+/**
+ * The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4, the last
+ * level 20th.
+ */
 const CORE = {
   abilityIncreases: { every: 4, extra: [] },
   featAdvancement: { every: 3, extra: [{ amount: 1, position: 1 }] },
+  lastLevel: 20,
 };
 
 describe("A ruleset's own fields", () => {
@@ -32,6 +40,7 @@ describe("A ruleset's own fields", () => {
             [RULESET_FEAT_ADVANCEMENT, "every:3"],
             [RULESET_FEAT_ADVANCEMENT, "3:1"],
             [RULESET_FEAT_ADVANCEMENT, "5:1"],
+            [RULESET_LAST_LEVEL, 30],
           ],
           { skillPointAbility: "intelligence" },
         ),
@@ -45,6 +54,7 @@ describe("A ruleset's own fields", () => {
           { amount: 1, position: 5 },
         ],
       },
+      lastLevel: 30,
       skillPointAbility: "intelligence",
     });
   });
@@ -59,6 +69,8 @@ describe("A ruleset's own fields", () => {
     expect(written(CORE).fields).toEqual({
       [RULESET_FEAT_ADVANCEMENT]: ["every:3", "1:1"],
       [RULESET_ABILITY_INCREASES]: ["every:4"],
+      // Written though it's the default, so a fork's 20th stands over its source's epic levels
+      [RULESET_LAST_LEVEL]: [20],
     });
   });
 

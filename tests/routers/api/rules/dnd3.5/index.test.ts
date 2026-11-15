@@ -29,6 +29,7 @@ import {
   RACE_SIZE,
   RULESET_ABILITY_INCREASES,
   RULESET_FEAT_ADVANCEMENT,
+  RULESET_LAST_LEVEL,
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
   SHIELD_TYPE,
@@ -184,7 +185,8 @@ describe("rules", () => {
       { label: "Animal Companion", value: "animalcompanion" },
       { label: "Special Mount", value: "mount" },
     ]);
-    expect(dnd35.progression.lastPosition).toBe(20);
+    // A class's epic levels among them
+    expect(dnd35.progression.lastPosition).toBe(40);
     expect(dnd35.tiers.at(0)).toEqual({ label: "Cantrips", tier: 0 });
     expect(dnd35.tiers.at(-1)).toEqual({ label: "Level 9", tier: 9 });
     expect(dnd35.license).toMatchObject({ text: "ogl" });
@@ -398,8 +400,10 @@ describe("rules", () => {
     );
     expect(fields.rulesets).toEqual([
       expect.objectContaining({ role: "skillPointAbility", input: "ref", references: "abilities", required: true }),
-      expect.objectContaining({ field: RULESET_FEAT_ADVANCEMENT, input: "progression", lastPosition: 20, max: 10 }),
-      expect.objectContaining({ field: RULESET_ABILITY_INCREASES, input: "progression", lastPosition: 20, max: 1 }),
+      // A character's last level: the core rules' 20th, epic levels past it
+      expect.objectContaining({ field: RULESET_LAST_LEVEL, input: "number", default: 20, min: 1, max: 40 }),
+      expect.objectContaining({ field: RULESET_FEAT_ADVANCEMENT, input: "progression", lastPosition: 40, max: 10 }),
+      expect.objectContaining({ field: RULESET_ABILITY_INCREASES, input: "progression", lastPosition: 40, max: 1 }),
     ]);
     // Each says itself in the word its class levels' positions read in
     const progressions = (fields.rulesets ?? []).flatMap((field) => (field.input === "progression" ? [field] : []));
