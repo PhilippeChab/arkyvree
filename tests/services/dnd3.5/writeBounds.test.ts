@@ -141,9 +141,9 @@ describe("a ruleset's entities", () => {
     ).toBe(4);
   });
 
-  test("refuses a class level of 0, 21 or 1.5, and one without its number", async () => {
+  test("refuses a class level of 0, 41 (past its epic levels) or 1.5, and one without its number", async () => {
     const { classId, owner, rulesetId } = await rulesetWithSave();
-    for (const level of [0, 21, 1.5]) {
+    for (const level of [0, 41, 1.5]) {
       expect(
         EntitiesService.createOwnedEntity(owner, rulesetId, "classes", classId, { position: level }),
       ).rejects.toMatchObject(invalidAt("position"));
