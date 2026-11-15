@@ -15,8 +15,8 @@ IMAGE=""
 PORT=""
 while (($#)); do
   case "$1" in
-    --image) IMAGE="${2:-}" && shift ;;
-    --port) PORT="${2:-}" && shift ;;
+    --image) (($# >= 2)) && IMAGE="$2" && shift ;;
+    --port) (($# >= 2)) && PORT="$2" && shift ;;
     *) die "Usage: $0 --image <image> --port <port>" ;;
   esac
   shift

@@ -9,28 +9,30 @@ set -euo pipefail
 # shellcheck source=docker/lib.sh
 source /usr/local/lib/arkyvree/lib.sh
 
-# How long the dump waits for the database to take connections
+# How long the dump waits for the database to be ready
 READY_WITHIN=90
 
-# Whether the bundled database takes connections, and holds the app's database (a first start makes it just after)
+# Whether the bundled database takes connections and holds the app's database (a first start makes it just after), and
+# the start's migrations are done (their changes to the schema would block or break a dump made meanwhile)
 database_ready() {
   (run_as postgres pg_isready -q -h "$PG_SOCKET_DIR" -d postgres) 2>/dev/null &&
-    [[ -n "$(psql_admin -c "SELECT 1 FROM pg_database WHERE datname = '$APP_DATABASE'" 2>/dev/null)" ]]
+    [[ -n "$(psql_admin -c "SELECT 1 FROM pg_database WHERE datname = '$APP_DATABASE'" 2>/dev/null)" ]] &&
+    ! grep -qsx migrate-bin /proc/[0-9]*/comm
 }
 
 # Waits for the database, up to READY_WITHIN seconds. ONCE's automatic update and its daily backup come due on the same
 # check, so a backup can run seconds after an update, in a container still starting: answering the updating page while
 # the version it replaces lets go of the volume (the entrypoint's hold_volume), then starting PostgreSQL, which recovers
-# from that version's abrupt stop. Its database takes connections only once both are done.
+# from that version's abrupt stop, then migrating it. The dump waits for all three.
 wait_for_database() {
   database_ready && return 0
-  log "pre-backup: the container is still starting (an update's handover, PostgreSQL's start): waiting for the database"
+  log "pre-backup: the container still starts (an update's handover, the database's start, the migrations): waiting"
   local deadline=$((SECONDS + READY_WITHIN))
   until database_ready; do
-    ((SECONDS < deadline)) || die "pre-backup: the database didn't take connections within $READY_WITHIN seconds"
+    ((SECONDS < deadline)) || die "pre-backup: the database wasn't ready within $READY_WITHIN seconds"
     sleep 1
   done
-  log "pre-backup: the database takes connections"
+  log "pre-backup: the database is ready"
 }
 
 if ! uses_bundled_database; then

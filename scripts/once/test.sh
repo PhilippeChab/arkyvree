@@ -24,8 +24,8 @@ RELEASE_IMAGE="ghcr.io/philippechab/arkyvree:latest"
 BACKGROUND=""
 while (($#)); do
   case "$1" in
-    --image) IMAGE="${2:-}" && shift ;;
-    --release) RELEASE_IMAGE="${2:-}" && shift ;;
+    --image) (($# >= 2)) || usage && IMAGE="$2" && shift ;;
+    --release) (($# >= 2)) || usage && RELEASE_IMAGE="$2" && shift ;;
     --background) BACKGROUND=1 ;;
     *) usage ;;
   esac
@@ -44,6 +44,7 @@ STARTED=$SECONDS
 CHARACTER_ID=""
 PORTRAIT_URL=""
 POLLER_PID=""
+RUNNER_PID=""
 mkdir -p "$BACKUPS"
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -62,6 +63,7 @@ step() {
 on_exit() {
   local status=$?
   [[ -z "$POLLER_PID" ]] || kill "$POLLER_PID" 2>/dev/null || true
+  [[ -z "$RUNNER_PID" ]] || kill "$RUNNER_PID" 2>/dev/null || true
   if ((status == 0)); then
     log "All checks passed in $((SECONDS - STARTED))s"
     return
@@ -126,7 +128,7 @@ read_verification_code() {
   until [[ -n "$id" && "$id" != null ]]; do
     ((tries++ < 60)) || die "No verification email reached Mailpit"
     sleep 1
-    id=$(curl -fs "$MAILPIT/api/v1/search?query=to:$EMAIL" | jq -r '.messages[0].ID')
+    id=$(curl -fs "$MAILPIT/api/v1/search?query=to:$EMAIL" | jq -r '.messages[0].ID') || true
   done
   # The email's preview line, in its HTML: "Your verification code is 12345678"
   curl -fs "$MAILPIT/api/v1/message/$id" | jq -r '.HTML' | grep -oE 'code is [0-9]+' | sed -n 1p | grep -oE '[0-9]+' ||
@@ -348,24 +350,25 @@ background_cycle() {
   printf 'FROM %s\nLABEL arkyvree.once-test="%s"\n' "$IMAGE" "$(date +%s)" |
     docker build -q -t "$DEPLOYED_IMAGE" - >/dev/null
   docker push -q "$DEPLOYED_IMAGE" >/dev/null
-  local new_id deadline=$((SECONDS + 420)) runner
+  local new_id running deadline=$((SECONDS + 420)) archive
   new_id=$(docker image inspect -f '{{.Id}}' "$DEPLOYED_IMAGE")
   once background run >"$WORK/background.log" 2>&1 &
-  runner=$!
-  log "   the runner checks every five minutes: waiting for its update and its backup"
-  until [[ "$(docker inspect -f '{{.Image}}' "$(app_container 2>/dev/null)" 2>/dev/null)" == "$new_id" ]] &&
-    compgen -G "$BACKUPS/automatic/*.tar.gz" >/dev/null &&
-    grep -qE "Auto-backup (completed|failed)" "$WORK/background.log"; do
-    ((SECONDS < deadline)) || die "ONCE's runner didn't update and back up the install within 7 minutes"
-    kill -0 "$runner" 2>/dev/null || die "ONCE's runner stopped"
+  RUNNER_PID=$!
+  log "   the runner checks every five minutes: waiting for its update, then its backup, in the same check"
+  until grep -qE "Auto-backup (completed|failed)" "$WORK/background.log"; do
+    ((SECONDS < deadline)) || die "ONCE's runner didn't back up the install within 7 minutes"
+    kill -0 "$RUNNER_PID" 2>/dev/null || die "ONCE's runner stopped"
     sleep 5
   done
-  sleep 5
-  kill "$runner" && wait "$runner" 2>/dev/null || true
-  grep -q "Auto-update completed" "$WORK/background.log" || die "ONCE's runner didn't report its update"
-  grep -q "Auto-backup completed" "$WORK/background.log" || die "ONCE's runner didn't report its backup"
-  local archive
+  kill "$RUNNER_PID" && wait "$RUNNER_PID" 2>/dev/null || true
+  RUNNER_PID=""
+  grep -q "Auto-update completed" "$WORK/background.log" || die "ONCE's runner didn't update the install"
+  grep -q "Auto-backup completed" "$WORK/background.log" || die "ONCE's runner's backup failed"
+  wait_for_app
+  running=$(docker inspect -f '{{.Image}}' "$(app_container)")
+  [[ "$running" == "$new_id" ]] || die "The app runs $running, not the image the runner should have updated to"
   archive=$(compgen -G "$BACKUPS/automatic/*.tar.gz" | sed -n 1p)
+  [[ -n "$archive" ]] || die "ONCE's runner left no backup in $BACKUPS/automatic"
   check_dump "$archive"
   check_data_kept
 }

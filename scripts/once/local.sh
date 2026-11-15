@@ -34,8 +34,8 @@ IMAGE=""
 PASSED=()
 while (($#)); do
   case "$1" in
-    --image) IMAGE="${2:-}" && shift ;;
-    --release) [[ "$MODE" == test ]] || usage && PASSED+=("$1" "${2:-}") && shift ;;
+    --image) (($# >= 2)) || usage && IMAGE="$2" && shift ;;
+    --release) [[ "$MODE" == test && $# -ge 2 ]] || usage && PASSED+=("$1" "$2") && shift ;;
     --background) [[ "$MODE" == test ]] || usage && PASSED+=("$1") ;;
     *) usage ;;
   esac
@@ -66,7 +66,7 @@ ports=()
 if [[ "$MODE" == try ]]; then ports=(-p "127.0.0.1:$TRY_PORT:80" -p "127.0.0.1:$TRY_MAIL_PORT:8025"); fi
 docker rm -f -v "$DIND" >/dev/null 2>&1 || true
 log "Starting Docker-in-Docker ($DIND_IMAGE)"
-docker run -d --privileged --name "$DIND" -e DOCKER_TLS_CERTDIR= "${ports[@]}" "$DIND_IMAGE" >/dev/null
+docker run -d --privileged --name "$DIND" -e DOCKER_TLS_CERTDIR= ${ports[@]+"${ports[@]}"} "$DIND_IMAGE" >/dev/null
 tries=0
 until docker exec "$DIND" docker info >/dev/null 2>&1; do
   ((tries++ < 60)) || {
@@ -84,7 +84,7 @@ fi
 docker cp "$ROOT/scripts/once" "$DIND:/once"
 
 if [[ "$MODE" == test ]]; then
-  docker exec "$DIND" bash /once/test.sh --image "$IMAGE" "${PASSED[@]}"
+  docker exec "$DIND" bash /once/test.sh --image "$IMAGE" ${PASSED[@]+"${PASSED[@]}"}
   exit
 fi
 

@@ -15,7 +15,8 @@ on:
       - scripts/once/**
       - .github/workflows/app-image.yml
       # What the image's start runs: the server's and the worker's start, the updating page, the probes, the
-      # migrations, the files kept on disk, PDFKit's runtime
+      # migrations, the files kept on disk, the dependencies the binaries are compiled with, PDFKit's runtime
+      - bun.lock
       - drizzle/**
       - scripts/db/migrate.ts
       - server/main.ts
@@ -82,6 +83,7 @@ jobs:
           docker stop -t 60 app
           docker logs app 2>&1 | grep -q "database system is shut down"
       - name: Save it
+        shell: bash
         run: docker save arkyvree-app:check | gzip -1 >"$RUNNER_TEMP/app-image.tar.gz"
       - uses: actions/upload-artifact@v4
         with:
@@ -104,6 +106,7 @@ jobs:
           name: app-image
           path: ${{ runner.temp }}
       - name: Load the image
+        shell: bash
         run: gunzip -c "$RUNNER_TEMP/app-image.tar.gz" | docker load
       # Weekly and on demand, ONCE's background runner too: its first check comes five minutes in
       - name: Test it with ONCE
