@@ -4,6 +4,7 @@ import "./instrument-worker.ts";
 import "./log.ts";
 import { MemoryCache } from "./cache/index.ts";
 import { waitForDatabase } from "./database/index.ts";
+import { checkEmailSetup } from "./emails/index.ts";
 import { readEnv } from "./environment.ts";
 import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "./jobs/runner.ts";
 import Shutdown from "./Shutdown.ts";
@@ -15,6 +16,7 @@ async function main() {
   // must build its sheet from current committed rules instead of a previous job.
   MemoryCache.setEnabled(false);
 
+  checkEmailSetup("worker");
   await waitForDatabase();
 
   let workerHealthy = true;
