@@ -1,3 +1,6 @@
+# Local development and tests only (bun dev:db, dev:mail, test:db): PostgreSQL databases and a mail inbox.
+# To run Arkyvree on a server, see docs/self-hosting.md.
+
 services:
   postgres-dev:
     image: postgres:16-alpine

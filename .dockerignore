@@ -5,7 +5,7 @@ dist
 .env.*
 *.log
 tests
-docker-compose*.yml
+compose.dev.yml
 playwright.config.ts
 playwright-report
 test-results

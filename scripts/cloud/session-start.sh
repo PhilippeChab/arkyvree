@@ -29,7 +29,7 @@ start_postgres() {
     as_postgres psql -c "create role devuser login superuser password 'devpass'" >> "$LOG" 2>&1 || return 1
   as_postgres psql -tAc "select 1 from pg_database where datname = 'arkyvree_test'" 2>> "$LOG" | grep -q 1 ||
     as_postgres createdb -O devuser arkyvree_test >> "$LOG" 2>&1 || return 1
-  # The example's port is docker compose's (5433); the cluster's is its own
+  # The example's port is compose.dev.yml's (5433); the cluster's is its own
   sed "s#@localhost:5433/#@localhost:${port}/#" .env.test.example > .env.test
   ready+=("PostgreSQL on :${port} (devuser, arkyvree_test), .env.test written")
 }
