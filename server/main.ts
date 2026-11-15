@@ -7,6 +7,7 @@ import { waitForDatabase } from "./database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "./environment.ts";
 import { application } from "./routers/application.ts";
 import Shutdown from "./Shutdown.ts";
+import { checkStorageConfiguration } from "./storage/ObjectStorage.ts";
 import { BroadcastListener } from "./websockets/index.ts";
 
 /** Stops a production start that lacks a variable production needs. */
@@ -35,6 +36,7 @@ function warmRulesetViews() {
 
 async function main() {
   checkProductionEnvironment();
+  checkStorageConfiguration("server");
   await waitForDatabase();
   await BroadcastListener.start();
   warmRulesetViews();

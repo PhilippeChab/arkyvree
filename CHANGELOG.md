@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Uploads can be kept on the server's disk, without a storage service
 - An admin page: who can sign up (anyone, the invited, or nobody), and the instance's accounts, which an admin makes admins, deactivates or marks verified
 - Invite links: an admin shares one link that lets people sign up
 - A modifier or a requirement keeps following the feat, skill, class, spell, language or race it names when that's renamed, in the ruleset that renames it and in those built on it

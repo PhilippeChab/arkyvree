@@ -89,7 +89,7 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 | `DIRECT_DATABASE_URL` | both | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features |
 | `RESEND_API_KEY` | both | Email via Resend |
 | `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
-| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
+| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage (Tigris) and cleanup: all five, or none to keep the files on disk (below) |
 | `GOOGLE_CLIENT_ID` | web | Google sign-in |
 | `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
 | `WORKER_FLYCAST_URL` | web | `http://arkyvree-worker.flycast:8001/health` |
@@ -98,6 +98,24 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 | `SENTRY_TRACES_SAMPLE_RATE` | both | Optional, defaults to `0` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | both | Better Stack OTLP ingest base URL (unset = metrics push disabled) |
 | `OTEL_AUTH_TOKEN` | both | Better Stack OTLP source token (wrapped in `Authorization: Bearer ...` at runtime) |
+
+### File storage
+
+Uploads (avatars, portraits, campaign documents' files) go to one of two places, which the S3 variables choose
+(`server/storage/ObjectStorage.ts`):
+
+- **An S3-compatible bucket**, with all five `S3_*` variables set: this deployment's (Tigris). A browser uploads an avatar
+  or a portrait straight to the bucket through a presigned link, and reads it from `S3_PUBLIC_URL`.
+- **The server's disk**, with none of them: the files are kept under `STORAGE_PATH`'s `files` folder (`/storage/files`
+  in production, `.storage/files` in the repo otherwise), which the server and the worker share. The app takes a
+  browser's upload at a link it signs (`PUT /files/<key>?…`, with `SIGNING_SECRET`: the type and the size it may hold,
+  for 5 minutes), checks its bytes are the image it was signed for, and serves the files at `/files/<key>`
+  (`DiskStorageBackend`).
+
+Some of the S3 variables set and not the others stops the server and the worker at startup, naming those missing.
+Either way, a stored file is read by whoever has its key, which holds its blob's random id, and never changes: a public
+bucket serves it so, and `/files/<key>` too. A campaign document's file is only ever handed out through its document's
+route, which asks who may read it.
 
 ## Custom domain
 

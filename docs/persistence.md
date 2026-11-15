@@ -95,7 +95,7 @@ The row keeps nothing that names its owner or lets anyone in. `Users.archive` fr
 | `PasswordResets` | code consumed / account deleted | `runCleanup.ts` reaps expired |
 | `Activities` | (none: no `archive`) | `runCleanup.ts` retention sweep only: they're history, kept when their target is deleted (see *Polymorphic rows*) |
 | `Notifications` | (none: no `archive`, use `markRead`) | `runCleanup.ts` retention sweep |
-| `Blobs`, `Attachments`, `Exports` | (none: no `archive`) | linked S3 object reaped / export expired |
+| `Blobs`, `Attachments`, `Exports` | (none: no `archive`) | linked stored file reaped (S3 or disk) / export expired |
 
 Archive while the row is still referenced by user-visible state (a session in flight, a verification email someone might click); hard-delete once the row is just data debris.
 

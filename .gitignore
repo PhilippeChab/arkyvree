@@ -75,3 +75,6 @@ sync.sql
 
 # Claude Code cloud sessions' setup state (scripts/cloud/session-start.sh)
 .cloud-session/
+
+# Uploads kept on disk in development (no S3)
+.storage/

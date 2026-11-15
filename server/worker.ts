@@ -7,8 +7,10 @@ import { waitForDatabase } from "./database/index.ts";
 import { readEnv } from "./environment.ts";
 import { createWorkerEvents, createWorkerPool, crontab, taskList, workerLogger } from "./jobs/runner.ts";
 import Shutdown from "./Shutdown.ts";
+import { checkStorageConfiguration } from "./storage/ObjectStorage.ts";
 
 async function main() {
+  checkStorageConfiguration("worker");
   // Web mutations cannot invalidate this process’s in-memory cache. Each job
   // must build its sheet from current committed rules instead of a previous job.
   MemoryCache.setEnabled(false);

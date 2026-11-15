@@ -9,6 +9,7 @@ import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { getFileEditableDocument, getFileReadableDocument } from "@/server/services/campaigns/documents/index.ts";
 import { getPortraitEditableCharacter } from "@/server/services/characters/index.ts";
 import { withAttachmentWrite, withBlobDeletion, withNewBlob } from "@/server/services/writes/index.ts";
+import { detectDocumentFileType, detectImageType } from "@/server/storage/fileTypes.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import {
   ALLOWED_DOCUMENT_FILE_TYPES,
@@ -21,7 +22,6 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 import { getAvatarEditableUser } from "./editableUser.ts";
-import { detectDocumentFileType, detectImageType } from "./imageTypes.ts";
 
 interface AttachableConfig {
   canAttach: AttachRight;
@@ -304,7 +304,7 @@ class AttachmentsService {
       await withBlobDeletion(orphan.id, (tx) => Blobs.delete(tx, { id: orphan.id }));
     } catch (error) {
       console.warn(
-        `[attachments] S3 cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
+        `[attachments] Storage cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
@@ -433,6 +433,7 @@ class AttachmentsService {
     });
 
     const presignedUrl = ObjectStorage.get().presignPut(key, {
+      byteSize: params.byteSize,
       contentType: params.contentType,
     });
     const signedId = this.signToken({
