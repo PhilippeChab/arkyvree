@@ -156,9 +156,10 @@ class AttachmentsService {
       throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
   }
 
+  /** A blob's storage key: its id, then its file's name made safe, "file" when nothing but dots would be left. */
   private buildKey(blobId: string, filename: string): string {
-    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
-    return `blobs/${blobId}/${safe}`;
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200);
+    return `blobs/${blobId}/${/^\.*$/.test(safe) ? "file" : safe}`;
   }
 
   /**
@@ -448,6 +449,20 @@ class AttachmentsService {
       presignedUrl,
       headers: { "Content-Type": params.contentType },
     };
+  }
+
+  /**
+   * Takes a browser's upload to the server's disk, at the link `createDirectUpload` signed (`DiskStorageBackend`): its
+   * signature and expiry first, then its blob, which must still wait for its file (stored, not yet attached), so a link
+   * replayed after its blob was attached, removed or swept stores nothing. One its link already filled is refused too.
+   */
+  async createDiskUpload(key: string, query: Record<string, string | undefined>, request: Request) {
+    const disk = ObjectStorage.findDisk();
+    if (!disk) throw new NotFoundError("File not found");
+    const grant = disk.verifyGrant(key, query);
+    const blob = await Blobs.findOne(db, { key });
+    if (!blob || blob.attachedAt) throw new ConflictError("This upload link was already used");
+    await disk.receiveUpload(key, grant, request);
   }
 
   /**

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { NotFoundError } from "@/server/errors/index.ts";
+import { AttachmentsService } from "@/server/services/attachments/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 
 /** The disk storage, which these routes are for: with S3, its bucket serves and takes the files, and they're not found. */
@@ -27,9 +28,11 @@ export default new Hono()
       "Content-Type": file.contentType,
       "Content-Length": String(file.size),
       "Cache-Control": "public, max-age=31536000, immutable",
+      // Opened on its own, a file runs nothing on the app's origin; a PDF's viewer, which a sandbox would stop, runs none
+      ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "sandbox" }),
     });
   })
   .put("/*", async (c) => {
-    await getDisk().receiveUpload(keyOf(c.req.path), c.req.query(), c.req.raw);
+    await AttachmentsService.createDiskUpload(keyOf(c.req.path), c.req.query(), c.req.raw);
     return c.body(null, 200);
   });

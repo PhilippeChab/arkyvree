@@ -1,10 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, utimesSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import type { DiskStorageBackend } from "@/server/storage/DiskStorageBackend.ts";
 import { diskStorage } from "@/tests/support/storage.ts";
+
+const HOUR = 60 * 60 * 1000;
+
+/** A JPEG's first bytes, which name its type, then `size` bytes in all. */
+function jpeg(size = 64) {
+  const bytes = new Uint8Array(size);
+  bytes.set([0xff, 0xd8, 0xff]);
+  return bytes;
+}
 
 /** A key as the app makes one: `blobs/<a blob's id>/<a file's name>`. */
 function keyFor(filename: string) {
@@ -90,41 +99,71 @@ describe("DiskStorageBackend", () => {
     }
   });
 
-  test("takes an image uploaded to the link it signed, whole", async () => {
+  test("takes an image uploaded to the link it signed, whole, once", async () => {
     const key = keyFor("avatar.png");
     const link = storage.presignPut(key, { byteSize: 64, contentType: "image/png" });
     expect(link).toStartWith(`/files/${key}?`);
+    const grant = storage.verifyGrant(key, queryOf(link));
 
-    await storage.receiveUpload(key, queryOf(link), uploadOf(png(64)));
+    await storage.receiveUpload(key, grant, uploadOf(png(64)));
     expect(await storage.objectStats(key)).toMatchObject({ size: 64 });
+    expect(storage.receiveUpload(key, grant, uploadOf(jpeg(64)))).rejects.toBeInstanceOf(ConflictError);
+    expect(await readAll((await storage.serve(key)).stream)).toEqual(png(64));
   });
 
-  test("refuses an upload whose link was changed, has expired, or isn't for its key", async () => {
+  test("takes any image the app takes, whatever type the browser named it", async () => {
+    const key = keyFor("avatar.png");
+    const grant = storage.verifyGrant(
+      key,
+      queryOf(storage.presignPut(key, { byteSize: 64, contentType: "image/png" })),
+    );
+
+    await storage.receiveUpload(key, grant, uploadOf(jpeg(64)));
+    expect((await storage.serve(key)).contentType).toBe("image/jpeg");
+  });
+
+  test("refuses a link that was changed, has expired, or isn't for its key", () => {
     const key = keyFor("avatar.png");
     const query = queryOf(storage.presignPut(key, { byteSize: 64, contentType: "image/png" }));
 
-    const refusals = [
-      storage.receiveUpload(key, { ...query, size: "10000000" }, uploadOf(png(64))),
-      storage.receiveUpload(key, { ...query, type: "text/plain" }, uploadOf(png(64), "text/plain")),
-      storage.receiveUpload(key, { ...query, signature: "forged" }, uploadOf(png(64))),
-      storage.receiveUpload(keyFor("other.png"), query, uploadOf(png(64))),
-    ];
-    for (const refusal of refusals) expect(refusal).rejects.toBeInstanceOf(BadRequestError);
+    for (const [forKey, changed] of [
+      [key, { ...query, size: "10000000" }],
+      [key, { ...query, type: "text/plain" }],
+      [key, { ...query, signature: "forged" }],
+      [keyFor("other.png"), query],
+    ] as const)
+      expect(() => storage.verifyGrant(forKey, changed)).toThrow(BadRequestError);
 
     const expired = queryOf(storage.presignPut(key, { byteSize: 64, contentType: "image/png", expiresIn: -1 }));
-    expect(storage.receiveUpload(key, expired, uploadOf(png(64)))).rejects.toThrow("The upload link has expired");
-    expect(await storage.objectStats(key)).toBeNull();
+    expect(() => storage.verifyGrant(key, expired)).toThrow("The upload link has expired");
   });
 
-  test("refuses an upload larger than it was signed for, of another type, or whose bytes aren't that type, keeping none", async () => {
+  test("refuses an upload larger than it was signed for, of another type, or that isn't an image, keeping none", async () => {
     const key = keyFor("avatar.png");
-    const query = queryOf(storage.presignPut(key, { byteSize: 64, contentType: "image/png" }));
+    const grant = storage.verifyGrant(
+      key,
+      queryOf(storage.presignPut(key, { byteSize: 64, contentType: "image/png" })),
+    );
 
-    expect(storage.receiveUpload(key, query, uploadOf(png(65)))).rejects.toThrow(/larger than the 64 bytes/);
-    expect(storage.receiveUpload(key, query, uploadOf(png(64), "image/jpeg"))).rejects.toThrow(/type isn't/);
-    expect(storage.receiveUpload(key, query, uploadOf(new Uint8Array(64)))).rejects.toThrow(/bytes aren't/);
+    expect(storage.receiveUpload(key, grant, uploadOf(png(65)))).rejects.toThrow(/larger than the 64 bytes/);
+    expect(storage.receiveUpload(key, grant, uploadOf(png(64), "image/jpeg"))).rejects.toThrow(/type isn't/);
+    expect(storage.receiveUpload(key, grant, uploadOf(new Uint8Array(64)))).rejects.toThrow(/isn't a PNG/);
 
     expect(await storage.objectStats(key)).toBeNull();
     expect(readdirSync(path.join(disk.root, ".uploading"))).toEqual([]);
+  });
+
+  test("deletes nothing for a key it would refuse, and removes what uploads cut short left once it's old", async () => {
+    await storage.deleteObject("../outside.png");
+    await storage.deleteObject(`blobs/${crypto.randomUUID()}/..`);
+
+    const uploading = path.join(disk.root, ".uploading");
+    mkdirSync(uploading, { recursive: true });
+    writeFileSync(path.join(uploading, "old"), "partial");
+    utimesSync(path.join(uploading, "old"), new Date(Date.now() - 2 * HOUR), new Date(Date.now() - 2 * HOUR));
+    writeFileSync(path.join(uploading, "recent"), "partial");
+
+    await storage.removeStaleUploads(HOUR);
+    expect(readdirSync(uploading)).toEqual(["recent"]);
   });
 });

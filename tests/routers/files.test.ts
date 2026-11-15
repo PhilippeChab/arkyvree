@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
+import { db } from "@/server/database/index.ts";
+import { Blobs } from "@/server/repositories/index.ts";
 import { application } from "@/server/routers/application.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { diskStorage, fakeStorage } from "@/tests/support/storage.ts";
@@ -23,6 +25,7 @@ describe("/files", () => {
 
   test("takes an image at its signed link, then serves it to whoever has its key, cached for good", async () => {
     const key = `blobs/${crypto.randomUUID()}/avatar.png`;
+    await Blobs.create(db, { key, filename: "avatar.png", contentType: "image/png", byteSize: 64 });
     const link = disk.storage.presignPut(key, { byteSize: 64, contentType: "image/png" });
 
     const upload = await application.request(link, {
@@ -37,7 +40,16 @@ describe("/files", () => {
     expect(read.headers.get("content-type")).toBe("image/png");
     expect(read.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
     expect(read.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(read.headers.get("content-security-policy")).toBe("sandbox");
     expect(new Uint8Array(await read.arrayBuffer())).toEqual(png(64));
+  });
+
+  test("serves a PDF without a sandbox, which would stop its viewer", async () => {
+    const key = `blobs/${crypto.randomUUID()}/map.pdf`;
+    await disk.storage.putObject(key, new TextEncoder().encode("%PDF-1.7 map"));
+    const read = await application.request(`/files/${key}`);
+    expect(read.headers.get("content-type")).toBe("application/pdf");
+    expect(read.headers.get("content-security-policy")).toBeNull();
   });
 
   test("refuses an upload without its link's signature, and answers an unknown or outside key as not found", async () => {

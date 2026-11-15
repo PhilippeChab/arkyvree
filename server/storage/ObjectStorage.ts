@@ -1,4 +1,4 @@
-import { type EnvironmentVariable, readEnv } from "@/server/environment.ts";
+import { type EnvironmentVariable, isProduction, readEnv } from "@/server/environment.ts";
 import { InternalError } from "@/server/errors/index.ts";
 
 import { DiskStorageBackend } from "./DiskStorageBackend.ts";
@@ -47,24 +47,29 @@ function isNotFound(err: unknown): boolean {
   return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
 }
 
-/** Stops a start whose S3 variables are set in part (`findStorageKind`), naming those missing. */
+/** Stops a start with no storage it can use (`findStorageKind`), saying what to set. */
 export function checkStorageConfiguration(processName: string) {
   if (findStorageKind()) return;
   const missing = S3_VARIABLES.filter((name) => !readEnv(name));
   console.error(
-    `[${processName}] S3 storage is set up in part: set ${missing.join(", ")} too, or none of the S3 variables to keep files on disk`,
+    missing.length < S3_VARIABLES.length
+      ? `[${processName}] S3 storage is set up in part: set ${missing.join(", ")} too, or none of the S3 variables to keep files on disk`
+      : `[${processName}] No file storage is set up: set the five S3 variables, or STORAGE_PATH to keep files on disk`,
   );
   process.exit(1);
 }
 
 /**
  * Where the files go: `s3` with every S3 variable set, `disk` with none. Some set and others not is a mistake the
- * server and the worker refuse to start with (`checkStorageConfiguration`), rather than keep files where nobody looks.
+ * server and the worker refuse to start with (`checkStorageConfiguration`), rather than keep files where nobody looks;
+ * so is production with none of them and no `STORAGE_PATH`, which would keep the files on a disk nobody chose (on Fly, a
+ * machine's own, lost with it).
  */
 export function findStorageKind(): "disk" | "s3" | null {
   const set = S3_VARIABLES.filter((name) => readEnv(name));
   if (set.length === S3_VARIABLES.length) return "s3";
-  return set.length === 0 ? "disk" : null;
+  if (set.length > 0) return null;
+  return isProduction() && !readEnv("STORAGE_PATH") ? null : "disk";
 }
 
 class S3StorageBackend implements StorageBackend {
@@ -145,7 +150,7 @@ class ObjectStorage {
   get(): StorageBackend {
     if (this.backend) return this.backend;
     const kind = findStorageKind();
-    if (!kind) throw new InternalError("S3 storage is set up in part");
+    if (!kind) throw new InternalError("No file storage is set up (checkStorageConfiguration)");
     this.backend = kind === "s3" ? new S3StorageBackend() : new DiskStorageBackend();
     return this.backend;
   }

@@ -15,7 +15,7 @@ const VARIABLES = {
   SIGNING_SECRET: "signs attachment upload tokens",
   S3_BUCKET: "attachment storage", S3_ENDPOINT: "attachment storage", S3_ACCESS_KEY_ID: "attachment storage",
   S3_SECRET_ACCESS_KEY: "attachment storage", S3_PUBLIC_URL: "the public URL attachments are served from",
-  STORAGE_PATH: "where the files are kept without S3 (under its `files`): `/storage` in production, `.storage` else",
+  STORAGE_PATH: "where the files are kept without S3 (under its `files`): required so in production, `.storage` else",
   GOOGLE_CLIENT_ID: "Google sign-in",
   APP_URL: "the app's public URL: CORS, the canonical host, the pages' meta",
   WORKER_FLYCAST_URL: "the worker's private URL, pinged to wake it for a new job",

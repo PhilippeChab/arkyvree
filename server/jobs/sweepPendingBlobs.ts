@@ -89,6 +89,9 @@ export async function sweepPendingBlobs(
     if (candidates.length < batch) break;
   }
 
+  // On the server's disk, what uploads cut short left behind (a crash mid-upload), as old as an unattached blob
+  await ObjectStorage.findDisk()?.removeStaleUploads(ttl);
+
   if (swept > 0 || failed > 0) logger.info(`Swept ${swept} blobs, ${failed} failed`);
 
   return { swept, failed };
