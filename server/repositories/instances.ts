@@ -11,6 +11,7 @@ import OAuthAuthorizationsRepository from "./accounts/OAuthAuthorizationsReposit
 import OAuthClientsRepository from "./accounts/OAuthClientsRepository.ts";
 import OAuthGrantsRepository from "./accounts/OAuthGrantsRepository.ts";
 import OAuthTokensRepository from "./accounts/OAuthTokensRepository.ts";
+import PasswordResetLinksRepository from "./accounts/PasswordResetLinksRepository.ts";
 import SessionsRepository from "./accounts/SessionsRepository.ts";
 import UsersRepository from "./accounts/UsersRepository.ts";
 import ActivitiesRepository from "./activities/ActivitiesRepository.ts";
@@ -78,6 +79,7 @@ export const OAuthAuthorizations = withRequestCache("OAuthAuthorizations", new O
 export const OAuthClients = withRequestCache("OAuthClients", new OAuthClientsRepository());
 export const OAuthGrants = withRequestCache("OAuthGrants", new OAuthGrantsRepository());
 export const OAuthTokens = withRequestCache("OAuthTokens", new OAuthTokensRepository());
+export const PasswordResetLinks = withRequestCache("PasswordResetLinks", new PasswordResetLinksRepository());
 export const PasswordResets = withRequestCache("PasswordResets", new AccountCodesRepository(passwordResetsInAccount));
 export const Picks = withRequestCache("Picks", new StoredPicks());
 export const PlayerCharacters = withRequestCache("PlayerCharacters", new PlayerCharactersRepository());

@@ -13,6 +13,9 @@ type GoogleSignInBody = InferRequestType<typeof rpc.auth.google.$post>["json"];
 /** What a password reset sends: the code, the email it went to, and the new password twice. */
 type ResetPasswordBody = InferRequestType<(typeof rpc.auth)["reset-password"]["$post"]>["json"];
 
+/** What a reset through an admin's link sends: its token, and the new password twice. */
+type ResetPasswordWithLinkBody = InferRequestType<(typeof rpc.auth)["password-reset-links"]["use"]["$post"]>["json"];
+
 type SignInBody = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
 
 type SignUpBody = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
@@ -21,9 +24,9 @@ type VerifyEmailBody = InferRequestType<(typeof rpc.auth)["verify-email"]["$post
 
 /**
  * The auth requests, each a mutation the store follows: sign in (with a password or Google), sign up, verify an email,
- * resend its code, ask for and make a password reset, sign out. They share one mutation key, so `pending` says whether
- * any is in flight, whichever page sent it, and the query client leaves their 401s to them (a wrong password, a session
- * already gone). A page shows a request's error through its `onError`. Where the user goes once the store changes is
+ * resend its code, ask for and make a password reset (by a code, or an admin's link), sign out. They share one
+ * mutation key, so `pending` says whether any is in flight, whichever page sent it, and the query client leaves their
+ * 401s to them (a wrong password, a session already gone). A page shows a request's error through its `onError`. Where the user goes once the store changes is
  * the routes' to say, never the page's (React Router applies a navigation in a transition, which the store's render
  * would run ahead of): a signed-in user leaves the auth pages for where they were going (`AuthLayoutRoute`), and a
  * signed-out one leaves the private pages for sign in (`PrivateRoute`).
@@ -91,6 +94,12 @@ export function useAuthRequests() {
     // Its email waits until the user signs in: the reset page stays to send them there
   });
 
+  const resetPasswordWithLink = useMutation({
+    mutationKey,
+    mutationFn: (json: ResetPasswordWithLinkBody) =>
+      parseResponse(rpc.auth["password-reset-links"].use.$post({ json })),
+  });
+
   // Signed out locally whatever the server says: one that failed (a session already gone, a network blip) ends there
   const signOut = useMutation({
     mutationKey,
@@ -107,6 +116,7 @@ export function useAuthRequests() {
     resendVerification,
     forgotPassword,
     resetPassword,
+    resetPasswordWithLink,
     signOut,
   };
 }

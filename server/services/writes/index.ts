@@ -10,7 +10,7 @@ export {
 } from "./characterWrites.ts";
 export {
   lockInstanceSettings,
-  markInviteLinksRevoked,
+  markAdminLinksRevoked,
   withAdministeredAccount,
   withInstanceWrite,
 } from "./instanceWrites.ts";

@@ -11,7 +11,7 @@ const VARIABLES = {
   // Set on Fly with `fly secrets set` (docs/deployment.md says on which app)
   DATABASE_URL: "Postgres, through Neon's pooler",
   DIRECT_DATABASE_URL: "Postgres without the pooler: LISTEN/NOTIFY and the job queue's session features",
-  RESEND_API_KEY: "sends email in production",
+  RESEND_API_KEY: "sends email in production through Resend, ahead of an SMTP server set as well",
   SIGNING_SECRET: "signs attachment upload tokens",
   S3_BUCKET: "attachment storage", S3_ENDPOINT: "attachment storage", S3_ACCESS_KEY_ID: "attachment storage",
   S3_SECRET_ACCESS_KEY: "attachment storage", S3_PUBLIC_URL: "the public URL attachments are served from",
@@ -28,9 +28,14 @@ const VARIABLES = {
   HOST: "the address the server and the worker listen on", PORT: "the server's port", WORKER_PORT: "the worker's",
   DB_POOL_MAX: "the server's database pool", DB_POOL_MIN: "the server's database pool",
   WORKER_DB_POOL_MAX: "the worker's database pool",
-  SMTP_HOST: "sends email in development (Mailpit, `bun dev:mail`)", SMTP_PORT: "its port",
+  SMTP_HOST: "an SMTP server's host, as development's Mailpit sets it (`bun dev:mail`)",
   DISABLE_CACHE: "`true` turns the in-memory caches off",
   BUN_TEST_WORKER_ID: "a parallel test run's worker, whose own database it uses",
+  // Set by a self-hosted install: ONCE sets the SMTP_* ones but SMTP_TLS, and MAILER_FROM_ADDRESS
+  SMTP_ADDRESS: "the SMTP server that sends email", SMTP_PORT: "its port: 587 in production unless set, 1025 elsewhere",
+  SMTP_USERNAME: "its user", SMTP_PASSWORD: "its password",
+  SMTP_TLS: "how it's reached: `implicit` (port 465's default), `starttls` (production's), or `none`",
+  MAILER_FROM_ADDRESS: "who email comes from, `Name <address>` or an address",
 } as const;
 
 /** The variables set on Fly: docs/deployment.md's table lists each (tests/environment.test.ts). */
@@ -44,7 +49,7 @@ export const FLY_SECRETS = [
 /** What the server won't start in production without (server/main.ts). */
 // oxfmt-ignore
 export const REQUIRED_IN_PRODUCTION = [
-  "APP_URL", "RESEND_API_KEY", "DATABASE_URL", "SIGNING_SECRET",
+  "APP_URL", "DATABASE_URL", "SIGNING_SECRET",
 ] as const satisfies EnvironmentVariable[];
 
 /** The deployment's name for monitoring (Sentry, OpenTelemetry): NODE_ENV, or `development` when it's unset. */

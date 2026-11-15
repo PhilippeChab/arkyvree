@@ -34,6 +34,7 @@ export {
   OAuthClients,
   OAuthGrants,
   OAuthTokens,
+  PasswordResetLinks,
   PasswordResets,
   Picks,
   PlayerCharacters,

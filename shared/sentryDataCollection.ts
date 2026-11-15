@@ -1,8 +1,11 @@
 /** Header, cookie and query names Sentry leaves out of a report: what names a client's address or its user. */
 const IDENTIFYING_NAMES = ["forwarded", "-ip", "remote-", "via", "-user"];
 
-/** Query names Sentry leaves out of a report besides: an invite link's token (`/sign-up?invite=…`) lets its holder in. */
-const SECRET_QUERY_NAMES = ["invite"];
+/**
+ * Query names Sentry leaves out of a report besides: a link's token lets its holder in, an invite link's
+ * (`/sign-up?invite=…`) and a password reset link's (`/reset-password-link?token=…`).
+ */
+const SECRET_QUERY_NAMES = ["invite", "token"];
 
 /**
  * What Sentry may put in an error report, for the browser and the server alike: no user (not their address either), no

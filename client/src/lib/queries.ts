@@ -236,6 +236,14 @@ export function inviteLinkStateQuery(token: string | undefined) {
   });
 }
 
+/** What a password reset link's token reads as: whether it resets a password, or why not. Nothing while there's none. */
+export function passwordResetLinkStateQuery(token: string | undefined) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.auth.passwordResetLink(token ?? ""),
+    queryFn: token ? () => parseResponse(rpc.auth["password-reset-links"].state.$post({ json: { token } })) : skipToken,
+  });
+}
+
 export function rulesetDetailQuery(id: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.detail(id),

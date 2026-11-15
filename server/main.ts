@@ -4,6 +4,7 @@ import "./instrument-web.ts";
 import "./log.ts";
 import { RulesetViews } from "./cow/index.ts";
 import { waitForDatabase } from "./database/index.ts";
+import { checkEmailSetup } from "./emails/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "./environment.ts";
 import { application } from "./routers/application.ts";
 import Shutdown from "./Shutdown.ts";
@@ -37,6 +38,7 @@ function warmRulesetViews() {
 async function main() {
   checkProductionEnvironment();
   checkStorageConfiguration("server");
+  checkEmailSetup("server");
   await waitForDatabase();
   await BroadcastListener.start();
   warmRulesetViews();

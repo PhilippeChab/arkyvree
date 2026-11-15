@@ -21,6 +21,7 @@ import {
 import {
   AdminIcon,
   DeactivateIcon,
+  PasswordResetIcon,
   RemoveAdminIcon,
   RestoreIcon,
   VerifyEmailIcon,
@@ -36,12 +37,19 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import { adminAccountsQuery } from "./adminQueries.ts";
+import { LinkCreatedDialog } from "./LinkCreatedDialog.tsx";
 
 /** An account of the instance, as its admins' list answers it. */
 type Account = InferResponseType<typeof rpc.api.admin.accounts.$get, 200>["items"][number];
 
 /** What an admin changes of an account, each its own request. */
 type AccountChange = "admin" | "deactivate" | "reactivate" | "removeAdmin" | "verifyEmail";
+
+/** A password reset link an admin just made, for the account at `emailAddress`: its token shown this once. */
+type CreatedResetLink = InferResponseType<
+  (typeof rpc.api.admin.accounts)[":id"]["password-reset-links"]["$post"],
+  201
+> & { emailAddress: string };
 
 const ACCOUNT_COLUMNS: TableColumn[] = [
   { key: "account", label: "Account" },
@@ -91,8 +99,8 @@ function describeStanding(account: Account) {
 
 /**
  * The instance's accounts, searched by address or username: its admins make one an admin or no longer one, deactivate
- * or reactivate it (a deactivated one is signed out everywhere and signs in nowhere), or mark its email verified, for
- * an instance whose codes don't reach their inbox.
+ * or reactivate it (a deactivated one is signed out everywhere and signs in nowhere), mark its email verified, for an
+ * instance whose codes don't reach their inbox, or make a link that resets its password, for someone locked out.
  */
 export function AccountsPanel() {
   const snackbar = useSnackbar();
@@ -101,6 +109,7 @@ export function AccountsPanel() {
   const { search, searchBarProps } = useSearchText();
   const accounts = useListPageQuery(adminAccountsQuery(search));
   const confirmDialog = useDialogState<{ account: Account; change: "deactivate" | "reactivate" }>();
+  const resetLinkDialog = useDialogState<CreatedResetLink>();
 
   const updateUser = useAuthStore((s) => s.updateUser);
 
@@ -124,6 +133,13 @@ export function AccountsPanel() {
     onError: (error) => snackbar.error(error, "Failed to change the account"),
   });
 
+  const resetLinkMutation = useMutation({
+    mutationFn: (account: Account) =>
+      parseResponse(rpc.api.admin.accounts[":id"]["password-reset-links"].$post({ param: { id: account.id } })),
+    onSuccess: (link, account) => resetLinkDialog.openWith({ ...link, emailAddress: account.emailAddress }),
+    onError: (error) => snackbar.error(error, "Failed to make the password reset link"),
+  });
+
   const pendingFor = (account: Account, change: AccountChange) =>
     changeMutation.isPending &&
     changeMutation.variables.account.id === account.id &&
@@ -136,7 +152,7 @@ export function AccountsPanel() {
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           Everyone with an account on this {APP_NAME}. An admin chooses who can sign up and changes these accounts. A
           deactivated account is signed out everywhere and can't sign in until it's reactivated; its characters,
-          rulesets and campaigns stay as they are.
+          rulesets and campaigns stay as they are. Someone locked out gets back in through a password reset link.
         </Typography>
       </Stack>
       <SearchBar {...searchBarProps} searchPlaceholder="Search by email or username…" />
@@ -184,6 +200,14 @@ export function AccountsPanel() {
                       changeMutation.mutate({ account, change: account.isAdmin ? "removeAdmin" : "admin" })
                     }
                   />
+                  {!account.deactivatedAt && (
+                    <RowAction
+                      icon={PasswordResetIcon}
+                      label="Password Reset Link"
+                      pending={resetLinkMutation.isPending && resetLinkMutation.variables.id === account.id}
+                      onClick={() => resetLinkMutation.mutate(account)}
+                    />
+                  )}
                   {account.id !== ownId && (
                     <RowAction
                       icon={account.deactivatedAt ? RestoreIcon : DeactivateIcon}
@@ -213,6 +237,18 @@ export function AccountsPanel() {
         }
         confirmLabel={confirmDialog.target?.change === "reactivate" ? "Reactivate" : "Deactivate"}
         intent={confirmDialog.target?.change === "reactivate" ? "positive" : "caution"}
+      />
+      <LinkCreatedDialog
+        url={
+          resetLinkDialog.target &&
+          `${window.location.origin}/reset-password-link?token=${resetLinkDialog.target.token}`
+        }
+        title="Password Reset Link Created"
+        label="Password Reset Link"
+        message={`Copy this link now and send it to ${resetLinkDialog.target?.emailAddress ?? "them"}: it won't be shown again. It sets a new password once, within the hour, and signs the account out everywhere.`}
+        open={resetLinkDialog.open}
+        onClose={resetLinkDialog.close}
+        onExited={resetLinkDialog.onExited}
       />
     </Panel>
   );

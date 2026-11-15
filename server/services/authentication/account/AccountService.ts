@@ -16,6 +16,7 @@ import {
   Invites,
   Notifications,
   OauthAccounts,
+  PasswordResetLinks,
   PasswordResets,
   PlayerCharacters,
   Players,
@@ -38,7 +39,7 @@ import { createCode, hasRecentCode, verifyCode } from "@/server/services/authent
 import { InstancePolicy } from "@/server/services/policies/index.ts";
 import {
   lockInstanceSettings,
-  markInviteLinksRevoked,
+  markAdminLinksRevoked,
   withAccountDeletion,
   withAccountWrite,
 } from "@/server/services/writes/index.ts";
@@ -186,7 +187,7 @@ class AccountService {
       const activeAdmins = await Users.count(tx, { isAdmin: true });
       (await InstancePolicy.for(tx, session, account)).canDeleteAccount({ activeAdmins });
       // The invite links it made let nobody in from then on
-      await markInviteLinksRevoked(tx, userId);
+      await markAdminLinksRevoked(tx, userId);
       await Rulesets.orphan(tx, { userId });
 
       // Drop the avatar's attachment row so the sweep can reclaim its S3 object: archiving the user leaves it in place,
@@ -253,6 +254,8 @@ class AccountService {
 
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
+      // A reset link an admin made for the account would set another over it
+      await PasswordResetLinks.update(tx, { expiresAt: new Date().toISOString() }, { userId: session.userId });
 
       await Activities.create(tx, {
         userId: session.userId,

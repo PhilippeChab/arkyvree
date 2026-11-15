@@ -87,7 +87,7 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 |---|---|---|
 | `DATABASE_URL` | both | Neon pooled connection |
 | `DIRECT_DATABASE_URL` | both | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features |
-| `RESEND_API_KEY` | both | Email via Resend |
+| `RESEND_API_KEY` | both | Email via Resend (see "Email" below) |
 | `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
 | `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage (Tigris) and cleanup: all five, or none to keep the files on disk (below) |
 | `GOOGLE_CLIENT_ID` | web | Google sign-in |
@@ -147,6 +147,17 @@ WebSocket works through Cloudflare's proxy. The 30s client-side ping heartbeat k
 ### Canonical-host enforcement
 
 Fly has no toggle to disable the default `*.fly.dev` hostname, so a Hono middleware in `server/routers/application.ts` 301-redirects any request whose `Host` header doesn't match `new URL(APP_URL).host` to the canonical origin. Search engines consolidate authority at the custom domain instead of splitting it across both URLs. `/health` is exempt so Fly probes still pass, and the middleware only activates in production (`NODE_ENV=production`, with `APP_URL` set).
+
+## Email
+
+Production needs a way to send email: the server and the worker each refuse to start without one, naming both ways and their variables (`findEmailSetupProblem`, `server/emails/delivery.ts`), and say in their first log line which one they use:
+
+- **Resend**, in production, when `RESEND_API_KEY` is set: this deployment's. It wins over an SMTP server set as well, which the log says.
+- **An SMTP server**, when `SMTP_ADDRESS` (ONCE's name for it) or `SMTP_HOST` (development's Mailpit) is set: its port `SMTP_PORT` (587 in production unless set, 1025 elsewhere), its user `SMTP_USERNAME` and `SMTP_PASSWORD` (both, or neither for a server that takes no sign-in), and its TLS `SMTP_TLS`: `implicit` (port 465's default), `starttls` (required, production's default), or `none` (a relay that speaks no TLS).
+
+Settings that can't work stop either process as it starts, in production or not: an SMTP port, user, password or TLS mode with no server, a user without its password, a TLS mode that isn't one. Development without Mailpit (`SMTP_HOST` unset) warns and sends nothing. A production worker that finds no way to send fails the job, which is retried and reported, rather than dropping the email.
+
+Email comes from `MAILER_FROM_ADDRESS` (`Name <address>` or an address), `Arkyvree <notifications@arkyvree.com>` unless it's set.
 
 ## CI/CD
 

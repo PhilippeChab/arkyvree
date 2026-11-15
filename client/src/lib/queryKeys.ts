@@ -18,6 +18,8 @@ export const QUERY_KEYS = {
     signUpPolicy: ["auth", "signUpPolicy"] as const,
     /** What an invite link's token reads as, which the sign-up page opened with it reads. */
     inviteLink: (token: string) => ["auth", "inviteLink", token] as const,
+    /** What a password reset link's token reads as, which the page opened with it reads. */
+    passwordResetLink: (token: string) => ["auth", "passwordResetLink", token] as const,
   },
   /** What the instance's admins run: its sign-up setting, its invite links and its accounts. */
   admin: {

@@ -1802,6 +1802,44 @@ export const oauthTokensInAccount = account.table(
   ],
 );
 
+export const passwordResetLinksInAccount = account.table(
+  "password_reset_links",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    /** The account whose password it resets. */
+    userId: uuid("user_id").notNull(),
+    /** The admin who made it. */
+    createdBy: uuid("created_by").notNull(),
+    /** The token's SHA-256 digest, hex: what a reset's token is looked up by. The token itself is shown once. */
+    digest: text().notNull(),
+    /** When it stops resetting the password: an hour after it's made, or when another is made for the account. */
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+    /** When it reset the password: it resets none from then on. */
+    usedAt: timestamp("used_at", { mode: "string", withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("password_reset_links_digest").using("btree", table.digest.asc().nullsLast()),
+    index("password_reset_links_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("password_reset_links_created_by").using("btree", table.createdBy.asc().nullsLast()),
+    index("password_reset_links_expires_at").using("btree", table.expiresAt.asc().nullsLast()),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "password_reset_links_user_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.createdBy],
+      foreignColumns: [usersInAccount.id],
+      name: "password_reset_links_created_by_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
 export const passwordResetsInAccount = account.table(
   "password_resets",
   {

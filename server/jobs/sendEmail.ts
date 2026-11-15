@@ -3,7 +3,7 @@ import type { JobHelpers } from "graphile-worker";
 import { type EmailJobPayload, renderEmail } from "@/server/emails/index.ts";
 import { isProduction } from "@/server/environment.ts";
 
-import { createEmailTransports } from "./emailTransports.ts";
+import EmailSenders from "./EmailSenders.ts";
 
 type SendEmailPayload = {
   from: string;
@@ -11,11 +11,10 @@ type SendEmailPayload = {
   to: string[];
 } & EmailJobPayload;
 
-const { resend, smtpTransport } = createEmailTransports();
-
 export async function sendEmailTask(payload: unknown, helpers: JobHelpers): Promise<void> {
   const email = payload as SendEmailPayload;
   const { to, from, subject } = email;
+  const { resend, smtpTransport } = EmailSenders.read();
 
   if (!smtpTransport && !resend) {
     if (isProduction()) throw new Error("Email service not configured");

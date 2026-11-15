@@ -3,18 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { APP_URL } from "@/emails/emailStyles.ts";
 import emailService from "@/server/emails/EmailService.ts";
 import { renderEmail } from "@/server/emails/templates.ts";
+import { withEnvironment } from "@/tests/support/environment.ts";
 import { queuedJobs } from "@/tests/support/jobs.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
-/** Runs `run` as the app does outside the tests, where emails are queued for the worker. */
-async function outsideTests<T>(run: () => Promise<T>) {
-  const env = process.env.NODE_ENV;
-  process.env.NODE_ENV = "development";
-  try {
-    return await run();
-  } finally {
-    process.env.NODE_ENV = env;
-  }
+/** Runs `run` as the app does outside the tests, where emails are queued for the worker (development's, to Mailpit). */
+async function outsideTests<T>(run: () => Promise<T>, env: Record<string, string | undefined> = {}) {
+  return await withEnvironment({ NODE_ENV: "development", SMTP_HOST: "localhost", ...env }, run);
 }
 
 describe("EmailService.send", () => {
@@ -48,6 +43,16 @@ describe("EmailService.send", () => {
       template: "welcome",
       props: { username: "Ada" },
     });
+  });
+
+  test("queues it from the instance's own sender when one is set", async () => {
+    const subject = `Welcome ${uniqueId()}`;
+    await outsideTests(
+      () => emailService.send({ to: "ada@example.com", subject, template: "welcome", props: { username: "Ada" } }),
+      { MAILER_FROM_ADDRESS: "Our Table <table@example.com>" },
+    );
+    const [job] = await queuedJobs("subject", subject);
+    expect(job.payload).toMatchObject({ from: "Our Table <table@example.com>" });
   });
 
   test("reports a job it couldn't queue", async () => {

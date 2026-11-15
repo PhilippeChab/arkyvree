@@ -14,6 +14,8 @@ How the client routes between unauthenticated, public, and authenticated surface
 
 The admin page (`/admin`, `AdminPage`) is a private page its admins alone see in the sidebar (`isAdmin`, which the store keeps with the user); anyone else who opens it goes to `/dashboard`, and its routes refuse them (`InstancePolicy`, [access.md](./access.md#the-instance--instancepolicy)). The sign-up and sign-in pages read who may sign up (`GET /auth/sign-up-policy`): an instance closed to new accounts shows its sign-up page's form as a message instead, and its sign-in page offers no sign-up; one that takes invites alone says so above the form, or, opened through an invite link (`/sign-up?invite=<token>`), says whether the link lets the visitor in (`POST /auth/invite-links/state`). The page keeps the token for the tab and takes it out of the address bar (`useInviteToken`), and sends it with the sign-up and with a Google sign-in from the sign-up or sign-in page.
 
+An admin's password reset link opens `/reset-password-link?token=<token>` (`PasswordResetLinkPage`, an auth page): it reads the token once and takes it out of the address bar (`useResetToken`), says up front whether the link resets a password (`POST /auth/password-reset-links/state`), then takes the new password and sends its user to sign in ([access.md](./access.md#the-instance--instancepolicy)). The forgot-password page says an admin can make one.
+
 ## Cookie security
 
 `server/middlewares/session.ts`:
