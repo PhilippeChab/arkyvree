@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { db, withWrite } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { InviteLinks, Locks, PasswordResetLinks, Users } from "@/server/repositories/index.ts";
+import { InviteLinks, Locks, Users } from "@/server/repositories/index.ts";
 import { InstancePolicy } from "@/server/services/policies/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
@@ -27,14 +27,11 @@ export async function lockInstanceSettings(tx: Db) {
 }
 
 /**
- * Ends the links an account made as an admin (`userId`), in the write that takes its admin rights away: it's no longer an
- * admin, it's deactivated, or it's deleted. Its invite links are revoked, under the settings' lock, which every sign-up
- * through a link takes too; its password reset links stop working.
+ * Revokes the invite links an account made (`userId`), in the write that takes its admin rights away: it's no longer an
+ * admin, it's deactivated, or it's deleted. Under the settings' lock, which every sign-up through a link takes too.
  */
-export async function markAdminLinksRevoked(tx: Db, userId: string) {
-  const now = new Date().toISOString();
-  await InviteLinks.update(tx, { revokedAt: now }, { createdBy: userId });
-  await PasswordResetLinks.update(tx, { expiresAt: now }, { createdBy: userId });
+export async function markInviteLinksRevoked(tx: Db, userId: string) {
+  await InviteLinks.update(tx, { revokedAt: new Date().toISOString() }, { createdBy: userId });
 }
 
 /**

@@ -10,7 +10,6 @@ import {
   OAuthAuthorizations,
   OAuthGrants,
   OAuthTokens,
-  PasswordResetLinks,
   PasswordResets,
   Sessions,
 } from "@/server/repositories/index.ts";
@@ -36,10 +35,6 @@ export async function runCleanupTask(_payload: unknown, helpers: JobHelpers): Pr
     {
       name: "password_resets",
       run: () => withWrite((tx) => PasswordResets.delete(tx, { expiresBefore: now })),
-    },
-    {
-      name: "password_reset_links",
-      run: () => withWrite((tx) => PasswordResetLinks.delete(tx, { expiresBefore: now })),
     },
     {
       name: "sessions",

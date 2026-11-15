@@ -29,7 +29,7 @@ import type { InviteLinkState } from "@/shared/inviteLinks.ts";
 
 import { adminInviteLinksQuery, adminSettingsQuery } from "./adminQueries.ts";
 import { type CreatedInviteLink, CreateInviteLinkDialog } from "./CreateInviteLinkDialog.tsx";
-import { LinkCreatedDialog } from "./LinkCreatedDialog.tsx";
+import { InviteLinkCreatedDialog } from "./InviteLinkCreatedDialog.tsx";
 
 /** An invite link of the instance, as its admins' list answers it. */
 type InviteLink = InferResponseType<(typeof rpc.api.admin)["invite-links"]["$get"], 200>["items"][number];
@@ -147,11 +147,8 @@ export function InviteLinksPanel() {
           onExited={createDialog.onExited}
         />
       )}
-      <LinkCreatedDialog
-        url={createdDialog.target && `${window.location.origin}/sign-up?invite=${createdDialog.target.token}`}
-        title="Invite Link Created"
-        label="Invite Link"
-        message={`Copy this link now: it won't be shown again. It works until ${createdDialog.target ? formatDate(createdDialog.target.expiresAt) : "it expires"}, or until you revoke it.`}
+      <InviteLinkCreatedDialog
+        link={createdDialog.target}
         open={createdDialog.open}
         onClose={createdDialog.close}
         onExited={createdDialog.onExited}

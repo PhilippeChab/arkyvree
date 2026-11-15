@@ -1,20 +1,18 @@
 import { db } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { generateLinkToken } from "@/server/linkTokens.ts";
+import { generateInviteLinkToken } from "@/server/inviteLinkTokens.ts";
 import {
   EmailVerifications,
   InstanceSettings,
   InviteLinks,
   type Pagination,
-  PasswordResetLinks,
   Users,
 } from "@/server/repositories/index.ts";
 import { signOutEverywhere } from "@/server/services/authentication/index.ts";
 import { InstancePolicy } from "@/server/services/policies/index.ts";
-import { markAdminLinksRevoked, withAdministeredAccount, withInstanceWrite } from "@/server/services/writes/index.ts";
+import { markInviteLinksRevoked, withAdministeredAccount, withInstanceWrite } from "@/server/services/writes/index.ts";
 import type { SignUpPolicy } from "@/shared/enums.ts";
 import { describeInviteLinkState } from "@/shared/inviteLinks.ts";
-import { PASSWORD_RESET_LINK_LIFETIME_MS } from "@/shared/passwordResetLinks.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
 /** A day, in milliseconds: what an invite link's lifetime counts in. */
@@ -53,29 +51,11 @@ class InstanceService {
       if (!settings) throw new InternalError("The instance's settings are missing");
       (await InstancePolicy.for(tx, session)).canCreateInviteLink(settings.signUpPolicy);
 
-      const { digest, token } = generateLinkToken("invite");
+      const { digest, token } = generateInviteLinkToken();
       const expiresAt = new Date(Date.now() + expiresInDays * DAY_MS).toISOString();
       const [link] = await InviteLinks.create(tx, { createdBy: session.userId, digest, expiresAt });
       if (!link) throw new InternalError("Could not create the invite link");
       return { ...toListedInviteLink(link), token };
-    });
-  }
-
-  /**
-   * Makes a link that resets an account's password once, within the hour: for someone locked out whose reset code
-   * doesn't reach them. Its token is answered this once, the database keeping its digest alone; the account's earlier
-   * links stop working.
-   */
-  async createPasswordResetLink(session: Session, userId: string) {
-    return await withAdministeredAccount(session, userId, async (tx, account) => {
-      (await InstancePolicy.for(tx, session, account)).canCreatePasswordResetLink();
-      await PasswordResetLinks.update(tx, { expiresAt: new Date().toISOString() }, { userId: account.id });
-
-      const { digest, token } = generateLinkToken("passwordReset");
-      const expiresAt = new Date(Date.now() + PASSWORD_RESET_LINK_LIFETIME_MS).toISOString();
-      const [link] = await PasswordResetLinks.create(tx, { createdBy: session.userId, digest, expiresAt, userId });
-      if (!link) throw new InternalError("Could not create the password reset link");
-      return { expiresAt: link.expiresAt, token };
     });
   }
 
@@ -143,7 +123,7 @@ class InstanceService {
 
       const [updated] = await Users.update(tx, { isAdmin }, { id: account.id });
       // No longer an admin: the links they made let nobody in from then on
-      if (!isAdmin) await markAdminLinksRevoked(tx, account.id);
+      if (!isAdmin) await markInviteLinksRevoked(tx, account.id);
       return toListedAccount(updated);
     });
   }
@@ -166,7 +146,7 @@ class InstanceService {
       );
       if (deactivated) {
         await signOutEverywhere(tx, account.id);
-        await markAdminLinksRevoked(tx, account.id);
+        await markInviteLinksRevoked(tx, account.id);
       }
       return toListedAccount(updated);
     });

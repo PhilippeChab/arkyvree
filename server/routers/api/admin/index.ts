@@ -9,8 +9,8 @@ import { INVITE_LINK_LIFETIMES_IN_DAYS } from "@/shared/inviteLinks.ts";
 
 /**
  * What the instance's admins run: who may make an account (its sign-up setting), the invite links that let people sign
- * up, and its accounts, made admins, deactivated and reactivated, their email marked verified, their password reset
- * through a link. Anyone else is refused (403).
+ * up, and its accounts, made admins, deactivated and reactivated, their email marked verified. Anyone else is refused
+ * (403).
  */
 export default new Hono()
   .use(sessionMiddleware)
@@ -23,11 +23,6 @@ export default new Hono()
     return c.json(await InstanceService.getInviteLinks(c.var.requestSession, { limit, page }), 200);
   })
   .get("/settings", async (c) => c.json(await InstanceService.getSettings(c.var.requestSession), 200))
-  // A link that resets the account's password once, within the hour: its token is answered this once
-  .post("/accounts/:id/password-reset-links", validate("param", idParam), async (c) => {
-    const { id } = c.req.valid("param");
-    return c.json(await InstanceService.createPasswordResetLink(c.var.requestSession, id), 201);
-  })
   .post("/accounts/:id/verify-email", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await InstanceService.markAccountVerified(c.var.requestSession, id), 200);

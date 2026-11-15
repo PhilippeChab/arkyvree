@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
     <AuthPage
       error={error}
       title="Forgot Password"
-      subtitle="Enter your email address and we'll send you a code to reset your password. An admin can also make you a password reset link."
+      subtitle="Enter your email address and we'll send you a code to reset your password."
     >
       <Stack spacing={4}>
         {/* The first field's own top, which adds to the gap above the form */}

@@ -21,7 +21,6 @@ import {
   OauthAccounts,
   OAuthAuthorizations,
   OAuthGrants,
-  PasswordResetLinks,
   Sessions,
   Users,
   Visibility,
@@ -38,6 +37,9 @@ type AccountField = "emailAddress" | "username";
 /** What an account is found by, besides its id: its email address or its username. */
 type AccountIdentifier = { emailAddress: string } | { username: string };
 
+/** What refuses a sign-in to an account an admin deactivated. */
+const DEACTIVATED_MESSAGE = "This account was deactivated by an admin of this Arkyvree.";
+
 /** The unique index that keeps a Google account linked to one user (`drizzle/schema.ts`). */
 const GOOGLE_LINK_INDEX = "oauth_accounts_provider_provider_account_id";
 
@@ -53,9 +55,6 @@ const UNIQUE_INDEXES = new Map<string, AccountField>([
   ["users_email", "emailAddress"],
   ["users_username", "username"],
 ]);
-
-/** What refuses a sign-in to an account an admin deactivated. */
-export const DEACTIVATED_MESSAGE = "This account was deactivated by an admin of this Arkyvree.";
 
 /** Whether `error` is a refusal a Google sign-in runs again (`RERUN_CAUSE`). */
 function isRerun(error: unknown): error is ConflictError {
@@ -235,12 +234,10 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
 
 /**
  * Signs a user out everywhere but the session `exceptId` (the one changing their password, when given): their sessions
- * ended, their API keys revoked and their connected apps disconnected, whatever signed in as them before cut off, and
- * the password reset links an admin made for them no longer reset it.
+ * ended, their API keys revoked and their connected apps disconnected, whatever signed in as them before cut off.
  */
 export async function signOutEverywhere(tx: Db, userId: string, exceptId?: string) {
   await Sessions.archive(tx, { userId, exceptId });
-  await PasswordResetLinks.update(tx, { expiresAt: new Date().toISOString() }, { userId });
   await ApiKeys.delete(tx, { userId });
   await OAuthGrants.delete(tx, { userId });
   await OAuthAuthorizations.delete(tx, { userId });

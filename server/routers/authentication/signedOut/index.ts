@@ -12,15 +12,12 @@ import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.t
 import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
-/**
- * A link's token, as its link carries it: an invite link's (`/sign-up?invite=…`), a password reset link's
- * (`/reset-password-link?token=…`).
- */
-const linkToken = z.string().min(1).max(200);
+/** An invite link's token, as its link carries it (`/sign-up?invite=…`). */
+const inviteToken = z.string().min(1).max(200);
 
 /**
  * What a signed-out user does: read who may sign up and what an invite link lets them do, sign up, verify their email,
- * sign in, reset their password (by an emailed code, or an admin's link).
+ * sign in, reset their password.
  */
 export default new Hono()
   // Who may make an account here: what the sign-up and sign-in pages show
@@ -39,7 +36,7 @@ export default new Hono()
   .post(
     "/google",
     authRateLimit,
-    validate("json", z.object({ idToken: z.string().min(1), inviteToken: linkToken.optional() })),
+    validate("json", z.object({ idToken: z.string().min(1), inviteToken: inviteToken.optional() })),
     async (c) => {
       const { idToken, inviteToken } = c.req.valid("json");
       const { session, user } = await AuthenticationService.signInWithGoogle(idToken, inviteToken);
@@ -49,30 +46,10 @@ export default new Hono()
   )
   // What an invite link's token reads as: whether it lets its opener sign up, nothing else of its link. Its token in the
   // body, never the path, which the request log and an error report keep
-  .post("/invite-links/state", inviteLinkRateLimit, validate("json", z.object({ token: linkToken })), async (c) => {
+  .post("/invite-links/state", inviteLinkRateLimit, validate("json", z.object({ token: inviteToken })), async (c) => {
     const { token } = c.req.valid("json");
     return c.json(await AuthenticationService.getInviteLinkState(token), 200);
   })
-  // What a password reset link's token reads as: whether it resets a password, nothing of its account. Its token in the
-  // body, never the path, which the request log and an error report keep
-  .post("/password-reset-links/state", authRateLimit, validate("json", z.object({ token: linkToken })), async (c) => {
-    const { token } = c.req.valid("json");
-    return c.json(await AuthenticationService.getPasswordResetLinkState(token), 200);
-  })
-  .post(
-    "/password-reset-links/use",
-    authRateLimit,
-    validate(
-      "json",
-      z
-        .object({ token: linkToken, newPassword: sanitizedPassword, newPasswordConfirmation: sanitizedPassword })
-        .check(checkPasswordConfirmation("newPassword")),
-    ),
-    async (c) => {
-      const { token, newPassword } = c.req.valid("json");
-      return c.json(await AuthenticationService.resetPasswordWithLink(token, newPassword), 200);
-    },
-  )
   .post(
     "/resend-verification",
     authRateLimit,
@@ -124,7 +101,7 @@ export default new Hono()
       z
         .object({
           emailAddress: sanitizedEmail,
-          inviteToken: linkToken.optional(),
+          inviteToken: inviteToken.optional(),
           password: sanitizedPassword,
           passwordConfirmation: sanitizedPassword,
         })

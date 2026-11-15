@@ -64,13 +64,6 @@
       "when": 1794701652329,
       "tag": "0008_invite_links",
       "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1794704041477,
-      "tag": "0009_password_reset_links",
-      "breakpoints": true
     }
   ]
 }

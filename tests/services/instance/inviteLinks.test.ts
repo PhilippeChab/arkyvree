@@ -6,7 +6,7 @@ import { inviteLinksInAccount } from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { hashLinkToken } from "@/server/linkTokens.ts";
+import { hashInviteLinkToken } from "@/server/inviteLinkTokens.ts";
 import { InstanceSettings, InviteLinks, Players, Users } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
@@ -82,7 +82,7 @@ describe("an admin's invite links", () => {
     expect(days).toBeLessThan(7.1);
 
     const [stored] = await db.select().from(inviteLinksInAccount);
-    expect(stored?.digest).toBe(hashLinkToken(link.token));
+    expect(stored?.digest).toBe(hashInviteLinkToken(link.token));
     expect(JSON.stringify(stored)).not.toContain(link.token);
 
     const { items } = await InstanceService.getInviteLinks(admin, { limit: 10, page: 1 });
@@ -208,7 +208,7 @@ describe("what an invite link's token reads as, to whoever opens it", () => {
   test("the database keeps no token: a link is found by its digest alone", async () => {
     const link = await createLink();
     expect(await InviteLinks.findOne(db, { digest: link.token })).toBeUndefined();
-    expect((await InviteLinks.findOne(db, { digest: hashLinkToken(link.token) }))?.id).toBe(link.id);
+    expect((await InviteLinks.findOne(db, { digest: hashInviteLinkToken(link.token) }))?.id).toBe(link.id);
   });
 });
 

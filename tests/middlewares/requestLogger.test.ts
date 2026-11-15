@@ -33,20 +33,3 @@ test("an invite link's token never reaches the request log: it travels in the bo
   expect(lines.some((line) => line.includes("/auth/invite-links/state"))).toBe(true);
   expect(lines.some((line) => line.includes(token))).toBe(false);
 });
-
-test("a password reset link's token never reaches the request log either", async () => {
-  const app = new Hono().use(requestLogger(true)).route("/auth", signedOut);
-  const token = `arkr_${crypto.randomUUID()}`;
-  const lines = await readLoggedLines(async () => {
-    for (const path of ["/auth/password-reset-links/state", "/auth/password-reset-links/use"]) {
-      await app.request(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: "a-new-password-1", newPasswordConfirmation: "a-new-password-1" }),
-      });
-    }
-  });
-
-  expect(lines.some((line) => line.includes("/auth/password-reset-links/use"))).toBe(true);
-  expect(lines.some((line) => line.includes(token))).toBe(false);
-});

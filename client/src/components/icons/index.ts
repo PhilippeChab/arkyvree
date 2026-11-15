@@ -60,7 +60,6 @@ export {
   StickyNote2 as NoteIcon,
   Notifications as NotificationsIcon,
   OpenInNew as OpenInNewIcon,
-  LockReset as PasswordResetIcon,
   PictureAsPdf as PdfIcon,
   HourglassEmpty as PendingIcon,
   PersonAdd as PersonAddIcon,

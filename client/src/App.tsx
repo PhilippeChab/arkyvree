@@ -27,7 +27,6 @@ const InvitePage = lazy(() => import("./pages/invites/InvitePage.tsx"));
 const KindEntityPage = lazy(() => import("./pages/rulesets/details/KindEntityPage.tsx"));
 const LegalPage = lazy(() => import("./pages/legal/LegalPage.tsx"));
 const NotificationsPage = lazy(() => import("./pages/notifications/NotificationsPage.tsx"));
-const PasswordResetLinkPage = lazy(() => import("./pages/auth/PasswordResetLinkPage.tsx"));
 const ProfilePage = lazy(() => import("./pages/profile/ProfilePage.tsx"));
 const queryClient = createQueryClient();
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage.tsx"));
@@ -50,8 +49,6 @@ const router = createBrowserRouter(
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* An admin's password reset link: a new password for its account, once */}
-        <Route path="/reset-password-link" element={<PasswordResetLinkPage />} />
       </Route>
 
       <Route element={<PublicLayout />}>

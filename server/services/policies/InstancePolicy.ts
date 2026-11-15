@@ -69,17 +69,6 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
   }
 
   /**
-   * Making a password reset link for the account: an admin's, of an account that may sign in (a deactivated one's
-   * would let nobody in).
-   */
-  canCreatePasswordResetLink() {
-    this.canAdminister();
-    if (this.entity?.deactivatedAt) throw new ConflictError("This account is deactivated: reactivate it first");
-
-    return true;
-  }
-
-  /**
    * Deactivating the account: an admin's, never of their own account (they'd lock themselves out, and the instance
    * could lose its last admin).
    */

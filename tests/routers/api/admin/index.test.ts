@@ -19,7 +19,6 @@ function adminRoutes(client: typeof api, id: string): (() => Promise<Answered>)[
     () => admin.accounts.$get({ query: {} }),
     () => admin.settings.$get(),
     () => admin.accounts[":id"]["verify-email"].$post({ param }),
-    () => admin.accounts[":id"]["password-reset-links"].$post({ param }),
     () => admin.accounts[":id"].admin.$put({ param, json: { isAdmin: true } }),
     () => admin.accounts[":id"].deactivated.$put({ param, json: { deactivated: true } }),
     () => admin.settings.$put({ json: { signUpPolicy: "Closed" } }),
@@ -95,18 +94,4 @@ test("a signed-out visitor reads who may sign up, which the sign-up page shows",
   expect(await expectOk(guestApi.auth["sign-up-policy"].$get())).toEqual({ hasAdmin: true, signUpPolicy: "Open" });
   await expectOk(api.api.admin.settings.$put({ json: { signUpPolicy: "Closed" } }));
   expect(await expectOk(guestApi.auth["sign-up-policy"].$get())).toEqual({ hasAdmin: true, signUpPolicy: "Closed" });
-});
-
-test("an admin makes a password reset link; whoever holds it reads it and sets a new password through it, once", async () => {
-  const { user } = await createTestUser("locked-out");
-  const link = await expectOk(api.api.admin.accounts[":id"]["password-reset-links"].$post({ param: { id: user.id } }));
-  expect(link.token).toStartWith("arkr_");
-
-  const reset = guestApi.auth["password-reset-links"];
-  expect(await expectOk(reset.state.$post({ json: { token: link.token } }))).toEqual({ state: "Valid" });
-  const json = { token: link.token, newPassword: "a-new-password-1", newPasswordConfirmation: "a-new-password-1" };
-  await expectStatus(reset.use.$post({ json: { ...json, newPasswordConfirmation: "mismatch-password-1" } }), 400);
-  expect(await expectOk(reset.use.$post({ json }))).toEqual({ success: true });
-  expect(await expectOk(reset.state.$post({ json: { token: link.token } }))).toEqual({ state: "Used" });
-  await expectStatus(reset.use.$post({ json }), 403);
 });

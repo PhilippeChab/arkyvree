@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { ForbiddenError, InternalError } from "@/server/errors/index.ts";
-import { hashLinkToken } from "@/server/linkTokens.ts";
+import { hashInviteLinkToken } from "@/server/inviteLinkTokens.ts";
 import {
   CharacterContributors,
   Contributors,
@@ -91,7 +91,7 @@ export async function markAdminIfNone(tx: Db, userId: string) {
  * neither revoked nor expired), or why not.
  */
 export async function readInviteLink(db: Db, token: string) {
-  const link = await InviteLinks.findOne(db, { digest: hashLinkToken(token) });
+  const link = await InviteLinks.findOne(db, { digest: hashInviteLinkToken(token) });
   const state = describeInviteLinkState(link);
   return { link: state === "Valid" ? link : undefined, state };
 }
