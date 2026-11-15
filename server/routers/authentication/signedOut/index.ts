@@ -1,13 +1,23 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { authEmailRateLimit, authRateLimit, setSessionCookie, validate } from "@/server/middlewares/index.ts";
+import {
+  authEmailRateLimit,
+  authRateLimit,
+  inviteLinkRateLimit,
+  setSessionCookie,
+  validate,
+} from "@/server/middlewares/index.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 
+/** An invite link's token, as its link carries it (`/sign-up?invite=…`). */
+const inviteToken = z.string().min(1).max(200);
+
 /**
- * What a signed-out user does: read who may sign up, sign up, verify their email, sign in, reset their password.
+ * What a signed-out user does: read who may sign up and what an invite link lets them do, sign up, verify their email,
+ * sign in, reset their password.
  */
 export default new Hono()
   // Who may make an account here: what the sign-up and sign-in pages show
@@ -23,11 +33,22 @@ export default new Hono()
       return c.json({ success: true }, 200);
     },
   )
-  .post("/google", authRateLimit, validate("json", z.object({ idToken: z.string().min(1) })), async (c) => {
-    const { idToken } = c.req.valid("json");
-    const { session, user } = await AuthenticationService.signInWithGoogle(idToken);
-    setSessionCookie(c, session.id);
-    return c.json(user, 200);
+  .post(
+    "/google",
+    authRateLimit,
+    validate("json", z.object({ idToken: z.string().min(1), inviteToken: inviteToken.optional() })),
+    async (c) => {
+      const { idToken, inviteToken } = c.req.valid("json");
+      const { session, user } = await AuthenticationService.signInWithGoogle(idToken, inviteToken);
+      setSessionCookie(c, session.id);
+      return c.json(user, 200);
+    },
+  )
+  // What an invite link's token reads as: whether it lets its opener sign up, nothing else of its link. Its token in the
+  // body, never the path, which the request log and an error report keep
+  .post("/invite-links/state", inviteLinkRateLimit, validate("json", z.object({ token: inviteToken })), async (c) => {
+    const { token } = c.req.valid("json");
+    return c.json(await AuthenticationService.getInviteLinkState(token), 200);
   })
   .post(
     "/resend-verification",
@@ -78,12 +99,17 @@ export default new Hono()
     validate(
       "json",
       z
-        .object({ emailAddress: sanitizedEmail, password: sanitizedPassword, passwordConfirmation: sanitizedPassword })
+        .object({
+          emailAddress: sanitizedEmail,
+          inviteToken: inviteToken.optional(),
+          password: sanitizedPassword,
+          passwordConfirmation: sanitizedPassword,
+        })
         .check(checkPasswordConfirmation("password")),
     ),
     async (c) => {
-      const { emailAddress, password } = c.req.valid("json");
-      await AuthenticationService.signUp(emailAddress, password);
+      const { emailAddress, inviteToken, password } = c.req.valid("json");
+      await AuthenticationService.signUp(emailAddress, password, inviteToken);
       return c.json({ message: "Verification email sent" }, 201);
     },
   )

@@ -55,6 +55,7 @@ describe("the instance's accounts", () => {
       emailAddress: user.emailAddress,
       emailVerifiedAt: null,
       id: user.id,
+      inviteLinkCreatedAt: null,
       isAdmin: false,
       username: user.username,
     });

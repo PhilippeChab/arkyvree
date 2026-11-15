@@ -5,6 +5,10 @@ import { emailNotVerified } from "@/client/src/lib/errorMessage.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { clearInviteToken } from "@/client/src/stores/inviteLinkStorage.ts";
+
+/** What a Google sign-in sends: Google's ID token, and the invite link a new account comes through, if any. */
+type GoogleSignInBody = InferRequestType<typeof rpc.auth.google.$post>["json"];
 
 /** What a password reset sends: the code, the email it went to, and the new password twice. */
 type ResetPasswordBody = InferRequestType<(typeof rpc.auth)["reset-password"]["$post"]>["json"];
@@ -45,14 +49,22 @@ export function useAuthRequests() {
 
   const signInWithGoogle = useMutation({
     mutationKey,
-    mutationFn: (idToken: string) => parseResponse(rpc.auth.google.$post({ json: { idToken } })),
-    onSuccess: startSession,
+    mutationFn: (json: GoogleSignInBody) => parseResponse(rpc.auth.google.$post({ json })),
+    onSuccess: (user) => {
+      // Signed in, or made an account: the invite link the tab kept has done its work
+      clearInviteToken();
+      startSession(user);
+    },
   });
 
   const signUp = useMutation({
     mutationKey,
     mutationFn: (json: SignUpBody) => parseResponse(rpc.auth["sign-up"].$post({ json })),
-    onSuccess: (_, { emailAddress }) => useAuthStore.setState({ pendingVerificationEmail: emailAddress }),
+    onSuccess: (_, { emailAddress }) => {
+      // The account is made: the invite link the tab kept has done its work
+      clearInviteToken();
+      useAuthStore.setState({ pendingVerificationEmail: emailAddress });
+    },
   });
 
   const verifyEmail = useMutation({

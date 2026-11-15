@@ -61,4 +61,6 @@ Each Arkyvree has admins: the first account on it to verify its email (or to sig
 - **Invite Only:** someone invited to a campaign, a ruleset or a character, with the address the invite went to. Anyone on it can send that invite.
 - **Closed:** nobody. An invite then goes only to someone who already has an account.
 
+An admin can also make an **invite link** on the same page, which lasts a day, a week or a month. Anyone who opens it can make an account, even while sign-ups are Invite Only, until it expires or the admin revokes it: paste it in your group's chat. The link is shown once, as it's made. Invite links don't work while sign-ups are Closed, and a link stops working when the admin who made it is no longer one. Each account that came in through a link says so in the accounts list.
+
 The same page lists the accounts. An admin makes another account an admin, or no longer one (there's always one left), and marks an account's email verified when its code never arrived. They can also deactivate an account: it's signed out everywhere, its API keys and connected apps stop working, and it can't sign in until an admin reactivates it. Its characters, rulesets and campaigns stay as they are.

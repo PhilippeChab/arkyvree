@@ -6,9 +6,9 @@ import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-import { AccountsPanel, SignUpPanel } from "./components/index.ts";
+import { AccountsPanel, InviteLinksPanel, SignUpPanel } from "./components/index.ts";
 
-/** The instance's admin page: who may sign up, and its accounts. Anyone else goes to their dashboard. */
+/** The instance's admin page: who may sign up, its invite links, and its accounts. Anyone else goes to their dashboard. */
 export default function AdminPage() {
   usePageTitle("Admin");
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
@@ -18,8 +18,12 @@ export default function AdminPage() {
     <PageTransition>
       <Container>
         <Stack spacing={4}>
-          <PageHeader title="Admin" subtitle={`Who can sign up to this ${APP_NAME}, and its accounts`} />
+          <PageHeader
+            title="Admin"
+            subtitle={`Who can sign up to this ${APP_NAME}, its invite links, and its accounts`}
+          />
           <SignUpPanel />
+          <InviteLinksPanel />
           <AccountsPanel />
         </Stack>
       </Container>

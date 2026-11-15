@@ -5,14 +5,18 @@ import { useAuthRequests, useGoogleSignIn } from "@/client/src/hooks/index.ts";
 
 interface GoogleSignInSectionProps {
   disabled?: boolean;
+  /** The invite link a new account comes through (the sign-up page's `?invite=`), if any. */
+  inviteToken?: string;
   label?: string;
   onError: (error: unknown) => void;
 }
 
 /** "or" divider plus the Google button, rendered only once Google Sign-In has loaded. */
-export function GoogleSignInSection({ label, disabled, onError }: GoogleSignInSectionProps) {
+export function GoogleSignInSection({ label, disabled, inviteToken, onError }: GoogleSignInSectionProps) {
   const { signInWithGoogle } = useAuthRequests();
-  const { overlayRef, isAvailable } = useGoogleSignIn((idToken) => signInWithGoogle.mutate(idToken, { onError }));
+  const { overlayRef, isAvailable } = useGoogleSignIn((idToken) =>
+    signInWithGoogle.mutate({ idToken, inviteToken }, { onError }),
+  );
 
   if (!isAvailable) return null;
 

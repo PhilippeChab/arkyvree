@@ -16,10 +16,13 @@ export const QUERY_KEYS = {
     oauthAuthorization: (id: string) => ["auth", "oauthAuthorization", id] as const,
     /** Who may make an account on the instance, which the sign-up and sign-in pages read. */
     signUpPolicy: ["auth", "signUpPolicy"] as const,
+    /** What an invite link's token reads as, which the sign-up page opened with it reads. */
+    inviteLink: (token: string) => ["auth", "inviteLink", token] as const,
   },
-  /** What the instance's admins run: its sign-up setting and its accounts. */
+  /** What the instance's admins run: its sign-up setting, its invite links and its accounts. */
   admin: {
     settings: ["admin", "settings"] as const,
+    inviteLinks: ["admin", "inviteLinks"] as const,
     accountLists: ["admin", "accounts"] as const,
     accounts: (search: string) => ["admin", "accounts", search] as const,
   },

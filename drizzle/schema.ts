@@ -46,6 +46,12 @@ export const usersInAccount = account.table(
     onboardingCompletedAt: timestamp("onboarding_completed_at", { mode: "string", withTimezone: true }),
     isAdmin: boolean("is_admin").default(false).notNull(),
     deactivatedAt: timestamp("deactivated_at", { mode: "string", withTimezone: true }),
+    /**
+     * The invite link the account signed up with, if it came through one (`account.invite_links`): what its link's count
+     * reads. No foreign key: the links name their admin (`created_by`), and two tables can't each name the other here.
+     * A link is never deleted (revoked instead) but with its admin's row, which no account loses but in the tests.
+     */
+    inviteLinkId: uuid("invite_link_id"),
   },
   (table) => [
     uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast()),
@@ -55,6 +61,7 @@ export const usersInAccount = account.table(
       table.username.asc().nullsLast().op("gin_trgm_ops"),
       table.emailAddress.asc().nullsLast().op("gin_trgm_ops"),
     ),
+    index("users_invite_link_id").using("btree", table.inviteLinkId.asc().nullsLast()),
   ],
 );
 
@@ -1362,6 +1369,35 @@ export const inventoryInCharacter = character.table(
       "inventory_check1",
       sql`(remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL))`,
     ),
+  ],
+);
+
+export const inviteLinksInAccount = account.table(
+  "invite_links",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    /** The admin who made it. */
+    createdBy: uuid("created_by").notNull(),
+    /** The token's SHA-256 digest, hex: what a sign-up's token is looked up by. The token itself is shown once. */
+    digest: text().notNull(),
+    /** When it stops letting anyone sign up, chosen as it's made. */
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+    /** When an admin revoked it: it lets nobody sign up from then on. */
+    revokedAt: timestamp("revoked_at", { mode: "string", withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("invite_links_digest").using("btree", table.digest.asc().nullsLast()),
+    index("invite_links_created_by").using("btree", table.createdBy.asc().nullsLast()),
+    foreignKey({
+      columns: [table.createdBy],
+      foreignColumns: [usersInAccount.id],
+      name: "invite_links_created_by_fkey",
+    }).onDelete("cascade"),
   ],
 );
 

@@ -16,8 +16,8 @@ import { adminSettingsQuery } from "./adminQueries.ts";
 const SIGN_UP_CAPTIONS: Record<SignUpPolicy, string> = {
   Open: "Anyone who reaches this address can make an account.",
   "Invite Only":
-    "Only someone invited to a campaign, a ruleset or a character can make an account, with the address the invite went to.",
-  Closed: "Nobody can make an account. Invites go only to people who already have one.",
+    "Only someone invited to a campaign, a ruleset or a character, with the address the invite went to, or who opens an invite link, can make an account.",
+  Closed: "Nobody can make an account, invite links included. Invites go only to people who already have one.",
 };
 
 const SIGN_UP_OPTIONS = [
