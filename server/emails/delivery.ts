@@ -58,6 +58,16 @@ export function findEmailSetupProblem(): string | undefined {
 }
 
 /**
+ * What keeps a self-hosted install waiting for its email setup (none when nothing does, or outside the self-hosted
+ * image): with `EMAIL_SETUP_PAGE` on, a setup that can't send email starts the server on a page saying so
+ * (server/noticePages.ts) and the worker idle, instead of stopping them, so ONCE keeps the install and its owner
+ * reads what to fix.
+ */
+export function findPendingEmailSetup(): string | undefined {
+  return readEnv("EMAIL_SETUP_PAGE") === "true" ? findEmailSetupProblem() : undefined;
+}
+
+/**
  * How this instance sends email: Resend in production when its key is set, ahead of an SMTP server set as well; an SMTP
  * server when one is set (ONCE's `SMTP_ADDRESS`, or `SMTP_HOST`, which development's Mailpit uses); none otherwise,
  * which production refuses to start with (`findEmailSetupProblem`), and development warns of.

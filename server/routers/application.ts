@@ -5,7 +5,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { runWithRequestCache } from "@/server/database/index.ts";
-import { isProduction, readEnv } from "@/server/environment.ts";
+import { isProduction, isServedOverHttps, readEnv } from "@/server/environment.ts";
 import { toErrorResponse } from "@/server/errors/index.ts";
 import { checkCsrf, requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
@@ -27,9 +27,11 @@ export type Application = typeof application;
 
 /**
  * Canonical host for the app, parsed from APP_URL. Non-matching hosts (e.g. Fly's default `*.fly.dev`) are 301'd to the
- * canonical origin so search engines consolidate authority at one URL. `/health` is exempt because Fly's probes hit it
- * with the machine-name Host, not the public hostname. Disabled in dev because Vite's `changeOrigin: true` proxy
- * rewrites the Host to the backend's, which would otherwise trigger an infinite redirect loop.
+ * canonical origin so search engines consolidate authority at one URL. `/health` and `/up` are exempt because Fly's
+ * and ONCE's probes hit them with the machine's address, not the public hostname. The redirect keeps APP_URL's scheme
+ * (`isServedOverHttps`): https, unless a self-hosted install serves plain HTTP. Disabled in dev because Vite's
+ * `changeOrigin: true` proxy rewrites the Host to the backend's, which would otherwise trigger an infinite redirect
+ * loop.
  */
 const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
 
@@ -38,6 +40,7 @@ const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host :
 const isDev = !isProduction();
 
 const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
+
 const cors = buildCors({
   origin,
   credentials: true,
@@ -45,17 +48,21 @@ const cors = buildCors({
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 });
 
+/** The probes' paths: Fly's (`/health`) and ONCE's (`/up`), which answer whatever host they're asked through. */
+const HEALTH_PATHS = new Set(["/health", "/up"]);
+
 /** The session is set only on the routes behind the session middleware. */
 export const application = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
   // First, so whatever any later middleware or route throws reaches onError as an Error.
   .use("*", wrapNonErrors)
   .use("*", async (c, next) => {
     if (!canonicalHost) return next();
-    if (c.req.path === "/health") return next();
+    if (HEALTH_PATHS.has(c.req.path)) return next();
     const host = c.req.header("host");
     if (!host || host === canonicalHost) return next();
     const url = new URL(c.req.url);
-    return c.redirect(`https://${canonicalHost}${url.pathname}${url.search}`, 301);
+    const scheme = isServedOverHttps() ? "https" : "http";
+    return c.redirect(`${scheme}://${canonicalHost}${url.pathname}${url.search}`, 301);
   })
   .use("*", cors)
   .use("*", checkCsrf(origin))

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { NO_EMAIL_MESSAGE } from "@/server/emails/delivery.ts";
-import { findEmailSetupProblem, readEmailDelivery } from "@/server/emails/index.ts";
+import { findEmailSetupProblem, findPendingEmailSetup, readEmailDelivery } from "@/server/emails/index.ts";
 import { withEnvironment } from "@/tests/support/environment.ts";
 
 /** Every variable the email setup reads, unset: what a case sets on top. */
@@ -14,6 +14,13 @@ const UNSET = {
   SMTP_PASSWORD: undefined,
   SMTP_TLS: undefined,
 };
+
+/** What keeps an install set up as `env` waiting, in production, the image's page on unless `env` says. */
+async function readPending(env: Record<string, string | undefined>) {
+  return await withEnvironment({ NODE_ENV: "production", EMAIL_SETUP_PAGE: "true", ...UNSET, ...env }, async () =>
+    findPendingEmailSetup(),
+  );
+}
 
 /** How an instance set up as `env` sends email, and what stops it starting, in production unless `env` says. */
 async function readSetup(env: Record<string, string | undefined>) {
@@ -72,5 +79,20 @@ describe("what stops an instance's start", () => {
     const smtp = { SMTP_ADDRESS: "smtp.example.com", SMTP_USERNAME: "ada", SMTP_PASSWORD: "secret", SMTP_TLS: "none" };
     expect((await readSetup(smtp)).problem).toBeUndefined();
     expect((await readSetup({ NODE_ENV: "development" })).problem).toBeUndefined();
+  });
+});
+
+describe("a self-hosted install waiting for its email setup", () => {
+  test("waits, with what's missing, when it can't send email", async () => {
+    expect(await readPending({})).toBe(NO_EMAIL_MESSAGE);
+    expect(await readPending({ SMTP_PORT: "587" })).toContain("SMTP_PORT set without SMTP_ADDRESS or SMTP_HOST");
+  });
+
+  test("doesn't wait once it can", async () => {
+    expect(await readPending({ SMTP_ADDRESS: "smtp.example.com" })).toBeUndefined();
+  });
+
+  test("never waits outside the image: the start stops instead (findEmailSetupProblem)", async () => {
+    expect(await readPending({ EMAIL_SETUP_PAGE: undefined })).toBeUndefined();
   });
 });

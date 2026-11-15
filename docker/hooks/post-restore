@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# ONCE runs this after it puts a backup's /storage back, in a container of its own with Arkyvree stopped
+# (docs/self-hosting.md). The database folder in a backup was copied while PostgreSQL ran, so it's rebuilt from the dump
+# pre-backup made: a new database, the dump loaded into it, then the copied folder removed. A failure puts the copied
+# folder back and stops with an error. With DATABASE_URL naming another database, there's nothing to load.
+set -euo pipefail
+
+# shellcheck source=docker/lib.sh
+source /usr/local/lib/arkyvree/lib.sh
+
+if ! uses_bundled_database; then
+  log "post-restore: DATABASE_URL names another database: nothing to load"
+  exit 0
+fi
+
+dump="$STORAGE_PATH/backup/arkyvree.dump"
+if [[ ! -f "$dump" ]]; then
+  # pre-backup didn't dump (it failed, or the backup predates it), so ONCE paused the container while it copied: its
+  # database folder stands as it was, which PostgreSQL recovers as after a power cut
+  log "post-restore: no dump in the backup: keeping its database folder as it was copied"
+  exit 0
+fi
+# A restored backup's files may come back with other owners: PostgreSQL's user reads the dump and writes the new folder
+own_tree postgres "$STORAGE_PATH/backup"
+
+copied="${PGDATA_DIR}.copied"
+rm -rf "$copied"
+if [[ -d "$PGDATA_DIR" ]]; then mv "$PGDATA_DIR" "$copied"; fi
+
+loaded=""
+# Whatever stops the load (a failed start, a failed restore), the backup's database folder goes back as it was copied
+put_back() {
+  [[ -z "$loaded" ]] || return 0
+  stop_postgres
+  rm -rf "$PGDATA_DIR"
+  if [[ -d "$copied" ]]; then mv "$copied" "$PGDATA_DIR"; fi
+  echo "[entrypoint] post-restore: loading the dump failed: the backup's database folder is back as it was copied" >&2
+}
+trap put_back EXIT
+
+init_postgres
+start_postgres
+ensure_database
+(run_as postgres pg_restore -h "$PG_SOCKET_DIR" -d "$APP_DATABASE" --exit-on-error "$dump")
+stop_postgres
+loaded=1
+
+rm -rf "$copied"
+log "post-restore: the database is loaded from $dump"

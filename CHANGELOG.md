@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A single image to self-host Arkyvree, with ONCE or Docker
 - Uploads can be kept on the server's disk, without a storage service
 - An admin page: who can sign up (anyone, the invited, or nobody), and the instance's accounts, which an admin makes admins, deactivates or marks verified
 - Invite links: an admin shares one link that lets people sign up

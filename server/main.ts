@@ -4,8 +4,9 @@ import "./instrument-web.ts";
 import "./log.ts";
 import { RulesetViews } from "./cow/index.ts";
 import { waitForDatabase } from "./database/index.ts";
-import { checkEmailSetup } from "./emails/index.ts";
+import { checkEmailSetup, findPendingEmailSetup } from "./emails/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "./environment.ts";
+import { startEmailSetupPage, startUpdatingPage } from "./noticePages.ts";
 import { application } from "./routers/application.ts";
 import Shutdown from "./Shutdown.ts";
 import { checkStorageConfiguration } from "./storage/ObjectStorage.ts";
@@ -36,21 +37,30 @@ function warmRulesetViews() {
 }
 
 async function main() {
+  const port = Number(readEnv("PORT")) || 8000;
+  const hostname = readEnv("HOST") || "localhost";
+  // A self-hosted install's new version, while the one it replaces still runs on its volume (docker/entrypoint.sh)
+  if (readEnv("UPDATING_PAGE") === "true") return startUpdatingPage({ hostname, port });
+
   checkProductionEnvironment();
   checkStorageConfiguration("server");
+  // A self-hosted install whose email isn't set up yet says so on its page, rather than stopping
+  const pendingEmailSetup = findPendingEmailSetup();
+  if (pendingEmailSetup) return startEmailSetupPage(pendingEmailSetup, { hostname, port });
+
   checkEmailSetup("server");
   await waitForDatabase();
   await BroadcastListener.start();
   warmRulesetViews();
 
-  const port = Number(readEnv("PORT")) || 8000;
-  const hostname = readEnv("HOST") || "localhost";
   const server = Bun.serve({
     port,
     hostname,
     fetch: application.fetch,
     websocket,
     development: !isProduction(),
+    // The self-hosted image's updating page answers on the port until this server listens beside it
+    reusePort: readEnv("REUSE_PORT") === "true",
   });
 
   Shutdown.onSignal("server", async () => {

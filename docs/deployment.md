@@ -2,6 +2,9 @@
 
 Arkyvree runs on **Fly.io** as two apps sharing one `Dockerfile`. CI handles build, test, and deploy on push to `main`.
 
+This is the hosted instance's deployment. To run Arkyvree on your own server, see [self-hosting.md](./self-hosting.md):
+the same `Dockerfile`'s `app` target, the server, the worker and PostgreSQL in one container.
+
 ## Topology
 
 | App | Purpose | Public? | Scaling |
@@ -170,6 +173,7 @@ One workflow per concern, in `.github/workflows/`:
 | `api-tests.yml` | PR, called by Deploy | `API Tests (shard n/3)` when Deploy calls it, `API Tests (changed, shard n/3)` and `API Tests (changed)` on a PR |
 | `e2e.yml` | PR, called by Deploy | `E2E (shard n/3)` |
 | `deploy.yml` | push to main | the four above, `Main's head`, then `Deploy`: the web app, then the worker |
+| `app-image.yml` | PR touching the image, a `v*.*.*` tag | `App Image`: builds the self-hosted image and starts it once; on a tag, `Publish`: pushes it to `ghcr.io/philippechab/arkyvree` for amd64 and arm64, as the version and `latest` |
 
 - A push to main runs only `deploy.yml`, which calls the four check workflows (`workflow_call`) and needs them: a deploy never uses a green result from another branch or commit. When a check fails, **Re-run failed jobs** re-runs it and deploys once it passes, as long as main is still at that commit (a re-run checks it again). A `Deploy` shown as cancelled gave its place in the queue to a newer commit's: don't re-run it. `Main's head` skips the deploy of a commit main has moved on from, before it queues, so re-running an older push never deploys it over a newer one nor takes the newer one's place in the queue: if the newer one fails its checks, nothing deploys until a fix lands on main. To roll back, redeploy both apps from the same earlier commit: `fly releases -a <app> --image` lists each app's images, `fly deploy -a <app> --config <its fly.*.toml> --image <image>` deploys one. The database stays migrated: migrations don't run backwards
 - The check workflows run in parallel. A new push to a PR cancels its previous runs; each push runs to the end
@@ -179,6 +183,7 @@ One workflow per concern, in `.github/workflows/`:
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
 - E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`), on the Google Chrome the runners come with (no browser to install). A failing shard uploads its Playwright report
 - `Deploy` deploys the web app (`fly.web.toml`, whose release command migrates the database), then the worker (`fly.worker.toml`), so the worker's code never runs before its migrations; a web deploy that fails stops it before the worker. One deploy runs at a time
+- The release command (`migrate-bin`) also installs and migrates graphile-worker's own schema (`runMigrations`). A graphile-worker upgrade's schema migrations therefore run there, while the old worker is still up until its own deploy follows: read the upgrade's notes for a migration the old worker can't run beside
 - Branch protection should require, by job name on the PRs' own runs, `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them). A PR that breaks a check only required by Deploy merges, then blocks the next release
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.
