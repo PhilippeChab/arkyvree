@@ -73,6 +73,12 @@ COPY runtime/package.json runtime/bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 
 FROM debian:bookworm-slim AS app
+# Their files outlive the image in the volume, so their users' ids never change: made before PostgreSQL's package,
+# which would otherwise pick the next free ones
+RUN groupadd --system --gid 999 postgres \
+  && useradd --system --uid 999 --gid postgres --home-dir /var/lib/postgresql --shell /bin/bash postgres \
+  && groupadd --system --gid 1000 arkyvree \
+  && useradd --system --uid 1000 --gid arkyvree --no-create-home --shell /usr/sbin/nologin arkyvree
 # PostgreSQL 17 from PostgreSQL's own repository; no cluster made at install, the entrypoint makes it in the volume
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
@@ -86,7 +92,7 @@ RUN apt-get update \
   && apt-get purge -y curl \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/* \
-  && useradd --system --no-create-home --shell /usr/sbin/nologin arkyvree
+  && test "$(id -u postgres):$(id -u arkyvree)" = "999:1000"
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PATH=/usr/lib/postgresql/17/bin:$PATH

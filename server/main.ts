@@ -59,6 +59,8 @@ async function main() {
     fetch: application.fetch,
     websocket,
     development: !isProduction(),
+    // The self-hosted image's updating page answers on the port until this server listens beside it
+    reusePort: readEnv("REUSE_PORT") === "true",
   });
 
   Shutdown.onSignal("server", async () => {

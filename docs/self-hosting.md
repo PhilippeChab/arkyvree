@@ -10,7 +10,7 @@ others as a hosted or managed service.
 ## What it needs
 
 - A Linux server (amd64 or arm64) with Docker, **2 CPU cores** and **2 GB of memory**. Measured on a running install:
-  about 350 MB of memory idle, about 450 MB after drawing a character's PDF.
+  about 350 to 450 MB of memory idle, about 520 MB while drawing a character's PDF.
 - About 1 GB of disk for the image, plus your data: a new install's `/storage` holds about 260 MB (its database, about
   70 MB with the bundled rulesets, and PostgreSQL's own files).
 - A domain name pointing at the server, for HTTPS (ONCE gets the certificate).
@@ -61,10 +61,18 @@ they are.
 ## Updates
 
 With automatic updates on, ONCE checks the image's `latest` tag and updates the install when a new version is
-published. ONCE starts the new version beside the old one, then removes the old one: until it's gone, the new one
-answers an "Arkyvree is updating" page, then starts its database (which recovers from the old one's abrupt stop, as
-PostgreSQL does after a power cut), applies the new version's database changes and opens the app. Expect a few seconds
-of the updating page.
+published. ONCE starts the new version beside the old one, waits for it to answer, then removes the old one at once.
+Meanwhile the new one answers an "Arkyvree is updating" page: once the old one is gone, it starts its database (which
+recovers from the old one's abrupt stop, as PostgreSQL does after a power cut) and applies the new version's database
+changes, still answering that page, until the app takes over. Expect the updating page for a few seconds to a minute.
+
+**An update can't be undone automatically**: once the new version has changed the database, the old one can't run on
+it. To go back after an update that went wrong: in ONCE's settings, set the image to the previous version's tag
+(`ghcr.io/philippechab/arkyvree:0.8.0` rather than `latest`, with automatic updates off), then restore a backup from
+before the update (ONCE keeps one a day), which brings back the database as it was then.
+
+Only one Arkyvree runs on a volume at a time. A second container started by hand on the same volume answers the
+updating page until the first one stops: stop the first, or give the second its own volume.
 
 ## Without ONCE: Docker alone
 

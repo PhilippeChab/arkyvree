@@ -13,12 +13,15 @@ if ! uses_bundled_database; then
   exit 0
 fi
 
-dump="${STORAGE_PATH:-/storage}/backup/arkyvree.dump"
+dump="$STORAGE_PATH/backup/arkyvree.dump"
 if [[ ! -f "$dump" ]]; then
-  # A backup ONCE made without the hook paused the container, so its database folder was copied at rest: it stands
+  # pre-backup didn't dump (it failed, or the backup predates it), so ONCE paused the container while it copied: its
+  # database folder stands as it was, which PostgreSQL recovers as after a power cut
   log "post-restore: no dump in the backup: keeping its database folder as it was copied"
   exit 0
 fi
+# A restored backup's files may come back with other owners: PostgreSQL's user reads the dump and writes the new folder
+own_tree postgres "$STORAGE_PATH/backup"
 
 copied="${PGDATA_DIR}.copied"
 rm -rf "$copied"
@@ -38,7 +41,7 @@ trap put_back EXIT
 init_postgres
 start_postgres
 ensure_database
-pg_restore -h "$PG_SOCKET_DIR" -U postgres -d "$APP_DATABASE" --exit-on-error "$dump"
+(run_as postgres pg_restore -h "$PG_SOCKET_DIR" -d "$APP_DATABASE" --exit-on-error "$dump")
 stop_postgres
 loaded=1
 

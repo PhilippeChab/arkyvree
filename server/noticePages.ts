@@ -1,3 +1,4 @@
+import { readEnv } from "./environment.ts";
 import Shutdown from "./Shutdown.ts";
 
 /** Escapes text for the page's HTML: the problem names settings and their values, as their owner typed them. */
@@ -41,6 +42,8 @@ function startNoticePage(
   const server = Bun.serve({
     port,
     hostname,
+    // The updating page hands the port to the server, which listens beside it a moment (docker/entrypoint.sh)
+    reusePort: readEnv("REUSE_PORT") === "true",
     fetch(request) {
       const { pathname } = new URL(request.url);
       if (pathname === "/up" || pathname === "/health") return new Response("notice", { status: 200 });

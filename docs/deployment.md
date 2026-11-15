@@ -183,6 +183,7 @@ One workflow per concern, in `.github/workflows/`:
 - Both API test commands run every `*.test.ts` under `tests/` (the Playwright specs are `*.e2e.ts`, so they're left out). Dependencies are installed from the frozen lockfile.
 - E2E: the suite sharded 3×, each shard building the client and copying the e2e template (made by `bun test:db:reset`) for its own server (`bunx playwright test --shard`), on the Google Chrome the runners come with (no browser to install). A failing shard uploads its Playwright report
 - `Deploy` deploys the web app (`fly.web.toml`, whose release command migrates the database), then the worker (`fly.worker.toml`), so the worker's code never runs before its migrations; a web deploy that fails stops it before the worker. One deploy runs at a time
+- The release command (`migrate-bin`) also installs and migrates graphile-worker's own schema (`runMigrations`). A graphile-worker upgrade's schema migrations therefore run there, while the old worker is still up until its own deploy follows: read the upgrade's notes for a migration the old worker can't run beside
 - Branch protection should require, by job name on the PRs' own runs, `Lint`, `Build` and `API Tests (changed)` (and the `E2E` shards to gate merges on them). A PR that breaks a check only required by Deploy merges, then blocks the next release
 
 `FLY_API_TOKEN` must be at **repository-level** secrets (Settings → Secrets and variables → Actions → Repository secrets). The deploy job doesn't declare an `environment:`, so environment-scoped secrets won't be visible.

@@ -1,8 +1,8 @@
 name: App Image
 
 # The self-hosted image (Dockerfile's `app` target, docs/self-hosting.md). A pull request that touches it builds it and
-# starts it once; a version tag (v1.2.3) publishes it to ghcr.io for amd64 and arm64, as that version and as `latest`,
-# which ONCE pulls again to update an install.
+# starts it once; a version tag (v1.2.3) publishes it to ghcr.io for amd64 and arm64, as that version, and as `latest`
+# (which ONCE pulls again to update an install) when it's the highest release.
 on:
   pull_request:
     branches: [main]
@@ -25,6 +25,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Check the scripts
@@ -70,6 +72,15 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # `latest` (what ONCE updates to) moves only to the highest release: never back to an older version's fix, never
+      # to a prerelease (v1.2.0-rc.1), which metadata-action's `latest=auto` already leaves out
+      - id: latest
+        name: Whether this release is the highest
+        run: |
+          highest=$(git tag -l 'v*.*.*' | grep -v -- - | sort -V | tail -n 1)
+          if [ "$GITHUB_REF_NAME" = "$highest" ]; then echo "flavor=latest=auto" >>"$GITHUB_OUTPUT"; else echo "flavor=latest=false" >>"$GITHUB_OUTPUT"; fi
       # The arm64 image installs PostgreSQL under emulation; its binaries are cross-compiled
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -82,9 +93,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/philippechab/arkyvree
+          flavor: ${{ steps.latest.outputs.flavor }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest
       - uses: docker/build-push-action@v6
         with:
           context: .

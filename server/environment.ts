@@ -40,6 +40,7 @@ const VARIABLES = {
   WORKER_CONCURRENCY: "how many jobs the worker runs at once: 2 unless set, 1 in the self-hosted image",
   EMAIL_SETUP_PAGE: "`true`: without a working email setup, the server answers a page saying so instead of stopping",
   UPDATING_PAGE: "`true`: the server answers only a page saying it's updating, while the previous version stops",
+  REUSE_PORT: "`true`: the server shares its port with the updating page it takes over from (SO_REUSEPORT)",
 } as const;
 
 /** The variables set on Fly: docs/deployment.md's table lists each (tests/environment.test.ts). */
