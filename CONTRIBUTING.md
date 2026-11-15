@@ -22,7 +22,7 @@ credentials or a production database for development or testing.
 The development workflow uses PostgreSQL on port 5432. The separate test
 database uses port 5433. Mailpit is available for local email; real Resend,
 Google, storage, and monitoring credentials are not required for basic local work.
-Uploads require separately configured S3-compatible storage.
+Without S3 settings, uploads are kept on disk under `.storage/` in the repo.
 
 ## Working on code
 

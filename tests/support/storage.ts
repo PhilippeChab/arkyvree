@@ -1,4 +1,19 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { DiskStorageBackend } from "@/server/storage/DiskStorageBackend.ts";
 import type { StorageBackend, StoredStream } from "@/server/storage/ObjectStorage.ts";
+
+/**
+ * A disk storage in a folder of its own, made for the test (`root`, under the system's temporary folder), and what
+ * removes it: `ObjectStorage.setForTest(storage)` to run a test's attachments on it.
+ */
+export function diskStorage() {
+  const root = mkdtempSync(path.join(tmpdir(), "arkyvree-files-"));
+  const storage = new DiskStorageBackend(root, "https://app.example.com");
+  return { root, storage, remove: () => rmSync(root, { recursive: true, force: true }) };
+}
 
 /**
  * An in-memory storage backend: every object exists and reports 1 KiB, and reads as none.

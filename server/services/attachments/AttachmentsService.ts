@@ -9,6 +9,7 @@ import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { getFileEditableDocument, getFileReadableDocument } from "@/server/services/campaigns/documents/index.ts";
 import { getPortraitEditableCharacter } from "@/server/services/characters/index.ts";
 import { withAttachmentWrite, withBlobDeletion, withNewBlob } from "@/server/services/writes/index.ts";
+import { detectDocumentFileType, detectImageType } from "@/server/storage/fileTypes.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import {
   ALLOWED_DOCUMENT_FILE_TYPES,
@@ -21,7 +22,6 @@ import {
 import type { Session } from "@/shared/relations.ts";
 
 import { getAvatarEditableUser } from "./editableUser.ts";
-import { detectDocumentFileType, detectImageType } from "./imageTypes.ts";
 
 interface AttachableConfig {
   canAttach: AttachRight;
@@ -156,9 +156,10 @@ class AttachmentsService {
       throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
   }
 
+  /** A blob's storage key: its id, then its file's name made safe, "file" when nothing but dots would be left. */
   private buildKey(blobId: string, filename: string): string {
-    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
-    return `blobs/${blobId}/${safe}`;
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200);
+    return `blobs/${blobId}/${/^\.*$/.test(safe) ? "file" : safe}`;
   }
 
   /**
@@ -304,7 +305,7 @@ class AttachmentsService {
       await withBlobDeletion(orphan.id, (tx) => Blobs.delete(tx, { id: orphan.id }));
     } catch (error) {
       console.warn(
-        `[attachments] S3 cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
+        `[attachments] Storage cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
@@ -433,6 +434,7 @@ class AttachmentsService {
     });
 
     const presignedUrl = ObjectStorage.get().presignPut(key, {
+      byteSize: params.byteSize,
       contentType: params.contentType,
     });
     const signedId = this.signToken({
@@ -447,6 +449,20 @@ class AttachmentsService {
       presignedUrl,
       headers: { "Content-Type": params.contentType },
     };
+  }
+
+  /**
+   * Takes a browser's upload to the server's disk, at the link `createDirectUpload` signed (`DiskStorageBackend`): its
+   * signature and expiry first, then its blob, which must still wait for its file (stored, not yet attached), so a link
+   * replayed after its blob was attached, removed or swept stores nothing. One its link already filled is refused too.
+   */
+  async createDiskUpload(key: string, query: Record<string, string | undefined>, request: Request) {
+    const disk = ObjectStorage.findDisk();
+    if (!disk) throw new NotFoundError("File not found");
+    const grant = disk.verifyGrant(key, query);
+    const blob = await Blobs.findOne(db, { key });
+    if (!blob || blob.attachedAt) throw new ConflictError("This upload link was already used");
+    await disk.receiveUpload(key, grant, request);
   }
 
   /**

@@ -143,6 +143,11 @@ const baseConfig: UserConfig = {
         target: `http://localhost:${apiPort}`,
         changeOrigin: true,
       },
+      // The files the server keeps on its disk without S3, and a browser's upload of one
+      "^/files/.*": {
+        target: `http://localhost:${apiPort}`,
+        changeOrigin: true,
+      },
       // The MCP server and its OAuth sign-in, which an app reaches at the app's origin: the consent page
       // (`/oauth/consent`) is the client's
       "^/(mcp|v1)(/.*)?$|^/oauth/(authorize|token|revoke)|^/\\.well-known/oauth-": {

@@ -3,7 +3,7 @@ import type { JobHelpers } from "graphile-worker";
 import { db } from "@/server/database/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { withBlobSweep } from "@/server/services/writes/index.ts";
-import ObjectStorage, { isStorageConfigured } from "@/server/storage/ObjectStorage.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 
 interface Logger {
   info(message: string): void;
@@ -28,10 +28,10 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
     const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
     if (refs.length > 0) return "skipped";
 
-    // S3 call inside the tx (unlike attach() which moves it out) — the
-    // FOR UPDATE lock has to span both the S3 delete and the row delete
+    // Storage call inside the tx (unlike attach() which moves it out) — the
+    // FOR UPDATE lock has to span both the file's delete and the row delete
     // so a concurrent attach() can't grab the blob and create a ref
-    // after we've already deleted the S3 object. Sweep is sequential
+    // after we've already deleted the file. Sweep is sequential
     // (graphile-worker single concurrency) so connection-pool impact
     // is bounded.
     try {
@@ -39,7 +39,7 @@ async function sweepOne(blobId: string, key: string, logger: Logger): Promise<Sw
       await Blobs.delete(tx, { id: blobId });
       return "swept";
     } catch (error) {
-      logger.warn(`S3 delete failed for ${key}: ${error instanceof Error ? error.message : error}`);
+      logger.warn(`Storage delete failed for ${key}: ${error instanceof Error ? error.message : error}`);
       return "failed";
     }
   });
@@ -51,11 +51,6 @@ export async function sweepPendingBlobs(
   opts: { batchSize?: number; logger?: Logger; now?: Date; ttlMs?: number } = {},
 ): Promise<{ failed: number; swept: number }> {
   const logger = opts.logger ?? noopLogger;
-
-  if (!isStorageConfigured()) {
-    logger.info("Storage not configured, skipping pending-blob sweep");
-    return { swept: 0, failed: 0 };
-  }
 
   const ttl = opts.ttlMs ?? UNATTACHED_BLOB_TTL_MS;
   const batch = opts.batchSize ?? BATCH_SIZE;
@@ -93,6 +88,9 @@ export async function sweepPendingBlobs(
     if (sweptThisBatch === 0) break;
     if (candidates.length < batch) break;
   }
+
+  // On the server's disk, what uploads cut short left behind (a crash mid-upload), as old as an unattached blob
+  await ObjectStorage.findDisk()?.removeStaleUploads(ttl);
 
   if (swept > 0 || failed > 0) logger.info(`Swept ${swept} blobs, ${failed} failed`);
 

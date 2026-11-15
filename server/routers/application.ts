@@ -13,6 +13,7 @@ import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
+import filesRouter from "./files.ts";
 import healthRouter from "./health.ts";
 import mcpRouter from "./mcp/index.ts";
 import oauthRouter from "./oauth/index.ts";
@@ -114,6 +115,8 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   // How an app signs in to the MCP server: before the static router, which answers no `/.well-known/` path
   .route("/.well-known", wellKnownRouter)
   .route("/oauth", oauthRouter)
+  // The files kept on the server's disk, without S3: before the static router, which answers a path with an extension
+  .route("/files", filesRouter)
   .route("/", staticRouter)
   // Everything a route or a service throws: the error in the API's envelope, with its status.
   .onError(toErrorResponse);

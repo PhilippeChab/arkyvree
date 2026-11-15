@@ -89,7 +89,7 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 | `DIRECT_DATABASE_URL` | both | Neon direct connection (no `-pooler`). Required for LISTEN/NOTIFY — pgbouncer doesn't support session features |
 | `RESEND_API_KEY` | both | Email via Resend |
 | `SIGNING_SECRET` | web | Signs upload attachment tokens; required at startup |
-| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage and cleanup; required by web startup |
+| `S3_BUCKET`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | both | Attachment storage (Tigris) and cleanup: all five, or none to keep the files on disk (below) |
 | `GOOGLE_CLIENT_ID` | web | Google sign-in |
 | `APP_URL` | both | Email links + logo image (worker — `EmailLayout` reads it at render time), CORS allowed origin and OG meta (web), canonical-host redirect (web) |
 | `WORKER_FLYCAST_URL` | web | `http://arkyvree-worker.flycast:8001/health` |
@@ -98,6 +98,30 @@ Set via `fly secrets set -a <app>`. Same set on both apps unless noted. `server/
 | `SENTRY_TRACES_SAMPLE_RATE` | both | Optional, defaults to `0` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | both | Better Stack OTLP ingest base URL (unset = metrics push disabled) |
 | `OTEL_AUTH_TOKEN` | both | Better Stack OTLP source token (wrapped in `Authorization: Bearer ...` at runtime) |
+
+### File storage
+
+Uploads (avatars, portraits, campaign documents' files) go to one of two places, which the variables choose
+(`server/storage/ObjectStorage.ts`):
+
+- **An S3-compatible bucket**, with all five `S3_*` variables set: this deployment's (Tigris). A browser uploads an avatar
+  or a portrait straight to the bucket through a presigned link, and reads it from `S3_PUBLIC_URL`.
+- **The server's disk**, with none of them: the files are kept under `STORAGE_PATH`'s `files` folder, which production
+  must set (`/storage` in the single-container install; `.storage` in the repo otherwise). The app takes a browser's
+  upload at a link it signs (`PUT /files/<key>?…`, with `SIGNING_SECRET`: its type and the size it may hold, for
+  5 minutes, and only while its blob still waits for its file), checks its bytes are an image the app takes, writes it
+  where no file is yet, and serves the files at `/files/<key>` (`DiskStorageBackend`).
+
+**Disk storage needs one host:** the web process and the worker must read and write the same folder (the worker's
+hourly sweep deletes files there), and only one web instance may serve it. That's the single-container install, where
+both run in one container on one volume. A deployment like this one, the web app and the worker as separate Fly apps
+(whose volumes can't be shared) that may scale to several machines, uses S3.
+
+The server and the worker refuse to start with some S3 variables set and not the others, naming those missing, and in
+production with none of them and no `STORAGE_PATH`: losing the S3 secrets never quietly moves the files to a machine's
+own disk. Either way, a stored file is read by whoever has its key, which holds its blob's random id, and never changes:
+a public bucket serves it so, and `/files/<key>` too, a file other than a PDF under `Content-Security-Policy: sandbox`.
+A campaign document's file is only ever handed out through its document's route, which asks who may read it.
 
 ## Custom domain
 
