@@ -228,6 +228,14 @@ export function invalidateCharacterListings(queryClient: QueryClient) {
   ]);
 }
 
+/** What an invite link's token reads as: whether it lets its opener sign up, or why not. None to read without one. */
+export function inviteLinkStateQuery(token: string | undefined) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.auth.inviteLink(token ?? ""),
+    queryFn: token ? () => parseResponse(rpc.auth["invite-links"][":token"].$get({ param: { token } })) : skipToken,
+  });
+}
+
 export function rulesetDetailQuery(id: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.detail(id),

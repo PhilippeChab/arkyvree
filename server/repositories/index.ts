@@ -24,6 +24,7 @@ export {
   EntitySnapshots,
   Exports,
   InstanceSettings,
+  InviteLinks,
   Invites,
   Modifiers,
   NameBindings,

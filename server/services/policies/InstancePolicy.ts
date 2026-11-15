@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
 import { Users } from "@/server/repositories/index.ts";
+import type { SignUpPolicy } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
@@ -48,6 +49,21 @@ export default class InstancePolicy extends BasePolicy<InstanceAccount | undefin
   /** Reading or changing the instance's settings and its accounts: its admins'; anyone else a 403. */
   canAdminister() {
     if (!this.isAdmin) throw new ForbiddenError("Only an admin of this Arkyvree can do this");
+
+    return true;
+  }
+
+  /**
+   * Making an invite link: an admin's, while the instance takes new accounts (`signUpPolicy`): a closed one would refuse
+   * whoever opened it.
+   */
+  canCreateInviteLink(signUpPolicy: SignUpPolicy) {
+    this.canAdminister();
+    if (signUpPolicy === "Closed") {
+      throw new ConflictError(
+        "Invite links only work while sign-ups are Open or Invite Only: change the setting first",
+      );
+    }
 
     return true;
   }

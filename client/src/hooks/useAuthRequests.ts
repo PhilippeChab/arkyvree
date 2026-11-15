@@ -6,6 +6,9 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
+/** What a Google sign-in sends: Google's ID token, and the invite link a new account comes through, if any. */
+type GoogleSignInBody = InferRequestType<typeof rpc.auth.google.$post>["json"];
+
 /** What a password reset sends: the code, the email it went to, and the new password twice. */
 type ResetPasswordBody = InferRequestType<(typeof rpc.auth)["reset-password"]["$post"]>["json"];
 
@@ -45,7 +48,7 @@ export function useAuthRequests() {
 
   const signInWithGoogle = useMutation({
     mutationKey,
-    mutationFn: (idToken: string) => parseResponse(rpc.auth.google.$post({ json: { idToken } })),
+    mutationFn: (json: GoogleSignInBody) => parseResponse(rpc.auth.google.$post({ json })),
     onSuccess: startSession,
   });
 

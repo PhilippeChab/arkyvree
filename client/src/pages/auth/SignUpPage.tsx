@@ -6,16 +6,37 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { AuthPage, authPagePath, type AuthPageState, useAuthRedirect } from "@/client/src/components/auth/index.ts";
 import { EmailField, LoadError, PasswordField } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { signUpPolicyQuery } from "@/client/src/lib/queries.ts";
+import { inviteLinkStateQuery, signUpPolicyQuery } from "@/client/src/lib/queries.ts";
 import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { INVITE_LINK_MESSAGES, type InviteLinkState } from "@/shared/inviteLinks.ts";
 
 import { AuthSubmitButton, GoogleSignInSection } from "./components/index.ts";
 
-type SignUpFormData = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
+interface InviteNoteProps {
+  /** What the invite link the visitor opened reads as: none when they opened none, or it's being read. */
+  inviteState: InviteLinkState | undefined;
+}
+
+type SignUpFormData = Omit<InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"], "inviteToken">;
+
+/**
+ * What the page says above its form about invites, on an instance that takes them alone: that an invite link let the
+ * visitor in, why the one they opened doesn't, or that signing up needs an invite.
+ */
+function InviteNote({ inviteState }: InviteNoteProps) {
+  if (inviteState === "Valid") return <Alert severity="success">You've been invited to this {APP_NAME}.</Alert>;
+  if (inviteState) return <Alert severity="error">{INVITE_LINK_MESSAGES[inviteState]}</Alert>;
+  return (
+    <Alert severity="info">
+      Signing up here needs an invite: use the address someone on this {APP_NAME} invited to a campaign, a ruleset or a
+      character, or the invite link they sent you.
+    </Alert>
+  );
+}
 
 export default function SignUpPage() {
   usePageTitle("Sign Up");
@@ -26,6 +47,9 @@ export default function SignUpPage() {
   // Who may sign up, once the instance has an admin (until then, anyone: its first account becomes its admin)
   const { data: signUp, error: signUpError } = useQuery(signUpPolicyQuery());
   const policy = signUp?.hasAdmin ? signUp.signUpPolicy : "Open";
+  // The invite link the visitor opened (`/sign-up?invite=…`), if any: what it lets them do, read up front
+  const inviteToken = useSearchParam("invite").value || undefined;
+  const { data: invite, error: inviteError } = useQuery(inviteLinkStateQuery(inviteToken));
 
   const { control, handleSubmit } = useFormWith<SignUpFormData>({
     emailAddress: "",
@@ -35,10 +59,13 @@ export default function SignUpPage() {
 
   const handleSignUp = (data: SignUpFormData) => {
     setError(null);
-    auth.signUp.mutate(data, {
-      onSuccess: () => navigate("/verify-email", { state: { redirect } satisfies AuthPageState }),
-      onError: (error) => setError(errorMessage(error, "Failed to sign up")),
-    });
+    auth.signUp.mutate(
+      { ...data, inviteToken },
+      {
+        onSuccess: () => navigate("/verify-email", { state: { redirect } satisfies AuthPageState }),
+        onError: (error) => setError(errorMessage(error, "Failed to sign up")),
+      },
+    );
   };
 
   const signInLink = (
@@ -70,12 +97,8 @@ export default function SignUpPage() {
       <Stack spacing={4}>
         {/* The setting unread: the form stays, and the server answers what it allows */}
         {!!signUpError && <LoadError what="Sign-up setting" error={signUpError} />}
-        {policy === "Invite Only" && (
-          <Alert severity="info">
-            Signing up here needs an invite: use the address someone on this {APP_NAME} invited to a campaign, a ruleset
-            or a character.
-          </Alert>
-        )}
+        {!!inviteError && <LoadError what="Invite link" error={inviteError} />}
+        {policy === "Invite Only" && <InviteNote inviteState={inviteToken ? invite?.state : undefined} />}
         {/* The first field's own top, which adds to the gap above the form */}
         <Stack component="form" onSubmit={handleSubmit(handleSignUp)} noValidate spacing={3} sx={{ pt: 2 }}>
           <EmailField control={control} name="emailAddress" />
@@ -101,6 +124,7 @@ export default function SignUpPage() {
         <Stack spacing={2}>
           <GoogleSignInSection
             label="Sign Up with Google"
+            inviteToken={inviteToken}
             disabled={auth.pending}
             onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
           />

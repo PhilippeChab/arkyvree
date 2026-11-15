@@ -1,4 +1,4 @@
-/** What the instance's admins read: its sign-up setting, and its accounts a page at a time. */
+/** What the instance's admins read: its sign-up setting, and its invite links and accounts a page at a time. */
 
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -16,6 +16,21 @@ export function adminAccountsQuery(search: string) {
       parseResponse(
         rpc.api.admin.accounts.$get({
           query: { page: pageParam.toString(), limit: LIST_PAGE_SIZE.toString(), search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+/** The instance's invite links, the newest first: who made each, when it expires, how many signed up with it. */
+export function adminInviteLinksQuery() {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.admin.inviteLinks,
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.admin["invite-links"].$get({
+          query: { page: pageParam.toString(), limit: LIST_PAGE_SIZE.toString() },
         }),
       ),
     initialPageParam: 1,

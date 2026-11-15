@@ -69,6 +69,8 @@ class UsersRepository extends include(BaseRepository<typeof usersInAccount>, Pag
     values: {
       emailAddress: string;
       emailVerifiedAt?: string;
+      /** The invite link it signed up with, if it came through one. */
+      inviteLinkId?: string;
       isAdmin?: boolean;
       password?: string;
       username?: string;
@@ -83,6 +85,7 @@ class UsersRepository extends include(BaseRepository<typeof usersInAccount>, Pag
         ...(passwordDigest ? { passwordDigest } : {}),
         ...(values.emailVerifiedAt ? { emailVerifiedAt: values.emailVerifiedAt } : {}),
         ...(values.isAdmin ? { isAdmin: true } : {}),
+        ...(values.inviteLinkId ? { inviteLinkId: values.inviteLinkId } : {}),
       })
       .returning();
   }

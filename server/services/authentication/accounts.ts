@@ -82,9 +82,10 @@ async function findTakenUser(tx: Db, identifier: AccountIdentifier) {
 
 /**
  * One run of a Google sign-in (`signInAsGoogleAccount`): its account found, locked and read again, then signed in,
- * linked, or made. A race its lock couldn't cover is refused for a rerun (`toRerun`).
+ * linked, or made (with the invite link it came through, `inviteToken`, if any). A race its lock couldn't cover is
+ * refused for a rerun (`toRerun`).
  */
-async function signInGoogleOnce(payload: { email: string; sub: string }) {
+async function signInGoogleOnce(payload: { email: string; sub: string }, inviteToken?: string) {
   const email = sanitizeEmail(payload.email);
 
   // Its account (the one the Google account is linked to, else the one its address names) locked first, then read
@@ -131,9 +132,9 @@ async function signInGoogleOnce(payload: { email: string; sub: string }) {
       // Case 3: New user. Another first sign-in of the address that commits its account first refuses this one's on
       // its index, which the rerun finds and signs in to as its returning user
       // Made verified: an instance with no admin who can sign in makes it its admin
-      const { noAdmin } = await checkSignUp(tx, email);
+      const { inviteLinkId, noAdmin } = await checkSignUp(tx, email, inviteToken);
       const userRows = await withUniqueRefusal(
-        () => Users.create(tx, { emailAddress: email, isAdmin: noAdmin }),
+        () => Users.create(tx, { emailAddress: email, inviteLinkId, isAdmin: noAdmin }),
         (index) => (index === "users_email" ? toRerun(toTakenError("emailAddress").message) : undefined),
       );
       if (!userRows[0]) throw new InternalError("Could not create user");
@@ -171,7 +172,7 @@ export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>,
 
 /** The user as a response carries it: whether a password is set, never its digest. */
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
-  const { passwordDigest, ...safeUser } = user;
+  const { inviteLinkId: _inviteLinkId, passwordDigest, ...safeUser } = user;
   return { ...safeUser, hasPassword: !!passwordDigest };
 }
 
@@ -217,14 +218,14 @@ export async function openSession(
  * couldn't cover (`RERUN_CAUSE`) runs again, once, as the winner left the accounts: the second of two first sign-ins
  * of a Google account signs in to the account the first made.
  */
-export async function signInAsGoogleAccount(payload: { email: string; sub: string }) {
+export async function signInAsGoogleAccount(payload: { email: string; sub: string }, inviteToken?: string) {
   try {
-    return await signInGoogleOnce(payload);
+    return await signInGoogleOnce(payload, inviteToken);
   } catch (error) {
     if (!isRerun(error)) throw error;
   }
   try {
-    return await signInGoogleOnce(payload);
+    return await signInGoogleOnce(payload, inviteToken);
   } catch (error) {
     // Lost twice: answered as a plain conflict, its cause the API's own
     throw isRerun(error) ? new ConflictError(error.message) : error;

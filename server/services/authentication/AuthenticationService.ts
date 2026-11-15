@@ -25,7 +25,7 @@ import {
 } from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
-import { checkSignUp, markAdminIfNone } from "./signUps.ts";
+import { checkSignUp, markAdminIfNone, readInviteLink } from "./signUps.ts";
 
 const DUMMY_HASH = await hashPassword("dummy-password-for-timing-normalization");
 
@@ -57,6 +57,15 @@ class AuthenticationService {
     if (!user) throw new InternalError("User not found");
 
     return toSafeUser(user);
+  }
+
+  /**
+   * What an invite link's token reads as, to whoever opens its link: one that lets them sign up, or why it doesn't
+   * (expired, revoked, or naming no link). Nothing else of the link.
+   */
+  async getInviteLinkState(token: string) {
+    const { state } = await readInviteLink(db, token);
+    return { state };
   }
 
   /**
@@ -148,9 +157,10 @@ class AuthenticationService {
     });
   }
 
-  async signInWithGoogle(idToken: string) {
+  /** Signs in with a Google account, or makes its account, through the invite link it came with (`inviteToken`). */
+  async signInWithGoogle(idToken: string, inviteToken?: string) {
     const payload = await verifyGoogleIdToken(idToken);
-    return await signInAsGoogleAccount(payload);
+    return await signInAsGoogleAccount(payload, inviteToken);
   }
 
   async signOut(session: SessionRow) {
@@ -168,13 +178,14 @@ class AuthenticationService {
     });
   }
 
-  async signUp(emailAddress: string, password: string) {
+  /** Makes an account, through the invite link it came with (`inviteToken`), if any, and sends its email's code. */
+  async signUp(emailAddress: string, password: string, inviteToken?: string) {
     const { user, code } = await withNewAccount(async (tx) => {
       // Never an admin yet: it becomes one once its email is verified, if the instance has none by then
-      await checkSignUp(tx, emailAddress);
+      const { inviteLinkId } = await checkSignUp(tx, emailAddress, inviteToken);
       await assertNotTaken(tx, { emailAddress });
 
-      const rows = await withTakenRefusal(() => Users.create(tx, { emailAddress, password }));
+      const rows = await withTakenRefusal(() => Users.create(tx, { emailAddress, inviteLinkId, password }));
       const user = rows[0];
       if (!user) throw new InternalError("Could not create user");
 
