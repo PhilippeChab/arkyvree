@@ -750,6 +750,32 @@ describe("DetailedCharacter", () => {
       // A Rogue 2 at 22nd: the epic save bonus's +1 on every save
       expect(await at([2])).toEqual({ attacks: [21, 16, 11, 6], bab: 21, saves: [13, 7, 7] });
     });
+
+    test("add a class's last level taken up to 20th, when it's taken on both sides of it", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await seedHuman(
+        "Fighter Rogue",
+        { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 },
+        { fields: { [CHARACTER_XP]: 210000 } },
+      );
+      const fighterLevels = Array.from({ length: 18 }, (_, index) => index + 1);
+      await addClassLevels(
+        db,
+        ctx,
+        characterId,
+        "Fighter",
+        fighterLevels,
+        fighterLevels.map(() => 10),
+      );
+      // Rogue 1 and 2 at 19th and 20th, Rogue 3 at 21st
+      await addClassLevels(db, ctx, characterId, "Rogue", [1, 2, 3], [6, 6, 6]);
+      const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+      const { fortitude, reflex, will } = detailed.components.saves.getSaves();
+      // Fighter 18's +18 and Rogue 2's +1, not Rogue 3's +2, and the epic attack bonus's +1
+      expect(detailed.components.combat.getCombat().bab).toBe(20);
+      // Fighter 18's good Fortitude +11 and poor saves +6, Rogue 2's good Reflex +3: no epic save bonus at 21st
+      expect([fortitude.base, reflex.base, will.base]).toEqual([11, 9, 6]);
+    });
   });
 
   describe("hit points", () => {
@@ -3723,6 +3749,33 @@ describe("DetailedCharacter", () => {
         });
         // A cleric 5's spells: third-level ones
         expect(detailed.getSpellcasting()).toEqual({ arcane: 0, arcanecasterlevel: 0, casterlevel: 5, divine: 3 });
+      });
+
+      test("rises past 20th, its spells per day stopping at a 20th level's: a cleric 18 / stormlord 5's is 23", async () => {
+        const { aptMap, featMap } = await getSeedCtx();
+        const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
+        const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+        const stormlord = (await Entities.findOne<Klass>(db, {
+          entityType: "classes",
+          name: "Stormlord",
+          rulesetId: extension.id,
+        }))!;
+        const advance = { [aptMap["Bonus Divine Caster Level"]]: [featMap["Advance Cleric Spellcasting"]] };
+        const epicId = await seedCaster("Cleric 18 / Stormlord 5", [["Cleric", 18]], fork.id);
+        for (let level = 1; level <= 5; level++)
+          await addCharacterLevel(epicId, (await findClassLevel(stormlord.id, level))!.id, { feats: advance });
+        const epic = await build((await Characters.findOne(db, { id: epicId }))!);
+        const cleric20 = await build(
+          (await Characters.findOne(db, { id: await seedCaster("Cleric 20", [["Cleric", 20]], fork.id) }))!,
+        );
+
+        expect(epic.getSpellcasting()).toEqual({ arcane: 0, arcanecasterlevel: 0, casterlevel: 23, divine: 9 });
+        // A cleric 20's spells per day, at each spell level
+        const slots = (character: DetailedCharacter) => {
+          const spells = character.components.aptitudes.getAptitudes()["clericspells"] as Record<string, unknown>;
+          return Array.from({ length: 10 }, (_, level) => (spells[String(level)] as AptitudeLevelData).allowed);
+        };
+        expect(slots(epic)).toEqual(slots(cleric20));
       });
 
       test("counts a class once it casts, cantrips included: a bard 1's is 1, a ranger 3's and a fighter's none", async () => {

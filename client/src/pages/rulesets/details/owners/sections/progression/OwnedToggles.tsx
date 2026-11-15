@@ -35,7 +35,7 @@ export interface ToggleNote {
   text: string;
 }
 
-/** The toggles a phone's line holds: ten, so 20 owned entities (3.5's class's levels) take two lines, none hidden. */
+/** The toggles a phone's line holds: ten, so 20 owned entities (a class's levels) take two lines, none hidden. */
 const PHONE_TOGGLES = 10;
 
 /**
