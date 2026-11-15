@@ -58,6 +58,13 @@ writes a consistent copy of the database to `/storage/backup/arkyvree.dump`. Res
 `/hooks/post-restore`, which rebuilds the database from that copy. Uploaded files (`/storage/files`) are backed up as
 they are.
 
+A backup that comes while Arkyvree is still starting (ONCE's automatic update and its daily backup come due on the same
+check, so a backup can follow an update by seconds) waits up to 90 seconds for the database before copying it.
+
+**Keep backups private.** Besides your data, each ONCE backup holds the install's settings in plain text: the email
+password, the image registry's password if one is set, and the secret (`SECRET_KEY_BASE`) Arkyvree signs upload links
+with. Store them where only you can read them.
+
 ## Updates
 
 With automatic updates on, ONCE checks the image's `latest` tag and updates the install when a new version is
@@ -110,6 +117,37 @@ docker run -d --name arkyvree --restart unless-stopped \
 | `GOOGLE_CLIENT_ID` | Turns on Google sign-in |
 | `ROLE` | `all` (the default), or `web` / `worker` to run the two apart; both need `DATABASE_URL` |
 | `WORKER_CONCURRENCY` | How many jobs (PDFs, emails) run at once: 1 by default here |
+
+## How the image is tested
+
+Every pull request that changes the image (`docker/Dockerfile`, what it runs), and every release before it's published,
+tests it through ONCE (`scripts/once/test.sh`, run by `.github/workflows/app-image.yml`), as a self-hoster would use it:
+
+1. ONCE installs the latest published release, with Mailpit as its email server.
+2. The test signs up through the app's own pages' requests, reads the code from the verification email, and checks
+   that the account is the admin. It creates a character and uploads its portrait.
+3. It publishes the new image under the same tag and runs `once update`, polling the site every half second: no request
+   may fail (the "Arkyvree is updating" page may answer meanwhile). A backup runs right after the update, while the new
+   version still starts, and must hold the database's dump. Then the account still signs in, the portrait still loads,
+   the app runs the new image, and its database holds every migration the image ships.
+4. It exports the character's PDF through the public API, which the background worker draws.
+5. It backs up, removes the install with its data, restores the backup, and signs in again; then it stops and starts
+   the app, and signs in again.
+
+Each week, and on demand, the same test also leaves ONCE's own background runner on for a few minutes, with automatic
+updates and backups: a new image is published, and the runner must update the install and back it up by itself.
+
+On your own machine, `bun run test:once` runs the same test against an image built from your working tree
+(`bun run test:once --image ghcr.io/philippechab/arkyvree:0.8.0` tests a published one, `--background` adds the
+background runner). It runs in a Docker-in-Docker container of its own, so ONCE never touches your computer's Docker or
+its ports 80 and 443, and removes everything when it ends. It needs Docker, and takes a few minutes.
+
+`bun run once:try` is the hands-on version: the same isolated install, kept running, with ONCE's own screen open in your
+terminal. Open http://arkyvree.localhost:8080 to use the app (sign up: the first account is the admin) and
+http://127.0.0.1:8026 for Mailpit, which holds the emails it sends, the verification code among them. Quitting ONCE's
+screen removes everything. `ONCE_TRY_PORT` and `ONCE_TRY_MAIL_PORT` change the two ports. Browsers open
+`*.localhost` addresses on your own computer by themselves; a command-line tool may not (`curl -H 'Host:
+arkyvree.localhost:8080' http://127.0.0.1:8080/` reaches it all the same).
 
 ## Not supported
 

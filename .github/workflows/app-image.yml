@@ -1,18 +1,37 @@
 name: App Image
 
-# The self-hosted image (Dockerfile's `app` target, docs/self-hosting.md). A pull request that touches it builds it and
-# starts it once; a version tag (v1.2.3) publishes it to ghcr.io for amd64 and arm64, as that version, and as `latest`
-# (which ONCE pulls again to update an install) when it's the highest release.
+# The self-hosted image (docker/Dockerfile, docs/self-hosting.md). A pull request that touches it builds it, starts it
+# once, then tests it through ONCE (scripts/once/test.sh): installed from the latest release, updated to this image,
+# backed up, restored and restarted. A version tag (v1.2.3) runs the same, then publishes it to ghcr.io for amd64 and
+# arm64, as that version, and as `latest` (which ONCE pulls again to update an install) when it's the highest release.
+# Each week, and on demand, main's image is tested with ONCE's own background runner too, which updates and backs up
+# an install by itself.
 on:
   pull_request:
     branches: [main]
     paths:
-      - Dockerfile
       - .dockerignore
       - docker/**
+      - scripts/once/**
       - .github/workflows/app-image.yml
+      # What the image's start runs: the server's and the worker's start, the updating page, the probes, the
+      # migrations, the files kept on disk, the dependencies the binaries are compiled with, PDFKit's runtime
+      - bun.lock
+      - drizzle/**
+      - scripts/db/migrate.ts
+      - server/main.ts
+      - server/worker.ts
+      - server/noticePages.ts
+      - server/routers/health.ts
+      - server/routers/files.ts
+      - server/storage/**
+      - runtime/**
   push:
     tags: ["v*.*.*"]
+  schedule:
+    # Mondays, 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 # A new push to a pull request cancels its previous run; each release runs to the end
 concurrency:
@@ -22,7 +41,6 @@ concurrency:
 jobs:
   check:
     name: App Image
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -30,13 +48,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check the scripts
-        run: shellcheck -x --severity=warning docker/entrypoint.sh docker/lib.sh docker/hooks/*
+        run: |
+          shellcheck -x --severity=warning docker/entrypoint.sh docker/lib.sh docker/hooks/* \
+            scripts/once/test.sh scripts/once/try.sh scripts/once/local.sh
       - uses: docker/setup-buildx-action@v3
+      # The amd64 image, as the release publishes it: built once, then saved for the ONCE test
       - name: Build
         uses: docker/build-push-action@v6
         with:
           context: .
-          target: app
+          file: docker/Dockerfile
           load: true
           tags: arkyvree-app:check
           cache-from: type=gha
@@ -61,10 +82,42 @@ jobs:
         run: |
           docker stop -t 60 app
           docker logs app 2>&1 | grep -q "database system is shut down"
+      - name: Save it
+        shell: bash
+        run: docker save arkyvree-app:check | gzip -1 >"$RUNNER_TEMP/app-image.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-image
+          path: ${{ runner.temp }}/app-image.tar.gz
+          retention-days: 1
+          compression-level: 0
+
+  once:
+    name: ONCE
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-image
+          path: ${{ runner.temp }}
+      - name: Load the image
+        shell: bash
+        run: gunzip -c "$RUNNER_TEMP/app-image.tar.gz" | docker load
+      # Weekly and on demand, ONCE's background runner too: its first check comes five minutes in
+      - name: Test it with ONCE
+        env:
+          BACKGROUND: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '' }}
+        run: scripts/once/test.sh --image arkyvree-app:check ${BACKGROUND:+--background}
 
   publish:
     name: Publish
     if: github.event_name == 'push'
+    needs: once
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -99,7 +152,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          target: app
+          file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
