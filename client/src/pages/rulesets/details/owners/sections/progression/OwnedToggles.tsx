@@ -37,6 +37,11 @@ export interface ToggleNote {
 
 /** The toggles a phone's line holds: ten, so 20 owned entities (a class's levels) take two lines, none hidden. */
 const PHONE_TOGGLES = 10;
+/**
+ * The toggles a wider screen's line holds: twenty, a class's levels to the 20th on one line, and its epic levels (3.5's,
+ * to the 40th) on a second one, none hidden.
+ */
+const WIDE_TOGGLES = 20;
 
 /**
  * One toggle an owned entity, filled where something is granted, outlined where the tab changed it before its save. A
@@ -61,10 +66,10 @@ export function OwnedToggles({
       aria-label={`${positionWord.many} of ${label}`}
       sx={{
         display: "grid",
-        // On a phone, ten a line (20 owned entities on two); from sm up, one line
+        // On a phone, ten a line (20 owned entities on two); from sm up, twenty a line (40 on two)
         gridTemplateColumns: {
           xs: `repeat(${Math.min(Math.max(ownedEntities.length, 1), PHONE_TOGGLES)}, minmax(0, 1fr))`,
-          sm: `repeat(${Math.max(ownedEntities.length, 1)}, minmax(24px, 1fr))`,
+          sm: `repeat(${Math.min(Math.max(ownedEntities.length, 1), WIDE_TOGGLES)}, minmax(24px, 1fr))`,
         },
         gap: 0.5,
       }}
