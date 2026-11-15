@@ -38,11 +38,16 @@ export const FEAT_FAMILIES = [
   "Greater Weapon Focus",
   "Weapon Specialization",
   "Greater Weapon Specialization",
+  // The epic book's, for a weapon
+  "Epic Weapon Focus",
+  "Epic Weapon Specialization",
   "Improved Critical",
   "Power Critical",
   "Martial Weapon Proficiency",
   "Exotic Weapon Proficiency",
   "Rapid Reload",
+  // The epic book's, for a type of crossbow
+  "Instant Reload",
   "Spell Focus",
   "Greater Spell Focus",
   "Arcane Defense",

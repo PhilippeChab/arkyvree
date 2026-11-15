@@ -5,6 +5,22 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** Generating what a book copies from the core rules: its copied feats (cowFeats.ts) and spells (cowSpells.ts). */
 export function GeneratesCopies<B extends Constructor<BaseBookGenerator>>(Base: B) {
   abstract class GeneratingCopies extends Base {
+    /**
+     * The book's cowClasses.ts and its epic classes' feats (feats/classes/epicClasses.ts): each core class its epic
+     * classes add levels to, with the features they grant, and their bonus feats' features. None for a book without
+     * epic classes.
+     */
+    writeCowClasses() {
+      if (!this.seeds.reference("epicClass")) return;
+      const { cowClasses, epicClassFeats } = BookLayout.files;
+      this.writeList(cowClasses.path, cowClasses.list, "CowClassEntry", this.seeds.cowClasses(), (file, copy) =>
+        file.cowClass(copy),
+      );
+      this.writeList(epicClassFeats.path, epicClassFeats.list, "FeatSeed", this.seeds.epicClassFeats(), (file, feat) =>
+        file.feat(feat),
+      );
+    }
+
     /** The book's cowFeats.ts: each core feat its classes' bonus feat lists name, with the lists it joins. */
     writeCowFeats() {
       if (!this.copiesFromCore()) return;

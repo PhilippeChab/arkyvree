@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
+import { DND35_EPIC_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { AdvancementPlanAnswer } from "@/engine/core/module/index.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -42,8 +44,14 @@ import {
 } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { writeValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  invalidateSeededRuleset,
+  readView,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
+import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -1647,6 +1655,38 @@ describe("a character's last level", () => {
     // Its 21st and 22nd levels save, a Fighter 20 having no 21st level to take, then none more
     await finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6]), {}, true);
     expect(finalizeBatch(ctx, characterId, [["Rogue", 3, 6]], {}, true)).rejects.toMatchObject(pastLastLevel(0, 22));
+  });
+
+  test("with the Epic SRD 3.5 extension, takes a class's levels past 20th, which give its epic bonus feats", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    await subscribeTestRuleset(fork.id, [(await findSeededRuleset(DND35_EPIC_NAME)).id]);
+    await writeValues("rulesets", fork.id, RULESET_FIELDS.write({ lastLevel: 24 }));
+    RulesetViews.invalidate(fork.id);
+    const characterId = await createFighterAt(ctx, 20, fork.id);
+    const view = Dnd35View.of(await readView(fork.id));
+    const epicPool = view.named("aptitudes", "Epic Fighter Bonus Feat")!.id;
+    const toughness = view.feats.find((feat) => feat.name === "Epic Toughness")!.id;
+    const fighterLevel = (level: number) => ({ classId: ctx.classMap.pc["Fighter"], level, hp: 8 });
+    // Its 21st level: the core rules' feat, and no bonus feat of the fighter's; its 22nd: one in the epic pool
+    const answer = await getPlanAnswer(session, characterId, levelUpPlan([fighterLevel(21), fighterLevel(22)]));
+    expect(stepAnswerOf(answer, "feats", "pick").pools[epicPool]).toMatchObject({ allowed: 1 });
+    const saved = await CharacterAdvancementsService.addAdvancements(
+      session,
+      characterId,
+      levelUpPlan([fighterLevel(21), fighterLevel(22)], { feats: { [epicPool]: [toughness] } }),
+      true,
+    );
+    expect(
+      (
+        await findPicks(
+          "feats",
+          saved.map(({ id }) => id),
+        )
+      ).map(({ entityId }) => entityId),
+    ).toContain(toughness);
+    // Fighter 22: its 20th level's +20 and the epic attack bonus's +1
+    expect((await sheetOf(characterId)).combat.bab).toBe(21);
   });
 });
 

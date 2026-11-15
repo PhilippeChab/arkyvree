@@ -180,7 +180,8 @@ Built-in families on the SRD ruleset and its extensions:
 | `weaponspecialization`, `greaterweaponspecialization`         | Weapon Specialization variants                                                                     |
 | `improvedcritical`, `powercritical`                           | Improved Critical and Power Critical variants                                                      |
 | `martialweaponproficiency`, `exoticweaponproficiency`         | per-weapon proficiency feats                                                                       |
-| `rapidreload`                                                 | Rapid Reload variants                                                                              |
+| `epicweaponfocus`, `epicweaponspecialization`                 | the Epic extension's Epic Weapon Focus and Epic Weapon Specialization variants                     |
+| `rapidreload`, `instantreload`                                | Rapid Reload variants, and the Epic extension's Instant Reload ones                                |
 | `spellfocus`, `greaterspellfocus`, `arcanedefense`            | Spell Focus, Greater Spell Focus and Arcane Defense per school                                     |
 | `skillfocus`                                                  | Skill Focus per skill                                                                              |
 | `metamagic`, `itemcreation`                                   | every metamagic / item creation feat                                                               |

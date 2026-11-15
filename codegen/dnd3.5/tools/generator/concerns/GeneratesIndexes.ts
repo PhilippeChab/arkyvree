@@ -24,10 +24,11 @@ export function GeneratesIndexes<B extends Constructor<BaseBookGenerator>>(Base:
 
     /** The book's class feats' index (feats/classes/index.ts): each of its classes' feats file, from its references. */
     writeClassFeatIndex() {
-      const files = this.seeds
-        .classReferences()
-        .map(({ ref }) => BookLayout.classFeatsFile(ref.raw.name))
-        .sort((a, b) => (a.path < b.path ? -1 : 1));
+      const { epicClassFeats } = BookLayout.files;
+      const files = [
+        ...this.seeds.classReferences().map(({ ref }) => BookLayout.classFeatsFile(ref.raw.name)),
+        ...(this.wrote(epicClassFeats.path) ? [epicClassFeats] : []),
+      ].sort((a, b) => (a.path < b.path ? -1 : 1));
       if (files.length === 0) return;
 
       const file = new CodeFile();

@@ -9,6 +9,7 @@ export type DeclaredType = keyof typeof DECLARED_TYPES;
 const DECLARED_TYPES = {
   BookContent: "@/content/dnd3.5/builders/rulesets/types.ts",
   ClassSeed: "@/content/dnd3.5/builders/classes/types.ts",
+  CowClassEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   CowFeatEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   CowSpellEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   DomainSeed: "@/content/dnd3.5/builders/domains/types.ts",

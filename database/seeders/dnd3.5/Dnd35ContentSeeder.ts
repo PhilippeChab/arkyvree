@@ -16,6 +16,11 @@ export interface Dnd35SeedContext extends SeedContext {
   abilityMap: Ids;
   /** Its aptitudes and its base ruleset's. */
   aptMap: Ids;
+  /**
+   * Its classes and its base ruleset's, by name (a creature's too, of their own names): an extension copies one it adds
+   * levels to (`cowClassesIntoExtension`).
+   */
+  classIds: Ids;
   /** Its feats and its base ruleset's, its own under a name they share. */
   featMap: Ids;
   /** Its base ruleset's spells, which it copies before adding them to a spell list (`cowSpell`). */
@@ -47,6 +52,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       saveMap: {},
       skillMap: {},
       aptMap: {},
+      classIds: {},
       featMap: {},
       spellMap: {},
       inheritedSpellMap: {},
@@ -72,6 +78,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       saveMap: await this.namesOf(db, rulesetId, "saves"),
       skillMap: await this.namesOf(db, rulesetId, "skills"),
       aptMap: await this.namesOf(db, rulesetId, "aptitudes"),
+      classIds: await this.namesOf(db, rulesetId, "classes"),
       featMap: await this.namesOf(db, rulesetId, "feats"),
       spellMap: await this.namesOf(db, rulesetId, "spells"),
       inheritedSpellMap: {},

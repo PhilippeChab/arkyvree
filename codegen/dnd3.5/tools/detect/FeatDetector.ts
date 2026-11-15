@@ -1,8 +1,11 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { BonusFeatList, ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -66,14 +69,21 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
  * and what its book's classes give them (the aptitudes and class levels of the bonus feat lists that name them).
  */
 export class FeatDetector extends BaseDetector<FeatReference> {
-  constructor(stored: Pick<FeatReference, "_meta" | "overrides" | "raw">, classes: ClassReferenceFile[]) {
+  constructor(
+    stored: Pick<FeatReference, "_meta" | "overrides" | "raw">,
+    classes: ClassReferenceFile[],
+    epicLists: BonusFeatList[] = [],
+  ) {
     super(stored);
     this.classes = classes;
+    this.epicLists = epicLists;
     this.feats = sanitizeJsonValues(stored.raw);
   }
 
   /** The book's classes, whose bonus feat lists name its feats. */
   private readonly classes: ClassReferenceFile[];
+  /** The bonus feat lists of the book's epic classes, which name its feats too. */
+  private readonly epicLists: BonusFeatList[];
   /** The feats its page gives, sanitized. */
   private readonly feats: FeatReference["raw"];
 
@@ -139,7 +149,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       const extraAptitudes = (bonusFeatAptitudes.get(slug) ?? []).filter((a) => !baseAptitudes.includes(a));
 
       // Wrap detected requirements with class-level alternatives from bonusFeatLists
-      let requirements = ovr?.requirements ?? det.requirements;
+      let requirements = this.withEpicLevel(ovr?.requirements ?? det.requirements);
       if (!ovr?.requirements && requirements.length > 0) {
         const classLevels = bonusFeatClassLevels.get(slug);
         if (classLevels?.length) {
@@ -159,8 +169,10 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),
         ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-        // An epic feat is left out unless an override keeps it
-        ...(ovr?.skip || (entry.featType === "epic" && ovr?.skip !== false) ? { skip: true } : {}),
+        // An epic feat is left out of another book than the epic one, unless an override keeps it
+        ...(ovr?.skip || (entry.featType === "epic" && !this.isEpicBook() && ovr?.skip !== false)
+          ? { skip: true }
+          : {}),
       };
     }
     return mapping;
@@ -182,6 +194,9 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         map.set(slug, existing);
       }
     }
+
+    // The epic classes' bonus feat lists → aptitudes
+    for (const list of this.epicLists) for (const featName of list.feats) add(featName, list.aptitude);
 
     for (const { ref } of this.classes) {
       // Bonus feat lists → aptitudes
@@ -227,5 +242,19 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       }
     }
     return map;
+  }
+
+  /** Whether the reference is the epic book's (`EPIC_BOOK`): its feats, all epic, are its own. */
+  private isEpicBook(): boolean {
+    return this.stored._meta.book === EPIC_BOOK;
+  }
+
+  /**
+   * A feat's requirements, a character's 21st level among them for the epic book's (the SRD's "at 21st level, and every
+   * three levels thereafter, the character may select an epic feat"): its class bonus feats come past 20th too.
+   */
+  private withEpicLevel(requirements: RequirementEntry[] | undefined): RequirementEntry[] {
+    if (!this.isEpicBook()) return requirements ?? [];
+    return [...(requirements ?? []), gte("identity.meta.level", LAST_NONEPIC_LEVEL + 1)];
   }
 }

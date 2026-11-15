@@ -38,6 +38,9 @@ export function CollectsAptitudes<B extends Constructor<BaseBookSeeds>>(Base: B)
           for (const list of ref.mapping.bonusFeatLists ?? []) names.add(list.aptitude);
         }
 
+        // From its epic classes' bonus feat lists
+        for (const list of this.epicLists()) names.add(list.aptitude);
+
         // From feat aptitudes
         for (const feat of allFeats) for (const apt of feat.aptitudes) names.add(apt);
 

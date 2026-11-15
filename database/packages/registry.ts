@@ -5,6 +5,7 @@ import { DND35_COMPLETE_DIVINE_PACKAGE } from "@/content/dnd3.5/packages/extensi
 import { DND35_COMPLETE_SCOUNDREL_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-scoundrel.ts";
 import { DND35_COMPLETE_WARRIOR_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-warrior.ts";
 import { DND35_DMG_PACKAGE } from "@/content/dnd3.5/packages/extensions/dmg.ts";
+import { DND35_EPIC_PACKAGE } from "@/content/dnd3.5/packages/extensions/epic.ts";
 import { DND5_CORE_PACKAGE } from "@/content/dnd5/packages/core.ts";
 import { PF1_CORE_PACKAGE } from "@/content/pf1/packages/core.ts";
 import { seedTestCharacters as seedDnd35TestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
@@ -30,6 +31,7 @@ export const RULESET_CONTENT = {
     extensions: [
       DND35_COMPLETE_WARRIOR_PACKAGE,
       DND35_DMG_PACKAGE,
+      DND35_EPIC_PACKAGE,
       DND35_COMPLETE_DIVINE_PACKAGE,
       DND35_COMPLETE_SCOUNDREL_PACKAGE,
       DND35_COMPLETE_ADVENTURER_PACKAGE,

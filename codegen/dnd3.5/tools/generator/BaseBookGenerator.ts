@@ -29,10 +29,12 @@ export class BaseBookGenerator {
 
   /**
    * Whether the book copies feats and spells from the core rules (cowFeats.ts, cowSpells.ts): an extension with
-   * classes. The core rules are what extensions copy from.
+   * classes or epic classes. The core rules are what extensions copy from.
    */
   protected copiesFromCore(): boolean {
-    return this.book !== CORE_BOOK && this.seeds.classReferences().length > 0;
+    return (
+      this.book !== CORE_BOOK && (this.seeds.classReferences().length > 0 || Boolean(this.seeds.reference("epicClass")))
+    );
   }
 
   /** Logs what the generator does, unless the generation is quiet. */

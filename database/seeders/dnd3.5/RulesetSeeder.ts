@@ -7,6 +7,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
+import { ExtendsClasses } from "./concerns/ExtendsClasses.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsSpells } from "./concerns/SeedsSpells.ts";
@@ -16,13 +17,14 @@ import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 /**
  * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
  * (`ContentSeeder`'s: aptitudes, abilities, saves, languages, feats, races, items, copies) or 3.5's own (`concerns/`:
- * classes, skills, spells, wizard schools, an extension's changes to the core), and the steps made of others are its
+ * classes, skills, spells, wizard schools, an extension's changes to the core, the levels it adds to its classes), and the steps made of others are its
  * own. Each names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules'
  * package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,
   CopiesIntoExtensions,
+  ExtendsClasses,
   SeedsClasses,
   SeedsSkills,
   SeedsSpells,
@@ -63,6 +65,7 @@ export class RulesetSeeder extends include(
     await this.cowSpellsIntoExtension(book.cowSpells);
     await this.seedDomains(book.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const klass of book.classes) await this.seedClass(klass);
+    await this.cowClassesIntoExtension(book.cowClasses);
   }
 
   /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */

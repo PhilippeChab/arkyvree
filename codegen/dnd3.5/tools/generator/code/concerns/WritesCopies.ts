@@ -1,11 +1,25 @@
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
 import type { CowFamilyEntry } from "@/codegen/dnd3.5/tools/seeds/concerns/Copies.ts";
-import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import type { CowClassEntry, CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
-/** Writing what a book copies from the core rules: a feat, a spell. */
+/** Writing what a book copies from the core rules: a class it adds levels to, a feat, a spell. */
 export function WritesCopies<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingCopies extends Base {
+    /** A core class a book adds levels to written as code, a list's item: its features a level a line. */
+    cowClass({ classFeatureAptitude, classFeatures, className, levels }: CowClassEntry): string[] {
+      return [
+        `  {`,
+        `    className: ${this.quote(className)},`,
+        `    levels: ${levels},`,
+        `    classFeatureAptitude: ${this.quote(classFeatureAptitude)},`,
+        `    classFeatures: [`,
+        ...classFeatures.map(([level, feature]) => `      [${level}, ${this.quote(feature)}],`),
+        `    ],`,
+        `  },`,
+      ];
+    }
+
     /**
      * A feat a book copies from the core rules written as code, a list's item: a family's, a feat for each of its
      * options, over the list its feats are made over.

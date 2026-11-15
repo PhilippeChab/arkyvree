@@ -13,28 +13,33 @@ import { ReferenceStore } from "@/codegen/core/references/ReferenceStore.ts";
 import { stringifyStably } from "@/codegen/core/text/json.ts";
 import { ClassDetector } from "@/codegen/dnd3.5/tools/detect/classes/ClassDetector.ts";
 import { DomainDetector } from "@/codegen/dnd3.5/tools/detect/DomainDetector.ts";
+import { EpicClassDetector } from "@/codegen/dnd3.5/tools/detect/EpicClassDetector.ts";
 import { FeatDetector } from "@/codegen/dnd3.5/tools/detect/FeatDetector.ts";
 import { ItemDetector } from "@/codegen/dnd3.5/tools/detect/ItemDetector.ts";
 import { MagicItemDetector } from "@/codegen/dnd3.5/tools/detect/MagicItemDetector.ts";
 import { RaceDetector } from "@/codegen/dnd3.5/tools/detect/RaceDetector.ts";
 import { SpellDetector } from "@/codegen/dnd3.5/tools/detect/SpellDetector.ts";
 import { WizardSchoolDetector } from "@/codegen/dnd3.5/tools/detect/WizardSchoolDetector.ts";
-import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { BonusFeatList, ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { ReferenceByType, ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /**
  * What a reference's detector reads of the books' other references: a book's classes, which a feat reference's mapping
- * reads, and the core rules' spells as stored, which an extension's spell may be written as ("As darkvision, except…").
+ * reads (and an epic class reference's, its core classes'), a book's epic classes' bonus feat lists, which name its
+ * feats too, and the core rules' spells as stored, which an extension's spell may be written as ("As darkvision,
+ * except…").
  */
 interface OtherReferences {
   classesOf(book: string): ClassReferenceFile[];
   coreSpells(): StoredReference<"spell">;
+  epicListsOf(book: string): BonusFeatList[];
 }
 
 /** The file a book's reference of each type is stored in, in the book's folder (a class's is its own, in `classes/`). */
 const REFERENCE_FILE_NAMES: { [T in Exclude<ReferenceType, "class">]: string } = {
   domain: "domains.json",
+  epicClass: "epicClasses.json",
   feat: "feats.json",
   item: "items.json",
   magicItem: "magicItems.json",
@@ -49,7 +54,9 @@ const RESOLVERS: {
 } = {
   class: (stored) => new ClassDetector(stored).resolve(),
   domain: (stored) => new DomainDetector(stored).resolve(),
-  feat: (stored, others) => new FeatDetector(stored, others.classesOf(stored._meta.book)).resolve(),
+  epicClass: (stored, others) => new EpicClassDetector(stored, others.classesOf(CORE_BOOK)).resolve(),
+  feat: (stored, others) =>
+    new FeatDetector(stored, others.classesOf(stored._meta.book), others.epicListsOf(stored._meta.book)).resolve(),
   item: (stored) => new ItemDetector(stored).resolve(),
   magicItem: (stored) => new MagicItemDetector(stored).resolve(),
   race: (stored) => new RaceDetector(stored).resolve(),
@@ -73,6 +80,7 @@ class References extends ReferenceStore<ReferenceByType> {
     const others: OtherReferences = {
       classesOf: (book) => this.loadClasses(book),
       coreSpells: () => this.stored(this.path(CORE_BOOK, "spell"), "spell"),
+      epicListsOf: (book) => this.epicLists(book),
     };
     return JSON.parse(stringifyStably(resolveStored(stored, others)));
   }
@@ -80,6 +88,12 @@ class References extends ReferenceStore<ReferenceByType> {
   /** Where `book`'s class reference `name` is stored (`classes/wizard.json`), whether or not it exists. */
   classPath(book: string, name: string): string {
     return join(this.dir, book, "classes", `${name}.json`);
+  }
+
+  /** The bonus feat lists of `book`'s epic classes, but those it skips: none for a book without epic classes. */
+  epicLists(book: string): BonusFeatList[] {
+    const epic = this.find(book, "epicClass");
+    return Object.values(epic?.mapping ?? {}).flatMap((mapping) => (mapping.skip ? [] : [mapping.bonusFeatList]));
   }
 
   /** `book`'s reference of `type`, loaded (`load`): none when the book has none. */

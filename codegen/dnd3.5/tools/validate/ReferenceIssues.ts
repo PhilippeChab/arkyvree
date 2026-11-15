@@ -120,7 +120,7 @@ export class ReferenceIssues {
       ...this.unreviewed(
         review,
         Library.book(data._meta.book)
-          .unknownListedFeats(data)
+          .unknownListedFeats(data.mapping.bonusFeatLists ?? [])
           .map((text) => ({ kind: "unknown listed feat" as const, text })),
         where,
         skip,
@@ -158,6 +158,32 @@ export class ReferenceIssues {
       }
       return this.unreviewed(review, found, { label: name, entityName: name });
     });
+  }
+
+  /**
+   * An epic classes reference's: what each class's table names that no feature or pattern reads, and the entries of its
+   * bonus feat list that name no feat, but those of a class its mapping skips.
+   */
+  private epicClassIssues(): Issue[] {
+    const data = References.load(this.file.path, "epicClass");
+    const review = new ReviewList(data.overrides?.reviewed);
+    const book = Library.book(data._meta.book);
+    return [
+      ...Object.entries(data.mapping).flatMap(([name, mapping]) =>
+        this.unreviewed(
+          review,
+          [
+            ...(data.detected[name]?.unresolved ?? []).map((text) => ({ kind: "error" as const, text })),
+            ...book
+              .unknownListedFeats([mapping.bonusFeatList])
+              .map((text) => ({ kind: "unknown listed feat" as const, text })),
+          ],
+          { label: name, entityName: name },
+          Boolean(mapping.skip),
+        ),
+      ),
+      ...this.stale(review),
+    ];
   }
 
   /** A feats reference's: its feats' detections, but those its mapping skips (an epic feat, unless an override keeps it). */
@@ -256,6 +282,8 @@ export class ReferenceIssues {
         return this.classIssues();
       case "feat":
         return this.featIssues();
+      case "epicClass":
+        return this.epicClassIssues();
       case "domain":
         return this.domainIssues();
       case "race":
