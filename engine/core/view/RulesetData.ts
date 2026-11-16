@@ -34,11 +34,6 @@ export interface KindValue {
 
 /** A ruleset's lists, composed across its chain (`RulesetComposition`): what its view holds and indexes. */
 export interface RulesetLists {
-  /**
-   * The owned entities the view shows under an owner they aren't stored under: an extension's class levels past those
-   * of the ruleset's own copy of the class (`RulesetComposition.composeOwned`), which the ruleset can't change
-   */
-  adopted?: ReadonlySet<string>;
   /** Each kind's entities, by its type */
   entities: ReadonlyMap<string, readonly ViewEntity[]>;
   /** Each kind's values kind-wide (its type's), as stat blocks show them: built when it's first read */
@@ -126,7 +121,6 @@ export default class RulesetData {
     this.words = words;
     this.kinds = kinds;
     this.entities = lists.entities;
-    this.adopted = lists.adopted ?? new Set();
     this.kindValuesOf = (type) => lists.kindValuesOf(type);
     this.composeLinksOf = (entityId) => lists.linksOf(entityId);
     this.originalOf = (type, slug, partition) => lists.originalOf?.(type, slug, partition);
@@ -191,9 +185,6 @@ export default class RulesetData {
     const owner = RulesetData.labelIn(words, ownerType).toLowerCase();
     return `Cannot restore: characters took ${taken} its parent's ${owner} doesn't have`;
   }
-
-  /** The owned entities the view shows under an owner they aren't stored under (`RulesetLists.adopted`). */
-  private readonly adopted: ReadonlySet<string>;
 
   private readonly built: Partial<Indices> = {};
 
@@ -370,14 +361,6 @@ export default class RulesetData {
   /** The kinds a character's inventory holds (`ViewKind.inventory`: 3.5's items), in their declared order. */
   inventoryTypes(): string[] {
     return Object.keys(this.kinds).filter((type) => this.isInventoryType(type));
-  }
-
-  /**
-   * Whether the view shows an owned entity (`id`) under an owner it isn't stored under: an extension's class level past
-   * those of the ruleset's own copy of the class, which the ruleset can't change (`RulesetLists.adopted`).
-   */
-  isAdopted(id: string): boolean {
-    return this.adopted.has(id);
   }
 
   /** Whether a user customizes a kind's entities (`type`): their modifiers and requirements. */

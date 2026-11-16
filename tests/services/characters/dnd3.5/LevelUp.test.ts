@@ -1701,57 +1701,21 @@ describe("a character's last level", () => {
       ).map(({ entityId }) => entityId),
     ).toContain(toughness);
     expect((await sheetOf(characterId)).combat.bab).toBe(21);
-    // Its epic levels are the book's: an edit or a delete of one is refused, naming it
+    // One of those levels, edited in the fork: its own copy, on its own class
     const level25 = view.classLevelByClassAndLevel.get(`${fighter.id}:25`)!;
-    const refused = "Fighter's level 25 comes from the Epic SRD 3.5 extension: it can't be changed in this ruleset";
-    expect(
-      EntitiesService.updateOwnedEntity(session, fork.id, "classes", fighter.id, level25.id, {
-        fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
-      }),
-    ).rejects.toMatchObject({ message: refused });
-    const level40 = view.classLevelByClassAndLevel.get(`${fighter.id}:40`)!;
-    expect(EntitiesService.deleteOwnedEntity(session, fork.id, "classes", fighter.id, level40.id)).rejects.toThrow(
-      "Fighter's level 40 comes from the Epic SRD 3.5 extension",
-    );
-  });
-
-  test("with the Epic SRD 3.5 extension, leaves a class the ruleset shortened as it is", async () => {
-    const ctx = await getSeedCtx();
-    const session = makeSession();
-    const epicId = (await findSeededRuleset(DND35_EPIC_NAME)).id;
-    const levelsOf = async (rulesetId: string) => {
-      RulesetViews.invalidate(rulesetId);
-      const view = Dnd35View.of(await readView(rulesetId));
-      const fighter = view.classes.find((klass) => klass.name === "Fighter" && klass.partition === "pc")!;
-      const levels = (view.classLevelsByClass.get(fighter.id) ?? []).toSorted((a, b) => a.position - b.position);
-      return { fighter, levels };
-    };
-    const deleteLast = async (rulesetId: string) => {
-      const { fighter, levels } = await levelsOf(rulesetId);
-      await EntitiesService.deleteOwnedEntity(session, rulesetId, "classes", fighter.id, levels.at(-1)!.id);
-    };
-    // Its own Fighter, its 20th level deleted, then subscribed: 19 levels, the book's 21st to 40th left out
-    const trimmed = await createSeededTestRuleset(session.userId);
-    await copyEntity(db, "classes", ctx.classMap.pc["Fighter"], trimmed);
-    await deleteLast(trimmed.id);
-    await subscribeTestRuleset(trimmed.id, [epicId]);
-    expect((await levelsOf(trimmed.id)).levels.map(({ position }) => position).at(-1)).toBe(19);
-    // Subscribed, then its own copy of the book's Fighter, its 40th deleted: 39
-    const copied = await createSeededTestRuleset(session.userId);
-    await subscribeTestRuleset(copied.id, [epicId]);
-    RulesetViews.invalidate(copied.id);
-    const { fighter } = await levelsOf(copied.id);
-    await copyEntity(db, "classes", fighter.id, copied);
-    await deleteLast(copied.id);
-    expect((await levelsOf(copied.id)).levels).toHaveLength(39);
-    // Its own Fighter, then subscribed, its own 20th deleted: the book's levels no longer join it
-    const own = await createSeededTestRuleset(session.userId);
-    await copyEntity(db, "classes", ctx.classMap.pc["Fighter"], own);
-    await subscribeTestRuleset(own.id, [epicId]);
-    expect((await levelsOf(own.id)).levels).toHaveLength(40);
-    const { fighter: ownFighter, levels } = await levelsOf(own.id);
-    await EntitiesService.deleteOwnedEntity(session, own.id, "classes", ownFighter.id, levels[19].id);
-    expect((await levelsOf(own.id)).levels).toHaveLength(19);
+    await EntitiesService.updateOwnedEntity(session, fork.id, "classes", fighter.id, level25.id, {
+      fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
+    });
+    RulesetViews.invalidate(fork.id);
+    const edited = Dnd35View.of(await readView(fork.id)).classLevelByClassAndLevel.get(`${fighter.id}:25`)!;
+    expect(edited.fields).toMatchObject({ [CLASS_LEVEL_SKILL_POINTS]: 4 });
+    expect(edited.id).not.toBe(level25.id);
+    // The epic book's own level as it was
+    const epic = Dnd35View.of(await readView((await findSeededRuleset(DND35_EPIC_NAME)).id));
+    const epicFighter = epic.classes.find((klass) => klass.name === "Fighter" && klass.partition === "pc")!;
+    expect(epic.classLevelByClassAndLevel.get(`${epicFighter.id}:25`)?.fields).toMatchObject({
+      [CLASS_LEVEL_SKILL_POINTS]: 2,
+    });
   });
 
   test("with the Epic SRD 3.5 extension, takes a class's levels past 20th, which give its epic bonus feats", async () => {
