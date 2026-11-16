@@ -157,13 +157,28 @@ export default class RulesetComposition {
   private readonly words: RulesDescription["words"];
 
   /**
-   * The owner the view shows that an owned row's owner (a copy, `row.ownerId`) stands as: the one it resolves to, when
-   * it's another the view shows. None for an original's row, or a row whose owner stands as none the view shows.
+   * The owner the view shows that an owned row joins (`adoptedOwner`): the one its owner (an extension's copy of a
+   * class) resolves to, of the same original, when that one copies no copy of its owner (which deleted the row, then),
+   * still has every level of the original (`lastOf`, its levels by owner: `positions`) and none at the row's, which is
+   * past the original's last. None otherwise: an original's row, a homebrew class's of a book's name, a trimmed class.
    */
-  private adoptedOwner(row: ViewEntity, owners: ReadonlySet<string>): string | undefined {
-    if (row.ownerId === null || this.cow.originalOf(row.ownerId) === row.ownerId) return undefined;
-    const standing = this.cow.resolve(row.ownerId);
-    return standing !== row.ownerId && owners.has(standing) ? standing : undefined;
+  private adoptedOwner(
+    row: ViewEntity,
+    owners: ReadonlySet<string>,
+    lastOf: ReadonlyMap<string, number>,
+    positions: ReadonlyMap<string, readonly ViewEntity[]>,
+  ): string | undefined {
+    const { ownerId, position } = row;
+    if (ownerId === null || position === null) return undefined;
+    const original = this.cow.originalOf(ownerId);
+    const standing = this.cow.resolve(ownerId);
+    if (original === ownerId || standing === ownerId || !owners.has(standing)) return undefined;
+    if (this.cow.originalOf(standing) !== original || this.cow.copies(standing, ownerId)) return undefined;
+    const originalLast = lastOf.get(original) ?? 0;
+    const held = new Set((positions.get(standing) ?? []).map((own) => own.position));
+    if (position <= originalLast || held.has(position)) return undefined;
+    for (let level = 1; level <= originalLast; level++) if (!held.has(level)) return undefined;
+    return standing;
   }
 
   /**
@@ -178,6 +193,7 @@ export default class RulesetComposition {
     const visibleIds = new Map<string, Set<string>>();
     const entities = new Map<string, ViewEntity[]>();
     const leftOut = new Set<string>();
+    const adopted = new Set<string>();
     const taken = new Map<string, StoredValues>();
     const merged = new Map<string, StoredValues>();
     for (const { ownerType, tracked, type } of this.schema.kinds) {
@@ -185,14 +201,14 @@ export default class RulesetComposition {
       if (ownerType) {
         const owners = visibleIds.get(ownerType);
         if (!owners) throw new Error(`The view composes ${type} before its owner, ${ownerType}`);
-        rows = this.composeOwned(type, owners, leftOut);
+        rows = this.composeOwned(type, owners, leftOut, adopted);
       } else {
         rows = this.composeRows((raw) => raw.entities[type] ?? []);
       }
       if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
       entities.set(type, this.cow.resolveLinks(this.mergeSiblings(type, rows, leftOut, { merged, taken })));
     }
-    return { entities, leftOut, merged, taken };
+    return { adopted, entities, leftOut, merged, taken };
   }
 
   /**
@@ -273,10 +289,11 @@ export default class RulesetComposition {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
-    const { entities, leftOut, merged, taken } = this.composeEntities();
+    const { adopted, entities, leftOut, merged, taken } = this.composeEntities();
     const bound = this.readBindings(entities);
     const { modifiers, excludedModifierIds, gates } = this.composeModifiers(leftOut, bound);
     return {
+      adopted,
       entities,
       kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, { merged, taken }),
       linksOf: (entityId: string) => this.composeLinks(entityId),
@@ -347,31 +364,34 @@ export default class RulesetComposition {
   }
 
   /**
-   * An owned kind's rows (`type`'s) whose owner the view shows (`owners`), the others left out (`leftOut`); and a copy's
-   * own past those the owner standing for it has (`adoptedOwner`), which join that owner: an extension that adds levels to
-   * a core class (the epic book's 21st to 40th) adds them to the ruleset's own copy of the class too, whose levels before
-   * stay its own. An original's, whose copy has fewer levels, stays left out.
+   * An owned kind's rows (`type`'s) whose owner the view shows (`owners`), the others left out (`leftOut`); and those an
+   * extension added to a class past its original's last (`adoptedOwner`), which join the ruleset's own copy of the class
+   * when that copy still has every level of the original: an extension that adds levels to a core class (the epic
+   * book's 21st to 40th) adds them to the ruleset's own copy too, whose levels stay its own. Each joined one goes in
+   * `adopted`.
    */
-  private composeOwned(type: string, owners: ReadonlySet<string>, leftOut: Set<string>): ViewEntity[] {
+  private composeOwned(type: string, owners: ReadonlySet<string>, leftOut: Set<string>, adopted: Set<string>) {
     const rows: ViewEntity[] = [];
     const orphans: ViewEntity[] = [];
+    // Each owner's last position, its stored rows': an original's, which an extension's added levels are past
+    const lastOf = new Map<string, number>();
     for (const raw of this.chain) {
       for (const row of raw.entities[type] ?? []) {
+        if (row.ownerId !== null) lastOf.set(row.ownerId, Math.max(lastOf.get(row.ownerId) ?? 0, row.position ?? 0));
         if (!this.cow.isHidden(row.id) && row.ownerId !== null && owners.has(row.ownerId)) rows.push(row);
         else if (!this.cow.isHidden(row.id) && row.ownerId !== null) orphans.push(row);
         else leftOut.add(row.id);
       }
     }
-    const taken = new Set(rows.map((row) => `${row.ownerId}:${row.position}`));
+    const positions = Map.groupBy(rows, (row) => row.ownerId!);
     for (const row of orphans) {
-      const owner = this.adoptedOwner(row, owners);
-      const key = `${owner}:${row.position}`;
-      if (owner !== undefined && !taken.has(key)) {
-        taken.add(key);
-        rows.push({ ...row, ownerId: owner });
-      } else {
+      const owner = this.adoptedOwner(row, owners, lastOf, positions);
+      if (owner === undefined) {
         leftOut.add(row.id);
+        continue;
       }
+      adopted.add(row.id);
+      rows.push({ ...row, ownerId: owner });
     }
     return rows;
   }

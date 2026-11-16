@@ -126,26 +126,6 @@ export default class EntityCopy {
   }
 
   /**
-   * Copies an owned entity the view shows under an owner of the ruleset its row isn't owned by (`ownedId`, of
-   * `ownedType`, under `ownerId`, of `ownerType`): an extension's class level past the ruleset's own class's last (the
-   * epic book's 25th, `RulesetComposition.composeOwned`), which its first edit copies under that class, standing for it
-   * at its position from then on. Answers the copy, and the customizations copied with it, by their sources' ids.
-   */
-  static async copyOwnedInto(
-    tx: Db,
-    ownerType: RulesetEntityType,
-    owned: { entityType: string; id: string },
-    ownerId: string,
-    scope: LockedRulesetScope,
-  ): Promise<{ copiedIds: ReadonlyMap<string, string>; id: string }> {
-    const copy = new EntityCopy(scope.sources, ownerType, ownerId);
-    const rows = await Entities.findMany(tx, { entityType: owned.entityType, ids: [owned.id] });
-    const cow = await CowDataReader.read(tx, scope.sources);
-    const ids = await copy.copyOwnedRows(tx, owned.entityType, rows, ownerId, cow);
-    return { copiedIds: copy.copiedIds, id: ids.get(owned.id)! };
-  }
-
-  /**
    * Copies `entityId` into the ruleset a write holds (`scope`, under its lock: no other write of it, nor of its source
    * chain, where the source is, runs meanwhile), or returns the copy it already has (then with no copied ids): the
    * newly created child entity, and the customizations copied with it, by their sources' ids.

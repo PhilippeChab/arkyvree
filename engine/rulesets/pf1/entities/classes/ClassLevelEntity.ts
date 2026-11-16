@@ -161,7 +161,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override describe(levelId: string) {
     const level = super.describe(levelId);
-    return { ...level, deletable: level.position >= this.lastPosition(), links: this.linksIn(level.id) };
+    const deletable = level.position >= this.lastPosition() && !this.view.rulesetData.isAdopted(level.id);
+    return { ...level, deletable, links: this.linksIn(level.id) };
   }
 
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
@@ -229,9 +230,14 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     throw new RulesError("conflict", `${this.klass.name}'s next ${what}`);
   }
 
-  /** The class's highest level's number, as the view has its levels; 0 for a class without one. */
+  /**
+   * The class's last level of its own: an extension's levels past its own (`RulesetData.isAdopted`), which the ruleset
+   * can't change, aside.
+   */
   private lastPosition() {
-    const levels = this.pf1.classLevelsByClass.get(this.klass.id) ?? [];
+    const levels = (this.pf1.classLevelsByClass.get(this.klass.id) ?? []).filter(
+      (level) => !this.view.rulesetData.isAdopted(level.id),
+    );
     return Math.max(0, ...levels.map((level) => level.position));
   }
 

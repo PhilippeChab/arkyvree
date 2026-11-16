@@ -107,6 +107,20 @@ export default class CowData {
   /** The ruleset's extensions, then its parent: where its inherited entities come from. */
   readonly sourceChain: string[];
 
+  /** Whether an entity (`id`) copies another (`sourceId`), directly or through the copies it copied. */
+  copies(id: string, sourceId: string): boolean {
+    const seen = new Set([id]);
+    for (
+      let source = this.sources.get(id);
+      source !== undefined && !seen.has(source);
+      source = this.sources.get(source)
+    ) {
+      if (source === sourceId) return true;
+      seen.add(source);
+    }
+    return false;
+  }
+
   /** Every id that resolves to the entity `id` resolves to, that entity's own first: a stored row may hold any. */
   getEquivalentIds(id: string): string[] {
     const target = this.resolve(id);
