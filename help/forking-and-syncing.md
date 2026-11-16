@@ -44,7 +44,7 @@ To re-pull the parent's update onto an entity you've already edited, restore it:
 - **Complete Divine** — divine classes, twenty cleric domains, divine feats.
 - **Complete Scoundrel** — luck feats, rogue-style classes and feats.
 - **DMG** — prestige classes.
-- **Epic** — the SRD's epic levels: the 11 base classes' levels 21 to 40 (a Fighter's bonus feat every 2 levels, a Rogue's sneak attack every 2…), each class's epic bonus feats, and the epic feats. Raise your ruleset's **Last Level** in its Settings too: a character stops there. A class you edited in your fork before subscribing keeps your edits, and gains the epic levels after its last.
+- **Epic** — the SRD's epic levels: the 11 base classes' levels 21 to 40 (a Fighter's bonus feat every 2 levels, a Rogue's sneak attack every 2…), each class's epic bonus feats, and the epic feats. Raise your ruleset's **Last Level** in its Settings too: a character stops there. A class you edited in your fork before subscribing stays yours, at its 20 levels.
 
 **Community extensions.** When you publish a fork that subscribes to no extensions, the **Publish Ruleset** dialog asks what to **Publish as**: a **Ruleset** (playable directly) or an **Extension**. A public fork published as an extension, with no extensions of its own, can be subscribed to from any fork of the same base. It's listed alongside the official ones.
 

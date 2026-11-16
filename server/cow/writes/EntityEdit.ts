@@ -24,22 +24,6 @@ export default class EntityEdit {
   }
 
   /**
-   * The row an edit of an owned entity the view shows under an owner of the ruleset, but stored under another
-   * (`owned`: an extension's class level past the ruleset's own class's last), writes: its copy under that owner
-   * (`ownerId`), made on its first edit (`EntityCopy.copyOwnedInto`).
-   */
-  private async adopt(
-    tx: Db,
-    ownerType: RulesetEntityType,
-    owned: { entityType: string; id: string },
-    ownerId: string,
-    namedId: string,
-  ): Promise<EditTarget> {
-    const copy = await EntityCopy.copyOwnedInto(tx, ownerType, owned, ownerId, this.scope);
-    return new EditTarget(copy.id, namedId, copy.copiedIds, owned);
-  }
-
-  /**
    * The copy of an inherited entity (`entityId`, of `entityType`), made on its first edit, as the target of a write
    * that named it `namedId`: with what it copied.
    */
@@ -90,21 +74,16 @@ export default class EntityEdit {
     if (!owner) throw new NotFoundError(notFound);
     const ownerRulesetId = String(owner.rulesetId);
 
-    if (ownerRulesetId === this.scope.sources.id) {
-      if (owned.ownerId === owner.id) return new EditTarget(owned.id, ownedId);
-      return await this.adopt(tx, ownerType, { entityType, id: owned.id }, owner.id, ownedId);
-    }
+    if (ownerRulesetId === this.scope.sources.id) return new EditTarget(owned.id, ownedId);
     // Not from the source chain
     if (!this.cow.sourceChain.includes(ownerRulesetId)) throw new NotFoundError(notFound);
 
     // Copy the owner (it copies what it owns), and find the owned entity's copy by its position: owned entities aren't
-    // snapshotted one by one. One the owner shows but doesn't own (an extension's level past its last) is copied under
-    // the owner's copy
+    // snapshotted one by one
     const copy = await this.copy(tx, ownerType, owner.id, owner.id);
     const ownedCopyId = (await copy.findOwned(tx, entityType)).get(owned.position);
-    if (ownedCopyId) return new EditTarget(ownedCopyId, ownedId, copy.copiedIds, { entityType, id: owned.id });
-    if (owned.ownerId === owner.id) throw new NotFoundError(notFound);
-    return await this.adopt(tx, ownerType, { entityType, id: owned.id }, copy.id, ownedId);
+    if (!ownedCopyId) throw new NotFoundError(notFound);
+    return new EditTarget(ownedCopyId, ownedId, copy.copiedIds, { entityType, id: owned.id });
   }
 
   /**

@@ -157,16 +157,6 @@ export default class RulesetComposition {
   private readonly words: RulesDescription["words"];
 
   /**
-   * The owner the view shows that an owned row's owner (a copy, `row.ownerId`) stands as: the one it resolves to, when
-   * it's another the view shows. None for an original's row, or a row whose owner stands as none the view shows.
-   */
-  private adoptedOwner(row: ViewEntity, owners: ReadonlySet<string>): string | undefined {
-    if (row.ownerId === null || this.cow.originalOf(row.ownerId) === row.ownerId) return undefined;
-    const standing = this.cow.resolve(row.ownerId);
-    return standing !== row.ownerId && owners.has(standing) ? standing : undefined;
-  }
-
-  /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
    * class's levels are overridden by its copy's, paired by `CowDataBuilder`, and a sibling loser's owner leaves its
    * own out), each winner with its sibling losers' fields and single links merged in (`mergeSiblings`), and the visible
@@ -185,7 +175,13 @@ export default class RulesetComposition {
       if (ownerType) {
         const owners = visibleIds.get(ownerType);
         if (!owners) throw new Error(`The view composes ${type} before its owner, ${ownerType}`);
-        rows = this.composeOwned(type, owners, leftOut);
+        rows = [];
+        for (const raw of this.chain) {
+          for (const row of raw.entities[type] ?? []) {
+            if (!this.cow.isHidden(row.id) && row.ownerId !== null && owners.has(row.ownerId)) rows.push(row);
+            else leftOut.add(row.id);
+          }
+        }
       } else {
         rows = this.composeRows((raw) => raw.entities[type] ?? []);
       }
@@ -344,36 +340,6 @@ export default class RulesetComposition {
     }
     this.originals.set(type, originals);
     return originals;
-  }
-
-  /**
-   * An owned kind's rows (`type`'s) whose owner the view shows (`owners`), the others left out (`leftOut`); and a copy's
-   * own past those the owner standing for it has (`adoptedOwner`), which join that owner: an extension that adds levels to
-   * a core class (the epic book's 21st to 40th) adds them to the ruleset's own copy of the class too, whose levels before
-   * stay its own. An original's, whose copy has fewer levels, stays left out.
-   */
-  private composeOwned(type: string, owners: ReadonlySet<string>, leftOut: Set<string>): ViewEntity[] {
-    const rows: ViewEntity[] = [];
-    const orphans: ViewEntity[] = [];
-    for (const raw of this.chain) {
-      for (const row of raw.entities[type] ?? []) {
-        if (!this.cow.isHidden(row.id) && row.ownerId !== null && owners.has(row.ownerId)) rows.push(row);
-        else if (!this.cow.isHidden(row.id) && row.ownerId !== null) orphans.push(row);
-        else leftOut.add(row.id);
-      }
-    }
-    const taken = new Set(rows.map((row) => `${row.ownerId}:${row.position}`));
-    for (const row of orphans) {
-      const owner = this.adoptedOwner(row, owners);
-      const key = `${owner}:${row.position}`;
-      if (owner !== undefined && !taken.has(key)) {
-        taken.add(key);
-        rows.push({ ...row, ownerId: owner });
-      } else {
-        leftOut.add(row.id);
-      }
-    }
-    return rows;
   }
 
   /**
