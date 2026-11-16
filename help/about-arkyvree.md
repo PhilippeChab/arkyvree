@@ -17,7 +17,7 @@ Three base rulesets, each its own game system: **Core SRD 3.5** (D&D 3.5), **Cor
 Included content for Core SRD 3.5:
 
 - **Base content** — the 11 base classes, all standard races, every SRD spell, the SRD feat list, weapons, armor, magic items.
-- **Sourcebook extensions** — Complete Warrior, Complete Divine, Complete Scoundrel, Complete Arcane, Complete Adventurer and DMG content, and the SRD's epic levels (Epic). Each fork subscribes to the ones it wants.
+- **Sourcebook extensions** — Complete Warrior, Complete Divine, Complete Scoundrel, Complete Arcane, Complete Adventurer and DMG content, and the SRD's epic feats (Epic). Each fork subscribes to the ones it wants.
 
 Included content for Core PSD 1, from the Pathfinder Core Rulebook:
 

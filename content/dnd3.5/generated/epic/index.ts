@@ -3,20 +3,15 @@
 import type { BookContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
 
 import { ALL_APTITUDES } from "./aptitudes.ts";
-import { COW_CLASSES } from "./cowClasses.ts";
-import { COW_FEATS } from "./cowFeats.ts";
-import { COW_SPELLS } from "./cowSpells.ts";
-import { ALL_CLASS_FEATS } from "./feats/classes/index.ts";
 import { ALL_STANDALONE_FEATS } from "./feats/index.ts";
 
 export const BOOK: BookContent = {
   aptitudes: ALL_APTITUDES,
   standaloneFeats: ALL_STANDALONE_FEATS,
-  classFeats: ALL_CLASS_FEATS,
-  cowFeats: COW_FEATS,
+  classFeats: [],
+  cowFeats: [],
   spells: [],
-  cowSpells: COW_SPELLS,
+  cowSpells: [],
   domains: [],
   classes: [],
-  cowClasses: COW_CLASSES,
 };

@@ -7,15 +7,11 @@ import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
 import type { TemplateFamily } from "@/codegen/dnd3.5/tools/seeds/FeatSeeds.ts";
 import type { BonusFeatList, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import type { CowClassEntry, CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
-import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
-import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What a class's bonus feat list's entry names, of the feats its book can list. */
 type ListedFeat =
@@ -53,36 +49,9 @@ function addListAdditions(
   }
 }
 
-/** The levels of a pattern from `first`, every `every` levels, to the last class level (`MAX_CLASS_LEVEL`). */
-function epicLevels(first: number, every: number): number[] {
-  const levels: number[] = [];
-  for (let level = first; level <= MAX_CLASS_LEVEL; level += every) levels.push(level);
-  return levels;
-}
-
 /** Copying from the core rules what a book's classes take: the core feats their lists name, the core spells. */
 export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
   abstract class Copying extends Base {
-    /**
-     * The core classes' features, by their name's slug: a list that joins a pool of theirs (an epic rogue's, the rogue's
-     * special abilities) copies them. The core rules' own, none.
-     */
-    private coreClassFeats(): Map<string, string> {
-      return this.memo("coreClassFeats", () => {
-        if (this.book === CORE_BOOK) return new Map<string, string>();
-        const core = this.shelf.book(CORE_BOOK);
-        const feats = core.classReferences().flatMap(({ ref }) => core.classes(ref).feats());
-        return new Map(feats.map((feat) => [stripSeparators(feat.name), feat.name]));
-      });
-    }
-
-    /** The core class's level modifiers (`className`'s), each at its level: none for a class the core rules haven't. */
-    private coreClassModifiers(className: string) {
-      const core = this.shelf.book(CORE_BOOK);
-      const ref = core.classReferences().find((file) => file.ref.raw.name === className)?.ref;
-      return ref ? (core.classes(ref).seed().modifiers ?? []) : [];
-    }
-
     /**
      * The core template families, by their name's slug: their feats are copied for each option. The core rules' own,
      * none.
@@ -98,7 +67,7 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
     /**
      * What a class's bonus feat list's entry names, by its letters ("Hear the Unseen" is Hear The Unseen): a feat of the
      * book's own (the feat generator gives it the list), a core feat (a family's for an option too, "Spell Focus:
-     * Enchantment", or a core class's feature, a rogue's special ability) or a core family, which the book copies; or
+     * Enchantment") or a core family, which the book copies; or
      * none.
      */
     private listedFeat(name: string): ListedFeat | undefined {
@@ -109,7 +78,7 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
       if (family) return { family };
       const [, prefix] = /^(.+?): ./.exec(name) ?? [];
       if (prefix && this.coreTemplates().has(stripSeparators(prefix))) return { core: name };
-      const core = this.findExistingFeat(name) ?? this.coreClassFeats().get(slug);
+      const core = this.findExistingFeat(name);
       return core ? { core } : undefined;
     }
 
@@ -124,35 +93,10 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
         for (const { ref } of this.classReferences()) {
           for (const feat of Object.values(ref.mapping.features))
             if (feat.seedName) names.set(stripSeparators(feat.seedName), feat.seedName);
+          for (const feat of this.classes(ref).feats()) names.set(stripSeparators(feat.name), feat.name);
         }
         return names;
       });
-    }
-
-    /**
-     * The core classes a book adds levels to: its epic classes', each to the last class level (`MAX_CLASS_LEVEL`), its
-     * features at each level of their patterns (`epicLevels`), its bonus feats' feature among them.
-     */
-    cowClasses(): CowClassEntry[] {
-      return this.memo("cowClasses", () =>
-        Object.entries(this.reference("epicClass")?.mapping ?? {})
-          .filter(([, mapping]) => !mapping.skip)
-          .map(([className, { bonusFeats, classFeatureAptitude, features, levelModifiers = [] }]) => ({
-            className,
-            levels: MAX_CLASS_LEVEL,
-            classFeatureAptitude,
-            modifiers: levelModifiers.flatMap(({ target, first, every }) => {
-              const last = this.coreClassModifiers(className).findLast((modifier) => modifier.target === target);
-              if (!last) throw new Error(`The core ${className} has no level modifier of ${target} to go on with`);
-              return epicLevels(first, every).map((level) => ({ ...last, level }));
-            }),
-            classFeatures: [...features, bonusFeats]
-              .flatMap(({ feature, first, every }) =>
-                epicLevels(first, every).map((level): [number, string] => [level, feature]),
-              )
-              .sort(([a, x], [b, y]) => a - b || (x < y ? -1 : 1)),
-          })),
-      );
     }
 
     /**
@@ -248,25 +192,6 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
         addListAdditions(entries, inheritable, bookInheritedLists);
         return [...entries.values()];
       });
-    }
-
-    /**
-     * The class features a book's epic classes' new levels grant past their core class's: each one's bonus feats, a pick
-     * in its own pool ("Epic Bonus Feat (Barbarian)": one more in Epic Barbarian Bonus Feat), at as many levels as its
-     * pattern gives, taken in its core class's feature aptitude.
-     */
-    epicClassFeats(): FeatSeed[] {
-      return this.memo("epicClassFeats", () =>
-        Object.values(this.reference("epicClass")?.mapping ?? {})
-          .filter((mapping) => !mapping.skip)
-          .map(({ bonusFeatList, bonusFeats, classFeatureAptitude }) => ({
-            name: bonusFeats.feature,
-            description: bonusFeats.description,
-            aptitudes: [classFeatureAptitude],
-            modifiers: [bonus(`aptitudes.${stripSeparators(bonusFeatList.aptitude)}.allowed`, 1)],
-            fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
-          })),
-      );
     }
 
     /**

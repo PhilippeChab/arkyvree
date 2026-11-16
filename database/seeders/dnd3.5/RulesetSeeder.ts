@@ -2,12 +2,12 @@ import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builde
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import { EntityLinks, type Ids } from "@/database/seeders/core/SeederState.ts";
 import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
-import { ExtendsClasses } from "./concerns/ExtendsClasses.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsSpells } from "./concerns/SeedsSpells.ts";
@@ -17,15 +17,13 @@ import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 /**
  * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
  * (`ContentSeeder`'s: aptitudes, abilities, saves, languages, feats, races, items, copies) or 3.5's own (`concerns/`:
- * classes, skills, spells, wizard schools, an extension's changes to the core, the levels it adds to its classes), and
- * the steps made of others are its own. Each names the rows the steps before it seeded by their ids in its context. It
- * holds no content: the core rules' package gives `seedCore` theirs, an extension's package gives `seedExtension` its
- * book.
+ * classes, skills, spells, wizard schools, an extension's changes to the core), and the steps made of others are its
+ * own. Each names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules'
+ * package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,
   CopiesIntoExtensions,
-  ExtendsClasses,
   SeedsClasses,
   SeedsSkills,
   SeedsSpells,
@@ -66,7 +64,6 @@ export class RulesetSeeder extends include(
     await this.cowSpellsIntoExtension(book.cowSpells);
     await this.seedDomains(book.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const klass of book.classes) await this.seedClass(klass);
-    await this.cowClassesIntoExtension(book.cowClasses);
   }
 
   /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */
@@ -118,5 +115,55 @@ export class RulesetSeeder extends include(
       "spells",
       this.uniqueBy(links, (l) => `${l.fromId}:${l.toId}`),
     );
+  }
+
+  /**
+   * Brings the seeded core rules up to their content (`core`): the aptitudes and feats it gained, the aptitudes its feats
+   * are listed in now (`syncListings`), and its classes' levels past their last seeded one (the core classes' 21st to
+   * 40th, with their epic bonus feats). An update of the core rules' package (`updates.ts`); each step adds only what's
+   * missing, so it's safe to run again.
+   */
+  async updateCore(core: CoreContent) {
+    await this.seedAptitudes(core.aptitudes.filter((name) => !this.ctx.aptMap[name]));
+    await this.seedFeats(core.feats.filter(({ name }) => !this.ctx.featMap[name]));
+    await this.syncListings(
+      core.feats.map(({ name, aptitudes }) => ({
+        fromId: this.ctx.featMap[name],
+        toIds: aptitudes.map((aptitude) => this.idOf(this.ctx.aptMap, aptitude, name)),
+      })),
+    );
+    for (const klass of core.classes) await this.addMissingLevels(klass);
+  }
+
+  /**
+   * Brings a seeded extension's feats' lists up to its book's (`book`) and its base's (`baseFeats`, the core rules' feats
+   * by name): its own feats' aptitudes as its content gives them, and each core feat it copied listed where the core
+   * feat is now, then where its book adds it, as a copy is seeded. An update of the extension's package (`updates.ts`).
+   */
+  async updateExtensionListings(book: BookContent, baseFeats: Ids) {
+    const ids = (aptitudes: string[]) =>
+      aptitudes.filter((name) => this.ctx.aptMap[name]).map((name) => this.ctx.aptMap[name]);
+    const copies = book.cowFeats.filter(
+      ({ feat }) => this.ctx.featMap[feat] && this.ctx.featMap[feat] !== baseFeats[feat],
+    );
+    const coreLists = await EntityLinks.findMany(this.db, {
+      fromIds: copies.map(({ feat }) => baseFeats[feat]),
+      role: "listedIn",
+    });
+    const coreListsOf = (featId: string) =>
+      coreLists
+        .filter(({ fromId, toType }) => fromId === featId && toType === "aptitudes")
+        .toSorted((a, b) => a.ordinal - b.ordinal)
+        .map(({ toId }) => toId);
+    await this.syncListings([
+      ...[...book.standaloneFeats, ...book.classFeats].map(({ name, aptitudes }) => ({
+        fromId: this.ctx.featMap[name],
+        toIds: ids(aptitudes),
+      })),
+      ...copies.map(({ feat, aptitudes }) => ({
+        fromId: this.ctx.featMap[feat],
+        toIds: [...new Set([...coreListsOf(baseFeats[feat]), ...ids(aptitudes)])],
+      })),
+    ]);
   }
 }

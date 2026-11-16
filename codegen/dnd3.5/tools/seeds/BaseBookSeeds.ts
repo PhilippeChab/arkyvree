@@ -15,11 +15,14 @@ import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import type { ReferenceByType, ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import type { SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { WizardSchoolReference } from "@/codegen/dnd3.5/tools/types/wizardSchools.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type { BookSeeds } from "./BookSeeds.ts";
 import { ClassSeeds } from "./classes/ClassSeeds.ts";
@@ -138,6 +141,25 @@ export class BaseBookSeeds {
       const names = [...this.shelf.book(CORE_BOOK).spellNames(), ...(this.book === CORE_BOOK ? [] : this.spellNames())];
       return new Map(names.map((name) => [name.toLowerCase(), name]));
     });
+  }
+
+  /**
+   * The features the book's epic progression's classes take their epic bonus feats with, past their 20th level (the
+   * core rules' "Epic Bonus Feat (Barbarian)": one more pick in Epic Barbarian Bonus Feat), each in its class's feature
+   * aptitude.
+   */
+  epicClassFeats(): FeatSeed[] {
+    return this.memo("epicClassFeats", () =>
+      Object.values(this.reference("epicClass")?.mapping ?? {})
+        .filter((mapping) => !mapping.skip)
+        .map(({ bonusFeatList, bonusFeats, classFeatureAptitude }) => ({
+          name: bonusFeats.feature,
+          description: bonusFeats.description,
+          aptitudes: [classFeatureAptitude],
+          modifiers: [bonus(`aptitudes.${stripSeparators(bonusFeatList.aptitude)}.allowed`, 1)],
+          fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+        })),
+    );
   }
 
   /**

@@ -71,3 +71,6 @@ export interface EpicFeature {
   feature: string;
   first: number;
 }
+
+/** An epic class's bonus feat list, with the core pools whose feats it takes too (`EpicClassFields.joins`). */
+export type EpicBonusFeatList = BonusFeatList & { joins?: string[] };

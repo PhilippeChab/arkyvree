@@ -65,6 +65,19 @@ function perLevelFeatSeeds(
 export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
   abstract class WithOwnFeats extends Base {
     /**
+     * The epic bonus feat pools of the class's book (its epic progression's lists: the epic rogue's) that name a feature
+     * of the class (`name`: "Crippling Strike (Rogue Special Ability)"), which it joins.
+     */
+    private epicListsNaming(name: string): string[] {
+      const slug = stripSeparators(name);
+      return Object.values(this.book.reference("epicClass")?.mapping ?? {})
+        .filter(
+          (mapping) => !mapping.skip && mapping.bonusFeatList.feats.some((feat) => stripSeparators(feat) === slug),
+        )
+        .map((mapping) => mapping.bonusFeatList.aptitude);
+    }
+
+    /**
      * The class's own feats: its features (other than the existing feats it grants), one per level for a feature that
      * gives a pick at several (its first, second… pick).
      */
@@ -82,7 +95,11 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
         if (!lockedType && !feature.ownFeat && this.existingFeatGranted(name, feature.description)) continue;
 
         const description = normalizeDescription(feature.description ?? "");
-        const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude, ...(feature.sharedAptitudes ?? [])];
+        const aptitudes = [
+          feature.aptitude ?? mapping.classFeatureAptitude,
+          ...(feature.sharedAptitudes ?? []),
+          ...this.epicListsNaming(name),
+        ];
         const perLevelModifier = feature.modifiers?.find((m) => perLevelExpansion.has(m.target));
         if (perLevelModifier) {
           const expansions = perLevelExpansion.get(perLevelModifier.target) ?? [];

@@ -78,7 +78,7 @@ describe("A class's levels", () => {
     const { classMap, rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {
       const levels = Engine.for(scope).owned("classes", classMap.pc["Fighter"]);
-      const [third, last] = [3, 20].map((position) => {
+      const [third, last] = [3, 40].map((position) => {
         const level = Dnd35View.of(scope.rulesetData).classLevelByClassAndLevel.get(
           `${classMap.pc["Fighter"]}:${position}`,
         );
@@ -86,7 +86,7 @@ describe("A class's levels", () => {
         return level.id;
       });
       expect(refusalOf(() => levels.planDelete(third))).toEqual({
-        message: "Only Fighter's last level, level 20, can be deleted",
+        message: "Only Fighter's last level, level 40, can be deleted",
         refusal: "conflict",
       });
       expect(levels.planDelete(last).entity.id).toBe(last);

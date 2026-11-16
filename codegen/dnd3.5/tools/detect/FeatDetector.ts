@@ -1,10 +1,11 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import type { BonusFeatList, ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { EpicBonusFeatList } from "@/codegen/dnd3.5/tools/types/epicClasses.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { CORE_BOOK, EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -72,7 +73,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
   constructor(
     stored: Pick<FeatReference, "_meta" | "overrides" | "raw">,
     classes: ClassReferenceFile[],
-    epicLists: BonusFeatList[] = [],
+    epicLists: EpicBonusFeatList[] = [],
   ) {
     super(stored);
     this.classes = classes;
@@ -82,8 +83,8 @@ export class FeatDetector extends BaseDetector<FeatReference> {
 
   /** The book's classes, whose bonus feat lists name its feats. */
   private readonly classes: ClassReferenceFile[];
-  /** The bonus feat lists of the book's epic classes, which name its feats too. */
-  private readonly epicLists: BonusFeatList[];
+  /** The core classes' epic bonus feat lists, which name any book's feats, and the core pools they take the feats of. */
+  private readonly epicLists: EpicBonusFeatList[];
   /** The feats its page gives, sanitized. */
   private readonly feats: FeatReference["raw"];
 
@@ -159,9 +160,10 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         }
       }
 
+      const aptitudes = [...baseAptitudes, ...extraAptitudes, ...this.epicListsNaming(entry)];
       mapping[entry.name] = {
         description: ovr?.description ?? entry.benefit,
-        aptitudes: [...baseAptitudes, ...extraAptitudes],
+        aptitudes: [...new Set([...aptitudes, ...this.joinedEpicLists(aptitudes)])],
         requirements,
         modifiers: ovr?.modifiers ?? det.modifiers ?? [],
         ...((ovr?.fields ?? det.fields) ? { fields: ovr?.fields ?? det.fields } : {}),
@@ -194,9 +196,6 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         map.set(slug, existing);
       }
     }
-
-    // The epic classes' bonus feat lists → aptitudes
-    for (const list of this.epicLists) for (const featName of list.feats) add(featName, list.aptitude);
 
     for (const { ref } of this.classes) {
       // Bonus feat lists → aptitudes
@@ -244,9 +243,34 @@ export class FeatDetector extends BaseDetector<FeatReference> {
     return map;
   }
 
+  /**
+   * The epic bonus feat pools whose lists name a feat (`entry`): the core rules' own feats (an epic wizard's Spell Focus)
+   * and epic feats, any book's. Another book's feat of an epic feat's name is another feat (Complete Warrior's Improved
+   * Favored Enemy).
+   */
+  private epicListsNaming(entry: FeatReference["raw"][number]): string[] {
+    if (this.stored._meta.book !== CORE_BOOK && entry.featType !== "epic" && !this.isEpicBook()) return [];
+    const slug = stripSeparators(entry.name);
+    return this.epicLists
+      .filter((list) => list.feats.some((feat) => stripSeparators(feat) === slug))
+      .map((list) => list.aptitude);
+  }
+
   /** Whether the reference is the epic book's (`EPIC_BOOK`): its feats, all epic, are its own. */
   private isEpicBook(): boolean {
     return this.stored._meta.book === EPIC_BOOK;
+  }
+
+  /**
+   * The epic bonus feat pools a feat in pools of its own (`aptitudes`) joins as their lists take those pools' feats
+   * (`joins`: the epic fighter's, any fighter bonus feat), those it's in already aside.
+   */
+  private joinedEpicLists(aptitudes: string[]): string[] {
+    return this.epicLists
+      .filter(
+        ({ aptitude, joins = [] }) => !aptitudes.includes(aptitude) && joins.some((pool) => aptitudes.includes(pool)),
+      )
+      .map(({ aptitude }) => aptitude);
   }
 
   /**

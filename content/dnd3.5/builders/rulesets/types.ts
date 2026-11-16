@@ -1,4 +1,3 @@
-import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
 import type { CorePackageDefinition, ExtensionPackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
@@ -18,8 +17,6 @@ export interface BookContent {
   aptitudes: string[];
   classes: ClassSeed[];
   classFeats: FeatSeed[];
-  /** Core classes the book adds levels to past their last. */
-  cowClasses: CowClassEntry[];
   /** Core feats the book changes. */
   cowFeats: CowFeatEntry[];
   /** Core spells the book adds to its spell lists. */
@@ -49,21 +46,6 @@ export interface CoreContent {
   /** The items others are made from, which a new ruleset starts with. */
   templateItems: Dnd35ItemSeed[];
   wizardSchools: WizardSchoolSeed[];
-}
-
-/**
- * A core class an extension adds levels to past its last (the epic book's, past 20th): its levels to `levels`, and the
- * class features they grant, by level (`classFeatures`: feats in `classFeatureAptitude`), and the bonuses its level
- * modifiers go on giving (`modifiers`, each at its level: a monk's AC bonus). The extension copies the class: its levels
- * before stay its source's, the new ones its copy's, each with its last level's base attack, saves and skill points,
- * and no spell slots more.
- */
-export interface CowClassEntry {
-  classFeatureAptitude: string;
-  classFeatures: [number, string][];
-  className: string;
-  levels: number;
-  modifiers: (ModifierSeed & { level: number })[];
 }
 
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */

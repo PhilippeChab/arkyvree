@@ -1,10 +1,12 @@
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { CasterLevelAdvancement, ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { Entities } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -113,8 +115,12 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       );
     }
 
-    /** The feats its levels grant: its class features, its proficiencies and its free feats. */
+    /**
+     * The feats its levels grant (those of `levelIds`, its levels seeded now): its class features, its proficiencies and
+     * its free feats.
+     */
     private async insertGrantedFeats(def: SeededClass, levelIds: Record<number, string>) {
+      const seeded = ([level]: [number, ...unknown[]]) => levelIds[level] !== undefined;
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
         role: "grants",
         fromId: levelIds[level],
@@ -127,14 +133,14 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       const featureAptitude = def.classFeatureAptitude;
       await this.insertLinks([
         ...(featureAptitude
-          ? (def.classFeatures ?? []).map(([level, feat]) =>
-              granted(level, feat, featureAptitude, `class feature at level ${level}`),
-            )
+          ? (def.classFeatures ?? [])
+              .filter(seeded)
+              .map(([level, feat]) => granted(level, feat, featureAptitude, `class feature at level ${level}`))
           : []),
-        ...(def.proficiencies ?? []).map((feat) => granted(1, feat, "General", "proficiency")),
-        ...(def.freeFeats ?? []).map(([level, feat, aptitude]) =>
-          granted(level, feat, aptitude, `free feat at level ${level}`),
-        ),
+        ...(levelIds[1] ? (def.proficiencies ?? []) : []).map((feat) => granted(1, feat, "General", "proficiency")),
+        ...(def.freeFeats ?? [])
+          .filter(seeded)
+          .map(([level, feat, aptitude]) => granted(level, feat, aptitude, `free feat at level ${level}`)),
       ]);
     }
 
@@ -160,6 +166,33 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           ].map((modifier) => ({ sourceId: id, modifier })),
         ),
       );
+    }
+
+    /**
+     * Its levels from `first` to its last (`def.levels`), under its class (`classId`): each with its base attack and its
+     * skill points, its saves, its modifiers and the feats it grants. Answers their ids, by their numbers.
+     */
+    private async insertLevels(def: SeededClass, classId: string, first: number) {
+      const numbers = Array.from({ length: def.levels - first + 1 }, (_, i) => first + i);
+      const bab = def.bab && presetOf(LEVEL_PRESETS.bab[def.bab], `${def.bab} bab`);
+      // Each level with its base attack and its skill points
+      const levelRowIds = await this.insertRows(
+        "class-levels",
+        numbers.map((level) => ({
+          ownerId: classId,
+          position: level,
+          fields: {
+            ...(bab && { [CLASS_LEVEL_BAB]: bab(level) }),
+            ...(def.skillPoints !== undefined && { [CLASS_LEVEL_SKILL_POINTS]: def.skillPoints }),
+          },
+        })),
+      );
+      const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
+      const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));
+      if (def.saves) await this.insertSaves(def.saves, levels);
+      await this.insertLevelModifiers(def, levels);
+      await this.insertGrantedFeats(def, levelIds);
+      return levelIds;
     }
 
     /** Each level's base saves, by the class's progressions (`saves`): its `baseBonus` links. */
@@ -198,6 +231,23 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /**
+     * Gives a seeded class (`def`'s, of the ruleset, by its name and partition) the levels its seed has past its last
+     * seeded one (the core classes' 21st to 40th): what an update adds once the content gains them. None when it has
+     * them all, so it's safe to run again.
+     */
+    async addMissingLevels(def: SeededClass) {
+      const classes = await Entities.findMany<Klass>(this.db, {
+        entityType: "classes",
+        rulesetIds: [this.ctx.rulesetId],
+      });
+      const klass = classes.find(({ name, partition }) => name === def.name && partition === (def.partition ?? "pc"));
+      if (!klass) throw new Error(`${def.name} isn't seeded`);
+      const levels = await Entities.findMany<KlassLevel>(this.db, { entityType: "class-levels", ownerIds: [klass.id] });
+      const last = Math.max(0, ...levels.map(({ position }) => position));
+      if (last < def.levels) await this.insertLevels(def, klass.id, last + 1);
+    }
+
+    /**
      * Seeds a class, in its partition (its kind's default without one), and its levels: their base attack, saves and
      * skill points, spell slots, picks and granted feats, and what it takes to reach each. A class that gives no base
      * attack, saves or skill points (a bonded creature's) leaves its levels' base attack and skill points at their
@@ -214,30 +264,10 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           partition: def.partition,
         },
       ]);
-      const klass = { id: classId };
-      const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
-      const bab = def.bab && presetOf(LEVEL_PRESETS.bab[def.bab], `${def.bab} bab`);
-      // Each level with its base attack and its skill points
-      const levelRowIds = await this.insertRows(
-        "class-levels",
-        numbers.map((level) => ({
-          ownerId: classId,
-          position: level,
-          fields: {
-            ...(bab && { [CLASS_LEVEL_BAB]: bab(level) }),
-            ...(def.skillPoints !== undefined && { [CLASS_LEVEL_SKILL_POINTS]: def.skillPoints }),
-          },
-        })),
-      );
-      const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
-      const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));
-
-      if (def.saves) await this.insertSaves(def.saves, levels);
-      await this.insertLevelModifiers(def, levels);
+      const levelIds = await this.insertLevels(def, classId, 1);
       await this.insertFirstLevelRequirements(def, levelIds);
-      await this.insertSkills(def, klass.id);
-      await this.insertGrantedFeats(def, levelIds);
-      return { classId: klass.id, levelIds };
+      await this.insertSkills(def, classId);
+      return { classId, levelIds };
     }
   }
   return SeedingClasses;

@@ -6,6 +6,7 @@ import { BARBARIAN_CLASS_FEATS } from "./barbarian.ts";
 import { BARD_CLASS_FEATS } from "./bard.ts";
 import { CLERIC_CLASS_FEATS } from "./cleric.ts";
 import { DRUID_CLASS_FEATS } from "./druid.ts";
+import { EPIC_CLASS_FEATS } from "./epicClasses.ts";
 import { FIGHTER_CLASS_FEATS } from "./fighter.ts";
 import { MONK_CLASS_FEATS } from "./monk.ts";
 import { PALADIN_CLASS_FEATS } from "./paladin.ts";
@@ -19,6 +20,7 @@ const _allClassFeats: FeatSeed[] = [
   ...BARD_CLASS_FEATS,
   ...CLERIC_CLASS_FEATS,
   ...DRUID_CLASS_FEATS,
+  ...EPIC_CLASS_FEATS,
   ...FIGHTER_CLASS_FEATS,
   ...MONK_CLASS_FEATS,
   ...PALADIN_CLASS_FEATS,

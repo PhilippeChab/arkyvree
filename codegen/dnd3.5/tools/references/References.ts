@@ -20,20 +20,21 @@ import { MagicItemDetector } from "@/codegen/dnd3.5/tools/detect/MagicItemDetect
 import { RaceDetector } from "@/codegen/dnd3.5/tools/detect/RaceDetector.ts";
 import { SpellDetector } from "@/codegen/dnd3.5/tools/detect/SpellDetector.ts";
 import { WizardSchoolDetector } from "@/codegen/dnd3.5/tools/detect/WizardSchoolDetector.ts";
-import type { BonusFeatList, ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { EpicBonusFeatList } from "@/codegen/dnd3.5/tools/types/epicClasses.ts";
 import type { ReferenceByType, ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /**
  * What a reference's detector reads of the books' other references: a book's classes, which a feat reference's mapping
- * reads (and an epic class reference's, its core classes'), a book's epic classes' bonus feat lists, which name its
- * feats too, and the core rules' spells as stored, which an extension's spell may be written as ("As darkvision,
+ * reads (and an epic class reference's, its core classes'), the core classes' epic bonus feat lists, which name any
+ * book's feats, and the core rules' spells as stored, which an extension's spell may be written as ("As darkvision,
  * except…").
  */
 interface OtherReferences {
   classesOf(book: string): ClassReferenceFile[];
   coreSpells(): StoredReference<"spell">;
-  epicListsOf(book: string): BonusFeatList[];
+  epicLists(): EpicBonusFeatList[];
 }
 
 /** The file a book's reference of each type is stored in, in the book's folder (a class's is its own, in `classes/`). */
@@ -55,8 +56,7 @@ const RESOLVERS: {
   class: (stored) => new ClassDetector(stored).resolve(),
   domain: (stored) => new DomainDetector(stored).resolve(),
   epicClass: (stored, others) => new EpicClassDetector(stored, others.classesOf(CORE_BOOK)).resolve(),
-  feat: (stored, others) =>
-    new FeatDetector(stored, others.classesOf(stored._meta.book), others.epicListsOf(stored._meta.book)).resolve(),
+  feat: (stored, others) => new FeatDetector(stored, others.classesOf(stored._meta.book), others.epicLists()).resolve(),
   item: (stored) => new ItemDetector(stored).resolve(),
   magicItem: (stored) => new MagicItemDetector(stored).resolve(),
   race: (stored) => new RaceDetector(stored).resolve(),
@@ -80,7 +80,7 @@ class References extends ReferenceStore<ReferenceByType> {
     const others: OtherReferences = {
       classesOf: (book) => this.loadClasses(book),
       coreSpells: () => this.stored(this.path(CORE_BOOK, "spell"), "spell"),
-      epicListsOf: (book) => this.epicLists(book),
+      epicLists: () => this.epicLists(),
     };
     return JSON.parse(stringifyStably(resolveStored(stored, others)));
   }
@@ -90,10 +90,15 @@ class References extends ReferenceStore<ReferenceByType> {
     return join(this.dir, book, "classes", `${name}.json`);
   }
 
-  /** The bonus feat lists of `book`'s epic classes, but those it skips: none for a book without epic classes. */
-  epicLists(book: string): BonusFeatList[] {
-    const epic = this.find(book, "epicClass");
-    return Object.values(epic?.mapping ?? {}).flatMap((mapping) => (mapping.skip ? [] : [mapping.bonusFeatList]));
+  /**
+   * The core classes' epic bonus feat lists (the core rules' epic progressions'), but those it skips, each with the
+   * core pools it takes the feats of too: any book's feats join them.
+   */
+  epicLists(): EpicBonusFeatList[] {
+    const epic = this.find(CORE_BOOK, "epicClass");
+    return Object.values(epic?.mapping ?? {}).flatMap(({ bonusFeatList, joins, skip }) =>
+      skip ? [] : [{ ...bonusFeatList, ...(joins ? { joins } : {}) }],
+    );
   }
 
   /** `book`'s reference of `type`, loaded (`load`): none when the book has none. */

@@ -195,6 +195,12 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
       .limit(1);
     return link !== undefined;
   }
+
+  /** Puts links in their places (`places`: each link's id, `id`, and its place among its entity's, `ordinal`). */
+  async setOrdinals(db: Db, places: { id: string; ordinal: number }[]) {
+    for (const { id, ordinal } of places)
+      await db.update(entityLinksInRules).set({ ordinal }).where(eq(entityLinksInRules.id, id));
+  }
 }
 
 export default StoredLinks;

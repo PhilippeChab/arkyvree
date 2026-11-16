@@ -4,6 +4,7 @@ import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { ClassOverridesCheck } from "./ClassOverridesCheck.ts";
 import { ReviewList } from "./ReviewList.ts";
@@ -162,12 +163,20 @@ export class ReferenceIssues {
 
   /**
    * An epic classes reference's: what each class's table names that no feature or pattern reads, and the entries of its
-   * bonus feat list that name no feat, but those of a class its mapping skips.
+   * bonus feat list that name no feat of its book nor another's (the epic book's feats join the core rules' lists), but
+   * those of a class its mapping skips.
    */
   private epicClassIssues(): Issue[] {
     const data = References.load(this.file.path, "epicClass");
     const review = new ReviewList(data.overrides?.reviewed);
     const book = Library.book(data._meta.book);
+    const otherFeats = new Set(
+      References.books()
+        .filter((other) => other !== data._meta.book)
+        .flatMap((other) => Object.entries(References.find(other, "feat")?.mapping ?? {}))
+        .filter(([, feat]) => !feat.skip)
+        .map(([name]) => stripSeparators(name)),
+    );
     return [
       ...Object.entries(data.mapping).flatMap(([name, mapping]) =>
         this.unreviewed(
@@ -176,6 +185,7 @@ export class ReferenceIssues {
             ...(data.detected[name]?.unresolved ?? []).map((text) => ({ kind: "error" as const, text })),
             ...book
               .unknownListedFeats([mapping.bonusFeatList])
+              .filter((text) => !otherFeats.has(stripSeparators(text)))
               .map((text) => ({ kind: "unknown listed feat" as const, text })),
           ],
           { label: name, entityName: name },

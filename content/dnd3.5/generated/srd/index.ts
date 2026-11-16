@@ -18,5 +18,4 @@ export const BOOK: BookContent = {
   cowSpells: [],
   domains: ALL_DOMAINS,
   classes: ALL_CLASSES,
-  cowClasses: [],
 };

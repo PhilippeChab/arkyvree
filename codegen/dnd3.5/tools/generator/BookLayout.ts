@@ -28,7 +28,6 @@ class BookLayout {
     aptitudes: { path: "aptitudes.ts", list: "ALL_APTITUDES" },
     classFeats: { path: "feats/classes/index.ts", list: "ALL_CLASS_FEATS" },
     classes: { path: "classes/index.ts", list: "ALL_CLASSES" },
-    cowClasses: { path: "cowClasses.ts", list: "COW_CLASSES" },
     cowFeats: { path: "cowFeats.ts", list: "COW_FEATS" },
     cowSpells: { path: "cowSpells.ts", list: "COW_SPELLS" },
     domainFeats: { path: "feats/domainFeats.ts", list: "DOMAIN_POOL_FEATS" },
@@ -71,7 +70,6 @@ class BookLayout {
     { key: "cowSpells", file: this.files.cowSpells },
     { key: "domains", file: this.files.domains },
     { key: "classes", file: this.files.classes },
-    { key: "cowClasses", file: this.files.cowClasses },
   ];
   /** The spell levels a book's spells/ has a file of, cantrips' first. */
   readonly spellLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];

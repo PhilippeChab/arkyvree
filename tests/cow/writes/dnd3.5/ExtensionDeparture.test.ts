@@ -231,7 +231,7 @@ describe("unsubscribing from a book whose copy of a core entity the fork changed
     const bookFighter = await copyEntity(db, "classes", (await getSeedCtx()).classMap.pc["Fighter"], book);
     const [beyond] = await Entities.create<KlassLevel>(db, DND35_BASE_RULES, "class-levels", {
       ownerId: bookFighter.id,
-      position: 21,
+      position: 41,
     });
     await RulesetExtensionsService.subscribeExtension(session, host.id, [book.id]);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
@@ -247,6 +247,6 @@ describe("unsubscribing from a book whose copy of a core entity the fork changed
       .select()
       .from(advancementsInCharacter)
       .where(eq(advancementsInCharacter.id, level.id));
-    expect((await readCowData(host.id)).resolve(entryId)).toBe((await findClassLevel(mine.id, 21))!.id);
+    expect((await readCowData(host.id)).resolve(entryId)).toBe((await findClassLevel(mine.id, 41))!.id);
   });
 });

@@ -9,14 +9,14 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
     name: "Crippling Strike (Rogue Special Ability)",
     description:
       "A rogue who possesses this ability strikes with such accuracy during sneak attacks that her blows debilitate the target. Any opponent who takes damage from one of her sneak attacks also suffers 2 points of Strength damage. Ability score points lost this way recover naturally at a rate of 1 point per day per affected ability.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {
     name: "Defensive Roll (Rogue Special Ability)",
     description:
       "The rogue learns to absorb the impact of a potentially fatal strike. Once per day, when a weapon or physical blow (not a spell or special ability) in combat would reduce her to 0 or fewer hit points, she may attempt to roll with the impact. She makes a Reflex saving throw with a DC equal to the damage dealt. On a success, she suffers only half the damage; on a failure, she takes the full amount. She must be aware of the incoming attack and able to respond - if her Dexterity bonus to AC is denied, she cannot use this ability. Because this situation would not ordinarily permit a Reflex save for half damage, her evasion ability has no effect on the defensive roll.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {
@@ -37,7 +37,7 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
     name: "Improved Evasion (Rogue Special Ability)",
     description:
       "This functions identically to evasion, with the additional benefit that on a failed Reflex saving throw against effects like dragon breath or explosion spells, the rogue takes only half damage rather than full damage. A helpless rogue (such as one who is unconscious or paralyzed) gains no benefit from improved evasion.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {
@@ -51,21 +51,21 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
     name: "Opportunist (Rogue Special Ability)",
     description:
       "Once each round, the rogue may take an attack of opportunity against a foe who has just been hit for damage in melee by another character. This uses up the rogue's attack of opportunity for the round. Even if the rogue has the Combat Reflexes feat, she can only use this ability once per round.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {
     name: "Skill Mastery (Rogue Special Ability)",
     description:
       "The rogue attains such proficiency with certain skills that she can perform them reliably under any circumstances. When she gains this ability, she chooses a number of skills equal to 3 + her Intelligence modifier. For those chosen skills, she may take 10 on skill checks even when stress or distractions would normally make that impossible. This special ability can be selected multiple times, with new skills chosen each time.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {
     name: "Slippery Mind (Rogue Special Ability)",
     description:
       "The rogue develops a mental resilience that helps her escape magical compulsions. If she is subjected to an enchantment spell or effect and fails her saving throw, she may attempt the save again 1 round later at the same DC. She receives only this single additional attempt.",
-    aptitudes: ["Rogue Special Ability"],
+    aptitudes: ["Rogue Special Ability", "Epic Rogue Bonus Feat"],
     requirements: [gte("classes.rogue.level", 10)],
   },
   {

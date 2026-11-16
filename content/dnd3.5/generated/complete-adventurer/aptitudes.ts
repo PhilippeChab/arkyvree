@@ -13,6 +13,7 @@ export const ALL_APTITUDES: string[] = [
   "Daggerspell Shaper Class Feature",
   "Dread Pirate Class Feature",
   "Dungeon Delver Class Feature",
+  "Epic Fighter Bonus Feat",
   "Exemplar Bonus Feat",
   "Exemplar Class Feature",
   "Exemplar Skill Artistry",

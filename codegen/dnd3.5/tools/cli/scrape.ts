@@ -33,7 +33,7 @@ const refusal = await new ScrapeCommand<Scraper>({
       one: (scraper, url) => scraper.scrapeSpell(url),
     },
     epicClass: {
-      help: "The epic book's class progressions past 20th level (the SRD's own file)",
+      help: "The core classes' progressions past 20th level, for the core rules' book (--book srd: the SRD's own file)",
       all: (scraper) => scraper.scrapeEpicClasses(),
     },
     domain: {

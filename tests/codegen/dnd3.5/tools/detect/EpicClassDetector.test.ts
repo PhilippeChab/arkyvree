@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 describe("EpicClassDetector", () => {
-  const epic = References.find("epic", "epicClass")!;
+  const epic = References.find(CORE_BOOK, "epicClass")!;
 
   test("reads each class's table into its core features' patterns past 20th, and its bonus feats'", () => {
     expect(epic.detected["Barbarian"].features).toEqual([
