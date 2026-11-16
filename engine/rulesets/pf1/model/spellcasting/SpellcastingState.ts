@@ -10,7 +10,7 @@ import type SpellGroupingsComponent from "@/engine/rulesets/pf1/model/spells/Spe
 import type SpellsComponent from "@/engine/rulesets/pf1/model/spells/SpellsComponent.ts";
 import type { KlassLevel } from "@/engine/rulesets/pf1/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/pf1/classes.ts";
+import type { CasterType } from "@/vocabulary/pf1/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/pf1/spells.ts";
 
 /**
@@ -145,10 +145,11 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   /**
    * A class's caster level: its level, and the caster levels other classes add to it (`bonuscasterlevel`, a prestige
-   * class's), up to `MAX_CLASS_LEVEL`. The class level its spells per day are read at.
+   * class's), past 20th too, as the Core Rulebook's Beyond 20th Level has it: the class level its spells per day are read
+   * at, a level past 20th a ruleset gives its class holding its own.
    */
   protected casterLevelOf({ bonuscasterlevel, level }: { bonuscasterlevel: number; level: number }): number {
-    return Math.min(level + bonuscasterlevel, MAX_CLASS_LEVEL);
+    return level + bonuscasterlevel;
   }
 
   /**
@@ -205,11 +206,6 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     return joining;
   }
 
-  /**
-   * A class's spell lists: those its levels give slots in, the levels the character hasn't taken included (a paladin's
-   * before his fourth); a pious templar's paladin and blackguard lists, the slots of the one she didn't pick gated out.
-   * None for a class without slots.
-   */
   protected spellListsOf(className: string): string[] {
     const classId = this.classes.getCharacterClasses()[className]?.klass.id;
     return [...((classId && this.classListsByClassId.get(classId)) || [])];

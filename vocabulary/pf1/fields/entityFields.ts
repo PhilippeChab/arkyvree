@@ -35,6 +35,7 @@ import {
   GENERAL_FEAT_LEVELS,
   HIT_DIE_LABELS,
   HIT_DIE_VALUES,
+  LAST_CORE_LEVEL,
   LEVEL_WORD,
   MAX_CHARACTER_LEVEL,
   MAX_CLASS_LEVEL,
@@ -90,7 +91,7 @@ import {
 } from "./item.ts";
 import { LANGUAGE_TYPE } from "./language.ts";
 import { RACE_BASE_SPEED, RACE_QUADRUPED, RACE_SIZE, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "./ruleset.ts";
+import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT, RULESET_LAST_LEVEL } from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
 import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
 import {
@@ -798,6 +799,18 @@ const RULESET_FIELDS = {
     references: "abilities",
     required: true,
     role: "skillRankAbility",
+  },
+  lastLevel: {
+    default: LAST_CORE_LEVEL,
+    description:
+      "The highest level a character can reach, whatever its classes (the core rules: 20). Past 20, as the Core Rulebook's Beyond 20th Level has it, its levels go on as before: hit dice, base attack bonus and saves at their class's rate, four attacks at most",
+    kind: "number",
+    label: "Last Level",
+    max: MAX_CHARACTER_LEVEL,
+    min: 1,
+    field: RULESET_LAST_LEVEL,
+    merge: "winner",
+    write: "always",
   },
   featAdvancement: {
     default: { every: 0, extra: GENERAL_FEAT_LEVELS },

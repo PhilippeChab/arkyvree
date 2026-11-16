@@ -204,8 +204,9 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    */
   getPlannedClassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
     // No character past its last level: the planned levels come after those it has
-    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.advancements.length);
-    const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
+    const levelRules = LevelRules.of(this.view);
+    const levelsLeft = levelRules.countLevelsLeft(this.character.rows.advancements.length);
+    const message = `A character can't go past level ${levelRules.lastLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ classId, level, abilityIncreases }, i) => {
       // A refusal names the character's level it's about, and a class in its rules' word

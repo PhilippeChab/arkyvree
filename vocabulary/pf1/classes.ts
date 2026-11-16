@@ -26,8 +26,9 @@ export const DEFAULT_HIT_DIE = 8;
  */
 export const FAVORED_CLASS_BONUS = { hitPoints: 1, skillRanks: 1 } as const;
 /**
- * The character levels whose general feat the core rules give, one a level: every odd level, the first among them
- * (no frequency: a progression's `every` counts levels from a multiple, and an odd level is none's).
+ * The character levels whose general feat the core rules give, one a level: every odd level, the first among them, to
+ * the 39th, its pattern going on past 20th as the ability increases' does, which Beyond 20th Level leaves unsaid (no
+ * frequency: a progression's `every` counts levels from a multiple, and an odd level is none's).
  */
 export const GENERAL_FEAT_LEVELS = [
   { amount: 1, position: 1 },
@@ -40,24 +41,42 @@ export const GENERAL_FEAT_LEVELS = [
   { amount: 1, position: 15 },
   { amount: 1, position: 17 },
   { amount: 1, position: 19 },
+  { amount: 1, position: 21 },
+  { amount: 1, position: 23 },
+  { amount: 1, position: 25 },
+  { amount: 1, position: 27 },
+  { amount: 1, position: 29 },
+  { amount: 1, position: 31 },
+  { amount: 1, position: 33 },
+  { amount: 1, position: 35 },
+  { amount: 1, position: 37 },
+  { amount: 1, position: 39 },
 ] as const;
 /** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
 export const HIT_DIE_LABELS = ["d6", "d8", "d10", "d12"] as const;
 /** The dice a class's levels roll for hit points: the Core Rulebook's classes roll a d6 to a d12. */
 export const HIT_DIE_VALUES = [6, 8, 10, 12] as const;
 /**
+ * The Core Rulebook's last character level, which a ruleset's Settings default to (`lastLevel`), past which its Beyond
+ * 20th Level goes on.
+ */
+export const LAST_CORE_LEVEL = 20;
+/**
  * Pathfinder's word "Level", in each of its uses: a class level's position along its class ("Level 3"), a character's
  * level, and a spell level, its tier.
  */
 export const LEVEL_WORD = { many: "Levels", one: "Level" } as const;
-/** The highest character level: the app has no epic levels. */
-export const MAX_CHARACTER_LEVEL = 20;
-/** The highest class level: the app has no epic levels. */
-export const MAX_CLASS_LEVEL = 20;
+/**
+ * The highest last level a ruleset's Settings may give its characters (`lastLevel`): a bound of the app's, as the Core
+ * Rulebook's Beyond 20th Level sets none.
+ */
+export const MAX_CHARACTER_LEVEL = 40;
+/** The highest class level: a character's highest level, a class's levels past 20th reaching it. */
+export const MAX_CLASS_LEVEL = MAX_CHARACTER_LEVEL;
 /** The most feats a ruleset's Settings may have a character level give: a bound of the app's, no book's. */
 export const MAX_GENERAL_FEATS_PER_LEVEL = 10;
-/** The highest base bonus a class level gives a save. */
-export const MAX_SAVE_BASE = 12;
+/** The highest base bonus a class level gives a save: a good save's at the 40th level (`MAX_CLASS_LEVEL`). */
+export const MAX_SAVE_BASE = 22;
 /** The most picks in a pool, or spells at a spell level, a class's table gives by a level: a bound of the app's. */
 export const MAX_TABLE_COUNT = 99;
 

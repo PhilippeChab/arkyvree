@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import LevelRules from "@/engine/rulesets/pf1/rules/LevelRules.ts";
+import { RULESET_FIELDS } from "@/engine/rulesets/pf1/ruleset/fields.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { getPf1SeedCtx } from "@/tests/support/pf1/seed.ts";
@@ -27,9 +28,15 @@ describe("The Pathfinder core rules' levels", () => {
     expect(LEVELS.filter((level) => rules.isAbilityIncreaseLevel(level - 1))).toEqual([4, 8, 12, 16, 20]);
   });
 
-  test("end at the 20th level", () => {
-    expect([LevelRules.countLevelsLeft(0), LevelRules.countLevelsLeft(19), LevelRules.countLevelsLeft(20)]).toEqual([
-      20, 1, 0,
+  test("end at the 20th level, unless a ruleset's Settings go past it", async () => {
+    const rules = await seededLevelRules();
+    expect([rules.lastLevel, rules.countLevelsLeft(0), rules.countLevelsLeft(19), rules.countLevelsLeft(20)]).toEqual([
+      20, 20, 1, 0,
     ]);
+    const beyond = new LevelRules({ ...RULESET_FIELDS.defaults, lastLevel: 25 });
+    expect([beyond.countLevelsLeft(20), beyond.countLevelsLeft(25), beyond.countLevelsLeft(30)]).toEqual([5, 0, 0]);
+    // The core rules' general feats go on at the odd levels past 20th, and their ability increases every 4th
+    expect([21, 22, 23].map((level) => beyond.countGeneralFeatsAfter(level - 1))).toEqual([1, 0, 1]);
+    expect(beyond.isAbilityIncreaseLevel(23)).toBe(true);
   });
 });

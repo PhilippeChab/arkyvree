@@ -1,11 +1,32 @@
 import { describe, expect, test } from "bun:test";
 
+import { RULESET_FIELDS } from "@/engine/rulesets/pf1/ruleset/fields.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Characters, RulesetSettings } from "@/server/repositories/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { buildCharacter, createPf1Character, type NewPf1Character } from "@/tests/support/pf1/characters.ts";
 import { addLevel, type LevelPlan } from "@/tests/support/pf1/levels.ts";
+import { getPf1SeedCtx } from "@/tests/support/pf1/seed.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { PF1_BASE_RULES } from "@/vocabulary/pf1/baseRules.ts";
 import { CHARACTER_XP } from "@/vocabulary/pf1/fields/index.ts";
 
 type Built = Awaited<ReturnType<typeof buildCharacter>>;
+
+/** A human evoker's first level, a cat familiar its arcane bond. */
+const EVOKER_1: LevelPlan = {
+  hp: 6,
+  skills: { "Knowledge (Arcana)": 1, "Knowledge (Planes)": 1, Spellcraft: 1, Linguistics: 1, Fly: 1, Perception: 1 },
+  feats: {
+    "Arcane School": ["Evocation Specialist"],
+    "Opposition School": ["Opposition School: Enchantment", "Opposition School: Necromancy"],
+    "Arcane Bond": ["Arcane Bond: Familiar"],
+    "Familiar Bond": ["Cat Familiar"],
+  },
+};
 
 /**
  * A human fighter's first level: 3 skill ranks (2 a fighter level, Intelligence's +0, a human's +1), two General feats
@@ -68,11 +89,12 @@ function skillOf(built: Built, slug: string) {
   return { ability, rank, size, total };
 }
 
-/** A human fighter with fighter levels 1 to `count`, the first `FIGHTER_1`, the others forced. */
-async function createFighter(count: number) {
+/** A human fighter with fighter levels 1 to `count`, the first `FIGHTER_1`, the others forced, of a ruleset or the core's. */
+async function createFighter(count: number, rulesetId?: string) {
   const character = await createPf1Character(session, {
     abilities: FIGHTER_SCORES,
     fields: { [CHARACTER_XP]: 300_000 },
+    ...(rulesetId ? { rulesetId } : {}),
   });
   await addLevel(session, character.id, "Fighter", 1, FIGHTER_1);
   for (let level = 2; level <= count; level++) {
@@ -232,6 +254,58 @@ describe("A Pathfinder character's sheet", () => {
       // Fighter 5: Fortitude 2 + 5/2 = 4, Reflex 5/3 = 1, Will 1; Duelist 1: Reflex (good) +1, the others +0; then
       // Constitution's +1, Dexterity's +2, Wisdom's +1
       expect(savesOf(built)).toEqual({ fortitude: 5, reflex: 4, will: 2 });
+    });
+  });
+
+  describe("past 20th level", () => {
+    test("go on at its classes' rates up to its ruleset's last level, four attacks at most", async () => {
+      const { rulesetId } = await getPf1SeedCtx();
+      const fork = await RulesetsService.forkRuleset(session, rulesetId, { name: `Fork ${uniqueId()}`, private: true });
+      await RulesetSettings.update(db, [
+        { id: fork.id, baseRules: PF1_BASE_RULES, write: RULESET_FIELDS.write({ lastLevel: 22 }) },
+      ]);
+      RulesetViews.invalidate(fork.id);
+      expect((await RulesetSettingsService.getSettings(session, fork.id)).fields).toMatchObject({
+        RULESET_LAST_LEVEL: 22,
+      });
+      const fighter = await createFighter(20, fork.id);
+      // A Fighter 20's Rogue 1 and 2, at 21st and 22nd: the rogue's three quarters base attack bonus and good Reflex
+      for (const level of [1, 2]) await addLevel(session, fighter.id, "Rogue", level, { hp: 8 }, true);
+      const built = await buildCharacter(fighter.id);
+      const { bab } = built.components.combat.getCombat();
+      const { fortitude, reflex, will } = built.components.saves.getSaves();
+      expect(bab).toBe(21);
+      expect([fortitude.base, reflex.base, will.base]).toEqual([12, 9, 6]);
+      expect(built.components.combat.getCombat().weaponsets["0"].mainhand!.tohit.total).toHaveLength(4);
+      // None past its 22nd
+      expect(addLevel(session, fighter.id, "Rogue", 3, { hp: 8 }, true)).rejects.toMatchObject({
+        issues: [{ category: "levels", message: "A character can't go past level 22: 0 level(s) left" }],
+      });
+    });
+
+    test("keep a familiar at its class's last level when its master goes past 20th", async () => {
+      const { rulesetId } = await getPf1SeedCtx();
+      const fork = await RulesetsService.forkRuleset(session, rulesetId, { name: `Fork ${uniqueId()}`, private: true });
+      await RulesetSettings.update(db, [
+        { id: fork.id, baseRules: PF1_BASE_RULES, write: RULESET_FIELDS.write({ lastLevel: 22 }) },
+      ]);
+      RulesetViews.invalidate(fork.id);
+      const wizard = await createPf1Character(session, {
+        abilities: { Intelligence: 16 },
+        fields: { [CHARACTER_XP]: 300_000 },
+        rulesetId: fork.id,
+      });
+      await addLevel(session, wizard.id, "Wizard", 1, EVOKER_1, true);
+      for (let level = 2; level <= 20; level++) {
+        const plan = { hp: 4, abilities: level % 4 === 0 ? ["Intelligence"] : [] };
+        await addLevel(session, wizard.id, "Wizard", level, plan, true);
+      }
+      // An adept's familiar levels add to the wizard's: 22, past its class's 20 levels, the save going through
+      for (const level of [1, 2]) await addLevel(session, wizard.id, "Adept", level, { hp: 4 }, true);
+      const built = await buildCharacter(wizard.id);
+      expect(built.components.bonded.getBondedLevel("familiar")).toBe(22);
+      const familiar = await Characters.findOne(db, { parentCharacterId: wizard.id, kind: "familiar" });
+      expect((await buildCharacter(familiar!.id)).components.identity.getIdentity().meta.level).toBe(20);
     });
   });
 });

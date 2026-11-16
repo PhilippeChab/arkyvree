@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Pathfinder 1: levels past 20th, as a ruleset's Last Level setting, up to 40
+
 ## 0.8.0 — 2026-11-14
 
 - Campaign documents: a Game Master's folders, uploaded files (pictures, PDFs and text files) and notes, each Private, Public or shown to selected players

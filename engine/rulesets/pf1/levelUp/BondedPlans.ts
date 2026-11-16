@@ -89,7 +89,10 @@ export default class BondedPlans {
     if (!klass) throw new RulesError("invalid", `${className} class not found in ruleset — content seed missing`);
     // Each grant feat adds to bonded.<kind>.level by a template (a druid's `{{ [classes.druid.level] }}`, a ranger's
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
-    const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), classId: klass.id };
+    // Up to its class's last level: a master's creature past 20th keeps its 20th-level powers
+    const lastLevel = Math.max(1, ...(view.classLevelsByClass.get(klass.id) ?? []).map(({ position }) => position));
+    const bondedLevel = Math.min(master.components.bonded.getBondedLevel(kind), lastLevel);
+    const levels = { hitDice: Math.max(1, bondedLevel), classId: klass.id };
     if (existing && existing.links[RACE_ROLE] === race.id) return { keptId: existing.id, levels };
     // Its stat block is its race's, by the name the rules know the race by, whatever the ruleset calls it
     const rulesName = view.rulesNameOf("races", race);
