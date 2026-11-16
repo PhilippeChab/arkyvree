@@ -40,6 +40,11 @@
       ]
     },
     "Devastating Critical": {
+      "featNameMap": {
+        "improvedcritical": "Improved Critical",
+        "overwhelmingcritical": "Overwhelming Critical",
+        "weaponfocus": "Weapon Focus"
+      },
       "requirements": [
         {
           "operator": "greater_than_or_equal",
@@ -118,6 +123,9 @@
       ]
     },
     "Efficient Item Creation": {
+      "featNameMap": {
+        "itemcreation": "Item Creation"
+      },
       "requirements": [
         {
           "operator": "equal",
@@ -183,7 +191,21 @@
         }
       ]
     },
+    "Epic Speed": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "combat.speed.misc",
+          "value": "30",
+          "valueType": "number"
+        }
+      ]
+    },
     "Epic Spell Focus": {
+      "featNameMap": {
+        "greaterspellfocus": "Greater Spell Focus",
+        "spellfocus": "Spell Focus"
+      },
       "requirements": [
         {
           "chainingOperator": "or",
@@ -294,7 +316,29 @@
         }
       ]
     },
+    "Epic Weapon Focus": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "weapon.tohit.misc",
+          "value": "2",
+          "valueType": "number"
+        }
+      ]
+    },
     "Epic Weapon Specialization": {
+      "featNameMap": {
+        "weaponfocus": "Weapon Focus",
+        "weaponspecialization": "Weapon Specialization"
+      },
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "weapon.damage.misc",
+          "value": "4",
+          "valueType": "number"
+        }
+      ],
       "requirements": [
         {
           "operator": "equal",
@@ -313,6 +357,66 @@
           "target": "feats.weaponspecialization.possessed",
           "value": "true",
           "valueType": "boolean"
+        }
+      ]
+    },
+    "Great Charisma": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.charisma.misc",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Great Constitution": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.constitution.misc",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Great Dexterity": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.dexterity.misc",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Great Intelligence": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.intelligence.misc",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Great Strength": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.strength.misc",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Great Wisdom": {
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "abilities.wisdom.misc",
+          "value": "1",
+          "valueType": "number"
         }
       ]
     },
@@ -445,6 +549,9 @@
       ]
     },
     "Instant Reload": {
+      "featNameMap": {
+        "weaponfocus": "Weapon Focus"
+      },
       "requirements": [
         {
           "operator": "equal",
@@ -517,6 +624,10 @@
       "skip": true
     },
     "Overwhelming Critical": {
+      "featNameMap": {
+        "improvedcritical": "Improved Critical",
+        "weaponfocus": "Weapon Focus"
+      },
       "requirements": [
         {
           "operator": "greater_than_or_equal",
@@ -592,6 +703,9 @@
       ]
     },
     "Swarm of Arrows": {
+      "featNameMap": {
+        "weaponfocus": "Weapon Focus"
+      },
       "requirements": [
         {
           "operator": "greater_than_or_equal",

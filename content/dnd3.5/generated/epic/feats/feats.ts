@@ -3,6 +3,7 @@
 import { and, eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALL_WEAPONS, CROSSBOW_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
@@ -417,6 +418,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Rogue Bonus Feat",
     ],
     requirements: [gte("abilities.dexterity.total", 21), eq("feats.run.possessed"), gte("identity.meta.level", 21)],
+    modifiers: [{ target: "combat.speed.misc", operator: "add", value: "30", valueType: "number" }],
   },
   {
     name: "Epic Spell Focus",
@@ -547,6 +549,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Charisma increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.charisma.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -554,6 +557,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Constitution increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.constitution.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -561,6 +565,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Dexterity increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.dexterity.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -568,6 +573,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Intelligence increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.intelligence.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -587,6 +593,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Strength increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.strength.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -594,6 +601,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description: "The character's Wisdom increases by 1 point.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
+    modifiers: [{ target: "abilities.wisdom.misc", operator: "add", value: "1", valueType: "number" }],
     fields: { [FEAT_STACKABLE]: true },
   },
   {
@@ -1473,6 +1481,9 @@ export const EPIC_WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
     "Epic Ranger Bonus Feat",
   ],
   requirements: [eq(feat(`Weapon Focus: ${w}`)), gte("identity.meta.level", 21)],
+  modifiers: [
+    { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "2", valueType: "number" },
+  ],
   fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Focus"] },
 }));
 
@@ -1480,7 +1491,15 @@ export const EPIC_WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) 
   name: `Epic Weapon Specialization: ${w}`,
   description: `Add +4 to all damage the character deals using ${w}. If the weapon is a ranged weapon, the damage bonus only applies if the target is within 30 feet.`,
   aptitudes: ["General", "Epic Fighter Bonus Feat"],
-  requirements: [eq(feat(`Epic Weapon Focus: ${w}`)), eq(feat(`Weapon Focus: ${w}`)), gte("identity.meta.level", 21)],
+  requirements: [
+    eq(feat(`Epic Weapon Focus: ${w}`)),
+    eq(feat(`Weapon Focus: ${w}`)),
+    eq(feat(`Weapon Specialization: ${w}`)),
+    gte("identity.meta.level", 21),
+  ],
+  modifiers: [
+    { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "4", valueType: "number" },
+  ],
   fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Specialization"] },
 }));
 
@@ -1488,6 +1507,12 @@ export const INSTANT_RELOAD_FEATS: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
   name: `Instant Reload: ${w}`,
   description: `The character may fire the selected type of crossbow at his or her full normal attack rate. Reloading the crossbow does not provoke attacks of opportunity.`,
   aptitudes: ["General", "Epic Fighter Bonus Feat"],
+  requirements: [
+    eq(feat("Quick Draw")),
+    eq(feat(`Rapid Reload: ${w}`)),
+    eq(feat(`Weapon Focus: ${w}`)),
+    gte("identity.meta.level", 21),
+  ],
   fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Instant Reload"] },
 }));
 

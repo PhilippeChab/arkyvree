@@ -93,6 +93,19 @@ describe("The seeded Epic SRD 3.5 extension", () => {
     expect(rows.feat("Opportunist (Rogue Special Ability)").listedIn.map((link) => link.toName)).toContain(
       "Epic Rogue Bonus Feat",
     );
+    // A feat's effect on the sheet, a per-weapon feat's on its own weapon, and a per-crossbow feat's prerequisites
+    expect(rows.modifiersOf(rows.feat("Great Strength").id).map(({ target, value }) => `${target} ${value}`)).toEqual([
+      "abilities.strength.misc 1",
+    ]);
+    expect(
+      rows.modifiersOf(rows.feat("Epic Weapon Focus: Longsword").id).map(({ target, value }) => `${target} ${value}`),
+    ).toEqual(["items.weapons.longsword.tohit.misc 2"]);
+    expect(rows.requirementsOf(rows.feat("Instant Reload: Light Crossbow").id).map(describeRequirement)).toEqual([
+      "1 feats.quickdraw.possessed equal true",
+      "2 feats.rapidreloadlightcrossbow.possessed equal true",
+      "3 feats.weaponfocuslightcrossbow.possessed equal true",
+      "4 identity.meta.level greater_than_or_equal 21",
+    ]);
     // A feat whose prerequisite is a DMG prestige class's feature is left out
     expect(rows.feats.some((feat) => feat.name === "Improved Death Attack")).toBe(false);
   });

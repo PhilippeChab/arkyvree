@@ -97,8 +97,9 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
     }
 
-    private writeCrossbowTemplate(family: TemplateFamily): void {
+    private writeCrossbowTemplate(family: TemplateFamily, families: Set<string>): void {
       this.openTemplate(family, "w", this.templateDescription(family, "w"));
+      this.writeTemplateRequirements(this.itemRequirementLines(family, family.requirements, "w", families));
       this.writeTemplateModifiers(family.modifiers, (target) => this.weaponTarget(target));
       this.closeTemplate(family.familyName);
     }
@@ -227,7 +228,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
         case "weapon":
           return this.writeWeaponTemplate(family, families);
         case "crossbow":
-          return this.writeCrossbowTemplate(family);
+          return this.writeCrossbowTemplate(family, families);
         case "skill":
           return this.writeSkillTemplate(family, families);
         case "school":
