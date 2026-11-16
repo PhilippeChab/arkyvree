@@ -33,6 +33,25 @@ export default class EntityEdit {
   }
 
   /**
+   * Refuses a write to an owned entity the view shows under an owner it isn't stored under (`owned`, under `ownerName`):
+   * an extension's class level past the ruleset's own class's last (`RulesetData.isAdopted`), the extension's to change,
+   * which the refusal names (its stored owner's ruleset).
+   */
+  private async refuseAdopted(
+    tx: Db,
+    ownerType: RulesetEntityType,
+    owned: { ownerId: string; position: number },
+    ownerName: string | null,
+  ): Promise<never> {
+    const storedOwner = await Entities.findOne(tx, { entityType: ownerType, id: owned.ownerId });
+    const book = storedOwner ? await Rulesets.findOne(tx, { id: String(storedOwner.rulesetId) }) : undefined;
+    const from = book ? `the ${book.name} extension` : "an extension";
+    throw new ConflictError(
+      `${ownerName}'s level ${owned.position} comes from ${from}: it can't be changed in this ruleset`,
+    );
+  }
+
+  /**
    * The row a write to the entity the view shows for an id changes (`entityId`, of `entityType`), resolved through the
    * view: the ruleset's own, or the copy of an inherited one; an owned entity's on its owner's (`cowOwned`). Refused as
    * not found (`notFound`: a customization's source's, an entity's) when the view shows none, or shows one from outside
@@ -75,7 +94,7 @@ export default class EntityEdit {
     const ownerRulesetId = String(owner.rulesetId);
 
     // An extension's level past the ruleset's own class's last, which the view shows under it: the extension's
-    await this.refuseAdopted(tx, entityType, ownerType, owned.id, owner.name);
+    if (owned.ownerId !== owner.id) await this.refuseAdopted(tx, ownerType, owned, owner.name);
     if (ownerRulesetId === this.scope.sources.id) return new EditTarget(owned.id, ownedId);
     // Not from the source chain
     if (!this.cow.sourceChain.includes(ownerRulesetId)) throw new NotFoundError(notFound);
@@ -100,28 +119,5 @@ export default class EntityEdit {
   ): Promise<EditTarget> {
     if (entity.rulesetId === this.scope.sources.id) return new EditTarget(entity.id, entity.id);
     return await this.copy(tx, entityType, entity.id, entity.id);
-  }
-
-  /**
-   * Refuses a write to an owned entity (`ownedId`, of `entityType`, owned by `ownerType`) the view shows under one of
-   * the ruleset's owners (`ownerName`) it isn't stored under: an extension's class level past the ruleset's own class's
-   * last (`RulesetData.isAdopted`), the extension's to change, which the refusal names ("Fighter's level 25 comes from
-   * the Epic SRD 3.5 extension: it can't be changed in this ruleset"). Nothing for another.
-   */
-  async refuseAdopted(
-    tx: Db,
-    entityType: string,
-    ownerType: RulesetEntityType,
-    ownedId: string,
-    ownerName: string | null,
-  ): Promise<void> {
-    if (!Engine.for(this.scope).isAdopted(ownedId)) return;
-    const [owned] = await Entities.findPositions(tx, { entityType, ids: [ownedId] });
-    const storedOwner = owned ? await Entities.findOne(tx, { entityType: ownerType, id: owned.ownerId }) : undefined;
-    const book = storedOwner ? await Rulesets.findOne(tx, { id: String(storedOwner.rulesetId) }) : undefined;
-    const from = book ? `the ${book.name} extension` : "an extension";
-    throw new ConflictError(
-      `${ownerName}'s level ${owned?.position} comes from ${from}: it can't be changed in this ruleset`,
-    );
   }
 }

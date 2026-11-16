@@ -159,8 +159,8 @@ export default class RulesetComposition {
   /**
    * The owner the view shows that an owned row joins (`adoptedOwner`): the one its owner (an extension's copy of a
    * class) resolves to, of the same original, when that one copies no copy of its owner (which deleted the row, then),
-   * has exactly the original's levels (`lastOf`, its levels by owner: `positions`), the row past them. None otherwise:
-   * an original's row, a homebrew class's of a book's name, a trimmed class, one with levels of its own past 20th.
+   * still has every level of the original (`lastOf`, its levels by owner: `positions`) and none at the row's, which is
+   * past the original's last. None otherwise: an original's row, a homebrew class's of a book's name, a trimmed class.
    */
   private adoptedOwner(
     row: ViewEntity,
@@ -176,8 +176,7 @@ export default class RulesetComposition {
     if (this.cow.originalOf(standing) !== original || this.cow.copies(standing, ownerId)) return undefined;
     const originalLast = lastOf.get(original) ?? 0;
     const held = new Set((positions.get(standing) ?? []).map((own) => own.position));
-    // Exactly the original's levels: one trimmed, or with levels of its own past them, takes none
-    if (position <= originalLast || held.size !== originalLast) return undefined;
+    if (position <= originalLast || held.has(position)) return undefined;
     for (let level = 1; level <= originalLast; level++) if (!held.has(level)) return undefined;
     return standing;
   }
@@ -367,7 +366,7 @@ export default class RulesetComposition {
   /**
    * An owned kind's rows (`type`'s) whose owner the view shows (`owners`), the others left out (`leftOut`); and those an
    * extension added to a class past its original's last (`adoptedOwner`), which join the ruleset's own copy of the class
-   * when that copy has exactly the original's levels: an extension that adds levels to a core class (the epic
+   * when that copy still has every level of the original: an extension that adds levels to a core class (the epic
    * book's 21st to 40th) adds them to the ruleset's own copy too, whose levels stay its own. Each joined one goes in
    * `adopted`.
    */
