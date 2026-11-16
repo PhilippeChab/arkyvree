@@ -52,4 +52,21 @@ test.describe("A fork's Settings", () => {
     const increases = page.getByRole("group", { name: "Ability Score Increases" });
     await expect(increases.getByRole("spinbutton", { name: "Every How Many Levels" })).toHaveValue("4");
   });
+
+  test("lets its characters reach epic levels, up to 30th", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    await forkCoreRuleset(page, uniqueName("Epic Fork"));
+
+    await page.getByRole("tab", { name: "Settings" }).click();
+    const lastLevel = page.getByRole("spinbutton", { name: "Last Level" });
+    // The core rules': 20th
+    await expect(lastLevel).toHaveValue("20", { timeout: 10_000 });
+    await lastLevel.fill("30");
+    const saved = apiResponse(page, "PUT", /\/api\/rulesets\/[a-f0-9-]+\/settings/);
+    await page.getByRole("button", { name: /^Save$/ }).click();
+    await saved;
+
+    await page.reload();
+    await expect(page.getByRole("spinbutton", { name: "Last Level" })).toHaveValue("30", { timeout: 10_000 });
+  });
 });

@@ -122,7 +122,7 @@ export function listBatchCounts(open: number): number[] {
 
 /**
  * The positions a create takes, in the order it takes them (`taken`, the owner's own): those the owner lacks up to its
- * rules' last (`lastPosition`: 3.5's level 20), a gap's first, so its next is always the lowest it lacks; while the
+ * rules' last (`lastPosition`: 3.5's level 40, its epic levels'), a gap's first, so its next is always the lowest it lacks; while the
  * rules load, that one alone.
  */
 export function listOpenPositions(taken: readonly number[], lastPosition: number | undefined): number[] {

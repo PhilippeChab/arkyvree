@@ -24,6 +24,8 @@ export const COMBAT_RULES = {
   LIGHT_OFF_HAND_BONUS: 2,
   // How much lower each attack after the first is, iterative or off hand
   ATTACK_STEP: 5,
+  // The most attacks a round a base attack bonus gives: an epic character's attack bonus past +20 adds none
+  MAX_ITERATIVE_ATTACKS: 4,
   // A ranged attack's penalty for each full range increment between the attacker and the target
   RANGE_INCREMENT_PENALTY: -2,
   // How many range increments a ranged or thrown attack reaches, a thrown weapon's, unless its weapon says otherwise

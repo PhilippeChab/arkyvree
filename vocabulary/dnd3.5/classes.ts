@@ -20,6 +20,11 @@ export const BAB_PROGRESSIONS = {
 export const CASTER_TYPES = ["Arcane", "Divine"] as const;
 /** The hit die a new class has when its form gives none. */
 export const DEFAULT_HIT_DIE = 8;
+/**
+ * How many character levels apart the epic bonuses come past `LAST_NONEPIC_LEVEL` (the SRD's Table: Epic Save and Epic
+ * Attack Bonuses): +1 on attacks at each odd level (21st, 23rd…), +1 on every save at each even one (22nd, 24th…).
+ */
+export const EPIC_BONUS_LEVEL_INTERVAL = 2;
 /** The feats a character's first level gives to pick in the core rules, past its frequency's. */
 export const FIRST_LEVEL_GENERAL_FEATS = 1;
 /** How many character levels apart the general feats come in the core rules: one at every third level. */
@@ -29,14 +34,23 @@ export const HIT_DIE_LABELS = ["d4", "d6", "d8", "d10", "d12"] as const;
 /** The dice a class's levels roll for hit points. */
 export const HIT_DIE_VALUES = [4, 6, 8, 10, 12] as const;
 /**
+ * The last level before the epic levels (the SRD's Epic Level Basics): the core rules' last character level, which a
+ * ruleset's Settings default to (`lastLevel`), the last character level whose class levels add to the base attack
+ * bonus and the base saves, and the last class level a class's spells per day grow at.
+ */
+export const LAST_NONEPIC_LEVEL = 20;
+/**
  * 3.5's word "Level", in each of its uses: a class level's position along its class ("Level 3"), a character's level,
  * and a spell level, its tier.
  */
 export const LEVEL_WORD = { many: "Levels", one: "Level" } as const;
-/** The highest character level: the app has no epic levels. */
-export const MAX_CHARACTER_LEVEL = 20;
-/** The highest class level: the app has no epic levels. */
-export const MAX_CLASS_LEVEL = 20;
+/**
+ * The highest last level a ruleset's Settings may give its characters (`lastLevel`): a bound of the app's, as the
+ * SRD's epic tables stop at 30th level and say their patterns go on.
+ */
+export const MAX_CHARACTER_LEVEL = 40;
+/** The highest class level: a character's highest level, a class's epic levels reaching it. */
+export const MAX_CLASS_LEVEL = MAX_CHARACTER_LEVEL;
 /** The most feats a ruleset's Settings may have a character level give: a bound of the app's, no book's. */
 export const MAX_GENERAL_FEATS_PER_LEVEL = 10;
 /** The highest base bonus a class level gives a save. */

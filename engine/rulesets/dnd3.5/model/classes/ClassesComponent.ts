@@ -8,6 +8,7 @@ import type {
   HeldSpell,
   SkillPick,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -21,6 +22,8 @@ interface ClassesData {
     level: number;
     levels: {
       advancement: StoredAdvancement;
+      /** The character's level it is: its place among the character's levels, from 1 */
+      characterLevel: number;
       classLevel: CustomizedClassLevel;
       feats: HeldFeat[];
       skills: SkillPick[];
@@ -29,9 +32,23 @@ interface ClassesData {
   };
 }
 
+/** A class the character has, with its levels: one of `ClassesData`. */
+type ClassData = ClassesData[string];
+
 /** A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0. */
 export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {
+  /**
+   * A class's last level the character took at a nonepic level (`LevelRules.isNonepicLevel`, up to 20th): the one its
+   * base attack bonus and base saves read. None for a class it took only past 20th, which adds to neither.
+   */
+  static lastNonepicLevel(klass: ClassData): ClassData["levels"][number] | undefined {
+    return klass.levels.findLast(({ characterLevel }) => LevelRules.isNonepicLevel(characterLevel));
+  }
+
   private readonly classes: ClassesData = {};
+
+  /** How many levels the character has, whatever their classes: its character level. */
+  private totalLevel = 0;
 
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
@@ -57,7 +74,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     const skillsByLevel = Map.groupBy(skills, (skill) => skill.advancementId);
     const spellsByLevel = Map.groupBy(spells, (spell) => spell.advancementId);
 
-    for (const advancement of advancements) {
+    for (const [index, advancement] of advancements.entries()) {
       const classLevel = classLevelsById.get(advancement.entryId);
       if (!classLevel) throw new Error("Class level not found");
 
@@ -78,6 +95,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       this.classes[className].levels.push({
         classLevel,
         advancement,
+        characterLevel: index + 1,
         feats: featsByLevel.get(advancement.id) ?? [],
         skills: skillsByLevel.get(advancement.id) ?? [],
         spells: spellsByLevel.get(advancement.id) ?? [],
@@ -88,6 +106,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       klass.levels.sort((a, b) => a.classLevel.position - b.classLevel.position);
       klass.level = klass.levels.length;
     }
+    this.totalLevel = advancements.length;
 
     // Add level-0 entries for ruleset classes the character doesn't have
     for (const klass of Dnd35View.of(rulesetData).classes) {
@@ -108,9 +127,11 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     const entry = this.classes[className];
     if (!entry) return;
 
+    this.totalLevel++;
     entry.levels.push({
       classLevel: { ...classLevel, modifiers: [], requirements: [] },
       advancement,
+      characterLevel: this.totalLevel,
       feats: [],
       skills: [],
       spells: [],
@@ -126,11 +147,17 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     return this.classes;
   }
 
+  /** How many levels the character has, whatever their classes: its character level. */
+  getTotalLevel(): number {
+    return this.totalLevel;
+  }
+
   removeProjectedLevel(className: string): void {
     const entry = this.classes[className];
     if (!entry || entry.levels.length === 0) return;
 
     entry.levels.pop();
     entry.level--;
+    this.totalLevel--;
   }
 }

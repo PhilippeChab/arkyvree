@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { addClassLevels } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/levelUp/BondedPlans.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -43,6 +44,20 @@ describe("planBondedCreature", () => {
     expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", bonded)).toEqual({
       keptId: bonded.id,
       levels: { hitDice: 3, classId: ctx.classMap.animalcompanion["Animal Companion"] },
+    });
+  });
+
+  test("keeps an epic master's creature at its class's last level, past which it takes none", async () => {
+    const { ctx, masterId, bonded } = await createDruidWithCompanion(20);
+    // A Druid 20 who takes Ranger 1 to 4 at 21st to 24th: its companion's level, the druid's and half the ranger's, 22nd
+    await addClassLevels(db, ctx, masterId, "Ranger", [1, 2, 3, 4], [8, 8, 8, 8]);
+    const record = (await Characters.findOne(db, { id: masterId }))!;
+    const master = await buildAs(DetailedCharacter, record);
+    const view = Dnd35View.of(await readView(ctx.rulesetId));
+    expect(master.components.bonded.getBondedLevel("animalcompanion")).toBe(22);
+    expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", bonded)).toEqual({
+      keptId: bonded.id,
+      levels: { hitDice: 20, classId: ctx.classMap.animalcompanion["Animal Companion"] },
     });
   });
 

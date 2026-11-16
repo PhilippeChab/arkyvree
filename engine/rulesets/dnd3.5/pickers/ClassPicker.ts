@@ -46,7 +46,7 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
    * character has count, not those the wizard plans, which a plan numbers in its place.
    */
   protected override detailsOf() {
-    const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
+    const left = LevelRules.of(this.view).countLevelsLeft(this.input.rows.advancements.length);
     return (klass: EntityRecord) => ({ track: { left, positions: this.positionsOf(klass, left) } });
   }
 

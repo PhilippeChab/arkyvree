@@ -31,7 +31,7 @@ Included content for Core SRD 5, from the System Reference Document 5.2.1:
 
 Excluded:
 
-- **Play past a ruleset's Last Level.** No character goes past it, whatever its classes: 20, unless the ruleset's Settings raise it (up to 40, in Pathfinder). Spells stop at 9th level.
+- **Play past a ruleset's Last Level.** No character goes past it, whatever its classes: 20, unless the ruleset's Settings raise it (up to 40, in D&D 3.5 and Pathfinder). Spells stop at 9th level: D&D 3.5's epic spells are left out.
 - **Pathfinder:** artifacts, cursed items, and weapon and armor special abilities; a favored class's bonus, which you add to your character yourself.
 - **D&D 5th Edition:** monsters; the 20 an increase raises a score to at most, which you keep to yourself; attunement's limit of three items; changing your weapon masteries at a Long Rest.
 

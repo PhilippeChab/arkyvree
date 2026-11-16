@@ -4,7 +4,11 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  RULESET_ABILITY_INCREASES,
+  RULESET_FEAT_ADVANCEMENT,
+  RULESET_LAST_LEVEL,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const settings = api.api.rulesets[":id"].settings;
 
@@ -16,14 +20,15 @@ describe("rulesets settings", () => {
     expect(read).toEqual({
       id,
       fields: {
+        [RULESET_LAST_LEVEL]: 20,
         [RULESET_FEAT_ADVANCEMENT]: { every: 3, extra: [{ amount: 1, position: 1 }] },
         [RULESET_ABILITY_INCREASES]: { every: 4, extra: [] },
       },
       links: { skillPointAbility: abilityMap["Intelligence"] },
     });
-    // Two feats at the first level
+    // Two feats at the first level, and epic levels up to 30th
     const featAdvancement = { every: 3, extra: [{ amount: 2, position: 1 }] };
-    const fields = { ...read.fields, [RULESET_FEAT_ADVANCEMENT]: featAdvancement };
+    const fields = { ...read.fields, [RULESET_FEAT_ADVANCEMENT]: featAdvancement, [RULESET_LAST_LEVEL]: 30 };
     const links = { skillPointAbility: abilityMap["Wisdom"] };
     expect(await expectOk(settings.$put({ param: { id }, json: { fields, links } }))).toEqual({ id, fields, links });
     expect(await expectOk(settings.$get({ param: { id } }))).toEqual({ id, fields, links });
@@ -34,6 +39,9 @@ describe("rulesets settings", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(settings.$put({ param: { id }, json: { links: { skillPointAbility: NIL_UUID } } }), 400);
     await expectStatus(settings.$put({ param: { id }, json: { fields: { SKILL_POINTS: 4 } } }), 400);
+    // A last level past 40th, or before the first
+    for (const lastLevel of [41, 0])
+      await expectStatus(settings.$put({ param: { id }, json: { fields: { [RULESET_LAST_LEVEL]: lastLevel } } }), 400);
     const partial = { [RULESET_FEAT_ADVANCEMENT]: { every: 3 } } as never;
     await expectStatus(settings.$put({ param: { id }, json: { fields: partial } }), 400);
     const links = { skillPointAbility: abilityMap["Wisdom"] };

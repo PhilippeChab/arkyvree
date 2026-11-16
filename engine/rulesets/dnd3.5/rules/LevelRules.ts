@@ -2,17 +2,21 @@ import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { countProgressionAt } from "@/shared/customization/progression.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { MAX_CHARACTER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { EPIC_BONUS_LEVEL_INTERVAL, LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 
 /** A ruleset's class levels by id, as the next-level rule reads them: each its class and its number in it. */
 type ClassLevelsById = ReadonlyMap<string, { ownerId: string; position: number }>;
-/** What a character's levels give it whatever its classes, by its ruleset's Settings: its feats and its increases. */
-type Progression = Pick<RulesetFieldValues, "abilityIncreases" | "featAdvancement">;
+/**
+ * What a character's levels give it whatever its classes, by its ruleset's Settings: its last level, its feats and its
+ * increases.
+ */
+type Progression = Pick<RulesetFieldValues, "abilityIncreases" | "featAdvancement" | "lastLevel">;
 
 /**
- * What a character's levels give it whatever its classes, as its ruleset's Settings have it (`of`): the feats it picks
- * and the ability increases it takes at each character level; and the bounds every ruleset's levels keep.
+ * What a character's levels give it whatever its classes, as its ruleset's Settings have it (`of`): its last level, the
+ * feats it picks and the ability increases it takes at each character level, and the epic bonuses its levels past 20th
+ * give; and the bounds every ruleset's levels keep.
  */
 export default class LevelRules {
   constructor(private readonly progression: Progression) {}
@@ -25,12 +29,25 @@ export default class LevelRules {
   /** The hit points a level counts before they're rolled: a level a level-up adds, whose hit points its save sets. */
   static readonly UNROLLED_LEVEL_HP = 10;
 
+  /** How many of a character's `totalLevel` levels are epic: those past 20th (`LAST_NONEPIC_LEVEL`). */
+  static countEpicLevels(totalLevel: number): number {
+    return Math.max(0, totalLevel - LAST_NONEPIC_LEVEL);
+  }
+
   /**
-   * The levels a character with `totalLevel` levels can still take, whatever their classes: up to a character's last
-   * level (`MAX_CHARACTER_LEVEL`).
+   * The epic bonus on attacks a character with `totalLevel` levels has (the SRD's Epic Attack Bonus): +1 at each odd
+   * level past 20th (`LAST_NONEPIC_LEVEL`), 21st first. Its base attack bonus counts it.
    */
-  static countLevelsLeft(totalLevel: number): number {
-    return Math.max(0, MAX_CHARACTER_LEVEL - totalLevel);
+  static epicAttackBonus(totalLevel: number): number {
+    return Math.ceil(LevelRules.countEpicLevels(totalLevel) / EPIC_BONUS_LEVEL_INTERVAL);
+  }
+
+  /**
+   * The epic bonus on every save a character with `totalLevel` levels has (the SRD's Epic Save Bonus): +1 at each even
+   * level past 20th (`LAST_NONEPIC_LEVEL`), 22nd first. Its base saves count it.
+   */
+  static epicSaveBonus(totalLevel: number): number {
+    return Math.floor(LevelRules.countEpicLevels(totalLevel) / EPIC_BONUS_LEVEL_INTERVAL);
   }
 
   /**
@@ -83,6 +100,14 @@ export default class LevelRules {
   }
 
   /**
+   * Whether a character's level `characterLevel` (its place among its levels, from 1) adds its class level's base attack
+   * bonus and base saves: up to 20th (`LAST_NONEPIC_LEVEL`), its epic levels' bonuses being their own.
+   */
+  static isNonepicLevel(characterLevel: number): boolean {
+    return characterLevel <= LAST_NONEPIC_LEVEL;
+  }
+
+  /**
    * The class levels a plan's levels take, in order (`classIds`, each planned level's class, after the character's
    * `levels`): each its class's next (`findNextClassLevel`) after the character's levels and the plan's before it, a gap
    * filled first (a lone Fighter 3 planning three Fighter levels takes Fighter 1, 2 and 4); past a class's last, a
@@ -130,8 +155,21 @@ export default class LevelRules {
     return countProgressionAt(this.progression.featAdvancement, totalLevel + 1);
   }
 
+  /**
+   * The levels a character with `totalLevel` levels can still take, whatever their classes: up to its last level, by its
+   * Settings (`lastLevel`). None for one past it, saved before its Settings lowered it.
+   */
+  countLevelsLeft(totalLevel: number): number {
+    return Math.max(0, this.progression.lastLevel - totalLevel);
+  }
+
   /** Whether the level after `totalLevel` levels takes an ability increase. */
   isAbilityIncreaseLevel(totalLevel: number): boolean {
     return this.countAbilityIncreases(totalLevel) > 0;
+  }
+
+  /** A character's last level, whatever its classes, by its Settings (`lastLevel`): 20 in the core rules. */
+  get lastLevel(): number {
+    return this.progression.lastLevel;
   }
 }

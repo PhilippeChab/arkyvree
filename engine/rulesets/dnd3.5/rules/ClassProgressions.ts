@@ -1,5 +1,11 @@
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import { BAB_PROGRESSIONS, type BabType, SAVE_PROGRESSIONS, type SaveType } from "@/vocabulary/dnd3.5/classes.ts";
+import {
+  BAB_PROGRESSIONS,
+  type BabType,
+  LAST_NONEPIC_LEVEL,
+  SAVE_PROGRESSIONS,
+  type SaveType,
+} from "@/vocabulary/dnd3.5/classes.ts";
 
 /**
  * Each of a class's progressions, by how good it is, its value at each class level from the first to the last: its
@@ -18,13 +24,19 @@ const CLASS_LEVELS = Array.from({ length: RULESET_LIMITS.classLevel }, (_, index
  * level form's presets fill, a bonded creature's by its hit dice, and the seeded classes' levels read.
  */
 export default class ClassProgressions {
-  /** Each progression's (`progressions`, by its key) value at each class level, as `valueAt` gives it. */
+  /**
+   * Each progression's (`progressions`, by its key) value at each class level, as `valueAt` gives it: an epic level's
+   * (past 20th, `LAST_NONEPIC_LEVEL`) the 20th's, as a character's base attack bonus and base saves grow no more there.
+   */
   private static valuesByLevel<K extends string>(
     progressions: Record<K, unknown>,
     valueAt: (progression: K, level: number) => number,
   ): Record<K, number[]> {
     const keys = Object.keys(progressions) as K[];
-    const values = keys.map((key) => [key, CLASS_LEVELS.map((level) => valueAt(key, level))]);
+    const values = keys.map((key) => [
+      key,
+      CLASS_LEVELS.map((level) => valueAt(key, Math.min(level, LAST_NONEPIC_LEVEL))),
+    ]);
     return Object.fromEntries(values) as Record<K, number[]>;
   }
 

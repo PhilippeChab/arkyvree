@@ -142,12 +142,12 @@ describe("rulesets class levels", () => {
     expect(lists.map((list) => list.name)).toEqual(["Pious Templar Spells", "Pious Templar Blackguard Spells"]);
   });
 
-  test("rejects a level without a number, out of 1–20 or with a key its body doesn't take", async () => {
+  test("rejects a level without a number, out of 1–40 (its epic levels') or with a key its body doesn't take", async () => {
     const { id, classId } = await setup();
     for (const json of [
       { fields: { [CLASS_LEVEL_BAB]: 1 } },
       { fields: { [CLASS_LEVEL_BAB]: 1 }, position: "1" },
-      { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 21 },
+      { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 41 },
     ]) {
       const refused = await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
       expect(await refused.json()).toMatchObject({ issues: [{ category: "position" }] });
@@ -240,7 +240,7 @@ describe("rulesets class levels", () => {
     expect(await (await expectStatus(post(levelsAt([2, 3, 2])), 400)).json()).toMatchObject({
       issues: [{ category: "owned.2.position", message: "Level 2 is listed twice" }],
     });
-    const pastLast = { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 21 };
+    const pastLast = { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 41 };
     expect(await (await expectStatus(post([...levelsAt([2]), pastLast]), 400)).json()).toMatchObject({
       issues: [{ category: "owned.1.position" }],
     });
@@ -254,9 +254,9 @@ describe("rulesets class levels", () => {
     await expectStatus(post([]), 400);
     await expectStatus(post([{ ...levelsAt([1])[0], extra: 1 }]), 400);
     // More than a class has levels, whatever their numbers
-    const many = Array.from({ length: 21 }, () => ({ position: 1 }));
+    const many = Array.from({ length: 41 }, () => ({ position: 1 }));
     expect(await (await expectStatus(post(many), 400)).json()).toMatchObject({
-      issues: [{ category: "owned", message: "A class has at most 20 levels" }],
+      issues: [{ category: "owned", message: "A class has at most 40 levels" }],
     });
     expect(await levelNumbers()).toEqual([1]);
   });

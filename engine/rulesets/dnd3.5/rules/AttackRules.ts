@@ -12,12 +12,18 @@ export default class AttackRules {
   }
 
   /**
-   * The attacks a round a base attack bonus gives: each 5 less than the last while positive (`ATTACK_STEP`), or the
-   * bonus alone. A character's weapons attack from them, and a class's table writes its levels' by them ("+6/+1").
+   * The attacks a round a base attack bonus gives: each 5 less than the last while positive (`ATTACK_STEP`), four at most
+   * (`MAX_ITERATIVE_ATTACKS`: an epic +21 attacks at +21/+16/+11/+6), or the bonus alone. A character's weapons attack
+   * from them, and a class's table writes its levels' by them ("+6/+1").
    */
   static listIterativeAttacks(bab: number): number[] {
     const attacks: number[] = [];
-    for (let bonus = bab; bonus > 0; bonus -= COMBAT_RULES.ATTACK_STEP) attacks.push(bonus);
+    for (
+      let bonus = bab;
+      bonus > 0 && attacks.length < COMBAT_RULES.MAX_ITERATIVE_ATTACKS;
+      bonus -= COMBAT_RULES.ATTACK_STEP
+    )
+      attacks.push(bonus);
 
     return attacks.length > 0 ? attacks : [bab];
   }

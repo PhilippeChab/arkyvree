@@ -127,7 +127,7 @@ export default class LevelsImport {
    */
   private matchLevels(): MatchedLevel[] {
     const matched: MatchedLevel[] = [];
-    const levelsLeft = LevelRules.countLevelsLeft(0);
+    const levelsLeft = LevelRules.of(this.view).countLevelsLeft(0);
     for (const level of this.imported.levels) {
       const klass = this.names.findClass(level.className);
       // The view's class level the file's level names: its class's, at its number there (`level.classLevel`)

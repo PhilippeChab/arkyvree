@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { AdvancementPlanAnswer } from "@/engine/core/module/index.ts";
+import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -40,6 +41,7 @@ import {
   increasesOf,
 } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
+import { writeValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -80,9 +82,9 @@ function levelsOf(klass: string, hps: number[]): BatchLevel[] {
   return hps.map((hp, index) => [klass, index + 1, hp]);
 }
 
-/** The refusal of a plan past a character's last level, with the levels it has left. */
-function pastLastLevel(levelsLeft: number) {
-  const message = `A character can't go past level 20: ${levelsLeft} level(s) left`;
+/** The refusal of a plan past a character's last level (its ruleset's Settings', 20th in the core rules), with the levels it has left. */
+function pastLastLevel(levelsLeft: number, lastLevel = 20) {
+  const message = `A character can't go past level ${lastLevel}: ${levelsLeft} level(s) left`;
   return { refusal: "invalid", issues: [{ category: "levels", message }] };
 }
 
@@ -101,9 +103,9 @@ function warClericFirst(general: string[], first: "General" | "War Domain Weapon
   return { ...WAR_CLERIC_FIRST, feats };
 }
 
-/** A new seeded fighter with fighter levels 1 to `count`, written straight to the database. */
-async function createFighterAt(ctx: SeedContext, count: number) {
-  const characterId = await createSeedCharacter(ctx);
+/** A new seeded fighter with fighter levels 1 to `count`, written straight to the database, of a ruleset or the core's. */
+async function createFighterAt(ctx: SeedContext, count: number, rulesetId?: string) {
+  const characterId = await createSeedCharacter(ctx, "fighter", rulesetId ? { rulesetId } : {});
   for (let level = 1; level <= count; level++)
     await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Fighter"], level))!.id);
   return characterId;
@@ -1628,6 +1630,23 @@ describe("a character's last level", () => {
     expect(await levelsLeft(atLast)).toEqual(new Set([0]));
     expect(finalizeBatch(ctx, atLast, levelsOf("Rogue", [6]), {}, true)).rejects.toMatchObject(pastLastLevel(0));
     expect(await levelsLeft(await createFighterAt(ctx, 18))).toEqual(new Set([2]));
+  });
+
+  test("is its ruleset's Settings': a ruleset's epic levels past 20th, as the class picker says", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    await writeValues("rulesets", fork.id, RULESET_FIELDS.write({ lastLevel: 22 }));
+    RulesetViews.invalidate(fork.id);
+    const characterId = await createFighterAt(ctx, 20, fork.id);
+    const left = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 20 });
+    if (left.grouped) throw new Error("Expected the classes ungrouped");
+    expect(new Set(left.items.map((klass) => klass.track?.left))).toEqual(new Set([2]));
+    expect(finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6, 6]), {}, true)).rejects.toMatchObject(
+      pastLastLevel(2, 22),
+    );
+    // Its 21st and 22nd levels save, a Fighter 20 having no 21st level to take, then none more
+    await finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6]), {}, true);
+    expect(finalizeBatch(ctx, characterId, [["Rogue", 3, 6]], {}, true)).rejects.toMatchObject(pastLastLevel(0, 22));
   });
 });
 
