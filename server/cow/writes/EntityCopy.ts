@@ -126,6 +126,26 @@ export default class EntityCopy {
   }
 
   /**
+   * Copies an owned entity the view shows under an owner of the ruleset its row isn't owned by (`ownedId`, of
+   * `ownedType`, under `ownerId`, of `ownerType`): an extension's class level past the ruleset's own class's last (the
+   * epic book's 25th, `RulesetComposition.composeOwned`), which its first edit copies under that class, standing for it
+   * at its position from then on. Answers the copy, and the customizations copied with it, by their sources' ids.
+   */
+  static async copyOwnedInto(
+    tx: Db,
+    ownerType: RulesetEntityType,
+    owned: { entityType: string; id: string },
+    ownerId: string,
+    scope: LockedRulesetScope,
+  ): Promise<{ copiedIds: ReadonlyMap<string, string>; id: string }> {
+    const copy = new EntityCopy(scope.sources, ownerType, ownerId);
+    const rows = await Entities.findMany(tx, { entityType: owned.entityType, ids: [owned.id] });
+    const cow = await CowDataReader.read(tx, scope.sources);
+    const ids = await copy.copyOwnedRows(tx, owned.entityType, rows, ownerId, cow);
+    return { copiedIds: copy.copiedIds, id: ids.get(owned.id)! };
+  }
+
+  /**
    * Copies `entityId` into the ruleset a write holds (`scope`, under its lock: no other write of it, nor of its source
    * chain, where the source is, runs meanwhile), or returns the copy it already has (then with no copied ids): the
    * newly created child entity, and the customizations copied with it, by their sources' ids.
@@ -300,36 +320,43 @@ export default class EntityCopy {
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), cow);
     for (const type of Engine.forRules(this.ruleset.baseRules).storage().ownedKinds(this.entityType)) {
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
-      if (owned.length === 0) continue;
-      const named = await EntityCopy.readNamed(
-        tx,
-        cow,
-        owned.flatMap((row) => Object.values(row.links)),
-      );
-      // Each its position, its fields and its single links (each to what stands for its target: `readNamed`), and
-      // its times
-      const copies = await Entities.createMany(
-        tx,
-        this.ruleset.baseRules,
-        type,
-        owned.map(({ createdAt, fields, links, position, updatedAt }) => ({
-          ownerId: targetEntityId,
-          position: position!,
-          fields,
-          links: EntityCopy.namedLinks(links, named),
-          createdAt,
-          updatedAt,
-        })),
-        true,
-      );
-      const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizations = await this.customizationCopies.read(tx, [...ids.keys()], type);
-      for (const [id, copyId] of ids) {
-        const own = customizations.get(id);
-        if (own) await this.customizationCopies.copy(tx, copyId, type, own, this.copiedIds);
-      }
-      await this.copyLinks(tx, type, ids, cow);
+      if (owned.length > 0) await this.copyOwnedRows(tx, type, owned, targetEntityId, cow);
     }
+  }
+
+  /**
+   * Copies owned entities (`owned`, of `type`) under an owner of the ruleset (`targetOwnerId`): each its position, its
+   * fields and its single links (each to what stands for its target: `readNamed`), its times, its customizations and
+   * its links of the roles it holds many of (a level's grants and saves). Answers each copy's id, by its source's.
+   */
+  private async copyOwnedRows(tx: Db, type: string, owned: EntityRecord[], targetOwnerId: string, cow: CowData) {
+    const named = await EntityCopy.readNamed(
+      tx,
+      cow,
+      owned.flatMap((row) => Object.values(row.links)),
+    );
+    const copies = await Entities.createMany(
+      tx,
+      this.ruleset.baseRules,
+      type,
+      owned.map(({ createdAt, fields, links, position, updatedAt }) => ({
+        ownerId: targetOwnerId,
+        position: position!,
+        fields,
+        links: EntityCopy.namedLinks(links, named),
+        createdAt,
+        updatedAt,
+      })),
+      true,
+    );
+    const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
+    const customizations = await this.customizationCopies.read(tx, [...ids.keys()], type);
+    for (const [id, copyId] of ids) {
+      const own = customizations.get(id);
+      if (own) await this.customizationCopies.copy(tx, copyId, type, own, this.copiedIds);
+    }
+    await this.copyLinks(tx, type, ids, cow);
+    return ids;
   }
 
   /**

@@ -54,7 +54,7 @@ import {
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
-import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CHARACTER_XP, CLASS_HD, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A level of a batch: class, level, hit points and the ability it increases. */
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
@@ -1655,6 +1655,67 @@ describe("a character's last level", () => {
     // Its 21st and 22nd levels save, a Fighter 20 having no 21st level to take, then none more
     await finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6]), {}, true);
     expect(finalizeBatch(ctx, characterId, [["Rogue", 3, 6]], {}, true)).rejects.toMatchObject(pastLastLevel(0, 22));
+  });
+
+  test("with the Epic SRD 3.5 extension, gives a class the ruleset edited before its levels past 20th", async () => {
+    const ctx = await getSeedCtx();
+    const session = makeSession();
+    const fork = await createSeededTestRuleset(session.userId);
+    // The fork's own Fighter, its hit die changed, before it subscribes
+    const mine = await copyEntity(db, "classes", ctx.classMap.pc["Fighter"], fork);
+    await EntitiesService.updateEntity(session, fork.id, "classes", mine.id, {
+      name: "Fighter",
+      description: mine.description,
+      fields: { [CLASS_HD]: 12 },
+    });
+    await subscribeTestRuleset(fork.id, [(await findSeededRuleset(DND35_EPIC_NAME)).id]);
+    await writeValues("rulesets", fork.id, RULESET_FIELDS.write({ lastLevel: 22 }));
+    RulesetViews.invalidate(fork.id);
+    const view = Dnd35View.of(await readView(fork.id));
+    const fighter = view.classes.find((klass) => klass.name === "Fighter" && klass.partition === "pc")!;
+    // Its own class, with the epic book's levels past its 20th
+    expect(fighter.id).toBe(mine.id);
+    expect(fighter.fields).toMatchObject({ [CLASS_HD]: 12 });
+    expect(
+      view.classLevelsByClass
+        .get(fighter.id)
+        ?.map(({ position }) => position)
+        .sort((a, b) => a - b),
+    ).toEqual(Array.from({ length: 40 }, (_, i) => i + 1));
+    const characterId = await createFighterAt(ctx, 20, fork.id);
+    const epicPool = view.named("aptitudes", "Epic Fighter Bonus Feat")!.id;
+    const toughness = view.feats.find((feat) => feat.name === "Epic Toughness")!.id;
+    const level = (n: number) => ({ classId: fighter.id, level: n, hp: 8 });
+    const saved = await CharacterAdvancementsService.addAdvancements(
+      session,
+      characterId,
+      levelUpPlan([level(21), level(22)], { feats: { [epicPool]: [toughness] } }),
+      true,
+    );
+    expect(
+      (
+        await findPicks(
+          "feats",
+          saved.map(({ id }) => id),
+        )
+      ).map(({ entityId }) => entityId),
+    ).toContain(toughness);
+    expect((await sheetOf(characterId)).combat.bab).toBe(21);
+    // One of those levels, edited in the fork: its own copy, on its own class
+    const level25 = view.classLevelByClassAndLevel.get(`${fighter.id}:25`)!;
+    await EntitiesService.updateOwnedEntity(session, fork.id, "classes", fighter.id, level25.id, {
+      fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
+    });
+    RulesetViews.invalidate(fork.id);
+    const edited = Dnd35View.of(await readView(fork.id)).classLevelByClassAndLevel.get(`${fighter.id}:25`)!;
+    expect(edited.fields).toMatchObject({ [CLASS_LEVEL_SKILL_POINTS]: 4 });
+    expect(edited.id).not.toBe(level25.id);
+    // The epic book's own level as it was
+    const epic = Dnd35View.of(await readView((await findSeededRuleset(DND35_EPIC_NAME)).id));
+    const epicFighter = epic.classes.find((klass) => klass.name === "Fighter" && klass.partition === "pc")!;
+    expect(epic.classLevelByClassAndLevel.get(`${epicFighter.id}:25`)?.fields).toMatchObject({
+      [CLASS_LEVEL_SKILL_POINTS]: 2,
+    });
   });
 
   test("with the Epic SRD 3.5 extension, takes a class's levels past 20th, which give its epic bonus feats", async () => {
