@@ -408,7 +408,10 @@ describe("LevelsService", () => {
     for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
     // A class or a class level the ruleset lacks named in its rules' word, after the level it's about when it's planned
     const messageOf = async (call: () => Promise<unknown>) => (await answerTo(call)).body.message;
-    expect(await messageOf(() => getPlanAnswer(session, character.id, past))).toBe("Level 6: Class level not found");
+    // A level past its class's last names the class and the level it hasn't
+    expect(await messageOf(() => getPlanAnswer(session, character.id, past))).toBe(
+      "Level 6: Class level not found (Test Class has no Level 6)",
+    );
     expect(await messageOf(() => getStepOptions(session, character.id, "feats", past, { pool: featAptitude.id }))).toBe(
       "Class level not found",
     );

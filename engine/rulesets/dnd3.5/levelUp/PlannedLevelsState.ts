@@ -209,7 +209,9 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
         throw new RulesError("invalid", `${about}${word} is not valid for a player character`);
 
       const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
-      if (!classLevel) throw this.rulesetData.notFound("class-levels", { about });
+      // A class past its last level names it ("Fighter has no Level 21"): its levels past 20th are its ruleset's
+      const where = `(${klass.name} has no ${this.rulesetData.positionNameOf("class-levels", level)})`;
+      if (!classLevel) throw this.rulesetData.notFound("class-levels", { about, where });
 
       return { klass, classLevel, abilityIncreases };
     });
