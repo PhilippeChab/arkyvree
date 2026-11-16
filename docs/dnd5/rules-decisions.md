@@ -43,6 +43,12 @@ holds names the code that holds it.
   it, a new character picks two standard languages, and one more per extra pick a feature gives "from the language
   tables" (`languages.extrapicks`: a rogue's Thieves' Cant, a ranger's Deft Explorer): as many of its picks as its extra
   picks may be rare, so a Rogue 1 picks Abyssal beside two standard ones, and a fighter none (`SpokenLanguages`).
+- **No levels past 20th; a reward past it is a granted feat.** A character stops at level 20 whatever its classes
+  (`MAX_CHARACTER_LEVEL`, `LevelRules.countLevelsLeft`): the SRD has no rule past it. A table that rewards a 20th-level
+  character with another Epic Boon, as the 2014 Dungeon Master's Guide suggested, grants it with a modifier on the
+  character (the sheet's Manage Modifiers, then Add Modifier: `feats.<slug>.possessed` set true, such as
+  `feats.boonofcombatprowess.possessed`), which the character then holds as a feat, its level-19 prerequisite aside
+  (`PossessesVirtually`).
 - **An increase past 20 isn't refused.** A background's, an Ability Score Improvement's or a feat's +1 raises a score to
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
 - **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training
