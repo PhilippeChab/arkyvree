@@ -4,6 +4,7 @@ import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { heldValues, writtenValues } from "@/tests/support/ownerValues.ts";
 import {
+  FEAT_EPIC,
   FEAT_FAMILY,
   FEAT_GENERATED,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
@@ -29,6 +30,8 @@ describe("A feat's fields", () => {
         ]),
       ),
     ).toEqual({
+      // A feat is an epic one when it says so
+      epic: false,
       families: ["Weapon Focus", "Fighter Bonus"],
       generated: false,
       oversizedTwoWeaponFighting: false,
@@ -42,6 +45,7 @@ describe("A feat's fields", () => {
 
   test("are kept in a value per family, school and rule, which read back as the fields", () => {
     const fields = {
+      epic: true,
       families: ["Spell Focus"],
       generated: false,
       oversizedTwoWeaponFighting: true,
@@ -55,6 +59,7 @@ describe("A feat's fields", () => {
     const always = { [FEAT_STACKABLE]: [false], [FEAT_SELECTABLE]: [false], [FEAT_GENERATED]: [false] };
     expect(written.fields).toEqual({
       ...always,
+      [FEAT_EPIC]: [true],
       [FEAT_FAMILY]: ["Spell Focus"],
       [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: [true],
       [WIZARD_PROHIBITED_SCHOOL]: ["Evocation", "Necromancy"],
@@ -67,6 +72,7 @@ describe("A feat's fields", () => {
     // Its form writes whether it stacks, its families, its schools and its rules: the others aren't its form's
     expect(FEAT_FIELDS.formNames).toEqual([
       "stackable",
+      "epic",
       "families",
       "weaponFinesse",
       "oversizedTwoWeaponFighting",

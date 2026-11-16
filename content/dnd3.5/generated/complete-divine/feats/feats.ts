@@ -2,7 +2,7 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {
@@ -98,7 +98,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
     aptitudes: ["General", "Epic Cleric Bonus Feat"],
     requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
 ];
 

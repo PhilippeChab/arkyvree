@@ -8,7 +8,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { CORE_BOOK, EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
 import { BenefitModifiers } from "./readers/modifiers/BenefitModifiers.ts";
@@ -166,7 +166,9 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         aptitudes: [...new Set([...aptitudes, ...this.joinedEpicLists(aptitudes)])],
         requirements,
         modifiers: ovr?.modifiers ?? det.modifiers ?? [],
-        ...((ovr?.fields ?? det.fields) ? { fields: ovr?.fields ?? det.fields } : {}),
+        ...(this.isEpic(entry) || ovr?.fields || det.fields
+          ? { fields: { ...(ovr?.fields ?? det.fields), ...(this.isEpic(entry) ? { [FEAT_EPIC]: true } : {}) } }
+          : {}),
         ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),
@@ -254,6 +256,11 @@ export class FeatDetector extends BaseDetector<FeatReference> {
     return this.epicLists
       .filter((list) => list.feats.some((feat) => stripSeparators(feat) === slug))
       .map((list) => list.aptitude);
+  }
+
+  /** Whether a feat (`entry`) is an epic one: the epic book's, or another book's of the epic type. */
+  private isEpic(entry: FeatReference["raw"][number]): boolean {
+    return this.isEpicBook() || entry.featType === "epic";
   }
 
   /** Whether the reference is the epic book's (`EPIC_BOOK`): its feats, all epic, are its own. */

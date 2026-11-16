@@ -1652,12 +1652,29 @@ describe("a character's last level", () => {
     expect(finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6, 6]), {}, true)).rejects.toMatchObject(
       pastLastLevel(2, 22),
     );
-    // Its 21st and 22nd levels save, a Fighter 20 having no 21st level to take, then none more
+    // Its 21st and 22nd levels save, then none more
     await finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6]), {}, true);
     expect(finalizeBatch(ctx, characterId, [["Rogue", 3, 6]], {}, true)).rejects.toMatchObject(pastLastLevel(0, 22));
   });
 
-  test("with the Epic SRD 3.5 extension, takes a class's levels past 20th, which give its epic bonus feats", async () => {
+  test("hides the epic feats from a level up's picks below 21st level, and offers them from it", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    await subscribeTestRuleset(fork.id, [(await findSeededRuleset(DND35_EPIC_NAME)).id]);
+    await writeValues("rulesets", fork.id, RULESET_FIELDS.write({ lastLevel: 24 }));
+    RulesetViews.invalidate(fork.id);
+    // A Fighter 2's 3rd level picks a General feat: Toughness, not Epic Toughness
+    const low = await createFighterAt(ctx, 2, fork.id);
+    expect(await offeredFeats(low, "Fighter", 3, "General", "Toughness")).toEqual(["Toughness"]);
+    // A Fighter 20's 21st: both
+    const high = await createFighterAt(ctx, 20, fork.id);
+    expect((await offeredFeats(high, "Fighter", 21, "General", "Toughness")).sort()).toEqual([
+      "Epic Toughness",
+      "Toughness",
+    ]);
+  });
+
+  test("takes a class's levels past 20th, which give its epic bonus feats, the Epic SRD 3.5 extension's", async () => {
     const ctx = await getSeedCtx();
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     await subscribeTestRuleset(fork.id, [(await findSeededRuleset(DND35_EPIC_NAME)).id]);

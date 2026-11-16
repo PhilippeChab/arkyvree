@@ -4,7 +4,7 @@ import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { GrantText } from "./GrantText.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -18,6 +18,8 @@ interface FeatEntry {
 export interface TemplateFamily {
   aptitudes: string[];
   description: string;
+  /** Its feats are epic ones (`FEAT_EPIC`) */
+  epic: boolean;
   familyName: string;
   featNameMap: Record<string, string>;
   modifiers: ModifierSeed[];
@@ -138,6 +140,7 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
           {
             type,
             familyName,
+            epic: mapped.fields?.[FEAT_EPIC] === true,
             aptitudes: mapped.aptitudes ?? [],
             requirements: mapped.requirements ?? [],
             featNameMap: mapped.featNameMap ?? {},

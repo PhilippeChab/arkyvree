@@ -4,7 +4,7 @@ import { and, eq, eqStr, gte, or } from "@/content/core/builders/customization/r
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALL_WEAPONS, CROSSBOW_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
@@ -24,6 +24,7 @@ export const DIVINE_FEATS: FeatSeed[] = [
       ),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Undead Mastery",
@@ -34,6 +35,7 @@ export const DIVINE_FEATS: FeatSeed[] = [
       eq("feats.turnorrebukeundead.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Zone of Animation",
@@ -46,6 +48,7 @@ export const DIVINE_FEATS: FeatSeed[] = [
       eq("feats.turnorrebukeundead.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
 
@@ -56,7 +59,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Choose one type of magic item that has a limit on the number a character can simultaneously wear and gain its benefit. The character can now wear one more magic item of this type and also gain its benefit.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Armor Skin",
@@ -72,7 +75,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     ],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "combat.ac.natural", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Augmented Alchemy",
@@ -84,6 +87,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.craft.rank", 24),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Automatic Quicken Spell",
@@ -102,7 +106,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 30),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Automatic Silent Spell",
@@ -121,7 +125,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 24),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Automatic Still Spell",
@@ -140,7 +144,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 27),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Bane of Enemies",
@@ -148,6 +152,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Any weapon the character wields against one of his or her favored enemies is treated as a bane weapon for that creature type (thus, its enhancement bonus is increased by +2 and it deals +2d6 points of damage). This ability doesn't stack with similar abilities.",
     aptitudes: ["General", "Epic Ranger Bonus Feat"],
     requirements: [gte("skills.survival.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Blinding Speed",
@@ -155,7 +160,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character can act as if hasted for 5 rounds each day. The duration of the effect need not be consecutive rounds. Activating this power is a free action.",
     aptitudes: ["General", "Epic Monk Bonus Feat", "Epic Ranger Bonus Feat", "Epic Rogue Bonus Feat"],
     requirements: [gte("abilities.dexterity.total", 25), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Bonus Domain",
@@ -163,7 +168,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Choose an additional domain from the character's deity's domain list. The character now has access to that domain's spells as normal for his or her domain spells and the domain's granted powers.",
     aptitudes: ["General", "Epic Cleric Bonus Feat"],
     requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Bulwark of Defense",
@@ -171,6 +176,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character's defensive stance bonuses increase to +4 Strength, +6 Constitution, +4 resistance bonus on all saves, and +6 dodge bonus to AC.",
     aptitudes: ["General"],
     requirements: [gte("abilities.constitution.total", 25), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Chaotic Rage",
@@ -186,6 +192,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("feats.ragebarbarian.count", 5),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Combat Archery",
@@ -197,6 +204,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.pointblankshot.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Damage Reduction",
@@ -204,7 +212,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character gains damage reduction 3/-. This does not stack with damage reduction granted by magic items or nonpermanent magical effects, but it does stack with any damage reduction granted by permanent magical effects, class features, or this feat itself.",
     aptitudes: ["General", "Epic Barbarian Bonus Feat", "Epic Fighter Bonus Feat", "Epic Monk Bonus Feat"],
     requirements: [gte("abilities.constitution.total", 21), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Deafening Song",
@@ -212,6 +220,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character can use song or poetics to temporarily deafen all enemies within a 30-foot spread from him or her. A successful Fortitude save (DC 10 + 1/2 the character's class level + the character's Charisma modifier) negates the effect. The deafening effect lasts for as long as the character continues the deafening song. The character can choose to exclude any characters from this effect. The character may sing, play, or recite a deafening song while taking other mundane actions, but not magical ones the bard's inspire courage ability for more details). The character may keep up the deafening song for a maximum of 10 rounds. Using the deafening song counts as one of the character's uses of song or poetics for the day.",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 24), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Death of Enemies",
@@ -223,6 +232,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.survival.rank", 30),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Devastating Critical",
@@ -239,6 +249,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.weaponfocus.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Dexterous Fortitude",
@@ -250,6 +261,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.slipperymindroguespecialability.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Dexterous Will",
@@ -261,6 +273,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.slipperymindroguespecialability.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Dire Charge",
@@ -268,6 +281,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "If the character charges a foe during the first round of combat (or the surprise round, if the character is allowed to act in it), he or she can make a full attack against the opponent charged.",
     aptitudes: ["General", "Epic Barbarian Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [eq("feats.improvedinitiative.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Distant Shot",
@@ -281,6 +295,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spot.rank", 20),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Efficient Item Creation",
@@ -293,6 +308,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 24),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Energy Resistance",
@@ -306,7 +322,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Sorcerer Bonus Feat",
     ],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Epic Dodge",
@@ -321,6 +337,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.defensiverollroguespecialability.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Endurance",
@@ -332,6 +349,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.endurance.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Fortitude",
@@ -339,6 +357,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "saves.fortitude.misc", operator: "add", value: "4", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Inspiration",
@@ -351,7 +370,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.bardicmusic.*.possessed"),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Epic Leadership",
@@ -363,6 +382,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.leadership.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Prowess",
@@ -377,7 +397,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     ],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "items.weapons.*.tohit.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Epic Reflexes",
@@ -385,6 +405,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "saves.reflex.misc", operator: "add", value: "4", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Reputation",
@@ -399,12 +420,14 @@ export const EPIC_FEATS: FeatSeed[] = [
       { target: "skills.intimidate.misc", operator: "add", value: "4", valueType: "number" },
       { target: "skills.perform.misc", operator: "add", value: "4", valueType: "number" },
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Skill Focus",
     description: "The character gains a +10 bonus on all skill checks with that skill.",
     aptitudes: ["General", "Epic Bard Bonus Feat", "Epic Rogue Bonus Feat"],
     requirements: [gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Speed",
@@ -419,6 +442,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     ],
     requirements: [gte("abilities.dexterity.total", 21), eq("feats.run.possessed"), gte("identity.meta.level", 21)],
     modifiers: [{ target: "combat.speed.misc", operator: "add", value: "30", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Spell Focus",
@@ -437,6 +461,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.spellfocus.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Spell Penetration",
@@ -454,6 +479,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.spellpenetration.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Spellcasting",
@@ -474,6 +500,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       ),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Epic Toughness",
@@ -488,7 +515,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     ],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "combat.hp.misc", operator: "add", value: "30", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Epic Will",
@@ -496,6 +523,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "saves.will.misc", operator: "add", value: "4", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Exceptional Deflection",
@@ -509,6 +537,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.improvedunarmedstrike.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Extended Life Span",
@@ -516,7 +545,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Add one-half the maximum result of the character's race's maximum age modifier to the character's normal middle age, old, and venerable age categories. Calculate the character's maximum age using the new venerable number. This feat can't lower the character's current age category.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Familiar Spell",
@@ -528,7 +557,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("abilities.charisma.total", 25),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Fast Healing",
@@ -542,7 +571,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Ranger Bonus Feat",
     ],
     requirements: [gte("abilities.constitution.total", 25), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Charisma",
@@ -550,7 +579,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.charisma.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Constitution",
@@ -558,7 +587,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.constitution.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Dexterity",
@@ -566,7 +595,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.dexterity.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Intelligence",
@@ -574,7 +603,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.intelligence.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Smiting",
@@ -586,7 +615,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       or(eq("feats.smite.*.possessed"), eq("feats.destructiondomain.possessed")),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Strength",
@@ -594,7 +623,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.strength.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Great Wisdom",
@@ -602,7 +631,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
     modifiers: [{ target: "abilities.wisdom.misc", operator: "add", value: "1", valueType: "number" }],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Group Inspiration",
@@ -610,7 +639,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The number of allies the character can affect with his or her inspire competence or inspire greatness bardic music ability doubles. When inspiring competence in multiple allies, the character can choose different skills to inspire for different allies.",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 30), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Hindering Song",
@@ -623,6 +652,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.bardicmusic.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Holy Strike",
@@ -638,6 +668,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.smiteevil.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Ignore Material Components",
@@ -656,6 +687,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 25),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Alignment-based Casting",
@@ -672,6 +704,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("spellcasting.divine", 9),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Aura of Courage",
@@ -682,6 +715,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.auraofcouragepaladin.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Combat Casting",
@@ -701,6 +735,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.concentration.rank", 25),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Combat Reflexes",
@@ -712,6 +747,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.combatreflexes.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Darkvision",
@@ -719,7 +755,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The range of the character's darkvision doubles. This feat does not stack with darkvision granted by magic items or nonpermanent magical effects.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Favored Enemy",
@@ -727,7 +763,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Add +1 to the bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks and damage rolls against all the character's favored enemies.",
     aptitudes: ["General", "Epic Ranger Bonus Feat"],
     requirements: [gte("feats.favoredenemyranger.count", 5), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Heighten Spell",
@@ -744,6 +780,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 20),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Ki Strike",
@@ -751,6 +788,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character's unarmed strikes are treated as epic magic weapons for the purposes of damage reduction.",
     aptitudes: ["General", "Epic Monk Bonus Feat"],
     requirements: [gte("abilities.wisdom.total", 21), gte("classes.monk.level", 16), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Low-light Vision",
@@ -758,7 +796,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The range of the character's low-light vision doubles. This feat does not stack with low-light vision granted by magic items or nonpermanent magical effects.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Manyshot",
@@ -773,6 +811,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.rapidshot.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Metamagic",
@@ -787,14 +826,14 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Wizard Bonus Feat",
     ],
     requirements: [gte("feats.metamagic.count", 4), gte("skills.spellcraft.rank", 30), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Sneak Attack",
     description: "Add +1d6 to the character's sneak attack damage.",
     aptitudes: ["General", "Epic Rogue Bonus Feat"],
     requirements: [gte("feats.sneakattack.count", 8), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Spell Capacity",
@@ -811,14 +850,14 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Wizard Bonus Feat",
     ],
     requirements: [or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Spell Resistance",
     description: "The character's spell resistance increases by +2.",
     aptitudes: ["General", "Epic Monk Bonus Feat"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Stunning Fist",
@@ -831,7 +870,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.stunningfist.possessed"),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Whirlwind Attack",
@@ -848,6 +887,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.whirlwindattack.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Incite Rage",
@@ -859,6 +899,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.greaterragebarbarian.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Infinite Deflection",
@@ -871,6 +912,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.improvedunarmedstrike.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Inspire Excellence",
@@ -878,6 +920,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character can use song or poetics to grant a bonus to one ability score to his or her allies. To be affected, an ally must hear the bard sing for 1 full round. The effect lasts as long as the bard sings and for 5 rounds after the bard stops singing (or 5 rounds after the ally can no longer hear the bard). While singing, the bard can fight but cannot cast spells, activate magic items by spell completion (such as scrolls), or activate magic items by command word (such as wands). Each ally to be inspired gains a +4 competence bonus to the same ability score, which the character must choose before he or she begins inspiring. Inspire excellence is a supernatural, mind-affecting ability. Use of this feat counts as one of the character's bardic music uses for the day.",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 30), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Keen Strike",
@@ -892,6 +935,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.stunningfist.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Lasting Inspiration",
@@ -899,6 +943,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The effects of the character's bardic music inspiration abilities last for ten times as long as normal after he or she stops singing. This feat has no effect on inspiration abilities that have no duration after the character stops singing.",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 25), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Climber",
@@ -916,6 +961,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.climb.rank", 24),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Commander",
@@ -929,12 +975,14 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.diplomacy.rank", 30),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Leaper",
     description: "The character need only move 5 feet in a straight line to make a running jump.",
     aptitudes: ["General", "Epic Barbarian Bonus Feat"],
     requirements: [gte("skills.jump.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Rider",
@@ -948,6 +996,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Ranger Bonus Feat",
     ],
     requirements: [gte("skills.ride.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Tracker",
@@ -961,6 +1010,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.survival.rank", 30),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Legendary Wrestler",
@@ -974,6 +1024,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("identity.meta.level", 21),
     ],
     modifiers: [{ target: "combat.grapple.misc", operator: "add", value: "10", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Lingering Damage",
@@ -985,6 +1036,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.cripplingstrikeroguespecialability.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Master Staff",
@@ -992,6 +1044,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "When the character activates a staff, he or she can substitute a spell slot instead of using a charge. The spell slot must be one the character ahs not used for the day, though the character may lose a prepared spell to emulate a wand charge (the character may not lose prepared spells from his or her school of specialty, if any). The spell slot lost must be equal to or higher in level than the specific spell stored in the staff, including any level-increasing metamagic enhancements. A character cannot emulate a charge for a staff function that does not match a specific spell.",
     aptitudes: ["General", "Epic Bard Bonus Feat", "Epic Sorcerer Bonus Feat"],
     requirements: [eq("feats.craftstaff.possessed"), gte("skills.spellcraft.rank", 15), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Master Wand",
@@ -999,6 +1052,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "When the character activates a wand, he or she can substitute a spell slot instead of using a charge. The spell slot must be one the character has not used for the day, though he or she may lose a prepared spell to emulate a wand charge (the character may not lose prepared spells from his or her school of specialty, if any). The spell slot lost must be equal to or higher in level than the spell stored in the wand, including any level-increasing metamagic enhancements.",
     aptitudes: ["General", "Epic Bard Bonus Feat", "Epic Sorcerer Bonus Feat"],
     requirements: [eq("feats.craftwand.possessed"), gte("skills.spellcraft.rank", 15), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Mighty Rage",
@@ -1012,6 +1066,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("feats.ragebarbarian.count", 5),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Multispell",
@@ -1028,7 +1083,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       or(gte("spellcasting.arcane", 9), gte("spellcasting.divine", 9)),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Music of the Gods",
@@ -1041,6 +1096,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.bardicmusic.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Overwhelming Critical",
@@ -1056,6 +1112,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.weaponfocus.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Penetrate Damage Reduction",
@@ -1063,7 +1120,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character melee weapons (including natural weapons) are treated as being crafted from the chosen special material for the purposes of bypassing the damage reduction of any creature the character strikes. None of the other special properties of special materials are gained by the character's melee weapons.",
     aptitudes: ["General", "Epic Fighter Bonus Feat"],
     requirements: [gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Perfect Health",
@@ -1075,6 +1132,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.greatfortitude.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Perfect Two-weapon Fighting",
@@ -1088,6 +1146,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.twoweaponfighting.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Permanent Emanation",
@@ -1108,6 +1167,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 25),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Planar Turning",
@@ -1120,6 +1180,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.turnorrebukeundead.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Polyglot",
@@ -1131,6 +1192,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.speaklanguage.rank", 5),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Positive Energy Aura",
@@ -1143,6 +1205,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.turnorrebukeundead.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Ranged Inspiration",
@@ -1150,7 +1213,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Double the range of any bardic music ability that has a range. (If the creature must hear the bard to be affected by the ability, that requirement doesn't change regardless of any extended range the bard's ability may have.)",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 25), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Rapid Inspiration",
@@ -1158,6 +1221,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character can use any of his or her bardic music inspiration abilities as a standard action. The inspiration takes effect immediately after the character concludes the action.",
     aptitudes: ["General", "Epic Bard Bonus Feat"],
     requirements: [gte("skills.perform.rank", 25), eq("feats.bardicmusic.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Reactive Countersong",
@@ -1170,6 +1234,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.bardicmusic.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Reflect Arrows",
@@ -1182,6 +1247,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.improvedunarmedstrike.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Righteous Strike",
@@ -1199,6 +1265,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       ),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Ruinous Rage",
@@ -1211,6 +1278,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.powerattack.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Self-concealment",
@@ -1223,6 +1291,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.tumble.rank", 30),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Shattering Strike",
@@ -1235,6 +1304,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.concentration.rank", 25),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Sneak Attack of Opportunity",
@@ -1245,6 +1315,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.opportunistroguespecialability.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Spectral Strike",
@@ -1255,6 +1326,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.turnorrebukeundead.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Spell Knowledge",
@@ -1262,7 +1334,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "The character learns two new arcane spells of any level up to the maximum level he or she can cast. This feat does not grant any additional spell slots.",
     aptitudes: ["General", "Epic Bard Bonus Feat", "Epic Sorcerer Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Spell Opportunity",
@@ -1283,6 +1355,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 25),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Spell Stowaway",
@@ -1301,6 +1374,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 24),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Spellcasting Harrier",
@@ -1308,6 +1382,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Any spellcaster the character threatens in melee provokes an attack of opportunity if he or she tries to cast defensively. The character gets a +4 bonus on this attack roll.",
     aptitudes: ["General", "Epic Fighter Bonus Feat", "Epic Rogue Bonus Feat"],
     requirements: [eq("feats.combatreflexes.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Spontaneous Domain Access",
@@ -1320,7 +1395,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 30),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Spontaneous Spell",
@@ -1339,7 +1414,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 25),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Storm of Throws",
@@ -1353,6 +1428,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.rapidshot.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Superior Initiative",
@@ -1361,6 +1437,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     aptitudes: ["General", "Epic Fighter Bonus Feat", "Epic Rogue Bonus Feat"],
     requirements: [eq("feats.improvedinitiative.possessed"), gte("identity.meta.level", 21)],
     modifiers: [{ target: "combat.initiative.misc", operator: "add", value: "8", valueType: "number" }],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Swarm of Arrows",
@@ -1374,6 +1451,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.weaponfocus.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Terrifying Rage",
@@ -1381,6 +1459,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "While you are raging, any enemy that views you must make a Will save opposed by your Intimidate check of become panicked (if it have HD less than your character level) or shaken (if it has HD equal to or up to twice your character level) for 4d6 rounds. An enemy with Hit Dice greater than twice your character level is not affected by this feat.",
     aptitudes: ["General", "Epic Barbarian Bonus Feat"],
     requirements: [gte("skills.intimidate.rank", 25), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Tenacious Magic",
@@ -1394,7 +1473,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Epic Wizard Bonus Feat",
     ],
     requirements: [gte("skills.spellcraft.rank", 15), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Thundering Rage",
@@ -1402,6 +1481,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       "Any weapon the character wields while in a rage is treated as a thundering weapon. The DC of the Fortitude save to resist deafness is equal to 10 + 1/2 the character's level. This ability does not stack with similar abilities.",
     aptitudes: ["General", "Epic Barbarian Bonus Feat"],
     requirements: [gte("abilities.strength.total", 25), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Trap Sense",
@@ -1414,6 +1494,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.trapfinding.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Two-weapon Rend",
@@ -1427,6 +1508,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.twoweaponfighting.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Uncanny Accuracy",
@@ -1442,6 +1524,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("skills.spot.rank", 20),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Vorpal Strike",
@@ -1457,6 +1540,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.stunningfist.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Widen Aura of Courage",
@@ -1467,6 +1551,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       eq("feats.auraofcouragepaladin.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
 
@@ -1484,7 +1569,7 @@ export const EPIC_WEAPON_FOCUS_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.tohit.misc`, operator: "add", value: "2", valueType: "number" },
   ],
-  fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Focus"] },
+  fields: { [FEAT_EPIC]: true, [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Focus"] },
 }));
 
 export const EPIC_WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
@@ -1500,7 +1585,7 @@ export const EPIC_WEAPON_SPECIALIZATION_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) 
   modifiers: [
     { target: `items.weapons.${stripSeparators(w)}.damage.misc`, operator: "add", value: "4", valueType: "number" },
   ],
-  fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Specialization"] },
+  fields: { [FEAT_EPIC]: true, [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Epic Weapon Specialization"] },
 }));
 
 export const INSTANT_RELOAD_FEATS: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
@@ -1513,7 +1598,7 @@ export const INSTANT_RELOAD_FEATS: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
     eq(feat(`Weapon Focus: ${w}`)),
     gte("identity.meta.level", 21),
   ],
-  fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Instant Reload"] },
+  fields: { [FEAT_EPIC]: true, [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Instant Reload"] },
 }));
 
 export const ITEM_CREATION_FEATS: FeatSeed[] = [
@@ -1527,7 +1612,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 28),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
   {
     name: "Craft Epic Rod",
@@ -1539,7 +1624,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 32),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
   {
     name: "Craft Epic Staff",
@@ -1551,7 +1636,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 35),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
   {
     name: "Craft Epic Wondrous Item",
@@ -1563,7 +1648,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 26),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
   {
     name: "Forge Epic Ring",
@@ -1575,7 +1660,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 35),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
   {
     name: "Scribe Epic Scroll",
@@ -1588,7 +1673,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 24),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Item Creation"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Item Creation"] },
   },
 ];
 
@@ -1606,7 +1691,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
       "Epic Wizard Bonus Feat",
     ],
     requirements: [eq("feats.maximizespell.possessed"), gte("identity.meta.level", 21)],
-    fields: { [FEAT_STACKABLE]: true, [FEAT_FAMILY]: ["Metamagic"] },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Intensify Spell",
@@ -1627,7 +1712,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
       gte("skills.spellcraft.rank", 30),
       gte("identity.meta.level", 21),
     ],
-    fields: { [FEAT_FAMILY]: ["Metamagic"] },
+    fields: { [FEAT_EPIC]: true, [FEAT_FAMILY]: ["Metamagic"] },
   },
 ];
 
@@ -1637,12 +1722,14 @@ export const WILD_FEATS: FeatSeed[] = [
     description: "The character can use his or her wild shape to take the shape of a Colossal animal.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [eq("feats.wildshape.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Diminutive Wild Shape",
     description: "The character can use wild shape to take the shape of a Diminutive animal.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [eq("feats.wildshape.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Dragon Wild Shape",
@@ -1654,18 +1741,21 @@ export const WILD_FEATS: FeatSeed[] = [
       gte("skills.knowledgenature.rank", 30),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Fine Wild Shape",
     description: "The character can use his or her wild shape to take the shape of a Fine animal.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [eq("feats.wildshape.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Gargantuan Wild Shape",
     description: "The character can use your wild shape to take the shape of a Gargantuan animal.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [eq("feats.wildshape.*.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Improved Elemental Wild Shape",
@@ -1677,6 +1767,7 @@ export const WILD_FEATS: FeatSeed[] = [
       eq("feats.wildshape.*.possessed"),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Magical Beast Companion",
@@ -1684,6 +1775,7 @@ export const WILD_FEATS: FeatSeed[] = [
       "The following magical beasts are added to the lists of animal companions from which you can select. 1st Level (no adjustment) Stirge Darkmantle 4th Level (-3) Hippogriff Shocker lizard 7th Level (-6) Cockatrice Ankheg Griffon Owlbear Sea cat* 10th Level (-9) Basilisk Digerster Girallon Spider eater 13th Level (-12) Bulette Chimera Remorhaz 16th Level (-15) Gorgon Gray render",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [gte("skills.knowledgenature.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Magical Beast Wild Shape",
@@ -1695,6 +1787,7 @@ export const WILD_FEATS: FeatSeed[] = [
       gte("skills.knowledgenature.rank", 27),
       gte("identity.meta.level", 21),
     ],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Plant Wild Shape",
@@ -1702,6 +1795,7 @@ export const WILD_FEATS: FeatSeed[] = [
       "The character can use his or her normal wild shape ability to take the form of a plant. The size limitation is the same as the character's limitation on animal size.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [gte("skills.knowledgenature.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
   {
     name: "Vermin Wild Shape",
@@ -1709,5 +1803,6 @@ export const WILD_FEATS: FeatSeed[] = [
       "The character can use his or her normal wild shape ability to take the form of a vermin. The size limitation is the same as the character's limitation on animal size.",
     aptitudes: ["General", "Epic Druid Bonus Feat"],
     requirements: [gte("skills.knowledgenature.rank", 24), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
