@@ -15,8 +15,8 @@ export function ExtendsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class ExtendingClasses extends Base {
     /**
      * Gives a class's copy its source's levels (`copyLevels`) and its new levels (`entry`): each after its source's last
-     * to `levels`, with that last level's base attack, skill points and base saves, and the class features
-     * `classFeatures` grants it there.
+     * to `levels`, with that last level's base attack, skill points and base saves, the class features `classFeatures`
+     * grants it there, and the bonuses its `modifiers` go on giving there.
      */
     private async addLevels(copyId: string, sourceId: string, entry: CowClassEntry) {
       const { last, saves } = await this.copyLevels(sourceId, copyId);
@@ -48,6 +48,10 @@ export function ExtendsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           free: true,
         })),
       ]);
+      await this.insertModifiers(
+        "class-levels",
+        entry.modifiers.map(({ level, ...modifier }) => ({ sourceId: levelIds.get(level)!, modifier })),
+      );
     }
 
     /**

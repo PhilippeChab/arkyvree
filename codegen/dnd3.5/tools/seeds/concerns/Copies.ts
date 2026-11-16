@@ -76,6 +76,13 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
       });
     }
 
+    /** The core class's level modifiers (`className`'s), each at its level: none for a class the core rules haven't. */
+    private coreClassModifiers(className: string) {
+      const core = this.shelf.book(CORE_BOOK);
+      const ref = core.classReferences().find((file) => file.ref.raw.name === className)?.ref;
+      return ref ? (core.classes(ref).seed().modifiers ?? []) : [];
+    }
+
     /**
      * The core template families, by their name's slug: their feats are copied for each option. The core rules' own,
      * none.
@@ -91,7 +98,8 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
     /**
      * What a class's bonus feat list's entry names, by its letters ("Hear the Unseen" is Hear The Unseen): a feat of the
      * book's own (the feat generator gives it the list), a core feat (a family's for an option too, "Spell Focus:
-     * Enchantment") or a core family, which the book copies; or none.
+     * Enchantment", or a core class's feature, a rogue's special ability) or a core family, which the book copies; or
+     * none.
      */
     private listedFeat(name: string): ListedFeat | undefined {
       const slug = stripSeparators(name);
@@ -129,10 +137,15 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
       return this.memo("cowClasses", () =>
         Object.entries(this.reference("epicClass")?.mapping ?? {})
           .filter(([, mapping]) => !mapping.skip)
-          .map(([className, { bonusFeats, classFeatureAptitude, features }]) => ({
+          .map(([className, { bonusFeats, classFeatureAptitude, features, levelModifiers = [] }]) => ({
             className,
             levels: MAX_CLASS_LEVEL,
             classFeatureAptitude,
+            modifiers: levelModifiers.flatMap(({ target, first, every }) => {
+              const last = this.coreClassModifiers(className).findLast((modifier) => modifier.target === target);
+              if (!last) throw new Error(`The core ${className} has no level modifier of ${target} to go on with`);
+              return epicLevels(first, every).map((level) => ({ ...last, level }));
+            }),
             classFeatures: [...features, bonusFeats]
               .flatMap(({ feature, first, every }) =>
                 epicLevels(first, every).map((level): [number, string] => [level, feature]),

@@ -6,8 +6,8 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** Writing what a book copies from the core rules: a class it adds levels to, a feat, a spell. */
 export function WritesCopies<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingCopies extends Base {
-    /** A core class a book adds levels to written as code, a list's item: its features a level a line. */
-    cowClass({ classFeatureAptitude, classFeatures, className, levels }: CowClassEntry): string[] {
+    /** A core class a book adds levels to written as code, a list's item: its features and its modifiers a level a line. */
+    cowClass({ classFeatureAptitude, classFeatures, className, levels, modifiers }: CowClassEntry): string[] {
       return [
         `  {`,
         `    className: ${this.quote(className)},`,
@@ -15,6 +15,9 @@ export function WritesCopies<B extends Constructor<BaseCodeFile>>(Base: B) {
         `    classFeatureAptitude: ${this.quote(classFeatureAptitude)},`,
         `    classFeatures: [`,
         ...classFeatures.map(([level, feature]) => `      [${level}, ${this.quote(feature)}],`),
+        `    ],`,
+        `    modifiers: [`,
+        ...modifiers.map((m) => `      { ${[`level: ${m.level}`, ...this.modifierFields(m)].join(", ")} },`),
         `    ],`,
         `  },`,
       ];

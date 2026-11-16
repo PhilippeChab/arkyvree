@@ -97,6 +97,7 @@ export class EpicClassDetector extends BaseDetector<EpicClassReference> {
         },
         bonusFeatList: ovr?.bonusFeatList ?? { aptitude: `Epic ${entry.name} Bonus Feat`, feats: det.feats },
         ...(ovr?.joins ? { joins: ovr.joins } : {}),
+        ...(ovr?.levelModifiers ? { levelModifiers: ovr.levelModifiers } : {}),
         ...(ovr?.skip ? { skip: true } : {}),
       };
     }

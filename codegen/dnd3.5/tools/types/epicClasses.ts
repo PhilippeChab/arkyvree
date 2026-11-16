@@ -32,6 +32,11 @@ export interface EpicClassFields {
    * bonus feat" (Fighter Bonus Feat)
    */
   joins?: string[];
+  /**
+   * The core class's level bonuses that go on past 20th, each by its target, at its first level and every so many after:
+   * its last one repeated (a monk's AC bonus, `combat.ac.misc`, every 5 levels from 25th). Its table names none
+   */
+  levelModifiers?: { every: number; first: number; target: string }[];
   skip?: boolean;
 }
 

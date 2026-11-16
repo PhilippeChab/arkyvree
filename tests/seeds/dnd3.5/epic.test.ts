@@ -58,6 +58,25 @@ describe("The seeded Epic SRD 3.5 extension", () => {
     ]);
     expect(await grantsAt("Rogue", 21)).toEqual(["Sneak Attack (Rogue)", "Trap Sense (Rogue)"]);
     expect(await grantsAt("Monk", 35)).toEqual(["Epic Bonus Feat (Monk)"]);
+    expect(await grantsAt("Ranger", 25)).toEqual(["Favored Enemy (Ranger)", "Favored Enemy Specialization (Ranger)"]);
+  });
+
+  test("goes on with a class's level bonuses: a monk's unarmored AC every 5 levels, its speed every 3", async () => {
+    const rows = await seededRows(DND35_EPIC_NAME);
+    const targetsAt = (level: number) =>
+      rows
+        .modifiersOf(rows.classLevel("Monk", level).id)
+        .map(({ target, value }) => `${target} ${value}`)
+        .sort();
+    expect([targetsAt(21), targetsAt(24), targetsAt(25), targetsAt(26)]).toEqual([
+      ["combat.speed.base 10"],
+      ["combat.speed.base 10"],
+      ["combat.ac.misc 1"],
+      [],
+    ]);
+    // The AC bonus keeps its gate: no armor, no shield, a light load
+    const ac = rows.modifiersOf(rows.classLevel("Monk", 25).id)[0];
+    expect(rows.requirementsOf(ac.id).length).toBeGreaterThan(0);
   });
 
   test("gives the epic feats, each of 21st level, in the General pool and the bonus feat lists that name them", async () => {

@@ -17,9 +17,10 @@ import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 /**
  * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
  * (`ContentSeeder`'s: aptitudes, abilities, saves, languages, feats, races, items, copies) or 3.5's own (`concerns/`:
- * classes, skills, spells, wizard schools, an extension's changes to the core, the levels it adds to its classes), and the steps made of others are its
- * own. Each names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules'
- * package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
+ * classes, skills, spells, wizard schools, an extension's changes to the core, the levels it adds to its classes), and
+ * the steps made of others are its own. Each names the rows the steps before it seeded by their ids in its context. It
+ * holds no content: the core rules' package gives `seedCore` theirs, an extension's package gives `seedExtension` its
+ * book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,

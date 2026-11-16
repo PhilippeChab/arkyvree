@@ -11,6 +11,34 @@
         "Fighter Bonus Feat"
       ]
     },
+    "Monk": {
+      "levelModifiers": [
+        {
+          "every": 5,
+          "first": 25,
+          "target": "combat.ac.misc"
+        },
+        {
+          "every": 3,
+          "first": 21,
+          "target": "combat.speed.base"
+        }
+      ]
+    },
+    "Ranger": {
+      "features": [
+        {
+          "every": 5,
+          "feature": "Favored Enemy (Ranger)",
+          "first": 25
+        },
+        {
+          "every": 5,
+          "feature": "Favored Enemy Specialization (Ranger)",
+          "first": 25
+        }
+      ]
+    },
     "Rogue": {
       "bonusFeatList": {
         "aptitude": "Epic Rogue Bonus Feat",

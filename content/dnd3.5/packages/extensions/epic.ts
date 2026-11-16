@@ -9,7 +9,7 @@ export const DND35_EPIC_PACKAGE: ExtensionPackage = {
   ruleset: {
     name: DND35_EPIC_NAME,
     description:
-      "The SRD's epic levels for D&D 3.5: the core classes' levels 21 to 40, their epic bonus feats, and the epic feats. A ruleset that subscribes raises its Last Level past 20.",
+      "The SRD's epic levels for D&D 3.5: the core classes' levels 21 to 40, their epic bonus feats, and the epic feats. Raise your ruleset's Last Level past 20 in its Settings to reach them.",
   },
   content: BOOK,
 };
