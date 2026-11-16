@@ -197,6 +197,10 @@ export function Progressions<B extends Constructor>(Base: B) {
         const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
         if (plan.owned.length === 0) return unchanged;
 
+        // An extension's level the class shows past its own last is the extension's: refused, naming it
+        const edit = new EntityEdit(scope);
+        for (const { entity } of plan.owned)
+          await edit.refuseAdopted(tx, plan.ownedType, type, entity.id, plan.owner.name);
         const gone = describeGone(scope.ruleset.baseRules, type, plan.ownedType);
         const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
         const ownedIds = await this.writeOwned(tx, scope, policy, target, plan, { gone, tokens });

@@ -1713,6 +1713,21 @@ describe("a character's last level", () => {
     expect(EntitiesService.deleteOwnedEntity(session, fork.id, "classes", fighter.id, level40.id)).rejects.toThrow(
       "Fighter's level 40 comes from the Epic SRD 3.5 extension",
     );
+    // So is a progression save that changes one, its other levels left as they were
+    const level5 = view.classLevelByClassAndLevel.get(`${fighter.id}:5`)!;
+    expect(
+      EntitiesService.updateProgression(session, fork.id, "classes", fighter.id, {
+        owned: [
+          { fields: { [CLASS_LEVEL_SKILL_POINTS]: 6 }, ownedId: level5.id },
+          { fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 }, ownedId: level25.id },
+        ],
+      }),
+    ).rejects.toMatchObject({ message: refused });
+    RulesetViews.invalidate(fork.id);
+    const after = Dnd35View.of(await readView(fork.id)).classLevelByClassAndLevel;
+    expect(after.get(`${fighter.id}:5`)?.fields[CLASS_LEVEL_SKILL_POINTS]).toBe(
+      level5.fields[CLASS_LEVEL_SKILL_POINTS],
+    );
   });
 
   test("with the Epic SRD 3.5 extension, leaves a class the ruleset shortened as it is", async () => {
@@ -1752,6 +1767,12 @@ describe("a character's last level", () => {
     const { fighter: ownFighter, levels } = await levelsOf(own.id);
     await EntitiesService.deleteOwnedEntity(session, own.id, "classes", ownFighter.id, levels[19].id);
     expect((await levelsOf(own.id)).levels).toHaveLength(19);
+    // Its own Fighter with a 21st level of its own, then subscribed: its 21 levels, none of the book's beside them
+    const longer = await createSeededTestRuleset(session.userId);
+    const longerFighter = await copyEntity(db, "classes", ctx.classMap.pc["Fighter"], longer);
+    await EntitiesService.createOwnedEntity(session, longer.id, "classes", longerFighter.id, { position: 21 });
+    await subscribeTestRuleset(longer.id, [epicId]);
+    expect((await levelsOf(longer.id)).levels).toHaveLength(21);
   });
 
   test("with the Epic SRD 3.5 extension, takes a class's levels past 20th, which give its epic bonus feats", async () => {

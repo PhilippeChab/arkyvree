@@ -124,6 +124,14 @@ export default class RulesetEngine {
   }
 
   /**
+   * Whether the view shows an owned entity (`id`) under an owner it isn't stored under: an extension's class level past
+   * the ruleset's own class's last (`RulesetData.isAdopted`), the extension's to change.
+   */
+  isAdopted(id: string): boolean {
+    return this.view.rulesetData.isAdopted(id);
+  }
+
+  /**
    * An entity's links of the role its page edits one at a time (`type`, `ownerId`: a class's skills): refused for a
    * kind without.
    */
