@@ -157,10 +157,12 @@ test.describe("A class's progression", () => {
     await page.getByLabel("Points a Level").fill("6");
     // The class's table, the tab's first: the change's before and after are a table of their own
     const levels = page.getByRole("table").first();
-    const lastRow = levels
+    // Its 20th level, the last a good base attack bonus rises at (its epic levels keep it)
+    const twentieth = levels
       .getByRole("row")
+      .filter({ has: page.getByRole("cell", { name: "20", exact: true }) })
       .filter({ has: page.getByRole("cell", { name: "+20/+15/+10/+5", exact: true }) });
-    await expect(lastRow).toHaveCount(1);
+    await expect(twentieth).toHaveCount(1);
 
     // The Spells tab and back keeps them
     await page.getByRole("tab", { name: "Spells" }).click();
