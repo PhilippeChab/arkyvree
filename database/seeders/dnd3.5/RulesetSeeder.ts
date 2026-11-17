@@ -2,9 +2,10 @@ import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builde
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
-import { EntityLinks, type Ids } from "@/database/seeders/core/SeederState.ts";
+import { Entities, EntityLinks, type Ids } from "@/database/seeders/core/SeederState.ts";
 import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEAT_EPIC } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
@@ -136,11 +137,25 @@ export class RulesetSeeder extends include(
   }
 
   /**
-   * Brings a seeded extension's feats' lists up to its book's (`book`) and its base's (`baseFeats`, the core rules' feats
-   * by name): its own feats' aptitudes as its content gives them, and each core feat it copied listed where the core
-   * feat is now, then where its book adds it, as a copy is seeded. An update of the extension's package (`updates.ts`).
+   * Brings a seeded extension's feats up to its book (`book`) and its base (`baseFeats`, the core rules' feats by name;
+   * `ownFeats`, its own as seeded): the feats its book gained (a Complete book's own epic feats), each epic one flagged
+   * as its content flags it (`FEAT_EPIC`), its own feats' aptitudes as its content gives them, and each core feat it
+   * copied listed where the core feat is now, then where its book adds it, as a copy is seeded. An update of the
+   * extension's package (`updates.ts`); each step adds only what's missing, so it's safe to run again.
    */
-  async updateExtensionListings(book: BookContent, baseFeats: Ids) {
+  async updateExtension(book: BookContent, baseFeats: Ids, ownFeats: Ids) {
+    const feats = [...book.standaloneFeats, ...book.classFeats];
+    await this.seedFeats(feats.filter(({ name }) => !ownFeats[name]));
+    const flagged = feats.filter(({ fields, name }) => ownFeats[name] && fields?.[FEAT_EPIC] === true);
+    for (const { name } of flagged) {
+      await Entities.update(
+        this.db,
+        this.baseRules,
+        "feats",
+        { fields: { [FEAT_EPIC]: true } },
+        { id: ownFeats[name] },
+      );
+    }
     const ids = (aptitudes: string[]) =>
       aptitudes.filter((name) => this.ctx.aptMap[name]).map((name) => this.ctx.aptMap[name]);
     const copies = book.cowFeats.filter(
@@ -156,7 +171,7 @@ export class RulesetSeeder extends include(
         .toSorted((a, b) => a.ordinal - b.ordinal)
         .map(({ toId }) => toId);
     await this.syncListings([
-      ...[...book.standaloneFeats, ...book.classFeats].map(({ name, aptitudes }) => ({
+      ...feats.map(({ name, aptitudes }) => ({
         fromId: this.ctx.featMap[name],
         toIds: ids(aptitudes),
       })),

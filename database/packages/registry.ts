@@ -10,7 +10,7 @@ import { DND5_CORE_PACKAGE } from "@/content/dnd5/packages/core.ts";
 import { PF1_CORE_PACKAGE } from "@/content/pf1/packages/core.ts";
 import { seedTestCharacters as seedDnd35TestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd35RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
-import { addEpicLevels, listInEpicLists } from "@/database/seeders/dnd3.5/updates.ts";
+import { addEpicContent, addEpicLevels } from "@/database/seeders/dnd3.5/updates.ts";
 import { seedTestCharacters as seedDnd5TestCharacters } from "@/database/seeders/dnd5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd5RulesetSeeder } from "@/database/seeders/dnd5/RulesetSeeder.ts";
 import { seedTestCharacters as seedPf1TestCharacters } from "@/database/seeders/pf1/characters/seedTestCharacters.ts";
@@ -49,7 +49,7 @@ export const RULESET_CONTENT = {
           DND35_COMPLETE_SCOUNDREL_PACKAGE,
           DND35_COMPLETE_ADVENTURER_PACKAGE,
           DND35_COMPLETE_ARCANE_PACKAGE,
-        ].map((pkg) => [pkg.name, { 2: listInEpicLists(pkg) }]),
+        ].map((pkg) => [pkg.name, { 2: addEpicContent(pkg) }]),
       ),
     },
   },

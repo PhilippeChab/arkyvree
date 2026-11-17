@@ -2,7 +2,7 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BARDIC_FEATS: FeatSeed[] = [
   {
@@ -33,6 +33,32 @@ export const BARDIC_FEATS: FeatSeed[] = [
       "You can expend daily uses of your bardic music to cast any arcane spell that you know and can cast spontaneously. You must still use an action to cast the spell (following the normal rules for casting time), but using the Lyric Spell feat counts as part of the spellcasting action. Casting a spell requires one use of your bardic music ability, plus one additional use per level of the spell. For example, casting a 3rd-level spell requires four daily uses of your bardic music ability.",
     aptitudes: ["General"],
     requirements: [eq("feats.bardicmusic.*.possessed"), gte("skills.perform.rank", 9)],
+  },
+];
+
+export const EPIC_FEATS: FeatSeed[] = [
+  {
+    name: "Epic Improved Skirmish",
+    description:
+      "If the bonus to AC granted when you use your skirmish ability is equal to or higher than the number of dice of extra damage granted by your skirmish ability, your extra damage on skirmish attacks increases by 1d6. If the bonus to AC granted by your skirmish ability is less than the number of dice of extra damage granted by your skirmish ability, the bonus to AC when skirmishing increases by 1 instead.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.skirmish.count", 4)],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
+  },
+  {
+    name: "Improved Sudden Strike",
+    description: "Add 1d6 to your sudden strike damage.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.suddenstrike.count", 8)],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
+  },
+  {
+    name: "Legendary Acrobat",
+    description:
+      "You can ignore any check penalties applied for accelerated movement while balancing, for accelerated tumbling, or for running while balancing on a narrow surface or while tumbling in this book).",
+    aptitudes: ["General"],
+    requirements: [gte("abilities.dexterity.total", 21), gte("skills.balance.rank", 24), gte("skills.tumble.rank", 24)],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
 

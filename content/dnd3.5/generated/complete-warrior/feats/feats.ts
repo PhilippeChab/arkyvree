@@ -3,7 +3,7 @@
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
@@ -52,6 +52,49 @@ export const DIVINE_FEATS: FeatSeed[] = [
       "As a free action, expend one turn undead attempt to add 2d6 damage to all successful melee attacks against undead for the remainder of the current round.",
     aptitudes: ["General"],
     requirements: [eq("feats.turnorrebukeundead.*.possessed")],
+  },
+];
+
+export const EPIC_FEATS: FeatSeed[] = [
+  {
+    name: "Combat Insight",
+    description:
+      "When attacking with a melee weapon, you apply your Intelligence modifier to damage rolls in place of your Strength modifier.",
+    aptitudes: ["General"],
+    requirements: [gte("combat.bab", 15), eq("feats.combatexpertise.possessed")],
+    fields: { [FEAT_EPIC]: true },
+  },
+  {
+    name: "Epic Combat Expertise",
+    description:
+      "During an attack action or full attack action in melee, you may accept up to a -5 penalty on attack rolls and apply the same value as a dodge bonus to your own AC and the AC of one adjacent ally. These adjustments last until your next action. This supersedes Combat Expertise and cannot be combined with it for stacking dodge bonuses.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("combat.bab", 21),
+      gte("abilities.intelligence.total", 19),
+      eq("feats.combatexpertise.possessed"),
+    ],
+    fields: { [FEAT_EPIC]: true },
+  },
+  {
+    name: "Epic Sunder",
+    description:
+      "When attacking an object, you may double any bonus damage from Strength. When making a Strength check to break an object through sudden force, you gain a +4 bonus to the check.",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.strength.total", 25),
+      eq("feats.improvedsunder.possessed"),
+      eq("feats.powerattack.possessed"),
+    ],
+    fields: { [FEAT_EPIC]: true },
+  },
+  {
+    name: "Wield Oversized Weapon",
+    description:
+      "You treat any weapon as if it were one size category smaller and one category lighter for determining the effort needed to wield it. For example, a halfling could use a Medium short sword as a Small light weapon, or a human could wield an ogre's Large greatclub as a Medium two-handed weapon. The weapon's damage is unchanged.",
+    aptitudes: ["General"],
+    requirements: [gte("combat.bab", 21), gte("abilities.strength.total", 25), eq("feats.monkeygrip.possessed")],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
 

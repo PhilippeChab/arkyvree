@@ -2,6 +2,12 @@
 
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 
-import { BARDIC_FEATS, FIGHTER_FEATS, GENERAL_FEATS, WILD_FEATS } from "./feats.ts";
+import { BARDIC_FEATS, EPIC_FEATS, FIGHTER_FEATS, GENERAL_FEATS, WILD_FEATS } from "./feats.ts";
 
-export const ALL_STANDALONE_FEATS: FeatSeed[] = [...BARDIC_FEATS, ...FIGHTER_FEATS, ...GENERAL_FEATS, ...WILD_FEATS];
+export const ALL_STANDALONE_FEATS: FeatSeed[] = [
+  ...BARDIC_FEATS,
+  ...EPIC_FEATS,
+  ...FIGHTER_FEATS,
+  ...GENERAL_FEATS,
+  ...WILD_FEATS,
+];

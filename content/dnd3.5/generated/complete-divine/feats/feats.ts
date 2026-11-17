@@ -100,6 +100,14 @@ export const EPIC_FEATS: FeatSeed[] = [
     requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
     fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
+  {
+    name: "Epic Devotion",
+    description:
+      "You receive a +4 bonus on saving throws against spells that possess the chosen alignment descriptor. You must select an alignment component (chaos, evil, good, or law) that is not part of your own alignment and that your patron deity's clerics do not share.",
+    aptitudes: ["General"],
+    requirements: [gte("abilities.wisdom.total", 21), eq("feats.ironwill.possessed")],
+    fields: { [FEAT_EPIC]: true },
+  },
 ];
 
 export const FAITH_FEATS: FeatSeed[] = [

@@ -8,11 +8,12 @@ import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { RulesetSeeder } from "./RulesetSeeder.ts";
 
 /**
- * A 3.5 extension's update (`pkg`'s) that lists its feats where its book lists them now, after the core rules' v2: its
- * fighter bonus feats in the epic fighter's list too, its copies of core feats where the core feats are now
- * (`RulesetSeeder.updateExtensionListings`), in a context naming the core rules' rows and, over them, its own.
+ * A 3.5 extension's update (`pkg`'s) to its book's epic content, after the core rules' v2: its own epic feats, flagged
+ * epic, and its feats listed where its book lists them now, its fighter bonus feats in the epic fighter's list too, its
+ * copies of core feats where the core feats are now (`RulesetSeeder.updateExtension`), in a context naming the core
+ * rules' rows and, over them, its own.
  */
-export function listInEpicLists(pkg: ExtensionPackage) {
+export function addEpicContent(pkg: ExtensionPackage) {
   return async (db: Db) => {
     const coreId = await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, pkg.ruleset.name);
     const [extension] = await db
@@ -27,7 +28,7 @@ export function listInEpicLists(pkg: ExtensionPackage) {
       aptMap: { ...core.aptMap, ...own.aptMap },
       featMap: { ...core.featMap, ...own.featMap },
     });
-    await seeder.updateExtensionListings(pkg.content, core.featMap);
+    await seeder.updateExtension(pkg.content, core.featMap, own.featMap);
   };
 }
 

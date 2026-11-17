@@ -23,7 +23,8 @@ import { WizardSchoolDetector } from "@/codegen/dnd3.5/tools/detect/WizardSchool
 import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { EpicBonusFeatList } from "@/codegen/dnd3.5/tools/types/epicClasses.ts";
 import type { ReferenceByType, ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { CORE_BOOK, EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /**
  * What a reference's detector reads of the books' other references: a book's classes, which a feat reference's mapping
@@ -34,6 +35,7 @@ import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 interface OtherReferences {
   classesOf(book: string): ClassReferenceFile[];
   coreSpells(): StoredReference<"spell">;
+  epicFeatNames(): Set<string>;
   epicLists(): EpicBonusFeatList[];
 }
 
@@ -56,7 +58,8 @@ const RESOLVERS: {
   class: (stored) => new ClassDetector(stored).resolve(),
   domain: (stored) => new DomainDetector(stored).resolve(),
   epicClass: (stored, others) => new EpicClassDetector(stored, others.classesOf(CORE_BOOK)).resolve(),
-  feat: (stored, others) => new FeatDetector(stored, others.classesOf(stored._meta.book), others.epicLists()).resolve(),
+  feat: (stored, others) =>
+    new FeatDetector(stored, others.classesOf(stored._meta.book), others.epicLists(), others.epicFeatNames()).resolve(),
   item: (stored) => new ItemDetector(stored).resolve(),
   magicItem: (stored) => new MagicItemDetector(stored).resolve(),
   race: (stored) => new RaceDetector(stored).resolve(),
@@ -80,6 +83,7 @@ class References extends ReferenceStore<ReferenceByType> {
     const others: OtherReferences = {
       classesOf: (book) => this.loadClasses(book),
       coreSpells: () => this.stored(this.path(CORE_BOOK, "spell"), "spell"),
+      epicFeatNames: () => this.epicFeatNames(),
       epicLists: () => this.epicLists(),
     };
     return JSON.parse(stringifyStably(resolveStored(stored, others)));
@@ -88,6 +92,13 @@ class References extends ReferenceStore<ReferenceByType> {
   /** Where `book`'s class reference `name` is stored (`classes/wizard.json`), whether or not it exists. */
   classPath(book: string, name: string): string {
     return join(this.dir, book, "classes", `${name}.json`);
+  }
+
+  /** The epic book's feats' names, by their slug, as stored: another book's epic feat of one of them is the epic book's. */
+  epicFeatNames(): Set<string> {
+    const path = this.path(EPIC_BOOK, "feat");
+    if (!existsSync(path)) return new Set();
+    return new Set(this.stored(path, "feat").raw.map(({ name }) => stripSeparators(name)));
   }
 
   /**

@@ -40,7 +40,21 @@
       "description": "This feat provides three tactical options. Advancing Blows: After a successful bull rush, during the following round all your attacks against the pushed foe gain a +1 bonus to attack and damage rolls per square you pushed them. Sundering Cleave: When you destroy an opponent's weapon or shield via a sunder attempt, you immediately gain an extra melee attack against that foe at the same attack bonus used for the sunder. Momentum Swing: If you charged on the previous round and use Power Attack on the current round with a penalty of -5 or worse, your Power Attack damage multiplier becomes x1.5 (or x3 with a two-handed weapon or one-handed weapon wielded in two hands)."
     },
     "Combat Insight": {
-      "description": "When attacking with a melee weapon, you apply your Intelligence modifier to damage rolls in place of your Strength modifier."
+      "description": "When attacking with a melee weapon, you apply your Intelligence modifier to damage rolls in place of your Strength modifier.",
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "combat.bab",
+          "value": "15",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.combatexpertise.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
     },
     "Crescent Moon": {
       "description": "When you hit the same creature with both your sword and your dagger within a single round, you may immediately attempt a disarm as a free action."
@@ -143,7 +157,27 @@
       "description": "You receive a +1 bonus on all attack rolls."
     },
     "Epic Sunder": {
-      "description": "When attacking an object, you may double any bonus damage from Strength. When making a Strength check to break an object through sudden force, you gain a +4 bonus to the check."
+      "description": "When attacking an object, you may double any bonus damage from Strength. When making a Strength check to break an object through sudden force, you gain a +4 bonus to the check.",
+      "requirements": [
+        {
+          "operator": "greater_than_or_equal",
+          "target": "abilities.strength.total",
+          "value": "25",
+          "valueType": "number"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.improvedsunder.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        },
+        {
+          "operator": "equal",
+          "target": "feats.powerattack.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
     },
     "Epic Toughness": {
       "description": "You gain +30 hit points."

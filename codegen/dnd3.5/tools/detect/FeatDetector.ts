@@ -74,15 +74,19 @@ export class FeatDetector extends BaseDetector<FeatReference> {
     stored: Pick<FeatReference, "_meta" | "overrides" | "raw">,
     classes: ClassReferenceFile[],
     epicLists: EpicBonusFeatList[] = [],
+    epicFeatNames: Set<string> = new Set(),
   ) {
     super(stored);
     this.classes = classes;
+    this.epicFeatNames = epicFeatNames;
     this.epicLists = epicLists;
     this.feats = sanitizeJsonValues(stored.raw);
   }
 
   /** The book's classes, whose bonus feat lists name its feats. */
   private readonly classes: ClassReferenceFile[];
+  /** The epic book's feats' names, by their slug: another book's epic feat of one of them is the epic book's. */
+  private readonly epicFeatNames: Set<string>;
   /** The core classes' epic bonus feat lists, which name any book's feats, and the core pools they take the feats of. */
   private readonly epicLists: EpicBonusFeatList[];
   /** The feats its page gives, sanitized. */
@@ -173,10 +177,8 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),
         ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-        // An epic feat is left out of another book than the epic one, unless an override keeps it
-        ...(ovr?.skip || (entry.featType === "epic" && !this.isEpicBook() && ovr?.skip !== false)
-          ? { skip: true }
-          : {}),
+        // Another book's epic feat of an epic book's feat's name (a reprint) is the epic book's, unless an override keeps it
+        ...(ovr?.skip || (this.isReprintedEpicFeat(entry) && ovr?.skip !== false) ? { skip: true } : {}),
       };
     }
     return mapping;
@@ -266,6 +268,15 @@ export class FeatDetector extends BaseDetector<FeatReference> {
   /** Whether the reference is the epic book's (`EPIC_BOOK`): its feats, all epic, are its own. */
   private isEpicBook(): boolean {
     return this.stored._meta.book === EPIC_BOOK;
+  }
+
+  /**
+   * Whether a feat (`entry`) is another book's reprint of an epic book's feat: an epic one of the epic book's name
+   * (Complete Warrior's Epic Toughness), which the epic book has. Another book's own epic feats are its own (Complete
+   * Warrior's Epic Sunder).
+   */
+  private isReprintedEpicFeat(entry: FeatReference["raw"][number]): boolean {
+    return entry.featType === "epic" && !this.isEpicBook() && this.epicFeatNames.has(stripSeparators(entry.name));
   }
 
   /**
