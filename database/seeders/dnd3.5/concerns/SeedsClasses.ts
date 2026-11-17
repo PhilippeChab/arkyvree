@@ -10,6 +10,7 @@ import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
@@ -240,7 +241,9 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         entityType: "classes",
         rulesetIds: [this.ctx.rulesetId],
       });
-      const klass = classes.find(({ name, partition }) => name === def.name && partition === (def.partition ?? "pc"));
+      const klass = classes.find(
+        ({ name, partition }) => name === def.name && partition === (def.partition ?? PLAYER_CHARACTER_KIND),
+      );
       if (!klass) throw new Error(`${def.name} isn't seeded`);
       const levels = await Entities.findMany<KlassLevel>(this.db, { entityType: "class-levels", ownerIds: [klass.id] });
       const last = Math.max(0, ...levels.map(({ position }) => position));

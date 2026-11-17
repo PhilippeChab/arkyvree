@@ -97,7 +97,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
     aptitudes: ["General", "Epic Cleric Bonus Feat"],
-    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
+    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9), gte("identity.meta.level", 21)],
     fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
@@ -105,7 +105,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "You receive a +4 bonus on saving throws against spells that possess the chosen alignment descriptor. You must select an alignment component (chaos, evil, good, or law) that is not part of your own alignment and that your patron deity's clerics do not share.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 21), eq("feats.ironwill.possessed")],
+    requirements: [gte("abilities.wisdom.total", 21), eq("feats.ironwill.possessed"), gte("identity.meta.level", 21)],
     fields: { [FEAT_EPIC]: true },
   },
 ];

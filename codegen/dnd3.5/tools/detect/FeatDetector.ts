@@ -154,7 +154,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       const extraAptitudes = (bonusFeatAptitudes.get(slug) ?? []).filter((a) => !baseAptitudes.includes(a));
 
       // Wrap detected requirements with class-level alternatives from bonusFeatLists
-      let requirements = this.withEpicLevel(ovr?.requirements ?? det.requirements);
+      let requirements = this.withEpicLevel(entry, ovr?.requirements ?? det.requirements);
       if (!ovr?.requirements && requirements.length > 0) {
         const classLevels = bonusFeatClassLevels.get(slug);
         if (classLevels?.length) {
@@ -292,11 +292,15 @@ export class FeatDetector extends BaseDetector<FeatReference> {
   }
 
   /**
-   * A feat's requirements, a character's 21st level among them for the epic book's (the SRD's "at 21st level, and every
-   * three levels thereafter, the character may select an epic feat"): its class bonus feats come past 20th too.
+   * A feat's (`entry`'s) requirements, a character's 21st level among them for an epic one (`isEpic`: the SRD's "at 21st
+   * level, and every three levels thereafter, the character may select an epic feat"), which every save checks: its
+   * class bonus feats come past 20th too.
    */
-  private withEpicLevel(requirements: RequirementEntry[] | undefined): RequirementEntry[] {
-    if (!this.isEpicBook()) return requirements ?? [];
+  private withEpicLevel(
+    entry: FeatReference["raw"][number],
+    requirements: RequirementEntry[] | undefined,
+  ): RequirementEntry[] {
+    if (!this.isEpic(entry)) return requirements ?? [];
     return [...(requirements ?? []), gte("identity.meta.level", LAST_NONEPIC_LEVEL + 1)];
   }
 }

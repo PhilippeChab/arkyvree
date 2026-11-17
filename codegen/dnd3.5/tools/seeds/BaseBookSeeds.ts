@@ -104,15 +104,11 @@ export class BaseBookSeeds {
     return ref ? this.items(ref).weights() : {};
   }
 
-  /**
-   * The book's bonus feat lists: its classes' (`bonusFeatLists`), and its epic classes' (`epicLists`), which name the
-   * feats they're picked from.
-   */
+  /** The book's classes' bonus feat lists (`bonusFeatLists`), which name the feats they're picked from. */
   bonusFeatLists(): BonusFeatList[] {
-    return this.memo("bonusFeatLists", () => [
-      ...this.classReferences().flatMap(({ ref }) => ref.mapping.bonusFeatLists ?? []),
-      ...this.epicLists(),
-    ]);
+    return this.memo("bonusFeatLists", () =>
+      this.classReferences().flatMap(({ ref }) => ref.mapping.bonusFeatLists ?? []),
+    );
   }
 
   /** A class reference's seeds: its seed and the feats it makes. */
@@ -163,18 +159,14 @@ export class BaseBookSeeds {
   }
 
   /**
-   * The bonus feat lists of the book's epic classes (its epic class reference's, but those it skips), each with the
-   * core feats of the pools it joins (`joins`: a fighter's any fighter bonus feat): none for a book without one.
+   * The pools of the book's epic progression's classes' bonus feats (its epic class reference's, but those it skips:
+   * the core rules' "Epic Fighter Bonus Feat"), which its aptitudes hold; any book's feats join them by their detector
+   * (`References.epicLists`). None for a book without one.
    */
-  epicLists(): BonusFeatList[] {
-    return this.memo("epicLists", () =>
-      Object.values(this.reference("epicClass")?.mapping ?? {})
-        .filter((mapping) => !mapping.skip)
-        .map(({ bonusFeatList, joins = [] }) => {
-          const joined = joins.flatMap((aptitude) => this.shelf.book(CORE_BOOK).featsIn(aptitude));
-          return { ...bonusFeatList, feats: [...new Set([...bonusFeatList.feats, ...joined])] };
-        }),
-    );
+  epicPools(): string[] {
+    return Object.values(this.reference("epicClass")?.mapping ?? {})
+      .filter((mapping) => !mapping.skip)
+      .map(({ bonusFeatList }) => bonusFeatList.aptitude);
   }
 
   /**
@@ -188,19 +180,6 @@ export class BaseBookSeeds {
   /** A feat reference's seeds: its feats by feat type, and its template families. */
   feats(ref: FeatReference): FeatSeeds {
     return this.memoOf(ref, "feats", () => new FeatSeeds(ref, this));
-  }
-
-  /**
-   * The names of the book's feats a pool (`aptitude`) lists: its feat reference's (a template family by its name) and
-   * its classes' features.
-   */
-  featsIn(aptitude: string): string[] {
-    const ref = this.reference("feat");
-    const feats = [
-      ...(ref ? this.feats(ref).aptitudeSources() : []),
-      ...this.classReferences().flatMap(({ ref: klass }) => this.classes(klass).feats()),
-    ];
-    return feats.filter((feat) => feat.aptitudes.includes(aptitude)).map((feat) => feat.name);
   }
 
   /**

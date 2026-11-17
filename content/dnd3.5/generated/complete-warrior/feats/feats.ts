@@ -61,7 +61,7 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "When attacking with a melee weapon, you apply your Intelligence modifier to damage rolls in place of your Strength modifier.",
     aptitudes: ["General"],
-    requirements: [gte("combat.bab", 15), eq("feats.combatexpertise.possessed")],
+    requirements: [gte("combat.bab", 15), eq("feats.combatexpertise.possessed"), gte("identity.meta.level", 21)],
     fields: { [FEAT_EPIC]: true },
   },
   {
@@ -73,6 +73,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("combat.bab", 21),
       gte("abilities.intelligence.total", 19),
       eq("feats.combatexpertise.possessed"),
+      gte("identity.meta.level", 21),
     ],
     fields: { [FEAT_EPIC]: true },
   },
@@ -85,6 +86,7 @@ export const EPIC_FEATS: FeatSeed[] = [
       gte("abilities.strength.total", 25),
       eq("feats.improvedsunder.possessed"),
       eq("feats.powerattack.possessed"),
+      gte("identity.meta.level", 21),
     ],
     fields: { [FEAT_EPIC]: true },
   },
@@ -93,7 +95,12 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "You treat any weapon as if it were one size category smaller and one category lighter for determining the effort needed to wield it. For example, a halfling could use a Medium short sword as a Small light weapon, or a human could wield an ogre's Large greatclub as a Medium two-handed weapon. The weapon's damage is unchanged.",
     aptitudes: ["General"],
-    requirements: [gte("combat.bab", 21), gte("abilities.strength.total", 25), eq("feats.monkeygrip.possessed")],
+    requirements: [
+      gte("combat.bab", 21),
+      gte("abilities.strength.total", 25),
+      eq("feats.monkeygrip.possessed"),
+      gte("identity.meta.level", 21),
+    ],
     fields: { [FEAT_EPIC]: true },
   },
 ];

@@ -94,7 +94,10 @@ class References extends ReferenceStore<ReferenceByType> {
     return join(this.dir, book, "classes", `${name}.json`);
   }
 
-  /** The epic book's feats' names, by their slug, as stored: another book's epic feat of one of them is the epic book's. */
+  /**
+   * The epic book's feats' names, by their slug, as stored, those it leaves out too: another book's epic feat of one of
+   * them is the epic book's (left out with it: Complete Divine's Unholy Strike, whose prerequisite is a DMG class's).
+   */
   epicFeatNames(): Set<string> {
     const path = this.path(EPIC_BOOK, "feat");
     if (!existsSync(path)) return new Set();

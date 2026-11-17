@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { DND35_EPIC_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import {
+  DND35_COMPLETE_DIVINE_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_EPIC_NAME,
+} from "@/content/dnd3.5/rulesetNames.ts";
 import { addEpicLevels } from "@/database/seeders/dnd3.5/updates.ts";
 import { db } from "@/server/database/index.ts";
-import { CLASS_LEVEL_BAB } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_LEVEL_BAB, FEAT_EPIC } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { describeRequirement, seededRows } from "./seededRows.ts";
 
@@ -112,5 +116,24 @@ describe("The seeded Epic SRD 3.5 extension", () => {
     ]);
     // A feat whose prerequisite is a DMG prestige class's feature is left out
     expect(rows.feats.some((feat) => feat.name === "Improved Death Attack")).toBe(false);
+  });
+});
+
+describe("A Complete book's own epic feats", () => {
+  test("are its own, flagged Epic and of 21st level, and its reprints of the Epic extension's feats aren't", async () => {
+    const rows = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const devotion = rows.feat("Epic Devotion");
+    expect(rows.valuesOf(devotion.id, FEAT_EPIC)).toEqual([true]);
+    expect(rows.requirementsOf(devotion.id).map(describeRequirement)).toContain(
+      "3 identity.meta.level greater_than_or_equal 21",
+    );
+    // Its Bonus Domain, kept before, too
+    expect(rows.requirementsOf(rows.feat("Bonus Domain").id).map(describeRequirement)).toContain(
+      "3 identity.meta.level greater_than_or_equal 21",
+    );
+    // Complete Warrior's Epic Toughness is the Epic extension's
+    const warrior = await seededRows(DND35_COMPLETE_WARRIOR_NAME);
+    expect(warrior.feats.some((feat) => feat.name === "Epic Toughness")).toBe(false);
+    expect(warrior.feats.some((feat) => feat.name === "Epic Sunder")).toBe(true);
   });
 });

@@ -195,7 +195,8 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
     }
 
     /**
-     * The entries of bonus feat lists (a class's, an epic class's) that name no feat its book can list, once each: what
+     * The entries of bonus feat lists (`lists`: a class's, the core rules' epic progression's) that name no feat its book
+     * can list, once each: what
      * the list's text runs into ("…a new terrain in which to receive the benefit (at +1)"), which no copy or feat takes.
      */
     unknownListedFeats(lists: BonusFeatList[]): string[] {

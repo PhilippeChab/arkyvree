@@ -42,14 +42,14 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "If the bonus to AC granted when you use your skirmish ability is equal to or higher than the number of dice of extra damage granted by your skirmish ability, your extra damage on skirmish attacks increases by 1d6. If the bonus to AC granted by your skirmish ability is less than the number of dice of extra damage granted by your skirmish ability, the bonus to AC when skirmishing increases by 1 instead.",
     aptitudes: ["General"],
-    requirements: [gte("feats.skirmish.count", 4)],
+    requirements: [gte("feats.skirmish.count", 4), gte("identity.meta.level", 21)],
     fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
     name: "Improved Sudden Strike",
     description: "Add 1d6 to your sudden strike damage.",
     aptitudes: ["General"],
-    requirements: [gte("feats.suddenstrike.count", 8)],
+    requirements: [gte("feats.suddenstrike.count", 8), gte("identity.meta.level", 21)],
     fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
   },
   {
@@ -57,7 +57,12 @@ export const EPIC_FEATS: FeatSeed[] = [
     description:
       "You can ignore any check penalties applied for accelerated movement while balancing, for accelerated tumbling, or for running while balancing on a narrow surface or while tumbling in this book).",
     aptitudes: ["General"],
-    requirements: [gte("abilities.dexterity.total", 21), gte("skills.balance.rank", 24), gte("skills.tumble.rank", 24)],
+    requirements: [
+      gte("abilities.dexterity.total", 21),
+      gte("skills.balance.rank", 24),
+      gte("skills.tumble.rank", 24),
+      gte("identity.meta.level", 21),
+    ],
     fields: { [FEAT_EPIC]: true },
   },
 ];
