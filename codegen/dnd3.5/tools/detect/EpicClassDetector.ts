@@ -7,6 +7,7 @@ import type {
   EpicClassReference,
   EpicFeature,
 } from "@/codegen/dnd3.5/tools/types/epicClasses.ts";
+import { epicBonusFeats } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
@@ -95,7 +96,7 @@ export class EpicClassDetector extends BaseDetector<EpicClassReference> {
           first: det.bonusFeats?.first ?? MAX_CLASS_LEVEL + 1,
           every: det.bonusFeats?.every ?? 1,
         },
-        bonusFeatList: ovr?.bonusFeatList ?? { aptitude: `Epic ${entry.name} Bonus Feat`, feats: det.feats },
+        bonusFeatList: ovr?.bonusFeatList ?? { aptitude: epicBonusFeats(entry.name), feats: det.feats },
         ...(ovr?.joins ? { joins: ovr.joins } : {}),
         ...(ovr?.levelModifiers ? { levelModifiers: ovr.levelModifiers } : {}),
         ...(ovr?.skip ? { skip: true } : {}),

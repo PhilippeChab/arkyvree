@@ -27,6 +27,11 @@ export function domainSpells(domain: string): string {
   return `${domainFeat(domain)} Spells`;
 }
 
+/** A class's epic bonus feats' pool, past its 20th level: "Epic Fighter Bonus Feat". */
+export function epicBonusFeats(className: string): string {
+  return `Epic ${className} Bonus Feat`;
+}
+
 /** A wizard school's specialist spell list: "Evocation Specialist Spells". */
 export function specialistSpells(school: string): string {
   return `${school} Specialist Spells`;

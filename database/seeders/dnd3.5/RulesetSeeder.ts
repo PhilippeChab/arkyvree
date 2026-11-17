@@ -15,6 +15,7 @@ import { FEAT_EPIC } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
+import { ExtendsForkCopies } from "./concerns/ExtendsForkCopies.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsSpells } from "./concerns/SeedsSpells.ts";
@@ -34,6 +35,7 @@ const EPIC_LEVEL = gte("identity.meta.level", LAST_NONEPIC_LEVEL + 1);
 export class RulesetSeeder extends include(
   BaseSeeder,
   CopiesIntoExtensions,
+  ExtendsForkCopies,
   SeedsClasses,
   SeedsSkills,
   SeedsSpells,
@@ -166,7 +168,7 @@ export class RulesetSeeder extends include(
    * 40th, with their epic bonus feats). An update of the core rules' package (`updates.ts`); each step adds only what's
    * missing, so it's safe to run again.
    */
-  async updateCore(core: CoreContent) {
+  async updateCore(core: CoreContent, pools: string[]) {
     await this.seedAptitudes(core.aptitudes.filter((name) => !this.ctx.aptMap[name]));
     await this.seedFeats(core.feats.filter(({ name }) => !this.ctx.featMap[name]));
     await this.syncListings(
@@ -176,6 +178,9 @@ export class RulesetSeeder extends include(
       })),
     );
     for (const klass of core.classes) await this.addMissingLevels(klass);
+    // The forks' own copies: a class it edited gets its new levels, a feat it edited the new pools
+    await this.extendForkClasses();
+    await this.listForkFeatsInPools(pools.map((pool) => this.idOf(this.ctx.aptMap, pool, "an epic pool")));
   }
 
   /**
@@ -185,7 +190,7 @@ export class RulesetSeeder extends include(
    * copied listed where the core feat is now, then where its book adds it, as a copy is seeded. An update of the
    * extension's package (`updates.ts`); each step adds only what's missing, so it's safe to run again.
    */
-  async updateExtension(book: BookContent, baseFeats: Ids, ownFeats: Ids) {
+  async updateExtension(book: BookContent, baseFeats: Ids, ownFeats: Ids, pools: string[]) {
     const feats = [...book.standaloneFeats, ...book.classFeats];
     await this.seedFeats(feats.filter(({ name }) => !ownFeats[name]));
     await this.flagEpicFeats(
@@ -216,5 +221,7 @@ export class RulesetSeeder extends include(
         toIds: [...new Set([...coreListsOf(baseFeats[feat]), ...ids(aptitudes)])],
       })),
     ]);
+    // The forks' copies of its copies of core feats, in the epic pools they're in now
+    await this.listForkFeatsInPools(pools.map((pool) => this.idOf(this.ctx.aptMap, pool, "an epic pool")));
   }
 }

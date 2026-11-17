@@ -1,11 +1,20 @@
 import { and, eq } from "drizzle-orm";
 
+import { epicBonusFeats } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { ExtensionPackage } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
+import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { RulesetSeeder } from "./RulesetSeeder.ts";
+
+/** The core classes' epic bonus feat pools: one per class past its 20th level ("Epic Fighter Bonus Feat"). */
+function epicPools(): string[] {
+  return DND35_CORE_PACKAGE.content.classes
+    .filter(({ levels }) => levels > LAST_NONEPIC_LEVEL)
+    .map(({ name }) => epicBonusFeats(name));
+}
 
 /**
  * A 3.5 extension's update (`pkg`'s) to its book's epic content, after the core rules' v2: its own epic feats, flagged
@@ -28,16 +37,17 @@ export function addEpicContent(pkg: ExtensionPackage) {
       aptMap: { ...core.aptMap, ...own.aptMap },
       featMap: { ...core.featMap, ...own.featMap },
     });
-    await seeder.updateExtension(pkg.content, core.featMap, own.featMap);
+    await seeder.updateExtension(pkg.content, core.featMap, own.featMap, epicPools());
   };
 }
 
 /**
  * The 3.5 core rules' v2: what their content gained since v1, the core classes' levels 21st to 40th (the SRD's epic
- * progressions) with their epic bonus feats, their pools and the feats listed in them (`RulesetSeeder.updateCore`).
+ * progressions) with their epic bonus feats, their pools and the feats listed in them, and the forks' own copies of
+ * the classes and feats it changed (`RulesetSeeder.updateCore`).
  */
 export async function addEpicLevels(db: Db) {
   const rulesetId = await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "The core classes' epic levels");
   const seeder = new RulesetSeeder(db, await RulesetSeeder.loadContext(db, rulesetId));
-  await seeder.updateCore(DND35_CORE_PACKAGE.content);
+  await seeder.updateCore(DND35_CORE_PACKAGE.content, epicPools());
 }

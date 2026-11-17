@@ -6,7 +6,12 @@ import {
   DND35_EPIC_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { addEpicLevels } from "@/database/seeders/dnd3.5/updates.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import { Entities, EntityLinks } from "@/server/repositories/index.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { CLASS_LEVEL_BAB, FEAT_EPIC } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { describeRequirement, seededRows } from "./seededRows.ts";
@@ -77,6 +82,40 @@ describe("The seeded core rules' epic levels", () => {
     expect(rows.feat("Opportunist (Rogue Special Ability)").listedIn.map((link) => link.toName)).toContain(
       "Epic Rogue Bonus Feat",
     );
+  });
+
+  test("reach a fork's own copy of a base class it has 20 levels of, and its copy of a core feat, by the update", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const levelsOf = async (classId: string) =>
+      await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [classId] });
+    // Copies as a fork made them before the core rules went past 20th: a Fighter of 20 levels, a Rogue it shortened to
+    // 19, a Dodge in no epic pool
+    const trimTo = async (classId: string, last: number) => {
+      for (const { id, position } of await levelsOf(classId))
+        if (position > last) await Entities.delete(db, { entityType: "class-levels", id });
+    };
+    const fighter = await copyEntity(db, "classes", ctx.classMap.pc["Fighter"], fork);
+    await trimTo(fighter.id, 20);
+    const rogue = await copyEntity(db, "classes", ctx.classMap.pc["Rogue"], fork);
+    await trimTo(rogue.id, 19);
+    const dodge = await copyEntity(db, "feats", ctx.featMap["Dodge"], fork);
+    const epicFighter = ctx.aptMap["Epic Fighter Bonus Feat"];
+    await EntityLinks.delete(db, { fromId: dodge.id, role: "listedIn", toId: epicFighter });
+
+    await addEpicLevels(db);
+
+    // The Fighter's 40 levels, its 22nd granting its epic bonus feat; the Rogue its own 19; Dodge in the epic pool
+    const fighterLevels = await levelsOf(fighter.id);
+    expect(fighterLevels.map(({ position }) => position).toSorted((a, b) => a - b)).toEqual(
+      Array.from({ length: 40 }, (_, i) => i + 1),
+    );
+    const level22 = fighterLevels.find(({ position }) => position === 22)!;
+    const grants = await EntityLinks.findMany(db, { fromIds: [level22.id], role: "grants" });
+    expect(grants.map(({ toId }) => toId)).toEqual([ctx.featMap["Epic Bonus Feat (Fighter)"]]);
+    expect(await levelsOf(rogue.id)).toHaveLength(19);
+    const listed = await EntityLinks.findMany(db, { fromIds: [dodge.id], role: "listedIn" });
+    expect(listed.map(({ toId }) => toId)).toContain(epicFighter);
   });
 
   test("are what the core rules' update to v2 adds: run on the seeded rules, it adds nothing", async () => {
