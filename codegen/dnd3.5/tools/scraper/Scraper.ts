@@ -3,6 +3,7 @@ import { include } from "@/lib/mixins.ts";
 import { BaseScraper } from "./BaseScraper.ts";
 import { ScrapesClasses } from "./concerns/ScrapesClasses.ts";
 import { ScrapesDomains } from "./concerns/ScrapesDomains.ts";
+import { ScrapesEpic } from "./concerns/ScrapesEpic.ts";
 import { ScrapesFeats } from "./concerns/ScrapesFeats.ts";
 import { ScrapesItems } from "./concerns/ScrapesItems.ts";
 import { ScrapesMagicItems } from "./concerns/ScrapesMagicItems.ts";
@@ -17,6 +18,7 @@ export class Scraper extends include(
   BaseScraper,
   ScrapesClasses,
   ScrapesDomains,
+  ScrapesEpic,
   ScrapesFeats,
   ScrapesItems,
   ScrapesMagicItems,

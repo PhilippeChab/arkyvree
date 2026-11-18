@@ -1,17 +1,29 @@
+import { inArray } from "drizzle-orm";
+
+import { gte } from "@/content/core/builders/customization/requirements.ts";
 import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
+import { Entities, EntityLinks, type Ids } from "@/database/seeders/core/SeederState.ts";
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { FEAT_EPIC } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
+import { ExtendsForkCopies } from "./concerns/ExtendsForkCopies.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsSpells } from "./concerns/SeedsSpells.ts";
 import { SeedsWizardSchools } from "./concerns/SeedsWizardSchools.ts";
 import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
+
+/** An epic feat's requirement: a character's 21st level, as the codegen gives it (`FeatDetector.withEpicLevel`). */
+const EPIC_LEVEL = gte("identity.meta.level", LAST_NONEPIC_LEVEL + 1);
 
 /**
  * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
@@ -23,6 +35,7 @@ import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 export class RulesetSeeder extends include(
   BaseSeeder,
   CopiesIntoExtensions,
+  ExtendsForkCopies,
   SeedsClasses,
   SeedsSkills,
   SeedsSpells,
@@ -63,6 +76,39 @@ export class RulesetSeeder extends include(
     await this.cowSpellsIntoExtension(book.cowSpells);
     await this.seedDomains(book.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const klass of book.classes) await this.seedClass(klass);
+  }
+
+  /**
+   * Flags a seeded extension's feats epic as its content flags them (`feats`, its own by name: `ownFeats`), each one not
+   * flagged yet (`FEAT_EPIC`) with a character's 21st level among its requirements, as the content gives it, unless it
+   * has it: a feat its book kept before it was flagged (Complete Divine's Bonus Domain).
+   */
+  private async flagEpicFeats(feats: FeatSeed[], ownFeats: Ids) {
+    const ids = feats.map(({ name }) => ownFeats[name]);
+    const records = new Map((await Entities.findMany(this.db, { entityType: "feats", ids })).map((r) => [r.id, r]));
+    const requirements = await this.db
+      .select({
+        entityId: requirementsInCustomization.entityId,
+        level: requirementsInCustomization.level,
+        target: requirementsInCustomization.target,
+      })
+      .from(requirementsInCustomization)
+      .where(inArray(requirementsInCustomization.entityId, ids));
+    const levelled = new Set(requirements.filter(({ target }) => target === EPIC_LEVEL.target).map((r) => r.entityId));
+    // Each feat's requirements at the top of its tree ("1", "2"…): the 21st level goes after them, as a seed lists it
+    const tops = (id: string) =>
+      requirements.filter(({ entityId, level }) => entityId === id && !level.includes(".")).length;
+    const unflagged = ids.filter((id) => records.get(id)?.fields[FEAT_EPIC] !== true);
+    for (const id of unflagged)
+      await Entities.update(this.db, this.baseRules, "feats", { fields: { [FEAT_EPIC]: true } }, { id });
+    await this.insertAll(
+      requirementsInCustomization,
+      ids
+        .filter((id) => !levelled.has(id))
+        .flatMap((id) =>
+          this.requirementRows(id, "feats", [EPIC_LEVEL]).map((row) => ({ ...row, level: String(tops(id) + 1) })),
+        ),
+    );
   }
 
   /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */
@@ -114,5 +160,68 @@ export class RulesetSeeder extends include(
       "spells",
       this.uniqueBy(links, (l) => `${l.fromId}:${l.toId}`),
     );
+  }
+
+  /**
+   * Brings the seeded core rules up to their content (`core`): the aptitudes and feats it gained, the aptitudes its feats
+   * are listed in now (`syncListings`), and its classes' levels past their last seeded one (the core classes' 21st to
+   * 40th, with their epic bonus feats). An update of the core rules' package (`updates.ts`); each step adds only what's
+   * missing, so it's safe to run again.
+   */
+  async updateCore(core: CoreContent, pools: string[]) {
+    await this.seedAptitudes(core.aptitudes.filter((name) => !this.ctx.aptMap[name]));
+    await this.seedFeats(core.feats.filter(({ name }) => !this.ctx.featMap[name]));
+    await this.syncListings(
+      core.feats.map(({ name, aptitudes }) => ({
+        fromId: this.ctx.featMap[name],
+        toIds: aptitudes.map((aptitude) => this.idOf(this.ctx.aptMap, aptitude, name)),
+      })),
+    );
+    for (const klass of core.classes) await this.addMissingLevels(klass);
+    // The forks' own copies: a class it edited gets its new levels, a feat it edited the new pools
+    await this.extendForkClasses();
+    await this.listForkFeatsInPools(pools.map((pool) => this.idOf(this.ctx.aptMap, pool, "an epic pool")));
+  }
+
+  /**
+   * Brings a seeded extension's feats up to its book (`book`) and its base (`baseFeats`, the core rules' feats by name;
+   * `ownFeats`, its own as seeded): the feats its book gained (a Complete book's own epic feats), each epic one flagged
+   * as its content flags it (`FEAT_EPIC`), its own feats' aptitudes as its content gives them, and each core feat it
+   * copied listed where the core feat is now, then where its book adds it, as a copy is seeded. An update of the
+   * extension's package (`updates.ts`); each step adds only what's missing, so it's safe to run again.
+   */
+  async updateExtension(book: BookContent, baseFeats: Ids, ownFeats: Ids, pools: string[]) {
+    const feats = [...book.standaloneFeats, ...book.classFeats];
+    await this.seedFeats(feats.filter(({ name }) => !ownFeats[name]));
+    await this.flagEpicFeats(
+      feats.filter(({ fields, name }) => ownFeats[name] && fields?.[FEAT_EPIC] === true),
+      ownFeats,
+    );
+    const ids = (aptitudes: string[]) =>
+      aptitudes.filter((name) => this.ctx.aptMap[name]).map((name) => this.ctx.aptMap[name]);
+    const copies = book.cowFeats.filter(
+      ({ feat }) => this.ctx.featMap[feat] && this.ctx.featMap[feat] !== baseFeats[feat],
+    );
+    const coreLists = await EntityLinks.findMany(this.db, {
+      fromIds: copies.map(({ feat }) => baseFeats[feat]),
+      role: "listedIn",
+    });
+    const coreListsOf = (featId: string) =>
+      coreLists
+        .filter(({ fromId, toType }) => fromId === featId && toType === "aptitudes")
+        .toSorted((a, b) => a.ordinal - b.ordinal)
+        .map(({ toId }) => toId);
+    await this.syncListings([
+      ...feats.map(({ name, aptitudes }) => ({
+        fromId: this.ctx.featMap[name],
+        toIds: ids(aptitudes),
+      })),
+      ...copies.map(({ feat, aptitudes }) => ({
+        fromId: this.ctx.featMap[feat],
+        toIds: [...new Set([...coreListsOf(baseFeats[feat]), ...ids(aptitudes)])],
+      })),
+    ]);
+    // The forks' copies of its copies of core feats, in the epic pools they're in now
+    await this.listForkFeatsInPools(pools.map((pool) => this.idOf(this.ctx.aptMap, pool, "an epic pool")));
   }
 }

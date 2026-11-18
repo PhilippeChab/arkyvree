@@ -324,7 +324,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     name: "Craft Contingent Spell",
     description:
       "You can make contingent any spell that you know. Crafting a contingent spell takes one day for each 1,000 gp in its base price (spell level Ã- caster level Ã- 100 gp). To craft a contingent spell, you must spend 1/25 of this base price in XP and use up raw materials costing one-half the base price. Some spells incur extra costs in material components or XP (as noted in their descriptions), which must be paid when the contingent spell is created. See Contingent Spells, for more information.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [gte("spellcasting.casterlevel", 11)],
     fields: { [FEAT_FAMILY]: ["Item Creation"] },
   },
@@ -335,7 +335,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Black Lore of Moil",
     description:
       "Any necromancy spell you cast can be cast instead as a Moilian spell, dealing an extra 1d6 points of negative energy damage +1d6 per two spell levels (+1d6 for 1st-level spells, +2d6 for 2nd- or 3rd-level spells, and so on). If the spell normally allows a saving throw, the target takes half the negative energy damage on a successful save, regardless of the outcome of the save on the spell's normal effect. In addition to its normal spell components, a Moilian spell requires the creation and expenditure of a Moilian runebone-- a small human bone (often a fi nger bone) scribed with carefully prepared arcane markings. Only a character trained in the Black Lore of Moil knows the secrets of creating a runebone, which takes 1 hour to craft and requires special inks and powders costing 25 gp per die of negative energy damage to be generated. For example, a runebone capable of adding 3d6 points of negative energy damage to a spell costs 75 gp to craft. While the maximum negative energy damage dealt by a Moilian spell is based on the spell's level, the actual damage is limited by the runebone. For example, if a sorcerer casts fi nger of death (a 7th-level spell, so normally +4d6) with a 75-gp (3d6) runebone, the spell deals only 3d6 points of additional negative energy damage. A Moilian spell uses a spell slot of the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.spellfocusnecromancy.possessed"), gte("spellcasting.casterlevel", 7)],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -343,7 +343,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Born of the Three Thunders",
     description:
       "When you cast a spell with either the electricity descriptor or the sonic descriptor that deals hit point damage, you can declare that spell to be a spell of the three thunders, with half its damage dealt as electricity damage and half dealt as sonic damage. In addition, the spell concludes with a mighty thunderclap that stuns all creatures that take damage from the spell for 1 round unless they succeed on a Fortitude save, then knocks stunned creatures prone unless they succeed on a Reflex save (both saves at the same DC as the base spell). Channeling the three thunders is costly, though, and you are automatically dazed for 1 round after doing so. A three thunders spell uses a spell slot of the spell's normal level. In addition, its descriptor changes to include both energy types--for example, a lightning bolt of the three thunders is an evocation [electricity, sonic] spell.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.energysubstitution.possessed"), gte("skills.knowledgenature.rank", 4)],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -351,7 +351,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Chain Spell",
     description:
       "Any spell that specifies a single target and has a range greater than touch can be chained so as to affect that primary target normally, then arc to a number of secondary targets equal to your caster level (maximum 20). Each arc affects one secondary target chosen by you, all of which must be within 30 feet of the primary target, and none of which can be affected more than once. You can choose to affect fewer secondary targets than the maximum. If the chained spell deals damage, the secondary targets each take half as much damage as the primary target (rounded down) and can attempt Reflex saving throws for half damage (whether the spell allows the original target a save or not). For spells that don't deal damage, the save DCs against arcing effects are reduced by 4. For example, if a 10th-level wizard normally casts cause fear at DC 14, a chained cause fear could target a goblin chieftain at DC 14 and up to ten of his nearby guards at DC 10. A chained spell uses up a spell slot three levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -359,7 +359,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Cooperative Spell",
     description:
       "While the two of you are adjacent, you and another spellcaster with the Cooperative Spell feat can simultaneously cast the same spell at the same time in the round. Add +2 to the save DC of cooperatively cast spells and +1 to caster level checks to beat the target's spell resistance (if any), using the higher base DC and level check of either caster. A cooperative spell uses up a spell slot of the same level as the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -367,7 +367,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Delay Spell",
     description:
       "When casting a spell, you set a delay of 1 to 5 rounds before it takes effect. The delay time cannot be changed once set; the spell activates just before your turn on the round you designate. Only area, personal, and touch spells can be affected by this feat. Any decisions you would make about the spell (including attack rolls, designating targets, or determining or shaping an area) are decided when the spell is cast, with any of its effects (including damage and saving throws) decided when the spell triggers. If conditions change during the delay period in ways that would make the spell impossible to cast (the target you designate moves beyond the spell's range, for example), the spell fails. During the delay period, a delayed spell can be dispelled normally, and it can be detected in the area or on the target (as applicable). A delayed spell uses up a spell slot three levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -375,7 +375,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Energy Admixture",
     description:
       "Choose one type of energy (acid, cold, electricity, or fire) that matches an energy type you have selected for substitution via the Energy Substitution feat. You can then modify any spell with an energy descriptor by adding an equal amount of the chosen type of energy to the spell's normal effects. The altered spell works normally in all respects except for the type and amount of damage dealt, with each type of energy counting separately toward the spell's damage cap. Thus, an acid fi reball cast at 6th level deals 6d6 points offiredamage and 6d6 points of acid damage (rolled separately), while the same acid fi reball cast at 10th level or higher deals 10d6 points offiredamage and 10d6 points of acid damage. Even opposed types of energy (such asfireand cold) can be combined using this feat. An energy admixed spell uses up a spell slot four levels higher than the spell's actual level. As well, the spell's descriptor changes to include both energy types present in the spell-for example, the acid fi reball described above is an evocation [acid, fire] spell.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.energysubstitution.possessed")],
     fields: { [FEAT_STACKABLE]: true, [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -383,7 +383,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Energy Substitution",
     description:
       "Choose one type of energy (acid, cold, electricity, or fire). You can then modify any spell with an energy descriptor to use the chosen type of energy instead. An energy substituted spell uses a spell slot of the spell's normal level. The spell's descriptor changes to the new energy type-for example, a fireball composed of cold energy is an evocation [cold] spell.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [gte("skills.knowledgearcana.rank", 5), eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_STACKABLE]: true, [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -391,21 +391,21 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Explosive Spell",
     description:
       "On a failed Refl ex save, an explosive spell ejects any creature caught in its area, sending it to a location outside the nearest edge of that area, dealing additional damage and further knocking creatures prone. For example, all creatures in the area of an explosive fireball that fail their saving throws not only take full damage but are pushed to the closest square outside the perimeter of the spell's 20-foot-radius spread. Likewise, an explosive lightning bolt moves targets that fail their saves to outside the area defi ned by the squares the bolt's line passes through. Any creature moved in this manner also takes an additional 1d6 points of damage per 10 feet moved (no additional damage if moved less than 10 feet by the effect) and is knocked prone. If some obstacle prevents a blasted creature from being moved to the edge of the effect, the creature is stopped and takes 1d6 points of damage from striking the barrier (in addition to any damage taken from the distance moved before then). In any event, this movement does not provoke attacks of opportunity. Explosive Spell can be applied only to spells that allow Refl ex saves and affect an area (a cone, cylinder, line, or burst). An explosive spell uses up a spell slot two levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Fortify Spell",
     description:
       "A fortified spell is treated as having a higher caster level for the purpose of defeating a target's spell resistance. You prepare and cast the spell in a higher-level spell slot than normal, with each additional level giving a +2 bonus on spell penetration checks for the altered spell. Spells that are not subject to spell resistance are not affected. A fortified spell uses up a spell slot at least one level higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Lord of the Uttercold",
     description:
       "You can turn spells with the cold descriptor into uttercold spells. Half the damage dealt by an uttercold spell is cold damage, and the other half is negative energy damage. The spell's saving throw remains unchanged, but creatures can apply cold resistance or immunity to cold only to the cold portion of the damage. An undead creature can be healed by the negative energy damage of an uttercold spell, though if it doesn't have resistance to cold, the effects of damage and healing cancel each other out. An uttercold spell uses a spell slot of the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [
       eq("feats.energysubstitution.possessed"),
       or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
@@ -417,7 +417,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Nonlethal Substitution",
     description:
       "Choose one type of energy (acid, cold, electricity, or fire). You can then modify any spell with the chosen descriptor to deal nonlethal damage instead of normal energy damage. The nonlethal spell works normally in all respects except the type of damage dealt-for example, a nonlethal fireball has the same range and area, but since it deals nonlethal damage instead of energy damage, it will not damage objects or set fire to combustibles in the area. A nonlethal spell uses a spell slot one level higher than the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [gte("skills.knowledgearcana.rank", 5), eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -425,7 +425,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Persistent Spell",
     description:
       "Spells with a fixed or personal range can have their duration increased to 24 hours. Spells of instantaneous duration cannot be affected by this feat, nor can spells whose effects are discharged. You don't need to maintain concentration on persistent detect spells (such as detect magic or detect thoughts) for you to be aware of the mere presence or absence of the subject detected, but gaining additional information requires concentration as normal. A persistent spell uses up a spell slot six levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.extendspell.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -433,7 +433,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Repeat Spell",
     description:
       "A repeated spell is automatically cast again at the beginning of your turn in the following round. No matter where you might have moved in the previous round, the second spell originates from the same location and affects the same area as the original spell. If the original spell designates a ranged target, the repeated spell affects the same target if it is within 30 feet of its original position; otherwise, the second spell fails. Touch range spells cannot be affected by this feat. A repeated spell uses up a spell slot three levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -441,7 +441,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sanctum Spell",
     description:
       "A sanctum spell has an effective spell level 1 higher than its normal level if cast in your sanctum, but if not cast in the sanctum, the spell has an effective spell level 1 lower than normal. All effects dependent on spell level (including save DCs) are calculated according to the adjusted level. A sanctum spell uses a spell slot of the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -449,7 +449,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sculpt Spell",
     description:
       "You can modify an area spell by changing the area's shape to either a cylinder (10-foot radius, 30 feet high), a 40-foot cone, four 10-foot cubes, a ball (20-foot-radius spread), or a 120-foot line. The sculpted spell works normally in all respects except for its shape. For example, a lightning bolt whose area is changed to a ball deals the same amount of damage, but affects a 20-foot-radius spread. A sculpted spell uses a spell slot one level higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -457,7 +457,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Split Ray",
     description:
       "You can cause any ray spell tofireone additional ray beyond the number normally allowed. The additional ray requires a separate ranged touch attack roll to hit and deals damage as normal. It can be fi red at the same target as the fi rst ray or at a different target, but all rays must be aimed at targets within 30 feet of each other and fi red simultaneously. A split ray spell uses a spell slot two levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -465,7 +465,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sudden Empower",
     description:
       "Once per day, you can apply the effect of the Empower Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Empower Spell normally if you have it",
-    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -473,14 +473,14 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sudden Extend",
     description:
       "Once per day, you can apply the effect of the Extend Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Extend Spell normally if you have it.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Sudden Maximize",
     description:
       "Once per day, you can apply the effect of the Maximize Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Maximize Spell normally if you have it.",
-    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
@@ -488,7 +488,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sudden Quicken",
     description:
       "Once per day, you can apply the effect of the Quicken Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Quicken Spell normally.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [
       eq("feats.quickenspell.possessed"),
       eq("feats.suddenempower.possessed"),
@@ -503,35 +503,35 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Sudden Silent",
     description:
       "Once per day, you can apply the effect of the Silent Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Silent Spell normally if you have it.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Sudden Still",
     description:
       "Once per day, you can apply the effect of the Still Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Still Spell normally if you have it.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Sudden Widen",
     description:
       "Once per day, you can apply the effect of the Widen Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Widen Spell normally if you have it.",
-    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Warmage Class Feature", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Transdimensional Spell",
     description:
       "A transdimensional spell has its full normal effect on incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures within an extradimensional space in the spell's area. Such creatures include ethereal creatures, creatures that are blinking or shadow walking, manifested ghosts, and creatures within the extradimensional space of a rope trick, portable hole, or familiar pocket. You must be able to perceive a creature to target it with a transdimensional spell, but you do not need to perceive a creature to catch it in the area of a burst, cone, emanation, or spread. A transdimensional spell uses up a spell slot one level higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Twin Spell",
     description:
       "Casting a twinned spell causes the spell to take effect twice in the same area or on the same target simultaneously. Any variable characteristics (including attack rolls) or decisions you would make about the spell (including target and area), are applied to both spells, with affected creatures receiving all the effects of each spell individually (including getting two saving throws if applicable). A spell whose effects wouldn't stack if it was cast twice under normal circumstances will create redundant effects if successfully twinned. For example, a twinned charm person doesn't create a more potent or long-lasting effect, but any ally of the target would have to succeed on two dispel attempts in order to free the target from the charm. As with other metamagic feats, twinning a spell does not affect its vulnerability to counterspelling, so a single successful counterspell negates both instances of a twinned spell. A twinned spell uses up a spell slot four levels higher than the spell's actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.metamagic.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },

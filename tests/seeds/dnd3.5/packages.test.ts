@@ -133,7 +133,8 @@ test("Every 3.5 content package seeds into a database without them, its extensio
     });
   }
 
-  // What the extensions copy is the new core's
+  // What the extensions copy is the new core's: its feats and spells, and the classes the epic book adds levels to
+  const coreClasses = await own("classes");
   const snapshots = await db
     .select()
     .from(entitySnapshotsInRules)
@@ -144,6 +145,6 @@ test("Every 3.5 content package seeds into a database without them, its extensio
       ),
     );
   expect(snapshots.length).toBeGreaterThan(0);
-  const coreIds = new Set([...coreFeats, ...coreSpells].map(({ id }) => id));
+  const coreIds = new Set([...coreFeats, ...coreSpells, ...coreClasses].map(({ id }) => id));
   expect(snapshots.filter((snapshot) => !coreIds.has(snapshot.sourceEntityId))).toEqual([]);
 }, 60_000);

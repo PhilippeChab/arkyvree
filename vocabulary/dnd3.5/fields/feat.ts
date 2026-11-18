@@ -1,3 +1,5 @@
+/** An epic feat: a character takes it past 20th level, and a level up offers it from the 21st. */
+export const FEAT_EPIC = "FEAT_EPIC";
 export const FEAT_FAMILY = "FEAT_FAMILY";
 /** A feat its ruleset generates (Skill Focus in a skill). */
 export const FEAT_GENERATED = "FEAT_GENERATED";

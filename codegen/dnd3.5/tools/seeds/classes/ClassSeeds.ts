@@ -6,6 +6,7 @@ import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseClassSeeds } from "./BaseClassSeeds.ts";
 import { AptitudePicks } from "./concerns/AptitudePicks.ts";
+import { EpicLevels } from "./concerns/EpicLevels.ts";
 import { Features } from "./concerns/Features.ts";
 import { LevelModifiers } from "./concerns/LevelModifiers.ts";
 import { OwnFeats } from "./concerns/OwnFeats.ts";
@@ -19,6 +20,7 @@ import { Spellcasting } from "./concerns/Spellcasting.ts";
 export class ClassSeeds extends include(
   BaseClassSeeds,
   AptitudePicks,
+  EpicLevels,
   Features,
   LevelModifiers,
   OwnFeats,
@@ -55,8 +57,9 @@ export class ClassSeeds extends include(
 
   /**
    * The class's seed: its summary (name, description, hit die, levels, skills, BAB, saves, requirements), its features
-   * and the feats it grants, its spellcasting, its level modifiers and its aptitude picks. Each is built in the order
-   * its file is written, so a class the generator refuses fails on the same field.
+   * and the feats it grants, its spellcasting, its level modifiers and its aptitude picks, continued past 20th when its
+   * book's epic progression continues it (`withEpicLevels`). Each is built in the order its file is written, so a class
+   * the generator refuses fails on the same field.
    */
   seed(): ClassSeed {
     return this.memo("seed", () => {
@@ -68,7 +71,7 @@ export class ClassSeeds extends include(
       const spells = this.spells();
       const modifiers = this.levelModifiers();
       const aptitudePicks = this.seedAptitudePicks();
-      return {
+      return this.withEpicLevels({
         name: raw.name,
         description: normalizeDescription(mapping.description),
         fields: { [CLASS_HD]: detected.hd, ...casting.fields },
@@ -87,7 +90,7 @@ export class ClassSeeds extends include(
         ...(spells ? { spells } : {}),
         ...(modifiers.length > 0 ? { modifiers } : {}),
         ...(aptitudePicks.length > 0 ? { aptitudePicks } : {}),
-      };
+      });
     });
   }
 }

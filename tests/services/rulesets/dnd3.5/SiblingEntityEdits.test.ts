@@ -75,7 +75,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     }
     if (omitLastLevel) {
       const last = (await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id] })).find(
-        (level) => level.position === 20,
+        (level) => level.position === 40,
       )!;
       await EntitiesService.deleteOwnedEntity(session, extension.id, "classes", copy.id, last.id);
     }
@@ -170,7 +170,7 @@ for (const action of ["add skill", "remove skill", "create level", "update level
     } else if (action === "create level") {
       await EntitiesService.createOwnedEntity(session, host.id, "classes", source.id, {
         fields: { [CLASS_LEVEL_BAB]: 20, [CLASS_LEVEL_SKILL_POINTS]: 2 },
-        position: 20,
+        position: 40,
       });
     } else if (action === "update level") {
       await EntitiesService.updateOwnedEntity(session, host.id, "classes", source.id, levelId, {

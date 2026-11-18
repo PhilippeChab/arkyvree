@@ -6,7 +6,7 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
 import type { TemplateFamily } from "@/codegen/dnd3.5/tools/seeds/FeatSeeds.ts";
-import type { ClassReference, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { BonusFeatList, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -67,7 +67,8 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
     /**
      * What a class's bonus feat list's entry names, by its letters ("Hear the Unseen" is Hear The Unseen): a feat of the
      * book's own (the feat generator gives it the list), a core feat (a family's for an option too, "Spell Focus:
-     * Enchantment") or a core family, which the book copies; or none.
+     * Enchantment") or a core family, which the book copies; or
+     * none.
      */
     private listedFeat(name: string): ListedFeat | undefined {
       const slug = stripSeparators(name);
@@ -92,6 +93,7 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
         for (const { ref } of this.classReferences()) {
           for (const feat of Object.values(ref.mapping.features))
             if (feat.seedName) names.set(stripSeparators(feat.seedName), feat.seedName);
+          for (const feat of this.classes(ref).feats()) names.set(stripSeparators(feat.name), feat.name);
         }
         return names;
       });
@@ -106,20 +108,18 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
       return this.memo("cowFeats", () => {
         // A feat in several lists joins each, once
         const copies = new Map<string, CowFeatEntry | CowFamilyEntry>();
-        for (const { ref } of this.classReferences()) {
-          for (const list of ref.mapping.bonusFeatLists ?? []) {
-            for (const name of list.feats) {
-              const listed = this.listedFeat(name);
-              if (!listed || "own" in listed) continue;
-              const key = "core" in listed ? listed.core : listed.family.familyName;
-              const copy = copies.get(key);
-              if (copy) {
-                if (!copy.aptitudes.includes(list.aptitude)) copy.aptitudes.push(list.aptitude);
-              } else if ("core" in listed) {
-                copies.set(key, { feat: listed.core, requirements: [], aptitudes: [list.aptitude] });
-              } else {
-                copies.set(key, { family: listed.family, aptitudes: [list.aptitude] });
-              }
+        for (const list of this.bonusFeatLists()) {
+          for (const name of list.feats) {
+            const listed = this.listedFeat(name);
+            if (!listed || "own" in listed) continue;
+            const key = "core" in listed ? listed.core : listed.family.familyName;
+            const copy = copies.get(key);
+            if (copy) {
+              if (!copy.aptitudes.includes(list.aptitude)) copy.aptitudes.push(list.aptitude);
+            } else if ("core" in listed) {
+              copies.set(key, { feat: listed.core, requirements: [], aptitudes: [list.aptitude] });
+            } else {
+              copies.set(key, { family: listed.family, aptitudes: [list.aptitude] });
             }
           }
         }
@@ -195,11 +195,12 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
     }
 
     /**
-     * The entries of a class's bonus feat lists that name no feat its book can list, once each: what the list's text
-     * runs into ("…a new terrain in which to receive the benefit (at +1)"), which no copy or feat takes.
+     * The entries of bonus feat lists (`lists`: a class's, the core rules' epic progression's) that name no feat its book
+     * can list, once each: what
+     * the list's text runs into ("…a new terrain in which to receive the benefit (at +1)"), which no copy or feat takes.
      */
-    unknownListedFeats(ref: ClassReference): string[] {
-      const names = (ref.mapping.bonusFeatLists ?? []).flatMap((list) => list.feats);
+    unknownListedFeats(lists: BonusFeatList[]): string[] {
+      const names = lists.flatMap((list) => list.feats);
       return [...new Set(names.filter((name) => !this.listedFeat(name)))];
     }
   }

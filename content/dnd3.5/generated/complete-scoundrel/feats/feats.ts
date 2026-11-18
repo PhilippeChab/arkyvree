@@ -113,14 +113,14 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     name: "Daring Warrior",
     description:
       "Your fighter and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC. For example, a 6th-level fighter/5th-level swashbuckler has grace +2 and gains a +2 dodge bonus to AC, as if she were an 11th-level swashbuckler. Your fighter and swashbuckler levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [eq("feats.weaponspecialization.*.possessed"), eq("feats.grace.*.possessed")],
   },
   {
     name: "Martial Stalker",
     description:
       "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [eq("feats.kipower.*.possessed"), eq("feats.martialweaponproficiency.possessed")],
   },
 ];
@@ -156,7 +156,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Deadly Defense",
     description:
       "When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
   },
   {
     name: "Enduring Ki",

@@ -284,11 +284,35 @@ describe("A generated class", () => {
     expect(classCode(classRef("dmg", "archmage"))).toContain(`gte("feats.spellfocus.count", 2),`);
   });
 
+  test("goes on past 20th as the SRD's epic progression says: its features' patterns and its level bonuses", () => {
+    const seedOf = (name: string) => {
+      const ref = classRef("srd", name);
+      return Library.book(ref._meta.book).classes(ref).seed();
+    };
+    const barbarian = seedOf("barbarian");
+    expect(barbarian.levels).toBe(40);
+    const rage = (barbarian.classFeatures ?? []).filter(([, feat]) => feat === "Rage (Barbarian)");
+    expect(rage.map(([level]) => level).filter((level) => level > 20)).toEqual([24, 28, 32, 36, 40]);
+    const epicFeats = (barbarian.classFeatures ?? []).filter(([, feat]) => feat === "Epic Bonus Feat (Barbarian)");
+    expect(epicFeats.map(([level]) => level)).toEqual([24, 28, 32, 36, 40]);
+    // A monk's unarmored speed every 3 levels from 21st, its AC bonus every 5 from 25th
+    const monk = (seedOf("monk").modifiers ?? []).filter(({ level }) => level > 20);
+    expect(monk.filter(({ target }) => target === "combat.speed.base").map(({ level }) => level)).toEqual([
+      21, 24, 27, 30, 33, 36, 39,
+    ]);
+    expect(monk.filter(({ target }) => target === "combat.ac.misc").map(({ level }) => level)).toEqual([
+      25, 30, 35, 40,
+    ]);
+    // A class the epic progression doesn't continue stops at its own last
+    expect(classCode(classRef("dmg", "archmage"))).toContain("levels: 5,");
+  });
+
   test("reads its table's columns into level modifiers: a number's rise, a text where it changes", () => {
     const monk = classRef("srd", "monk");
+    // Its table's: those past 20th are the SRD's epic progression's
     const modifiers = (column: string, ref = monk) =>
       (Library.book(ref._meta.book).classes(ref).seed().modifiers ?? [])
-        .filter(({ target }) => target === ref.mapping.columns?.[column]?.target)
+        .filter(({ level, target }) => level <= 20 && target === ref.mapping.columns?.[column]?.target)
         .map(({ level, value, operator }) => `${level} ${operator} ${value}`);
     // "+0 ft." … "+60 ft."; "+0" … "+4"; "1d6" … "2d10"
     expect(modifiers("Unarmored Speed Bonus")).toEqual([

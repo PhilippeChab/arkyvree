@@ -44,6 +44,7 @@ To re-pull the parent's update onto an entity you've already edited, restore it:
 - **Complete Divine** — divine classes, twenty cleric domains, divine feats.
 - **Complete Scoundrel** — luck feats, rogue-style classes and feats.
 - **DMG** — prestige classes.
+- **Epic** — the SRD's epic feats, from the Epic Level Handbook.
 
 **Community extensions.** When you publish a fork that subscribes to no extensions, the **Publish Ruleset** dialog asks what to **Publish as**: a **Ruleset** (playable directly) or an **Extension**. A public fork published as an extension, with no extensions of its own, can be subscribed to from any fork of the same base. It's listed alongside the official ones.
 

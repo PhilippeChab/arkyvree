@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 
 /** What a book copies of the core feats: each core feat by its name, a family's by its name and options. */
@@ -32,15 +31,8 @@ describe("The core feats a book copies", () => {
     // secrets are pools of their own
     expect(copiedFeatsOf("complete-divine")).toEqual([]);
     expect(copiedFeatsOf("complete-arcane")).toEqual([]);
-    const geomancer = References.loadClasses("complete-divine").find(({ ref }) => ref.raw.name === "Geomancer");
-    if (!geomancer) throw new Error("Complete Divine has no geomancer");
     const fragment = "a new terrain in which to receive the benefit (at +1)";
-    const listing = {
-      ...geomancer.ref.mapping,
-      bonusFeatLists: [{ aptitude: "Ley Lines", feats: ["Alertness", fragment] }],
-    };
-    expect(Library.book("complete-divine").unknownListedFeats({ ...geomancer.ref, mapping: listing })).toEqual([
-      fragment,
-    ]);
+    const lists = [{ aptitude: "Ley Lines", feats: ["Alertness", fragment] }];
+    expect(Library.book("complete-divine").unknownListedFeats(lists)).toEqual([fragment]);
   });
 });

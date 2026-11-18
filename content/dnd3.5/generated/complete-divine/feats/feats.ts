@@ -2,7 +2,7 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {
@@ -96,9 +96,17 @@ export const EPIC_FEATS: FeatSeed[] = [
     name: "Bonus Domain",
     description:
       "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
+    aptitudes: ["General", "Epic Cleric Bonus Feat"],
+    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9), gte("identity.meta.level", 21)],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
+  },
+  {
+    name: "Epic Devotion",
+    description:
+      "You receive a +4 bonus on saving throws against spells that possess the chosen alignment descriptor. You must select an alignment component (chaos, evil, good, or law) that is not part of your own alignment and that your patron deity's clerics do not share.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
-    fields: { [FEAT_STACKABLE]: true },
+    requirements: [gte("abilities.wisdom.total", 21), eq("feats.ironwill.possessed"), gte("identity.meta.level", 21)],
+    fields: { [FEAT_EPIC]: true },
   },
 ];
 
@@ -304,7 +312,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
   {
     name: "Sanctify Relic",
     description: "You can create relics, which are special magic items imbued with divine significance.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [eq("feats.itemcreation.*.possessed")],
     fields: { [FEAT_FAMILY]: ["Item Creation"] },
   },
@@ -315,7 +323,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Consecrate Spell",
     description:
       "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [
       or(
         eqStr("identity.beliefs.alignment", "Lawful Good"),
@@ -329,7 +337,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Corrupt Spell",
     description:
       "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     requirements: [
       or(
         eqStr("identity.beliefs.alignment", "Lawful Evil"),
@@ -343,21 +351,21 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     name: "Rapid Spell",
     description:
       "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Reach Spell",
     description:
       "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Transdimensional Spell",
     description:
       "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
-    aptitudes: ["General", "Wizard Bonus Feat"],
+    aptitudes: ["General", "Wizard Bonus Feat", "Epic Wizard Bonus Feat"],
     fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
 ];

@@ -1,7 +1,12 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { CLASS_FEAT_FAMILY_NAMES } from "@/codegen/dnd3.5/tools/terms/classFeatFamilies.ts";
 import { findFamilyFeat } from "@/codegen/dnd3.5/tools/terms/featOptions.ts";
-import type { ClassReference, ClassReferenceFile, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type {
+  BonusFeatList,
+  ClassReference,
+  ClassReferenceFile,
+  InheritedSpellList,
+} from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { DomainReference } from "@/codegen/dnd3.5/tools/types/domains.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import type { ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
@@ -10,11 +15,14 @@ import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import type { ReferenceByType, ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import type { SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { WizardSchoolReference } from "@/codegen/dnd3.5/tools/types/wizardSchools.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
+import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type { BookSeeds } from "./BookSeeds.ts";
 import { ClassSeeds } from "./classes/ClassSeeds.ts";
@@ -96,6 +104,13 @@ export class BaseBookSeeds {
     return ref ? this.items(ref).weights() : {};
   }
 
+  /** The book's classes' bonus feat lists (`bonusFeatLists`), which name the feats they're picked from. */
+  bonusFeatLists(): BonusFeatList[] {
+    return this.memo("bonusFeatLists", () =>
+      this.classReferences().flatMap(({ ref }) => ref.mapping.bonusFeatLists ?? []),
+    );
+  }
+
   /** A class reference's seeds: its seed and the feats it makes. */
   classes(ref: ClassReference): ClassSeeds {
     return this.memoOf(ref, "classes", () => new ClassSeeds(ref, this));
@@ -122,6 +137,36 @@ export class BaseBookSeeds {
       const names = [...this.shelf.book(CORE_BOOK).spellNames(), ...(this.book === CORE_BOOK ? [] : this.spellNames())];
       return new Map(names.map((name) => [name.toLowerCase(), name]));
     });
+  }
+
+  /**
+   * The features the book's epic progression's classes take their epic bonus feats with, past their 20th level (the
+   * core rules' "Epic Bonus Feat (Barbarian)": one more pick in Epic Barbarian Bonus Feat), each in its class's feature
+   * aptitude.
+   */
+  epicClassFeats(): FeatSeed[] {
+    return this.memo("epicClassFeats", () =>
+      Object.values(this.reference("epicClass")?.mapping ?? {})
+        .filter((mapping) => !mapping.skip)
+        .map(({ bonusFeatList, bonusFeats, classFeatureAptitude }) => ({
+          name: bonusFeats.feature,
+          description: bonusFeats.description,
+          aptitudes: [classFeatureAptitude],
+          modifiers: [bonus(`aptitudes.${stripSeparators(bonusFeatList.aptitude)}.allowed`, 1)],
+          fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+        })),
+    );
+  }
+
+  /**
+   * The pools of the book's epic progression's classes' bonus feats (its epic class reference's, but those it skips:
+   * the core rules' "Epic Fighter Bonus Feat"), which its aptitudes hold; any book's feats join them by their detector
+   * (`References.epicLists`). None for a book without one.
+   */
+  epicPools(): string[] {
+    return Object.values(this.reference("epicClass")?.mapping ?? {})
+      .filter((mapping) => !mapping.skip)
+      .map(({ bonusFeatList }) => bonusFeatList.aptitude);
   }
 
   /**

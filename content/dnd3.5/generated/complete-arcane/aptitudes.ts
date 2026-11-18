@@ -13,6 +13,7 @@ export const ALL_APTITUDES: string[] = [
   "Effigy Master Class Feature",
   "Elemental Savant Class Feature",
   "Enlightened Fist Class Feature",
+  "Epic Wizard Bonus Feat",
   "Fatespinner Class Feature",
   "Favored Soul Spells",
   "General",

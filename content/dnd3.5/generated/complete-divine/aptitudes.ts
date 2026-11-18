@@ -22,6 +22,8 @@ export const ALL_APTITUDES: string[] = [
   "Dweomerkeeper Class Feature",
   "Dweomerkeeper Supernatural Spell",
   "Entropomancer Class Feature",
+  "Epic Cleric Bonus Feat",
+  "Epic Wizard Bonus Feat",
   "Evangelist Class Feature",
   "Favored Soul Class Feature",
   "Favored Soul Spells",

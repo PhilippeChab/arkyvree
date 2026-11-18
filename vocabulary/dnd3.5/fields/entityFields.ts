@@ -66,6 +66,7 @@ import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, 
 import { CLASS_CASTER_TYPE, CLASS_HD } from "./class.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./classLevel.ts";
 import {
+  FEAT_EPIC,
   FEAT_FAMILY,
   FEAT_GENERATED,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
@@ -241,6 +242,13 @@ const FEAT_FIELDS = {
     field: FEAT_STACKABLE,
     merge: "winner",
     write: "always",
+  },
+  epic: {
+    description: "Whether it's an epic feat: a level up offers it from a character's 21st level",
+    kind: "flag",
+    label: "Epic",
+    field: FEAT_EPIC,
+    merge: "winner",
   },
   selectable: {
     default: true,

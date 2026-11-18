@@ -13,7 +13,7 @@ export const SORCERER: ClassSeed = {
   description:
     "Sorcerers wield magic through innate gift rather than scholarly discipline. They carry no tomes, follow no formal instruction, and rely on no theoretical framework - only a natural wellspring of arcane power shaped through practice. Some sorcerers believe draconic blood flows in their lineage, and there may be truth to it: powerful dragons are known to assume humanoid guise and take mortal partners, making such ancestry difficult to disprove. Sorcerers frequently possess striking, somewhat exotic features that suggest an unusual heritage. Others dismiss these claims as boastful self-mythologizing or jealous speculation from those who lack such gifts. Most sorcerers take up adventuring to push the boundaries of their abilities. Since a sorcerer's power is woven into the very fabric of their being, cultivating it becomes a personal quest regardless of how they intend to apply it. Good-aligned sorcerers often feel driven to earn acceptance and demonstrate their worth to a society that views them as outsiders. Evil sorcerers, meanwhile, see their separation from ordinary folk as evidence of superiority and seek power over those they consider beneath them. Rather than learning magic through careful study, sorcerers channel spells instinctively. Their repertoire is narrower than a wizard's, and they gain access to higher-level spells at a slower pace, but they can cast more frequently each day and never need to prepare spells in advance. Sorcerers cannot specialize in particular schools of magic the way wizards sometimes do. Because they bypass the years of rigorous academic training that wizards undergo, sorcerers lack the deep arcane scholarship most wizards possess. On the other hand, their freer schedule allows more time to develop combat skills, granting them proficiency with simple weapons.",
   fields: { [CLASS_HD]: 4, [CLASS_CASTER_TYPE]: "Arcane" },
-  levels: 20,
+  levels: 40,
   skillPoints: 2,
   bab: "poor",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
@@ -23,6 +23,12 @@ export const SORCERER: ClassSeed = {
     [1, "Spells (Sorcerer)"],
     [1, "Summon Familiar (Sorcerer)"],
     [1, "Weapon and Armor Proficiency (Sorcerer)"],
+    [23, "Epic Bonus Feat (Sorcerer)"],
+    [26, "Epic Bonus Feat (Sorcerer)"],
+    [29, "Epic Bonus Feat (Sorcerer)"],
+    [32, "Epic Bonus Feat (Sorcerer)"],
+    [35, "Epic Bonus Feat (Sorcerer)"],
+    [38, "Epic Bonus Feat (Sorcerer)"],
   ],
   links: { bonusSpellAbility: "Charisma" },
   spells: {

@@ -5,6 +5,7 @@ import type { Modifier, ModifierEffect } from "@/content/core/builders/customiza
 
 import type { ClassReference } from "./classes.ts";
 import type { DomainReference } from "./domains.ts";
+import type { EpicClassReference } from "./epicClasses.ts";
 import type { FeatReference } from "./feats.ts";
 import type { ItemReference } from "./items.ts";
 import type { MagicItemReference } from "./magicItems.ts";
@@ -33,6 +34,7 @@ export interface NamedText {
 export interface ReferenceByType {
   class: ClassReference;
   domain: DomainReference;
+  epicClass: EpicClassReference;
   feat: FeatReference;
   item: ItemReference;
   magicItem: MagicItemReference;

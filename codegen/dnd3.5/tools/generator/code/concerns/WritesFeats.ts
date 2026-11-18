@@ -9,7 +9,7 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses
@@ -17,9 +17,13 @@ import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts
  */
 export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingFeats extends Base {
-    /** Ends a template: its feats' fields, each made by its ruleset (`FEAT_GENERATED`) and of its family. */
-    private closeTemplate(familyName: string): void {
-      this.lines.push(`  fields: ${this.seedFields({ [FEAT_GENERATED]: true, [FEAT_FAMILY]: [familyName] })},`);
+    /**
+     * Ends a template (`family`'s): its feats' fields, each made by its ruleset (`FEAT_GENERATED`), of its family, and an
+     * epic one when the family's are (`FEAT_EPIC`).
+     */
+    private closeTemplate({ epic, familyName }: Pick<TemplateFamily, "epic" | "familyName">): void {
+      const fields = { [FEAT_GENERATED]: true, [FEAT_FAMILY]: [familyName], ...(epic ? { [FEAT_EPIC]: true } : {}) };
+      this.lines.push(`  fields: ${this.seedFields(fields)},`);
       this.lines.push(`}));`);
       this.lines.push("");
     }
@@ -97,10 +101,11 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       return target.replace(/^weapon\./, "items.weapons.${stripSeparators(w)}.");
     }
 
-    private writeCrossbowTemplate(family: TemplateFamily): void {
+    private writeCrossbowTemplate(family: TemplateFamily, families: Set<string>): void {
       this.openTemplate(family, "w", this.templateDescription(family, "w"));
+      this.writeTemplateRequirements(this.itemRequirementLines(family, family.requirements, "w", families));
       this.writeTemplateModifiers(family.modifiers, (target) => this.weaponTarget(target));
-      this.closeTemplate(family.familyName);
+      this.closeTemplate(family);
     }
 
     private writeSchoolTemplate(family: TemplateFamily, families: Set<string>): void {
@@ -115,7 +120,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.writeTemplateModifiers(modifiers, (target) =>
         target.replace(/spells\.groups\.[^.]+\./, "spells.groups.${stripSeparators(s)}."),
       );
-      this.closeTemplate(family.familyName);
+      this.closeTemplate(family);
     }
 
     /** A feat per skill: its description and modifiers name the skill (`{skill}`, `skills.skill.…`). */
@@ -125,7 +130,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.writeTemplateModifiers(family.modifiers, (target) =>
         target.replace(/skills\.[^.]+/, "skills.${stripSeparators(s)}"),
       );
-      this.closeTemplate(family.familyName);
+      this.closeTemplate(family);
     }
 
     /**
@@ -155,7 +160,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
     }
 
     private writeWeaponTemplate(family: TemplateFamily, families: Set<string>): void {
-      const { familyName, requirements, modifiers, proficient } = family;
+      const { requirements, modifiers, proficient } = family;
       this.openTemplate(family, "w", this.templateDescription(family, "w"));
 
       const reqLines: string[] = [];
@@ -177,7 +182,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.writeTemplateRequirements(reqLines);
 
       this.writeTemplateModifiers(modifiers, (target) => this.weaponTarget(target));
-      this.closeTemplate(familyName);
+      this.closeTemplate(family);
     }
 
     /** A feat written as code, a list's item. */
@@ -227,7 +232,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
         case "weapon":
           return this.writeWeaponTemplate(family, families);
         case "crossbow":
-          return this.writeCrossbowTemplate(family);
+          return this.writeCrossbowTemplate(family, families);
         case "skill":
           return this.writeSkillTemplate(family, families);
         case "school":

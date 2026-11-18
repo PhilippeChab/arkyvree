@@ -135,6 +135,7 @@ describe("parser:dnd3.5:validate", () => {
     const feats = issuesOf("complete-divine/feats.json", clear);
     expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`)).toEqual([
       "modifier Divine Spell Power",
+      "modifier Epic Devotion",
       "modifier Oaken Resilience",
       "modifier Wolverine's Rage",
     ]);

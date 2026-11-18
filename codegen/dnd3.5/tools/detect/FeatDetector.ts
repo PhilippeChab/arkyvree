@@ -1,10 +1,14 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { EpicBonusFeatList } from "@/codegen/dnd3.5/tools/types/epicClasses.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { CORE_BOOK, EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
 import { BenefitModifiers } from "./readers/modifiers/BenefitModifiers.ts";
@@ -66,14 +70,25 @@ function isStackable(entry: FeatReference["raw"][number]): boolean {
  * and what its book's classes give them (the aptitudes and class levels of the bonus feat lists that name them).
  */
 export class FeatDetector extends BaseDetector<FeatReference> {
-  constructor(stored: Pick<FeatReference, "_meta" | "overrides" | "raw">, classes: ClassReferenceFile[]) {
+  constructor(
+    stored: Pick<FeatReference, "_meta" | "overrides" | "raw">,
+    classes: ClassReferenceFile[],
+    epicLists: EpicBonusFeatList[] = [],
+    epicFeatNames: Set<string> = new Set(),
+  ) {
     super(stored);
     this.classes = classes;
+    this.epicFeatNames = epicFeatNames;
+    this.epicLists = epicLists;
     this.feats = sanitizeJsonValues(stored.raw);
   }
 
   /** The book's classes, whose bonus feat lists name its feats. */
   private readonly classes: ClassReferenceFile[];
+  /** The epic book's feats' names, by their slug: another book's epic feat of one of them is the epic book's. */
+  private readonly epicFeatNames: Set<string>;
+  /** The core classes' epic bonus feat lists, which name any book's feats, and the core pools they take the feats of. */
+  private readonly epicLists: EpicBonusFeatList[];
   /** The feats its page gives, sanitized. */
   private readonly feats: FeatReference["raw"];
 
@@ -139,7 +154,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       const extraAptitudes = (bonusFeatAptitudes.get(slug) ?? []).filter((a) => !baseAptitudes.includes(a));
 
       // Wrap detected requirements with class-level alternatives from bonusFeatLists
-      let requirements = ovr?.requirements ?? det.requirements;
+      let requirements = this.withEpicLevel(entry, ovr?.requirements ?? det.requirements);
       if (!ovr?.requirements && requirements.length > 0) {
         const classLevels = bonusFeatClassLevels.get(slug);
         if (classLevels?.length) {
@@ -149,18 +164,21 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         }
       }
 
+      const aptitudes = [...baseAptitudes, ...extraAptitudes, ...this.epicListsNaming(entry)];
       mapping[entry.name] = {
         description: ovr?.description ?? entry.benefit,
-        aptitudes: [...baseAptitudes, ...extraAptitudes],
+        aptitudes: [...new Set([...aptitudes, ...this.joinedEpicLists(aptitudes)])],
         requirements,
         modifiers: ovr?.modifiers ?? det.modifiers ?? [],
-        ...((ovr?.fields ?? det.fields) ? { fields: ovr?.fields ?? det.fields } : {}),
+        ...(this.isEpic(entry) || ovr?.fields || det.fields
+          ? { fields: { ...(ovr?.fields ?? det.fields), ...(this.isEpic(entry) ? { [FEAT_EPIC]: true } : {}) } }
+          : {}),
         ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
         ...(ovr?.selectable === false ? { selectable: false } : {}),
         ...(det.template ? { template: det.template } : {}),
         ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-        // An epic feat is left out unless an override keeps it
-        ...(ovr?.skip || (entry.featType === "epic" && ovr?.skip !== false) ? { skip: true } : {}),
+        // Another book's epic feat of an epic book's feat's name (a reprint) is the epic book's, unless an override keeps it
+        ...(ovr?.skip || (this.isReprintedEpicFeat(entry) && ovr?.skip !== false) ? { skip: true } : {}),
       };
     }
     return mapping;
@@ -227,5 +245,62 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       }
     }
     return map;
+  }
+
+  /**
+   * The epic bonus feat pools whose lists name a feat (`entry`): the core rules' own feats (an epic wizard's Spell Focus)
+   * and epic feats, any book's. Another book's feat of an epic feat's name is another feat (Complete Warrior's Improved
+   * Favored Enemy).
+   */
+  private epicListsNaming(entry: FeatReference["raw"][number]): string[] {
+    if (this.stored._meta.book !== CORE_BOOK && entry.featType !== "epic" && !this.isEpicBook()) return [];
+    const slug = stripSeparators(entry.name);
+    return this.epicLists
+      .filter((list) => list.feats.some((feat) => stripSeparators(feat) === slug))
+      .map((list) => list.aptitude);
+  }
+
+  /** Whether a feat (`entry`) is an epic one: the epic book's, or another book's of the epic type. */
+  private isEpic(entry: FeatReference["raw"][number]): boolean {
+    return this.isEpicBook() || entry.featType === "epic";
+  }
+
+  /** Whether the reference is the epic book's (`EPIC_BOOK`): its feats, all epic, are its own. */
+  private isEpicBook(): boolean {
+    return this.stored._meta.book === EPIC_BOOK;
+  }
+
+  /**
+   * Whether a feat (`entry`) is another book's reprint of an epic book's feat: an epic one of the epic book's name
+   * (Complete Warrior's Epic Toughness), which the epic book has. Another book's own epic feats are its own (Complete
+   * Warrior's Epic Sunder).
+   */
+  private isReprintedEpicFeat(entry: FeatReference["raw"][number]): boolean {
+    return entry.featType === "epic" && !this.isEpicBook() && this.epicFeatNames.has(stripSeparators(entry.name));
+  }
+
+  /**
+   * The epic bonus feat pools a feat in pools of its own (`aptitudes`) joins as their lists take those pools' feats
+   * (`joins`: the epic fighter's, any fighter bonus feat), those it's in already aside.
+   */
+  private joinedEpicLists(aptitudes: string[]): string[] {
+    return this.epicLists
+      .filter(
+        ({ aptitude, joins = [] }) => !aptitudes.includes(aptitude) && joins.some((pool) => aptitudes.includes(pool)),
+      )
+      .map(({ aptitude }) => aptitude);
+  }
+
+  /**
+   * A feat's (`entry`'s) requirements, a character's 21st level among them for an epic one (`isEpic`: the SRD's "at 21st
+   * level, and every three levels thereafter, the character may select an epic feat"), which every save checks: its
+   * class bonus feats come past 20th too.
+   */
+  private withEpicLevel(
+    entry: FeatReference["raw"][number],
+    requirements: RequirementEntry[] | undefined,
+  ): RequirementEntry[] {
+    if (!this.isEpic(entry)) return requirements ?? [];
+    return [...(requirements ?? []), gte("identity.meta.level", LAST_NONEPIC_LEVEL + 1)];
   }
 }

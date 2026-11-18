@@ -58,6 +58,7 @@ export class BookGenerator extends include(
       this.writeAptitudes();
       this.writeFeatIndex();
     }
+    this.writeEpicClassFeats();
     this.writeCowFeats();
     this.writeCowSpells();
     this.writeClassIndex();

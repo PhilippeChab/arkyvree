@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { ScrapeCommand } from "@/codegen/core/cli/ScrapeCommand.ts";
 import { Scraper } from "@/codegen/dnd3.5/tools/scraper/Scraper.ts";
 import { sanitizeHtml } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { CORE_BOOK, EPIC_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /** Where the scraper caches the pages it fetches: its own folder's, which git ignores. */
 const SCRAPER_CACHE = join(import.meta.dirname!, "../scraper/.cache");
@@ -23,14 +23,18 @@ const refusal = await new ScrapeCommand<Scraper>({
       one: (scraper, url) => scraper.scrapeClass(url),
     },
     feat: {
-      help: "A book's feats (dndtools.net); --url: one feat's page, printed",
-      all: (scraper) => scraper.scrapeFeats(),
+      help: "A book's feats (dndtools.net; the epic book's, the SRD's own file); --url: one feat's page, printed",
+      all: (scraper) => (scraper.book === EPIC_BOOK ? scraper.scrapeEpicFeats() : scraper.scrapeFeats()),
       one: (scraper, url) => scraper.scrapeFeat(url),
     },
     spell: {
       help: "A book's spells (dndtools.net); --url: one spell's page, printed",
       all: (scraper) => scraper.scrapeSpells(),
       one: (scraper, url) => scraper.scrapeSpell(url),
+    },
+    epicClass: {
+      help: "The core classes' progressions past 20th level, for the core rules' book (--book srd: the SRD's own file)",
+      all: (scraper) => scraper.scrapeEpicClasses(),
     },
     domain: {
       help: "A book's domains (dndtools' copy at dnd.arkalseif.info)",

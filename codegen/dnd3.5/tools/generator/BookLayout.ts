@@ -32,6 +32,7 @@ class BookLayout {
     cowSpells: { path: "cowSpells.ts", list: "COW_SPELLS" },
     domainFeats: { path: "feats/domainFeats.ts", list: "DOMAIN_POOL_FEATS" },
     domains: { path: "domains.ts", list: "ALL_DOMAINS" },
+    epicClassFeats: { path: "feats/classes/epicClasses.ts", list: "EPIC_CLASS_FEATS" },
     index: { path: "index.ts", list: "BOOK" },
     races: { path: "races.ts", list: "ALL_RACES" },
     spells: { path: "spells/index.ts", list: "ALL_SPELLS" },

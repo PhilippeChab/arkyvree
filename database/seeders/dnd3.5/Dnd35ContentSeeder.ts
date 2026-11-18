@@ -1,7 +1,7 @@
 import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
-import type { Ids, SeedContext } from "@/database/seeders/core/SeederState.ts";
+import { EntityLinks, type Ids, type SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
@@ -108,6 +108,37 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
         toType: "aptitudes",
         tier: tier ?? null,
       })),
+    );
+  }
+
+  /**
+   * Brings feats' lists (`lists`: each feat, `fromId`, with the aptitudes it's listed in, `toIds`, in the order a seed
+   * lists them) to what's given: the links it lacks added, and each link's place (`ordinal`) the aptitude's in
+   * `toIds`, as a seed writes them. What an update does once the content lists feats in more aptitudes; it adds only
+   * what's missing and moves only what's out of place, so it's safe to run again.
+   */
+  protected async syncListings(lists: { fromId: string; toIds: string[] }[]) {
+    const fromIds = lists.map(({ fromId }) => fromId);
+    const listed = (await EntityLinks.findMany(this.db, { fromIds, role: "listedIn" })).filter(
+      ({ toType }) => toType === "aptitudes",
+    );
+    const has = new Set(listed.map(({ fromId, toId }) => `${fromId}:${toId}`));
+    await this.insertListings(
+      "feats",
+      lists.flatMap(({ fromId, toIds }) =>
+        toIds.filter((toId) => !has.has(`${fromId}:${toId}`)).map((toId) => ({ fromId, toId })),
+      ),
+    );
+    const links = (await EntityLinks.findMany(this.db, { fromIds, role: "listedIn" })).filter(
+      ({ toType }) => toType === "aptitudes",
+    );
+    const place = new Map(lists.flatMap(({ fromId, toIds }) => toIds.map((toId, i) => [`${fromId}:${toId}`, i])));
+    await EntityLinks.setOrdinals(
+      this.db,
+      links.flatMap(({ fromId, id, ordinal, toId }) => {
+        const wanted = place.get(`${fromId}:${toId}`);
+        return wanted === undefined || wanted === ordinal ? [] : [{ id, ordinal: wanted }];
+      }),
     );
   }
 }

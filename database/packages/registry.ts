@@ -5,10 +5,12 @@ import { DND35_COMPLETE_DIVINE_PACKAGE } from "@/content/dnd3.5/packages/extensi
 import { DND35_COMPLETE_SCOUNDREL_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-scoundrel.ts";
 import { DND35_COMPLETE_WARRIOR_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-warrior.ts";
 import { DND35_DMG_PACKAGE } from "@/content/dnd3.5/packages/extensions/dmg.ts";
+import { DND35_EPIC_PACKAGE } from "@/content/dnd3.5/packages/extensions/epic.ts";
 import { DND5_CORE_PACKAGE } from "@/content/dnd5/packages/core.ts";
 import { PF1_CORE_PACKAGE } from "@/content/pf1/packages/core.ts";
 import { seedTestCharacters as seedDnd35TestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd35RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import { addEpicContent, addEpicLevels } from "@/database/seeders/dnd3.5/updates.ts";
 import { seedTestCharacters as seedDnd5TestCharacters } from "@/database/seeders/dnd5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd5RulesetSeeder } from "@/database/seeders/dnd5/RulesetSeeder.ts";
 import { seedTestCharacters as seedPf1TestCharacters } from "@/database/seeders/pf1/characters/seedTestCharacters.ts";
@@ -30,6 +32,7 @@ export const RULESET_CONTENT = {
     extensions: [
       DND35_COMPLETE_WARRIOR_PACKAGE,
       DND35_DMG_PACKAGE,
+      DND35_EPIC_PACKAGE,
       DND35_COMPLETE_DIVINE_PACKAGE,
       DND35_COMPLETE_SCOUNDREL_PACKAGE,
       DND35_COMPLETE_ADVENTURER_PACKAGE,
@@ -37,6 +40,18 @@ export const RULESET_CONTENT = {
     ],
     seedTestCharacters: seedDnd35TestCharacters,
     seeder: Dnd35RulesetSeeder,
+    updates: {
+      [DND35_CORE_PACKAGE.name]: { 2: addEpicLevels },
+      ...Object.fromEntries(
+        [
+          DND35_COMPLETE_WARRIOR_PACKAGE,
+          DND35_COMPLETE_DIVINE_PACKAGE,
+          DND35_COMPLETE_SCOUNDREL_PACKAGE,
+          DND35_COMPLETE_ADVENTURER_PACKAGE,
+          DND35_COMPLETE_ARCANE_PACKAGE,
+        ].map((pkg) => [pkg.name, { 2: addEpicContent(pkg) }]),
+      ),
+    },
   },
   "Pathfinder: 1": {
     core: PF1_CORE_PACKAGE,

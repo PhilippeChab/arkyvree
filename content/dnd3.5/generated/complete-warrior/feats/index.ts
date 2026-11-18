@@ -4,6 +4,7 @@ import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 
 import {
   DIVINE_FEATS,
+  EPIC_FEATS,
   FIGHTER_FEATS,
   GENERAL_FEATS,
   POWER_CRITICAL_FEATS,
@@ -13,6 +14,7 @@ import {
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...DIVINE_FEATS,
+  ...EPIC_FEATS,
   ...FIGHTER_FEATS,
   ...GENERAL_FEATS,
   ...POWER_CRITICAL_FEATS,

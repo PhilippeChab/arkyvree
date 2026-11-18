@@ -4,6 +4,7 @@ import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import { ClassOverridesCheck } from "./ClassOverridesCheck.ts";
 import { ReviewList } from "./ReviewList.ts";
@@ -120,7 +121,7 @@ export class ReferenceIssues {
       ...this.unreviewed(
         review,
         Library.book(data._meta.book)
-          .unknownListedFeats(data)
+          .unknownListedFeats(data.mapping.bonusFeatLists ?? [])
           .map((text) => ({ kind: "unknown listed feat" as const, text })),
         where,
         skip,
@@ -158,6 +159,41 @@ export class ReferenceIssues {
       }
       return this.unreviewed(review, found, { label: name, entityName: name });
     });
+  }
+
+  /**
+   * An epic classes reference's: what each class's table names that no feature or pattern reads, and the entries of its
+   * bonus feat list that name no feat of its book nor another's (the epic book's feats join the core rules' lists), but
+   * those of a class its mapping skips.
+   */
+  private epicClassIssues(): Issue[] {
+    const data = References.load(this.file.path, "epicClass");
+    const review = new ReviewList(data.overrides?.reviewed);
+    const book = Library.book(data._meta.book);
+    const otherFeats = new Set(
+      References.books()
+        .filter((other) => other !== data._meta.book)
+        .flatMap((other) => Object.entries(References.find(other, "feat")?.mapping ?? {}))
+        .filter(([, feat]) => !feat.skip)
+        .map(([name]) => stripSeparators(name)),
+    );
+    return [
+      ...Object.entries(data.mapping).flatMap(([name, mapping]) =>
+        this.unreviewed(
+          review,
+          [
+            ...(data.detected[name]?.unresolved ?? []).map((text) => ({ kind: "error" as const, text })),
+            ...book
+              .unknownListedFeats([mapping.bonusFeatList])
+              .filter((text) => !otherFeats.has(stripSeparators(text)))
+              .map((text) => ({ kind: "unknown listed feat" as const, text })),
+          ],
+          { label: name, entityName: name },
+          Boolean(mapping.skip),
+        ),
+      ),
+      ...this.stale(review),
+    ];
   }
 
   /** A feats reference's: its feats' detections, but those its mapping skips (an epic feat, unless an override keeps it). */
@@ -256,6 +292,8 @@ export class ReferenceIssues {
         return this.classIssues();
       case "feat":
         return this.featIssues();
+      case "epicClass":
+        return this.epicClassIssues();
       case "domain":
         return this.domainIssues();
       case "race":

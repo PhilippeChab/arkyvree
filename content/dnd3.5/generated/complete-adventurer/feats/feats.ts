@@ -2,7 +2,7 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_EPIC, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BARDIC_FEATS: FeatSeed[] = [
   {
@@ -36,46 +36,77 @@ export const BARDIC_FEATS: FeatSeed[] = [
   },
 ];
 
+export const EPIC_FEATS: FeatSeed[] = [
+  {
+    name: "Epic Improved Skirmish",
+    description:
+      "If the bonus to AC granted when you use your skirmish ability is equal to or higher than the number of dice of extra damage granted by your skirmish ability, your extra damage on skirmish attacks increases by 1d6. If the bonus to AC granted by your skirmish ability is less than the number of dice of extra damage granted by your skirmish ability, the bonus to AC when skirmishing increases by 1 instead.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.skirmish.count", 4), gte("identity.meta.level", 21)],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
+  },
+  {
+    name: "Improved Sudden Strike",
+    description: "Add 1d6 to your sudden strike damage.",
+    aptitudes: ["General"],
+    requirements: [gte("feats.suddenstrike.count", 8), gte("identity.meta.level", 21)],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_EPIC]: true },
+  },
+  {
+    name: "Legendary Acrobat",
+    description:
+      "You can ignore any check penalties applied for accelerated movement while balancing, for accelerated tumbling, or for running while balancing on a narrow surface or while tumbling in this book).",
+    aptitudes: ["General"],
+    requirements: [
+      gte("abilities.dexterity.total", 21),
+      gte("skills.balance.rank", 24),
+      gte("skills.tumble.rank", 24),
+      gte("identity.meta.level", 21),
+    ],
+    fields: { [FEAT_EPIC]: true },
+  },
+];
+
 export const FIGHTER_FEATS: FeatSeed[] = [
   {
     name: "Brutal Throw",
     description:
       "You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
   },
   {
     name: "Combat Intuition",
     description:
       "As a free action, you can use Sense Motive to assess the challenge presented by a single opponent in relationship to your own level/Hit Dice. You gain a +4 bonus on such checks and narrow the result to a single category. In addition, whenever you make a melee attack against a creature that you made a melee attack against during the previous round, you gain a +1 insight bonus on your melee attack rolls against that creature.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [gte("combat.bab", 5), gte("skills.sensemotive.rank", 4)],
   },
   {
     name: "Dual Strike",
     description:
       "As a standard action, you can make a melee attack with your primary weapon and your off-hand weapon. Both attacks use the same attack roll to determine success, using the worse of the two weapons' attack modifiers. If you are using a one-handed or light weapon in your primary hand and a light weapon in your off hand, you take a -4 penalty on this attack roll; otherwise you take a -10 penalty. Each weapon deals its normal damage. Damage reduction and other resistances apply separately against each weapon attack.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [eq("feats.improvedtwoweaponfighting.possessed"), eq("feats.twoweaponfighting.possessed")],
   },
   {
     name: "Goad",
     description:
       "As a move action, you can goad an opponent that threatens you, has line of sight to you, can hear you, and has an Intelligence of 3 or higher. (The goad is a mind-affecting ability.) When the goaded opponent starts its next turn, if it threatens you and has line of sight to you, it must make a Will saving throw (DC 10 + 1/2 your character level + your Cha modifier). If the opponent fails its save, you are the only creature it can make melee attacks against during this turn. (If it kills you, knocks you unconscious, loses sight of you, or otherwise is unable to make melee attacks against you, it may make any remaining melee attacks against other foes, as normal.) A goaded creature can still cast spells, make ranged attacks, move, or perform other actions normally. The use of this feat restricts only melee attacks.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [gte("combat.bab", 1), gte("abilities.charisma.total", 13)],
   },
   {
     name: "Improved Diversion",
     description:
       "You can use Bluff to create a diversion to hide as a move action. You gain a +4 bonus on Bluff checks made for this purpose.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [gte("skills.bluff.rank", 4)],
   },
   {
     name: "Oversized Two-Weapon Fighting",
     description:
       "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [gte("abilities.strength.total", 13), eq("feats.twoweaponfighting.possessed")],
     fields: { [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: true },
   },
@@ -83,7 +114,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     name: "Power Throw",
     description:
       "On your turn, before making any attack rolls, you can choose to subtract a number from all thrown weapon attack rolls and add the same number to all thrown weapon damage rolls. This number may not exceed your base attack bonus. The penalty on attack rolls and the bonus on damage rolls applies until your next turn.",
-    aptitudes: ["General", "Fighter Bonus Feat"],
+    aptitudes: ["General", "Fighter Bonus Feat", "Epic Fighter Bonus Feat"],
     requirements: [
       gte("abilities.strength.total", 13),
       eq("feats.brutalthrow.possessed"),
