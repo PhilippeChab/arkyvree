@@ -2,12 +2,7 @@
 
 ## Unreleased
 
-- D&D 3.5: epic levels, as a ruleset's Last Level setting, up to 40
-- D&D 3.5: the base classes' levels 21 to 40, with their epic bonus feats
-- D&D 3.5: the Epic extension, the SRD's epic feats
-- D&D 3.5: Complete Adventurer's, Complete Divine's and Complete Warrior's own epic feats
-- D&D 3.5: a level up offers epic feats from a character's 21st level only
-- Pathfinder 1: levels past 20th, as a ruleset's Last Level setting, up to 40
+- D&D 3.5 and Pathfinder 1: epic levels
 
 ## 0.8.0 — 2026-11-14
 
