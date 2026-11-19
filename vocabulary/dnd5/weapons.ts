@@ -96,8 +96,9 @@ export const WEAPON_DEFINITIONS: Partial<Record<string, WeaponDefinition>> = {
 
 /**
  * The Monk weapons, as Martial Arts names them, and the Unarmed Strike: Simple Melee weapons and Martial Melee weapons
- * that have the Light property, by name, in the table's order: the codegen gives each its Martial Arts die. The engine
- * reads a weapon's own fields the same way (`Attacks.applyMartialArts`), a homebrew one's too.
+ * that have the Light property, by name, in the table's order: the codegen gives each its Martial Arts die, a modifier
+ * per weapon. Martial Arts' Dexterity the engine reads off a weapon's own fields by the same rule
+ * (`Attacks.applyMartialArts`), a homebrew one's too, which gets no die unless its ruleset gives it one.
  */
 export const MONK_WEAPONS: readonly string[] = [
   UNARMED_STRIKE.name,

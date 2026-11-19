@@ -13,7 +13,7 @@ import { findSeededCharacter, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5/abilities.ts";
 import { MULTICLASS_ABILITY_MINIMUM } from "@/vocabulary/dnd5/classes.ts";
-import { CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5/fields/index.ts";
+import { CLASS_MULTICLASS_SLOTS, ITEM_TYPE, WEAPON_CATEGORY, WEAPON_DAMAGE } from "@/vocabulary/dnd5/fields/index.ts";
 
 /** Each class's hit die, its first level's hit points as a character's first. */
 const HIT_DICE: Record<string, number> = {
@@ -324,6 +324,31 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponproficiencylongsword"));
     await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponmasterylongsword"));
     expect(await heldSword()).toMatchObject({ proficient: true, mastery: "Sap", tohit: { proficiency: 2, total: 5 } });
+  });
+
+  test("of a monk's Martial Arts on a homebrew weapon: a Simple melee one with Dexterity, a Martial one without Light not", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+      name: `Fork ${uniqueId()}`,
+      private: true,
+    });
+    const weapon = async (name: string, category: string) =>
+      await EntitiesService.createEntity(session, fork.id, "items", {
+        name,
+        fields: { [ITEM_TYPE]: "Weapon", [WEAPON_CATEGORY]: category, [WEAPON_DAMAGE]: "1d4" },
+      });
+    const abilityWith = async (item: { id: string }) => {
+      const monk = await createDnd5Character(session, {
+        rulesetId: fork.id,
+        abilities: { Strength: 10, Dexterity: 16 },
+      });
+      await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+      await CharacterInventoryService.addItem(session, monk.id, item.id, 1, "Main Hand", null, null, [0]);
+      return (await buildCharacter(monk.id)).components.combat.getCombat().weaponsets["0"].mainhand!.ability;
+    };
+    // Martial Arts reads the weapon's own fields, as Weapon Finesse reads 3.5's: no Base Weapon needed
+    expect(await abilityWith(await weapon(`Cudgel ${uniqueId()}`, "Simple"))).toBe("Dexterity");
+    expect(await abilityWith(await weapon(`Maul ${uniqueId()}`, "Martial"))).toBe("Strength");
   });
 
   test("of a monk's Martial Arts in armor: its Monk weapons back to Strength", async () => {
