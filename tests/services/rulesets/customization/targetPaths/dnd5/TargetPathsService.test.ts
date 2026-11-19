@@ -42,13 +42,11 @@ async function seededId(type: string, name: string) {
   return row.id;
 }
 
-
 /** The seeded D&D 5th Edition core rules' paths of a kind, by path. */
 async function seedPaths(kind: TargetPathKind) {
   const { rulesetId } = await getDnd5SeedCtx();
   return new Map((await readTargetPaths(rulesetId, kind)).paths.map((p) => [p.path, p]));
 }
-
 
 describe("D&D 5th Edition target paths: an item's own weapon", () => {
   test("takes modifiers from an item only, and offers its proficiency and Finesse, never a mastery", async () => {
