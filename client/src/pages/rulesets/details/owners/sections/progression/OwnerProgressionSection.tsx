@@ -441,7 +441,10 @@ export function OwnerProgressionSection({
     const track = tracks.find((t) => t.key === columnKey);
     if (!track) return null;
     const value =
-      shownTracks[ownedEntity.id]?.[shownKeyOf(track)] ?? readEditedTrack(ownedEntity, track.key, draft.edits);
+      shownTracks[ownedEntity.id]?.[shownKeyOf(track)] ??
+      // A level an earlier plan's answer predates (one just added): the saved answer's
+      savedShown[ownedEntity.id]?.[shownKeyOf(track)] ??
+      readEditedTrack(ownedEntity, track.key, draft.edits);
     const saved = savedShown[ownedEntity.id]?.[shownKeyOf(track)] ?? readTrack(ownedEntity, track.key);
     const changed = value !== saved;
     return (
