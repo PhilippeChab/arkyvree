@@ -73,7 +73,7 @@ import {
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, isTrackSetAt, presetsOf, readShownTrack } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
 import { useCreateFeature } from "./useCreateFeature.ts";
@@ -209,8 +209,15 @@ export function OwnerProgressionSection({
   // +18/+13/+8 at level 20")
   const describeChoice = (track: OwnerTrack) => (choice: number | string, positions: readonly number[]) => {
     const values = listTrackValues(track, choice, positions, shown);
+    // Past the level its rules stop the track at, its value there, made now or saved, and its bonus
+    const valueAt = (position: number) => {
+      const index = positions.indexOf(position);
+      if (index >= 0) return values[index];
+      const saved = ownedEntities.find((each) => each.position === position);
+      return saved && readTrack(saved, track.key);
+    };
     const at = (index: number) =>
-      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${positions[index]}`;
+      `${formatTrackValue(track.rules, readShownTrack(track.rules, positions[index], values[index], valueAt))} at ${positionSingular} ${positions[index]}`;
     if (positions.length === 0) return undefined;
     return positions.length === 1 ? at(0) : `${at(0)}, ${at(positions.length - 1)}`;
   };
@@ -241,12 +248,22 @@ export function OwnerProgressionSection({
     const choices = Object.fromEntries(tracks.map(({ key }) => [key, data.choices[key] ?? batchDefaults[key]]));
     createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists, shown));
   };
-  const valuesOf = (read: (ownedEntity: OwnedRead) => number) =>
-    ownedEntities.map((ownedEntity) => ({
-      ownedId: ownedEntity.id,
-      position: ownedEntity.position,
-      value: read(ownedEntity),
-    }));
+  // A track's values its tab sets: none past the level its rules stop it at (3.5's 20th), which its table works out
+  const valuesOf = (track: OwnerTrack, read: (ownedEntity: OwnedRead) => number) =>
+    ownedEntities
+      .filter(({ position }) => isTrackSetAt(track.rules, position))
+      .map((ownedEntity) => ({
+        ownedId: ownedEntity.id,
+        position: ownedEntity.position,
+        value: read(ownedEntity),
+      }));
+  // A track's value at an owned entity as its table shows it, its values read by `read`: past the level its rules stop
+  // it at, its value there and its bonus (a 3.5 Barbarian 21's +21/+16/+11/+6)
+  const shownValue = (track: OwnerTrack, ownedEntity: OwnedRead, read: (ownedEntity: OwnedRead) => number) =>
+    readShownTrack(track.rules, ownedEntity.position, read(ownedEntity), (position) => {
+      const at = ownedEntities.find((each) => each.position === position);
+      return at && read(at);
+    });
 
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
     ...row,
@@ -310,8 +327,8 @@ export function OwnerProgressionSection({
   const poolIdOf = (pool: Record<string, unknown>) => String(pool.id);
   const changes = [
     ...tracks.flatMap((track) => {
-      const before = valuesOf((ownedEntity) => readTrack(ownedEntity, track.key));
-      const after = valuesOf((ownedEntity) => readEditedTrack(ownedEntity, track.key, draft.edits));
+      const before = valuesOf(track, (ownedEntity) => readTrack(ownedEntity, track.key));
+      const after = valuesOf(track, (ownedEntity) => readEditedTrack(ownedEntity, track.key, draft.edits));
       const changed = after.filter(({ value }, index) => value !== before[index].value).length;
       if (changed === 0) return [];
       const constant = (values: typeof before) => values.every(({ value }) => value === values[0].value);
@@ -425,8 +442,8 @@ export function OwnerProgressionSection({
     }
     const track = tracks.find((t) => t.key === columnKey);
     if (!track) return null;
-    const value = readEditedTrack(ownedEntity, track.key, draft.edits);
-    const changed = value !== readTrack(ownedEntity, track.key);
+    const value = shownValue(track, ownedEntity, (each) => readEditedTrack(each, track.key, draft.edits));
+    const changed = value !== shownValue(track, ownedEntity, (each) => readTrack(each, track.key));
     return (
       <Typography variant="body2" sx={[changed && CHANGED_CELL_SX]}>
         {formatTrackValue(track.rules, value)}
@@ -511,8 +528,8 @@ export function OwnerProgressionSection({
                 }
                 format={(value) => formatTrackValue(track.rules, value)}
                 presets={track.rules.presets.length > 0 ? presetsOf(track.rules) : undefined}
-                saved={valuesOf((ownedEntity) => readTrack(ownedEntity, track.key))}
-                values={valuesOf((ownedEntity) => readEditedTrack(ownedEntity, track.key, draft.edits))}
+                saved={valuesOf(track, (ownedEntity) => readTrack(ownedEntity, track.key))}
+                values={valuesOf(track, (ownedEntity) => readEditedTrack(ownedEntity, track.key, draft.edits))}
                 onChange={(values) =>
                   draft.setTrack(
                     track.key,

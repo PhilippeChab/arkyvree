@@ -471,7 +471,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
                 />
               )}
               {!readOnly && (
-                <Box sx={{ pt: 1 }}>
+                <Stack sx={{ justifyContent: "center", minHeight: 56 }}>
                   <RowAction
                     icon={DeleteIcon}
                     label={
@@ -482,7 +482,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
                     intent="destructive"
                     onClick={() => remove(index)}
                   />
-                </Box>
+                </Stack>
               )}
             </Box>
           ))}

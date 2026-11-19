@@ -284,9 +284,13 @@ export interface ProgressionTable {
  * engine reads its label and bounds off (`RulesEngine`). A class of a kind whose creature's sheet works the column's
  * value out itself (3.5's familiar's base attack bonus, its master's) holds none at its levels, which a save of one
  * refuses setting (its module's rules): its table and its tab leave the column out, by the kind a class is for
- * (`omittedFor`, of `entityKinds`' values).
+ * (`omittedFor`, of `entityKinds`' values). Past a level its levels stop adding to it at (`beyond.position`: 3.5's 20th,
+ * an epic level adding nothing to a character's base attack bonus or saves), it reads its value there and the bonus a
+ * character of that level has (`beyond.bonuses`, from the next level: 3.5's epic attack and save bonuses), which its
+ * table shows and its tab doesn't set.
  */
 export interface ProgressionTrack {
+  beyond?: { bonuses: number[]; position: number };
   field?: string;
   key: string;
   label: string;

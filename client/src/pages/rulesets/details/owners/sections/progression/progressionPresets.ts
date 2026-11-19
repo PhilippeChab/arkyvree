@@ -49,6 +49,11 @@ export function formatTrackValue(track: ProgressionTrack, value: number) {
   return track.labels?.[value - track.min] ?? String(value);
 }
 
+/** Whether a track's tab sets it at `position`: not past the level its rules stop it at (`beyond`: 3.5's 20th). */
+export function isTrackSetAt(track: ProgressionTrack, position: number) {
+  return !track.beyond || position <= track.beyond.position;
+}
+
 /** A track's presets as its rules give them, each its value at a position, the last position's past its values. */
 export function presetsOf(track: ProgressionTrack): ProgressionPreset[] {
   return track.presets.map(({ key, label, values }) => ({
@@ -56,4 +61,20 @@ export function presetsOf(track: ProgressionTrack): ProgressionPreset[] {
     label,
     valueAt: (position) => values[Math.min(Math.max(position, 1), values.length) - 1] ?? 0,
   }));
+}
+
+/**
+ * A track's value at `position` as its table shows it: past the level its rules stop it at (`beyond`), its value there
+ * (`valueAt`) and the bonus a character of `position` has (a 3.5 Barbarian 21's base attack bonus: its 20th's +20 and
+ * the epic +1); its own (`own`) elsewhere, or where it has no value there.
+ */
+export function readShownTrack(
+  track: ProgressionTrack,
+  position: number,
+  own: number,
+  valueAt: (position: number) => number | undefined,
+) {
+  if (!track.beyond || isTrackSetAt(track, position)) return own;
+  const base = valueAt(track.beyond.position);
+  return base === undefined ? own : base + (track.beyond.bonuses[position - track.beyond.position - 1] ?? 0);
 }
