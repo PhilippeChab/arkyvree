@@ -112,8 +112,9 @@ export default class Equipping {
   }
 
   /**
-   * The character meets the item's requirements and its template's, each its own group. A weapon's aren't checked:
-   * without its proficiency, a -4 penalty applies instead.
+   * The character meets the item's requirements and its template's, each its own group, as 3.5's: an armor's or a
+   * Shield's training is refused unless forced. A weapon's aren't checked: without its proficiency, its attacks add no
+   * Proficiency Bonus instead.
    */
   private checkItemRequirements(item: EquippedEntry["item"]) {
     if (item.fields[ITEM_TYPE] === "Weapon") return;

@@ -45,12 +45,10 @@ export interface CombatData {
     readonly category: WornArmorCategory;
     /** Whether its wearer meets its Strength: without, its speed is 10 feet lower. */
     readonly strengthmet: boolean;
-    /** Whether it has training with its armor's category: without, it can't cast spells. */
+    /** Whether it's trained with the armor worn (`ArmorSlot.trained`): without, it can't cast spells. */
     readonly trained: boolean;
   };
   armors: ArmorsData;
-  /** Training with each armor category and with shields, each a feat's to set. */
-  armortraining: { heavy: boolean; light: boolean; medium: boolean; shields: boolean };
   /**
    * The attacks it makes when it takes the Attack action: 1, or the most a feature sets (Extra Attack's 2, the
    * Fighter's Two Extra Attacks' 3), whatever the order its features apply in. A modifier raises it, never lowers it.
@@ -138,13 +136,15 @@ export interface WeaponSlot {
     type: string;
   };
   entryId: string | null;
-  /** Whether it can use Dexterity as a Finesse weapon does: a monk's Unarmed Strike and Monk weapons. */
+  /** Whether it can use Dexterity as a Finesse weapon does: a monk's Unarmed Strike and Monk weapons (Martial Arts). */
   finesse: boolean;
   itemId: string | null;
+  /** Whether its wielder masters its kind: a modifier sets it (Weapon Mastery: Longsword's). */
   mastered: boolean;
   /** Its mastery property, when its wielder has mastered its kind (`mastered`). */
   readonly mastery: string | null;
   name: string;
+  /** Whether its wielder is proficient with it: meets its item's requirements (an Unarmed Strike always). */
   proficient: boolean;
   properties: string[];
   range: { long: number; normal: number } | null;
@@ -200,7 +200,6 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
     return {
       ac: { base: COMBAT_RULES.UNARMORED_AC_BASE, dexterity: 0, shield: 0, misc: 0, unarmored: {} },
       armor: { category: "none", strengthmet: true, trained: true },
-      armortraining: { light: false, medium: false, heavy: false, shields: false },
       armors,
       get attacks() {
         return attacks;

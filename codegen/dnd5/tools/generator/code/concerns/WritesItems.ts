@@ -1,7 +1,16 @@
 import { isDeepStrictEqual } from "node:util";
 
 import type { BaseCodeFile } from "@/codegen/dnd5/tools/generator/code/BaseCodeFile.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { armorFields, shieldFields, weaponFields } from "@/content/dnd5/builders/items/fields.ts";
+import {
+  HEAVY_ARMOR_TRAINING,
+  LIGHT_ARMOR_TRAINING,
+  martial,
+  MEDIUM_ARMOR_TRAINING,
+  SHIELD_TRAINING,
+  simple,
+} from "@/content/dnd5/builders/items/proficiencies.ts";
 import type { Dnd5ItemSeed, ItemFields } from "@/content/dnd5/builders/items/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { ARMOR_DEFINITIONS } from "@/vocabulary/dnd5/armor.ts";
@@ -15,6 +24,16 @@ interface FieldsBuilder {
   call: (item: string) => string;
   name: string;
   of: (item: string) => ItemFields | undefined;
+}
+
+/**
+ * A builder an item's requirements are written with: what it gives an item of a name (`of`), and whether it's called
+ * with the item's name (`simple("Club")`) or is the value itself (`SHIELD_TRAINING`).
+ */
+interface RequirementsBuilder {
+  called: boolean;
+  name: string;
+  of: (item: string) => RequirementEntry[];
 }
 
 /**
@@ -37,6 +56,16 @@ const ITEM_FIELDS: FieldsBuilder[] = [
     of: (item) => (item === "Shield" ? shieldFields() : undefined),
     call: () => "shieldFields()",
   },
+];
+
+/** The builders an item's requirements are written with: a weapon's proficiency, an armor's or the Shield's training. */
+const ITEM_REQUIREMENTS: RequirementsBuilder[] = [
+  { name: "simple", of: simple, called: true },
+  { name: "martial", of: martial, called: true },
+  { name: "HEAVY_ARMOR_TRAINING", of: () => HEAVY_ARMOR_TRAINING, called: false },
+  { name: "LIGHT_ARMOR_TRAINING", of: () => LIGHT_ARMOR_TRAINING, called: false },
+  { name: "MEDIUM_ARMOR_TRAINING", of: () => MEDIUM_ARMOR_TRAINING, called: false },
+  { name: "SHIELD_TRAINING", of: () => SHIELD_TRAINING, called: false },
 ];
 
 /** Writing an item. */
@@ -62,16 +91,31 @@ export function WritesItems<B extends Constructor<BaseCodeFile>>(Base: B) {
     }
 
     /**
-     * An item written as code, a list's item: its fields as stored (written with the builder that gives them for its
-     * name, when one does: `...weaponFields("Club")`), the template it's made from (its `madeFrom` link) by its name,
-     * and its modifiers.
+     * An item's requirements as code (`requirements`): with the builder that gives them for the item's name (`item`),
+     * else an array of them, one per line.
+     */
+    private itemRequirements(item: string, requirements: RequirementEntry[]): string {
+      const builder = ITEM_REQUIREMENTS.find(({ of }) => isDeepStrictEqual(of(item), requirements));
+      if (builder) {
+        this.uses.add(builder.name);
+        return builder.called ? `${builder.name}(${this.quote(item)})` : builder.name;
+      }
+      return `[\n${requirements.map((entry) => `      ${this.requirement(entry, 3)},`).join("\n")}\n    ]`;
+    }
+
+    /**
+     * An item written as code, a list's item: its requirements (written with the builder that gives them for its name,
+     * when one does: `simple("Club")`, a training), its fields as stored (written with the builder that gives them for
+     * its name, when one does: `...weaponFields("Club")`), the template it's made from (its `madeFrom` link) by its
+     * name, and its modifiers.
      */
     item(item: Dnd5ItemSeed): string[] {
-      const { name, description, fields, links } = item;
+      const { name, description, fields, links, requirements } = item;
       return [
         `  {`,
         `    name: ${this.quote(name)},`,
         `    description: ${this.quote(description)},`,
+        ...(requirements?.length ? [`    requirements: ${this.itemRequirements(name, requirements)},`] : []),
         `    fields: ${this.itemFields(name, fields)},`,
         ...(links?.madeFrom ? [`    links: { madeFrom: ${this.quote(links.madeFrom)} },`] : []),
         ...this.listField(

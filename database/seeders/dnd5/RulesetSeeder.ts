@@ -7,13 +7,14 @@ import { SeedsClasses } from "./concerns/SeedsClasses.ts";
 import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsSpecies } from "./concerns/SeedsSpecies.ts";
 import { SeedsSpells } from "./concerns/SeedsSpells.ts";
+import { UpdatesWeaponRules } from "./concerns/UpdatesWeaponRules.ts";
 
 /**
  * Seeds a D&D 5th Edition ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
  * (`ContentSeeder`'s: items) or its own (`concerns/`: aptitudes, abilities, saves and languages, feats, skills,
- * species, backgrounds, classes, spells), and the steps made of others are its own. Each names the rows the steps
- * before it seeded by their ids in its context. It holds no content: the core rules' package gives `seedCore` theirs,
- * an extension's package gives `seedExtension` its book.
+ * species, backgrounds, classes, spells, the core rules' v2 update), and the steps made of others are its own. Each
+ * names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules' package
+ * gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,
@@ -22,6 +23,7 @@ export class RulesetSeeder extends include(
   SeedsSkills,
   SeedsSpecies,
   SeedsSpells,
+  UpdatesWeaponRules,
 ) {
   /**
    * Seeds the core rules: the SRD's content and the hand-written core content. The skills come before the classes,
@@ -57,5 +59,22 @@ export class RulesetSeeder extends include(
     await this.seedSpecies(book.species);
     await this.seedBackgrounds(book.backgrounds);
     for (const klass of book.classes) await this.seedClass(klass);
+  }
+
+  /**
+   * Brings the seeded core rules up to their content (`core`) since v1, where a weapon's proficiency, an armor's and
+   * the Shield's training and Martial Arts' Dexterity work as 3.5's proficiency and Weapon Finesse do: each template
+   * gets its requirements (a weapon's proficiency feats, an armor's training), each feat its weapon rule field (Martial
+   * Arts' flag), and the feats' modifiers that set them before go; and so do the forks' own copies of them, a copy its
+   * source's (`UpdatesWeaponRules`). A mastery stays its feat's modifier. An update of the core rules' package
+   * (`updates.ts`); each step adds only what's missing, so it's safe to run again.
+   */
+  async updateCore(core: CoreContent) {
+    const itemIds = await RulesetSeeder.namesOf(this.db, this.ctx.rulesetId, "items");
+    const items = await this.withForkCopies("items", core.templateItems, itemIds);
+    await this.requireProficiency(items.map(({ id, seed }) => ({ id, requirements: seed.requirements })));
+    const feats = await this.withForkCopies("feats", core.feats, this.ctx.featMap);
+    await this.addWeaponRuleFields(feats.map(({ id, seed }) => ({ fields: seed.fields, id })));
+    await this.dropSettledModifiers(feats.map(({ id }) => id));
   }
 }

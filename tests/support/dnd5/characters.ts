@@ -1,3 +1,4 @@
+import { armorTraining } from "@/content/dnd5/builders/feats/proficiencies.ts";
 import { CharacterInputs, type FieldsRequest } from "@/engine/core/module/index.ts";
 import { BACKGROUND_ROLE, SPECIES_ROLE } from "@/engine/rulesets/dnd5/characters/CharacterValues.ts";
 import Dnd5CharacterBuilder from "@/engine/rulesets/dnd5/model/Dnd5CharacterBuilder.ts";
@@ -41,6 +42,15 @@ const NEW_FIELDS: FieldsRequest = {
   [CHARACTER_WEIGHT]: "80",
   [CHARACTER_XP]: 355_000,
 };
+
+/**
+ * A built character's training with each armor category and with Shields: whether it has each Armor Training feat,
+ * which an armor or the Shield requires.
+ */
+export function armorTrainingOf(built: Awaited<ReturnType<typeof buildCharacter>>) {
+  const has = (training: string) => built.components.feats.getFeat(armorTraining(training))?.possessed ?? false;
+  return { light: has("Light Armor"), medium: has("Medium Armor"), heavy: has("Heavy Armor"), shields: has("Shields") };
+}
 
 /**
  * `characterId`, a D&D 5th Edition character, built the way the engine builds one (`Dnd5CharacterBuilder`): its rows

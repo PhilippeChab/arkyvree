@@ -36,20 +36,18 @@ const WEAPON_PROFICIENCY_FIELDS: FeatFields = {
   [FEAT_FAMILY]: ["Weapon Proficiency"],
 };
 
-/** The armor trainings: each category of armor's, then the Shields'. */
+/** The armor trainings: each category of armor's, then the Shields', which an armor or the Shield requires. */
 export const ARMOR_TRAINING_FEATS: FeatSeed[] = [
   ...ARMOR_CATEGORIES.map((category) => ({
     name: armorTraining(`${category} Armor`),
     description: `You can wear ${category} armor without penalty.`,
     aptitudes: [ARMOR_TRAINING_POOL],
-    modifiers: [setFlag(`combat.armortraining.${stripSeparators(category)}`)],
     fields: ARMOR_TRAINING_FIELDS,
   })),
   {
     name: armorTraining("Shields"),
     description: "You gain a Shield's Armor Class bonus while you hold one.",
     aptitudes: [ARMOR_TRAINING_POOL],
-    modifiers: [setFlag("combat.armortraining.shields")],
     fields: ARMOR_TRAINING_FIELDS,
   },
 ];
@@ -64,22 +62,21 @@ export const SAVING_THROW_PROFICIENCY_FEATS: FeatSeed[] = ABILITY_NAMES.map((abi
 }));
 
 /**
- * The weapon proficiencies: each category of weapons' (every Simple weapon, every Martial one), then each weapon's
- * (`items.weapons.<weapon>.proficient`), which a class grants one kind of martial weapon at a time by.
+ * The weapon proficiencies: each category of weapons' (every Simple weapon, every Martial one), then each weapon's,
+ * which a class grants one kind of martial weapon at a time by. A weapon requires them (`simple("Club")`): a character
+ * who has one is proficient with it.
  */
 export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
   ...WEAPON_CATEGORIES.map((category) => ({
     name: weaponProficiency(`${category} Weapons`),
     description: `You add your Proficiency Bonus to attacks with ${category} weapons.`,
     aptitudes: [WEAPON_PROFICIENCIES_POOL],
-    modifiers: [setFlag(`items.weapons.${stripSeparators(category)}.proficient`)],
     fields: WEAPON_PROFICIENCY_FIELDS,
   })),
   ...WEAPON_NAMES.map((weapon) => ({
     name: weaponProficiency(weapon),
     description: `You add your Proficiency Bonus to attacks with the ${weapon}.`,
     aptitudes: [WEAPON_PROFICIENCIES_POOL],
-    modifiers: [setFlag(`items.weapons.${stripSeparators(weapon)}.proficient`)],
     fields: WEAPON_PROFICIENCY_FIELDS,
   })),
 ];

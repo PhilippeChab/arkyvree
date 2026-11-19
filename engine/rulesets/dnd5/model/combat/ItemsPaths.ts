@@ -138,7 +138,7 @@ export default class ItemsPaths implements PathCategory<Dnd5Components> {
   readonly namesEntities = true;
 
   readonly pathDescriptions = {
-    "items.weapons": "Per-weapon proficiency, mastery, attack, damage, and how it's wielded",
+    "items.weapons": "Per-weapon mastery, attack, damage, and how it's wielded",
     "items.armors": "Per-armor AC, max Dexterity, Strength and Stealth",
     "items.shields": "The Shield's AC",
     // Item sub-group intermediates (structural keys, dynamic group stripped)

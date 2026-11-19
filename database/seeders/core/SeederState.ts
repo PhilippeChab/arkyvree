@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { and, inArray, ne } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
 import type { Modifier, ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
@@ -149,6 +149,30 @@ export abstract class SeederState {
   /** A kind's entities (`type`, `ids`), as their records: their own columns, their fields and their single links. */
   protected async entityRecords<R extends { id: string }>(type: string, ids: string[]): Promise<R[]> {
     return await Entities.findMany<R>(this.db, { entityType: type, ids });
+  }
+
+  /** The copies other rulesets made of the ruleset's entities of a kind (`type`), each with its source's id. */
+  protected async findForkCopies(type: string): Promise<{ copyId: string; sourceId: string }[]> {
+    const sources = await Entities.findMany(this.db, { entityType: type, rulesetIds: [this.ctx.rulesetId] });
+    if (sources.length === 0) return [];
+    const snapshots = await this.db
+      .select({ copyId: entitySnapshotsInRules.forkedEntityId, sourceId: entitySnapshotsInRules.sourceEntityId })
+      .from(entitySnapshotsInRules)
+      .where(
+        and(
+          inArray(
+            entitySnapshotsInRules.sourceEntityId,
+            sources.map(({ id }) => id),
+          ),
+          ne(entitySnapshotsInRules.rulesetId, this.ctx.rulesetId),
+        ),
+      );
+    const copies = await Entities.findMany(this.db, {
+      entityType: type,
+      ids: snapshots.map(({ copyId }) => copyId),
+    });
+    const live = new Set(copies.map(({ id }) => id));
+    return snapshots.filter(({ copyId }) => live.has(copyId));
   }
 
   /** Inserts the rows, if there are any. */

@@ -6,14 +6,14 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
+import { armorTrainingOf, buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
 import { addLevel } from "@/tests/support/dnd5/levels.ts";
 import { getDnd5SeedCtx } from "@/tests/support/dnd5/seed.ts";
 import { findSeededCharacter, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5/abilities.ts";
 import { MULTICLASS_ABILITY_MINIMUM } from "@/vocabulary/dnd5/classes.ts";
-import { CLASS_MULTICLASS_SLOTS } from "@/vocabulary/dnd5/fields/index.ts";
+import { CLASS_MULTICLASS_SLOTS, ITEM_TYPE, WEAPON_CATEGORY, WEAPON_DAMAGE } from "@/vocabulary/dnd5/fields/index.ts";
 
 /** Each class's hit die, its first level's hit points as a character's first. */
 const HIT_DICE: Record<string, number> = {
@@ -150,7 +150,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // The cleric's saving throws alone: a multiclass's fighter level gives none
     expect(savesOf(built)).toMatchObject({ wisdom: 3 + 2, charisma: 1 + 2, strength: 2, constitution: 1 });
     // A fighter's multiclass gives no heavy armor: Scale Mail's 14, a Shield's +2, Defense's +1
-    expect(combat.armortraining).toEqual({ light: true, medium: true, heavy: false, shields: true });
+    expect(armorTrainingOf(built)).toEqual({ light: true, medium: true, heavy: false, shields: true });
     expect(combat.weaponsets["0"].ac.total).toBe(17);
     // The cleric's three levels count, the fighter's none: a 3rd-level caster's slots
     expect(slotsOf(built)).toEqual(["1: 4", "2: 2"]);
@@ -281,6 +281,98 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // A fighter's training: the Shield's +2 and its +1; a wizard's none, its +1 neither
     expect(await shieldAcOf("Fighter")).toEqual({ shield: 3, total: 13 });
     expect(await shieldAcOf("Wizard")).toEqual({ shield: 0, total: 10 });
+  });
+
+  test("of armor and a Shield without their training: refused unless forced, as 3.5's; forced, no spellcasting and the Shield's +0", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const idOf = async (name: string) =>
+      (await Entities.findOne(db, { entityType: "items", name, rulesetId: ctx.rulesetId }))!.id;
+    const wizard = await createDnd5Character(session);
+    await addLevel(session, wizard.id, "Wizard", 1, { hp: HIT_DICE.Wizard }, true);
+    const armor = await idOf("Leather Armor");
+    const shield = await idOf("Shield");
+    for (const [item, location, sets] of [
+      [armor, "Armor", []],
+      [shield, "Off Hand", [0]],
+    ] as const) {
+      expect(
+        CharacterInventoryService.addItem(session, wizard.id, item, 1, location, null, null, [...sets]),
+      ).rejects.toThrow("Character does not meet the requirements to equip this item");
+      await CharacterInventoryService.addItem(session, wizard.id, item, 1, location, null, null, [...sets], true);
+    }
+    const combat = (await buildCharacter(wizard.id)).components.combat.getCombat();
+    expect(combat.armor).toMatchObject({ category: "light", trained: false });
+    expect(combat.weaponsets["0"].ac.shield).toBe(0);
+  });
+
+  test("of a weapon without its proficiency, a magic one made from it, and its mastery: its template's requirements, its feat's modifier", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const sword = (await Entities.findOne(db, {
+      entityType: "items",
+      name: "Longsword +1",
+      rulesetId: ctx.rulesetId,
+    }))!;
+    const wizard = await createDnd5Character(session, { abilities: { Strength: 14 } });
+    await addLevel(session, wizard.id, "Wizard", 1, { hp: HIT_DICE.Wizard }, true);
+    await CharacterInventoryService.addItem(session, wizard.id, sword.id, 1, "Main Hand", null, null, [0]);
+    const heldSword = async () =>
+      (await buildCharacter(wizard.id)).components.combat.getCombat().weaponsets["0"].mainhand!;
+    // The Longsword's requirements, which its +1 inherits: no Martial proficiency, no Proficiency Bonus, no mastery
+    expect(await heldSword()).toMatchObject({ proficient: false, mastery: null, tohit: { proficiency: 0, total: 3 } });
+    const grant = (feat: string) => ({ target: `feats.${feat}.possessed`, operator: "set", value: "true" });
+    await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponproficiencylongsword"));
+    await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponmasterylongsword"));
+    expect(await heldSword()).toMatchObject({ proficient: true, mastery: "Sap", tohit: { proficiency: 2, total: 5 } });
+  });
+
+  test("of a monk's Martial Arts on a homebrew weapon: a Simple melee one with Dexterity, a Martial one without Light not", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const fork = await RulesetsService.forkRuleset(session, ctx.rulesetId, {
+      name: `Fork ${uniqueId()}`,
+      private: true,
+    });
+    const weapon = async (name: string, category: string) =>
+      await EntitiesService.createEntity(session, fork.id, "items", {
+        name,
+        fields: { [ITEM_TYPE]: "Weapon", [WEAPON_CATEGORY]: category, [WEAPON_DAMAGE]: "1d4" },
+      });
+    const abilityWith = async (item: { id: string }) => {
+      const monk = await createDnd5Character(session, {
+        rulesetId: fork.id,
+        abilities: { Strength: 10, Dexterity: 16 },
+      });
+      await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+      await CharacterInventoryService.addItem(session, monk.id, item.id, 1, "Main Hand", null, null, [0]);
+      return (await buildCharacter(monk.id)).components.combat.getCombat().weaponsets["0"].mainhand!.ability;
+    };
+    // Martial Arts reads the weapon's own fields, as Weapon Finesse reads 3.5's: no Base Weapon needed
+    expect(await abilityWith(await weapon(`Cudgel ${uniqueId()}`, "Simple"))).toBe("Dexterity");
+    expect(await abilityWith(await weapon(`Maul ${uniqueId()}`, "Martial"))).toBe("Strength");
+  });
+
+  test("of a monk's Martial Arts in armor: its Monk weapons back to Strength", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const idOf = async (name: string) =>
+      (await Entities.findOne(db, { entityType: "items", name, rulesetId: ctx.rulesetId }))!.id;
+    const monk = await createDnd5Character(session, { abilities: { Strength: 10, Dexterity: 16 } });
+    await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+    // A Club, a Simple Melee weapon without Finesse: Martial Arts' Dexterity, read off its fields
+    await CharacterInventoryService.addItem(session, monk.id, await idOf("Club"), 1, "Main Hand", null, null, [0]);
+    const club = async () => (await buildCharacter(monk.id)).components.combat.getCombat().weaponsets["0"].mainhand!;
+    expect(await club()).toMatchObject({ finesse: true, ability: "Dexterity" });
+    // Forced on: a monk has no armor training
+    await CharacterInventoryService.addItem(
+      session,
+      monk.id,
+      await idOf("Leather Armor"),
+      1,
+      "Armor",
+      null,
+      null,
+      [],
+      true,
+    );
+    expect(await club()).toMatchObject({ finesse: false, ability: "Strength" });
   });
 
   test("of a paladin's Blessed Warrior: two Cleric cantrips, cast with its Charisma", async () => {

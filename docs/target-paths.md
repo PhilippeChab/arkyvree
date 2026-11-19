@@ -208,6 +208,8 @@ Weapon items, armor items, and shield items auto-generate proficiency requiremen
 | `feats.shieldproficiency.possessed`                | Light/Heavy shield items        |
 | `feats.towershieldproficiency.possessed`           | Tower shield items              |
 
+D&D 5th Edition's weapons, armor and Shield require their proficiency feats the same way, and have no path of their own for it: a Simple or Martial weapon `feats.weaponproficiencysimpleweapons.possessed` or `feats.weaponproficiencymartialweapons.possessed`, or its own (`feats.weaponproficiencylongsword.possessed`); an armor its category's Armor Training (`feats.armortraininglightarmor.possessed`, `…mediumarmor`, `…heavyarmor`), the Shield `feats.armortrainingshields.possessed`. A weapon's mastery is its Weapon Mastery feat's modifier on its group (`items.weapons.longsword.mastered`), as 3.5's Weapon Focus is; Martial Arts' Dexterity is its feat's field, as 3.5's Weapon Finesse is.
+
 ## spells
 
 | Path                              | Type        | Description                                                          |

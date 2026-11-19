@@ -19,7 +19,6 @@ import type CombatComponent from "./CombatComponent.ts";
 /** The labels of the combat paths' segments their fields' descriptions don't give. */
 const COMBAT_LABELS: Record<string, string> = {
   ac: "Armor Class",
-  armortraining: "Armor Training",
   capacity: "Carrying Capacity",
   carriedweight: "Carried Weight",
   draglift: "Drag, Lift, or Push",
@@ -93,11 +92,6 @@ const COMBAT_PATHS = [
     sortOrder: 2,
     requirementOnly: true,
   },
-  // Training: what a class's or a feat's Armor Training sets
-  { path: "armortraining.light", description: "Training with Light armor", type: "boolean" as const },
-  { path: "armortraining.medium", description: "Training with Medium armor", type: "boolean" as const },
-  { path: "armortraining.heavy", description: "Training with Heavy armor", type: "boolean" as const },
-  { path: "armortraining.shields", description: "Training with Shields", type: "boolean" as const },
   // Hit points
   { path: "hp.base", description: "From each level's hit points", type: "number" as const },
   { path: "hp.constitution", description: "Con modifier per level", type: "number" as const, requirementOnly: true },
@@ -250,7 +244,6 @@ export default class CombatPaths implements PathCategory<Dnd5Components> {
   readonly pathDescriptions = {
     "combat.ac": "AC bonuses",
     "combat.armor": "The armor worn",
-    "combat.armortraining": "Training with each armor category and with Shields",
     "combat.shield": "The Shield carried",
     "combat.hp": "HP sources and total",
     "combat.initiative": "Initiative bonus components",

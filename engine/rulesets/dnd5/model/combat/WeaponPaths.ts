@@ -18,22 +18,15 @@ import { WIELDED_VALUES } from "./CombatState.ts";
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
  * (`weapon.tohit.misc`, on the item). A part the sheet computes when read is for requirements only, the flat bonus in
- * the misc beside it.
+ * the misc beside it. Whether its wielder masters it is a path, a feat's modifier sets it on its group (Weapon Mastery:
+ * Longsword's), as 3.5's Weapon Focus adds to its group's attack. Whether its wielder is proficient with it or uses
+ * Dexterity with it (Martial Arts) isn't: its requirements and its wielder's feats tell, as 3.5's proficiency and Weapon
+ * Finesse do.
  */
 const WEAPON_PATHS = [
   {
-    path: "proficient",
-    description: "Whether proficient with it",
-    type: "boolean" as const,
-  },
-  {
     path: "mastered",
     description: "Whether it uses its mastery property",
-    type: "boolean" as const,
-  },
-  {
-    path: "finesse",
-    description: "Whether it can use Dexterity, as a Finesse weapon (Martial Arts)",
     type: "boolean" as const,
   },
   { path: "tohit.ability", description: "Str/Dex modifier to attack", type: "number" as const, requirementOnly: true },
@@ -88,7 +81,8 @@ export default class WeaponPaths implements PathCategory<Dnd5Components> {
     return WeaponPaths.buildPaths("weapon", "weapon", kind);
   }
 
-  readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";
+  readonly description =
+    "On an item: its own weapon's mastery, to-hit, damage, and how it's wielded, wherever it's held";
 
   readonly label = "Weapon";
 

@@ -8,7 +8,7 @@ import { CharacterModifiersService } from "@/server/services/characters/modifier
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/advancementPlans.ts";
-import { buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
+import { armorTrainingOf, buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd5/levelPlans.ts";
 import { addLevel, findPicks, type LevelPlan, picksOf } from "@/tests/support/dnd5/levels.ts";
 import { getDnd5SeedCtx } from "@/tests/support/dnd5/seed.ts";
@@ -299,7 +299,7 @@ describe("A D&D 5th Edition character's levels", () => {
         true,
         false,
       ]);
-      expect(built.components.combat.getCombat().armortraining).toEqual({
+      expect(armorTrainingOf(built)).toEqual({
         light: true,
         medium: true,
         heavy: true,
@@ -356,7 +356,7 @@ describe("A D&D 5th Edition character's levels", () => {
       const built = await buildCharacter(character.id);
       const combat = built.components.combat.getCombat();
       // A fighter's multiclass: light and medium armor, Shields and martial weapons, no heavy armor
-      expect(combat.armortraining).toEqual({ light: true, medium: true, heavy: false, shields: true });
+      expect(armorTrainingOf(built)).toEqual({ light: true, medium: true, heavy: false, shields: true });
       const saves = built.components.saves.getSaves();
       expect(
         [saves.intelligence, saves.wisdom, saves.strength, saves.constitution].map(({ proficient }) => proficient),

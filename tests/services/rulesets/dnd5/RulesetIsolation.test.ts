@@ -63,7 +63,7 @@ describe("A D&D 5th Edition ruleset", () => {
         "skills.stealth.expertise",
         "saves.strength.proficient",
         "combat.attacks",
-        "items.weapons.longsword.mastered",
+        "combat.proficiency.misc",
       ]),
     );
     expect(own.filter((path) => /^combat\.(bab|cmb)\b|^skills\.(hide|spot)\./.test(path))).toEqual([]);
@@ -72,7 +72,9 @@ describe("A D&D 5th Edition ruleset", () => {
     expect(others).toHaveLength(2);
     for (const other of others) {
       expect((await featsKindOf(other.id)).constructor).not.toBe(FeatEntity);
-      expect((await modifierPathsOf(other.id)).filter((path) => /\.expertise$|\.mastered$/.test(path))).toEqual([]);
+      expect(
+        (await modifierPathsOf(other.id)).filter((path) => /\.expertise$|^combat\.proficiency\./.test(path)),
+      ).toEqual([]);
       // Another base rules' ruleset has no species: its own module refuses the kind as not found
       await withRulesetScope(db, other.id, async (scope) => {
         expect(() => Engine.for(scope).entities("species")).toThrow(expect.objectContaining({ refusal: "not-found" }));

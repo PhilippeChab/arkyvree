@@ -22,6 +22,8 @@ export interface ArmorSlot {
   stealthdisadvantage: boolean;
   /** The Strength score its wearer needs, or its speed is 10 feet lower: 0 for none. */
   strength: number;
+  /** Whether the character is trained with it (`applyProficiencies`): without, it can't cast spells. */
+  trained: boolean;
 }
 
 /** The armors a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
@@ -57,6 +59,7 @@ export default class ArmorsComponent extends CharacterComponent<LoadedCharacterD
       maxdex: maxDex,
       strength: strength ?? 0,
       stealthdisadvantage: stealthDisadvantage === true,
+      trained: true,
     };
   }
 

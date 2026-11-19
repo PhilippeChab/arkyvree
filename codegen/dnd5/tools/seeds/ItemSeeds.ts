@@ -7,6 +7,14 @@ import { TOOL_PROFICIENCIES_POOL } from "@/content/dnd5/builders/aptitudes/names
 import { toolProficiency } from "@/content/dnd5/builders/feats/proficiencies.ts";
 import type { FeatSeed } from "@/content/dnd5/builders/feats/types.ts";
 import { armorFields, shieldFields, weaponFields } from "@/content/dnd5/builders/items/fields.ts";
+import {
+  HEAVY_ARMOR_TRAINING,
+  LIGHT_ARMOR_TRAINING,
+  martial,
+  MEDIUM_ARMOR_TRAINING,
+  SHIELD_TRAINING,
+  simple,
+} from "@/content/dnd5/builders/items/proficiencies.ts";
 import type { Dnd5ItemSeed } from "@/content/dnd5/builders/items/types.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { ARMOR_DEFINITIONS, ARMOR_NAMES } from "@/vocabulary/dnd5/armor.ts";
@@ -33,6 +41,9 @@ export interface ItemSeedsByKind {
   simpleWeapons: Dnd5ItemSeed[];
   tools: Dnd5ItemSeed[];
 }
+
+/** The training each category of armor requires. */
+const ARMOR_TRAINING = { Heavy: HEAVY_ARMOR_TRAINING, Light: LIGHT_ARMOR_TRAINING, Medium: MEDIUM_ARMOR_TRAINING };
 
 /** The categories that say what an item is no more than its kind does: a gear's, a tool's, ammunition's. */
 const PLAIN_CATEGORIES = ["Adventuring Gear", "Ammunition", ...TOOL_CATEGORIES];
@@ -146,24 +157,37 @@ export class ItemSeeds {
       throw new Error(`The armor isn't the Armor table's: ${names(armor).join(", ")}`);
   }
 
-  /** A template: a weapon's, an armor's or the Shield's, its fields the tables' (`weaponFields`…). */
+  /**
+   * A template: a weapon's, an armor's or the Shield's, its fields the tables' (`weaponFields`…), and its requirements
+   * the proficiency or the training a character needs with it (`simple("Club")`, `SHIELD_TRAINING`).
+   */
   private template(entry: ItemEntry): Dnd5ItemSeed {
     const { name } = entry;
     if (isOf(entry, "Weapons")) {
-      if (!WEAPON_DEFINITIONS[name]) throw new Error(`${name}: a weapon the Weapons table doesn't have`);
+      const weapon = WEAPON_DEFINITIONS[name];
+      if (!weapon) throw new Error(`${name}: a weapon the Weapons table doesn't have`);
       return {
         name,
         description: describeWeapon(entry),
+        requirements: weapon.category === "Simple" ? simple(name) : martial(name),
         fields: { [ITEM_IS_TEMPLATE]: true, ...weaponFields(name) },
       };
     }
-    if (isOf(entry, "Shields"))
-      return { name, description: describeArmor(entry), fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() } };
+    if (isOf(entry, "Shields")) {
+      return {
+        name,
+        description: describeArmor(entry),
+        requirements: SHIELD_TRAINING,
+        fields: { [ITEM_IS_TEMPLATE]: true, ...shieldFields() },
+      };
+    }
 
-    if (!ARMOR_DEFINITIONS[name]) throw new Error(`${name}: an armor the Armor table doesn't have`);
+    const armor = ARMOR_DEFINITIONS[name];
+    if (!armor) throw new Error(`${name}: an armor the Armor table doesn't have`);
     return {
       name,
       description: describeArmor(entry),
+      requirements: ARMOR_TRAINING[armor.category],
       fields: { [ITEM_IS_TEMPLATE]: true, ...armorFields(name) },
     };
   }

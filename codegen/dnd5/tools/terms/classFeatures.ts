@@ -23,12 +23,14 @@ import {
 import { poolRoom } from "@/content/dnd5/builders/aptitudes/rooms.ts";
 import { grantFeat } from "@/content/dnd5/builders/feats/possession.ts";
 import { savingThrowProficiency } from "@/content/dnd5/builders/feats/proficiencies.ts";
+import type { FeatFields } from "@/content/dnd5/builders/feats/types.ts";
 import { grantLanguage, languagePick } from "@/content/dnd5/builders/languages/knowledge.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5/abilities.ts";
 import { FIGHTING_STYLE_OPTION_CLASSES } from "@/vocabulary/dnd5/classes.ts";
 import { ABILITY_SCORE_IMPROVEMENT_POOL, SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5/feats.ts";
-import { UNARMED_STRIKE, WEAPON_DEFINITIONS } from "@/vocabulary/dnd5/weapons.ts";
+import { FEAT_MARTIAL_ARTS } from "@/vocabulary/dnd5/fields/index.ts";
+import { MONK_WEAPONS } from "@/vocabulary/dnd5/weapons.ts";
 
 /** A count a class's levels hold that adds to a target as it grows: each increase is a class level's modifier. */
 interface ClassCount {
@@ -38,23 +40,19 @@ interface ClassCount {
   target: string;
 }
 
+/** A feature's fields, by its name: its class's or its subclass's alone when it names one (`owner`). */
+interface FeatureFields {
+  feature: string;
+  fields: FeatFields;
+  owner?: string;
+}
+
 /** A feature's modifiers, by its name: its class's or its subclass's alone when it names one (`owner`). */
 interface FeatureModifiers {
   feature: string;
   modifiers: ModifierSeed[];
   owner?: string;
 }
-
-/**
- * The Monk weapons, as Martial Arts names them, and the Unarmed Strike: Simple Melee weapons and Martial Melee weapons
- * that have the Light property, by name.
- */
-const MONK_WEAPONS = [
-  UNARMED_STRIKE.name,
-  ...Object.entries(WEAPON_DEFINITIONS).flatMap(([name, weapon]) =>
-    weapon && !weapon.ranged && (weapon.category === "Simple" || weapon.properties.includes("Light")) ? [name] : [],
-  ),
-];
 
 /** No Shield held: what a monk's Unarmored Defense and Unarmored Movement require too. */
 const NO_SHIELD: RequirementCondition = {
@@ -89,6 +87,14 @@ export const CLASS_COUNTS: ClassCount[] = [
     target: `items.weapons.${stripSeparators(weapon)}.damage.die`,
     requirements: [UNARMORED, NO_SHIELD],
   })),
+];
+
+/**
+ * The fields of the features that change a weapon rule: Martial Arts' Dexterity with an Unarmed Strike and Monk weapons,
+ * while its monk wears no armor and holds no Shield (its die is its levels': `CLASS_COUNTS`).
+ */
+export const FEATURE_FIELDS: FeatureFields[] = [
+  { feature: "Martial Arts", owner: "Monk", fields: { [FEAT_MARTIAL_ARTS]: true } },
 ];
 
 /** The modifiers of the features a sheet reads a number of, or that grant a feat or a language, by feature. */
@@ -126,16 +132,6 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
     // Every skill, a skill a ruleset adds included
     feature: "Jack of All Trades",
     modifiers: [setFlag("skills.*.halfproficient")],
-  },
-  {
-    // Its weapons attack with Dexterity as a Finesse weapon does, while its monk wears no armor and holds no Shield;
-    // its die is its levels' (`CLASS_COUNTS`)
-    feature: "Martial Arts",
-    owner: "Monk",
-    modifiers: MONK_WEAPONS.map((weapon) => ({
-      ...setFlag(`items.weapons.${stripSeparators(weapon)}.finesse`),
-      requirements: [UNARMORED, NO_SHIELD],
-    })),
   },
   {
     feature: "Primal Champion",

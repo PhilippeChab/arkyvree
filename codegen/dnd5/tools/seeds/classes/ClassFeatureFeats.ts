@@ -1,5 +1,5 @@
 import { normalizeText } from "@/codegen/dnd5/tools/detect/text.ts";
-import { FEATURE_MODIFIERS } from "@/codegen/dnd5/tools/terms/classFeatures.ts";
+import { FEATURE_FIELDS, FEATURE_MODIFIERS } from "@/codegen/dnd5/tools/terms/classFeatures.ts";
 import type { Subclass } from "@/codegen/dnd5/tools/types/classes.ts";
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
@@ -18,7 +18,8 @@ import type { ClassEntries } from "./ClassEntries.ts";
  * (`classFeatures`), its subclass's placeholder past the level it's picked at left out (a subclass's own features fill
  * those levels); each subclass a feat of its subclass pool (`classSubclass`) whose modifiers grant its features' feats,
  * each from its class level on. A feature's feat is named after its class or subclass ("Rage (Barbarian)",
- * "Improved Critical (Champion)"), and its modifiers are those the terms give it (`FEATURE_MODIFIERS`).
+ * "Improved Critical (Champion)"), and its modifiers and fields are those the terms give it (`FEATURE_MODIFIERS`,
+ * `FEATURE_FIELDS`).
  */
 export class ClassFeatureFeats {
   constructor(private readonly entries: ClassEntries) {}
@@ -29,13 +30,15 @@ export class ClassFeatureFeats {
   }
 
   /**
-   * A feature's feat: its text, the pool its class's features are in, its modifiers, granted at `levels` levels, and
-   * its family when a feat requires it (`FEATURE_FAMILIES`: Fighting Style, Spellcasting).
+   * A feature's feat: its text, the pool its class's features are in, its modifiers, granted at `levels` levels, its
+   * family when a feat requires it (`FEATURE_FAMILIES`: Fighting Style, Spellcasting), and the fields the terms give it
+   * (`FEATURE_FIELDS`: Martial Arts').
    */
   private featureFeat(feature: string, owner: string, description: string, levels: number): FeatSeed {
-    const modifiers = FEATURE_MODIFIERS.filter(
-      (entry) => entry.feature === feature && (entry.owner === undefined || entry.owner === owner),
-    ).flatMap((entry) => entry.modifiers);
+    const isOwn = (entry: { feature: string; owner?: string }) =>
+      entry.feature === feature && (entry.owner === undefined || entry.owner === owner);
+    const modifiers = FEATURE_MODIFIERS.filter(isOwn).flatMap((entry) => entry.modifiers);
+    const fields = Object.assign({}, ...FEATURE_FIELDS.filter(isOwn).map((entry) => entry.fields));
     return {
       name: ClassFeatureFeats.featName(feature, owner),
       description: normalizeText(description),
@@ -45,6 +48,7 @@ export class ClassFeatureFeats {
         [FEAT_SELECTABLE]: false,
         ...(levels > 1 ? { [FEAT_STACKABLE]: true } : {}),
         ...(isOneOf(feature, FEATURE_FAMILIES) ? { [FEAT_FAMILY]: [feature] } : {}),
+        ...fields,
       },
     };
   }

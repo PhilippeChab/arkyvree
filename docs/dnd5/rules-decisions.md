@@ -21,11 +21,23 @@ holds names the code that holds it.
   `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). Jack of All Trades sets `skills.*.halfproficient`, which
   reaches every skill, one a ruleset adds included. The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
-  mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
-  the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
-  ruleset adds included; its Expertise requires proficiency in it however the character has it
-  (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's) picks them in
-  the Skill Proficiencies pool, which a new skill joins.
+  mastery: each is a feat. A skill's and a saving throw's set the path they give (`skills.<skill>.proficient`). A
+  weapon, an armor and the Shield work as 3.5's do: each requires the feat that makes its wielder proficient or
+  trained with it (the Longsword "Weapon Proficiency: Martial Weapons" or "Weapon Proficiency: Longsword", Chain Mail
+  "Armor Training: Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the
+  character lacks it for (`Builds.settleSheet`), and no path sets it. An item with no requirements of its own or its
+  template's (a homebrew weapon made from none, the SRD's Mithral Armor) is every character's to use with proficiency,
+  as in 3.5: its form's Category doesn't give it any. Equipping works as 3.5's: a weapon without them is equipped, and
+  adds no Proficiency Bonus; an armor or a Shield is refused unless forced, and forced, an armor stops spellcasting
+  (an issue), a Shield adds nothing. A template's requirements are all its proficiency, as 3.5's are: one a ruleset
+  adds to a template (a Strength 18 on its Leather Armor) counts as its training too: refused unless forced, then
+  untrained. The core rules' v2 update gives a fork's copy of a template its requirements only when it holds none. A
+  weapon's mastery is its feat's modifier on its group (Weapon Mastery: Longsword sets
+  `items.weapons.longsword.mastered`), as 3.5's Weapon Focus adds to its group's attack. A skill's Skill Proficiency
+  and Expertise are made with the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`,
+  `ExpertiseFeats`), a skill a ruleset adds included; its Expertise requires proficiency in it however the character
+  has it (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's)
+  picks them in the Skill Proficiencies pool, which a new skill joins.
 - **A class's starting proficiencies are one feat, a first class's or a multiclass's.** A class names the feat its first
   level grants when it's the character's first class (`startingProficiencies`: its saving throws, armor training,
   weapons, tools and skill picks) and the smaller one it grants a multiclass (`multiclassProficiencies`, the SRD's
@@ -51,10 +63,11 @@ holds names the code that holds it.
   (`PossessesVirtually`).
 - **An increase past 20 isn't refused.** A background's, an Ability Score Improvement's or a feat's +1 raises a score to
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
-- **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training
-  in has Disadvantage on Strength and Dexterity tests and can't cast spells (`Diagnoses.findArmorIssues`); a Shield
-  without training adds nothing to its Armor Class, its magic bonus neither (a Shield +1's, on `combat.ac.shield`, as
-  3.5's are: `ArmorClass`).
+- **Armor without its training is refused unless forced, as 3.5's.** Forced on, a character wearing armor of a category
+  it has no training in has Disadvantage on Strength and Dexterity tests and can't cast spells, an issue on its sheet
+  (`Diagnoses.findArmorIssues`); a Shield without training adds nothing to its Armor Class, its magic bonus neither (a
+  Shield +1's, on `combat.ac.shield`, as 3.5's are: `ArmorClass`). A character that wore one before the core rules' v2
+  keeps it on, untrained, until an edit of it, which is refused unless forced.
 
 ## Combat
 
@@ -67,16 +80,19 @@ holds names the code that holds it.
   Monk 1 adds the better of Constitution and Wisdom, not both; a Barbarian of Constitution 8 keeps 10 and Dexterity:
   the SRD's "you choose which calculation to use; you can't use more than one".
 - **An attack** adds its ability's modifier (the better of Strength and Dexterity with a Finesse weapon, as the sheet
-  stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the Proficiency Bonus when proficient with the weapon (a feat sets `items.weapons.<kind or category>.proficient`),
-  and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the
-  Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
-  (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
+  stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the
+  Proficiency Bonus when proficient with the weapon (its requirements met), and its magic and misc; its damage, its
+  ability's modifier, an off-hand attack's only when negative without the Two-Weapon Fighting style
+  (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice (`Attacks`). A weapon's mastery
+  property shows once a feat sets `items.weapons.<kind>.mastered`. Without training with the armor worn (its
+  requirements), the character can't cast spells; an untrained Shield adds nothing.
 - **A monk's Martial Arts** lets its Unarmed Strike and its Monk weapons (Simple melee weapons, and Martial melee ones
-  with Light, by name) attack with Dexterity as a Finesse weapon does (`items.weapons.<weapon>.finesse`), and its levels
-  give each its die from the Monk table (`damage.die`: 6 sides, 8 from its 5th level, 10 from its 11th, 12 from its
-  17th, as a 3.5 monk's levels give its unarmed damage), which a weapon rolls when better than its own dice (a
-  Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
-  wears no armor, in each weapon set holding no Shield (a weapon modifier gated on the set reaches that set's weapons
+  with Light, read off the weapon's fields, a homebrew one's too) attack with Dexterity as a Finesse weapon does (its
+  feat's `FEAT_MARTIAL_ARTS`, as 3.5's Weapon Finesse is its feat's), and its levels give each SRD Monk weapon its die
+  from the Monk table (`damage.die`, a modifier per weapon, `MONK_WEAPONS`: 6 sides, 8 from its 5th level, 10 from its
+  11th, 12 from its 17th, as a 3.5 monk's levels give its unarmed damage; a homebrew weapon none unless its ruleset
+  adds it), which a weapon rolls when better than its own dice (a Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
+  wears no armor, in each weapon set holding no Shield (the die's modifier, gated on the set, reaches that set's weapons
   alone: `Builds.scopesOf`); that it wields only Monk weapons isn't checked.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
   3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2), and the sheet keeps the most any
