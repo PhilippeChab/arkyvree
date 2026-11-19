@@ -125,6 +125,7 @@ export const PROGRESSION: ProgressionDeclaration = {
       ),
       presets: ProgressionLabels.listPresets(BAB_PRESET_LABELS, LEVEL_PRESETS.bab),
       shortLabel: "BAB",
+      shownFrom: LAST_NONEPIC_LEVEL + 1,
       source: "field",
     },
     {
@@ -135,6 +136,7 @@ export const PROGRESSION: ProgressionDeclaration = {
         (base) => formatSigned(base),
       ),
       presets: ProgressionLabels.listPresets(SAVE_PRESET_LABELS, LEVEL_PRESETS.saves),
+      shownFrom: LAST_NONEPIC_LEVEL + 1,
       source: "amounts",
     },
     {

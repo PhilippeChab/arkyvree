@@ -74,7 +74,7 @@ import {
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, isTrackSetAt, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
 import { useCreateFeature } from "./useCreateFeature.ts";
@@ -209,11 +209,13 @@ export function OwnerProgressionSection({
   // What a track's choice gives what it makes, under its toggle: its first and its last ("+16/+11/+6 at level 16,
   // +18/+13/+8 at level 20")
   const describeChoice = (track: OwnerTrack) => (choice: number | string, positions: readonly number[]) => {
-    const values = listTrackValues(track, choice, positions, shown);
+    // Not where its rules answer the track, which what it makes doesn't set
+    const set = positions.filter((position) => isTrackSetAt(track.rules, position));
+    const values = listTrackValues(track, choice, set, shown);
     const at = (index: number) =>
-      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${positions[index]}`;
-    if (positions.length === 0) return undefined;
-    return positions.length === 1 ? at(0) : `${at(0)}, ${at(positions.length - 1)}`;
+      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${set[index]}`;
+    if (set.length === 0) return undefined;
+    return set.length === 1 ? at(0) : `${at(0)}, ${at(set.length - 1)}`;
   };
   const createDefaults: OwnedCreateFormData = { choices: batchDefaults, count: 1 };
   const createDialog = useDialogState();
@@ -247,10 +249,10 @@ export function OwnerProgressionSection({
   const shownKey = progressionRules?.shown ?? "";
   const savedShown = readShownTracks(answer?.[shownKey]);
   const shownKeyOf = (track: OwnerTrack) => track.toId ?? track.rules.key;
-  // A track's values its tab sets: not those its rules answer
+  // A track's values its tab sets: not where its rules answer it
   const valuesOf = (track: OwnerTrack, read: (ownedEntity: OwnedRead) => number) =>
     ownedEntities
-      .filter((ownedEntity) => savedShown[ownedEntity.id]?.[shownKeyOf(track)] === undefined)
+      .filter((ownedEntity) => isTrackSetAt(track.rules, ownedEntity.position))
       .map((ownedEntity) => ({
         ownedId: ownedEntity.id,
         position: ownedEntity.position,
@@ -606,16 +608,19 @@ export function OwnerProgressionSection({
         ownerName={ownerName}
         // Its levels send every amount: they wait for the entities they're of
         submitDisabled={!!ownedLists.amounts && !amountEntities}
-        tracks={tracks.map((track) => ({
-          describe: describeChoice(track),
-          initial: batchDefaults[track.key],
-          key: track.key,
-          label: track.label,
-          max: track.rules.max,
-          min: track.rules.min,
-          presets: presetsOf(track.rules),
-          unitLabel: track.rules.unitLabel,
-        }))}
+        // A track its rules answer at every position it makes, it doesn't offer (3.5's attack bonus past 20th)
+        tracks={tracks
+          .filter((track) => open[0] === undefined || isTrackSetAt(track.rules, open[0]))
+          .map((track) => ({
+            describe: describeChoice(track),
+            initial: batchDefaults[track.key],
+            key: track.key,
+            label: track.label,
+            max: track.rules.max,
+            min: track.rules.min,
+            presets: presetsOf(track.rules),
+            unitLabel: track.rules.unitLabel,
+          }))}
       />
     </Stack>
   );
