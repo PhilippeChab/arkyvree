@@ -311,10 +311,10 @@ export function OwnerProgressionSection({
     placeholderData: keepPreviousData,
   });
   const notesKey = grantsRules?.notes ?? "";
-  // The values its table shows that aren't its owned entities' own: the draft's, as its plan answers them, else saved
-  const shownTracks = sends
-    ? readShownTracks(plan.isError ? undefined : plan.data?.[shownKey as keyof typeof plan.data])
-    : savedShown;
+  // The values its table shows that aren't its owned entities' own: the draft's, as its plan answers them, else the
+  // saved ones (before its first answer, or when it's refused), never its owned entities' own, which the rules ignore
+  const plannedShown = sends && !plan.isError ? plan.data?.[shownKey as keyof typeof plan.data] : undefined;
+  const shownTracks = plannedShown === undefined ? savedShown : readShownTracks(plannedShown);
   // A failed plan's notes would be another draft's: none then, the save refusing what the engine refuses
   const notes = readFeatureNotes(
     sends ? (plan.isError ? undefined : plan.data?.[notesKey as keyof typeof plan.data]) : answer?.[notesKey],

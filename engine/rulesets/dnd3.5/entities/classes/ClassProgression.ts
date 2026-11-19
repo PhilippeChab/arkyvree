@@ -206,13 +206,19 @@ export default class ClassProgression {
     const sentBab = form?.fields?.[CLASS_LEVEL_BAB];
     const bab = typeof sentBab === "number" ? sentBab : Number(last.fields[CLASS_LEVEL_BAB] ?? 0);
     const sentSaves = form?.links?.baseBonus;
-    const saves = Array.isArray(sentSaves)
+    const given = Array.isArray(sentSaves)
       ? sentSaves.flatMap((link) =>
           isRecord(link) && typeof link.toId === "string"
             ? [{ amount: Number(link.amount ?? 0), toId: link.toId }]
             : [],
         )
       : this.dnd35.baseBonusesOf(last.id).map(({ amount, toId }) => ({ amount: amount ?? 0, toId }));
+    // Every save of the ruleset, one the 20th gives nothing to at 0, as a character's sheet counts it
+    const { rulesetData } = this;
+    const saves = this.dnd35.saves.map(({ id }) => ({
+      amount: given.find(({ toId }) => rulesetData.canonicalize(toId) === rulesetData.canonicalize(id))?.amount ?? 0,
+      toId: id,
+    }));
     return Object.fromEntries(
       this.classLevels
         .filter(({ position }) => position > LAST_NONEPIC_LEVEL)
