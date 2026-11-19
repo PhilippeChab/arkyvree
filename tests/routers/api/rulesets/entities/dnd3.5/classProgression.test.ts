@@ -15,6 +15,12 @@ import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/f
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const progression = kinds[":entityId"].progression;
 
+/** A 3.5 progression's answer's levels past 20th (`answer`'s, which is typed for every ruleset's). */
+function epicTracksOf(answer: object) {
+  if (!("epicTracks" in answer)) throw new Error("The answer holds no levels past 20th");
+  return answer.epicTracks as Record<string, Record<string, number>>;
+}
+
 /** A class's first level as its route answers it (`param`, the class's): its id, its token, its fields and its saves. */
 async function firstLevelOf(param: { entityId: string; entityType: "classes"; id: string }) {
   const level = (await expectOk(kinds[":entityId"].owned.$get({ param }))).find(({ position }) => position === 1)!;
@@ -196,6 +202,33 @@ describe("rulesets class progression", () => {
       404,
     );
     await expectStatus(progression.$put({ param: { ...param, entityId: NIL_UUID }, json }), 404);
+  });
+
+  test("answers a class's base attack bonus and saves past 20th as a character of that level has them, a plan's of its 20th as the draft leaves it", async () => {
+    const { param, levels } = await setup();
+    const at = (position: number) => levels.find((level) => level.position === position)!;
+    const twentieth = at(20);
+    const saves = linksOf(twentieth, "baseBonus");
+    // A wizard's 20th: +10 attack, a good Will save of +12
+    const will = saves.find(({ amount }) => amount === 12)!;
+
+    const read = epicTracksOf(await expectOk(progression.$get({ param })));
+    expect(read[twentieth.id]).toBeUndefined();
+    expect(read[at(21).id]).toMatchObject({ bab: 11, [will.toId]: 12 });
+    expect(read[at(22).id]).toMatchObject({ bab: 11, [will.toId]: 13 });
+    expect(read[at(40).id]).toMatchObject({ bab: 20, [will.toId]: 22 });
+
+    const owned = [
+      {
+        ownedId: twentieth.id,
+        fields: { [CLASS_LEVEL_BAB]: 15 },
+        links: {
+          baseBonus: saves.map(({ amount, toId }) => ({ toId, amount: toId === will.toId ? 10 : (amount ?? 0) })),
+        },
+      },
+    ];
+    const planned = epicTracksOf(await expectOk(progression.plan.$post({ param, json: { owned } })));
+    expect(planned[at(21).id]).toMatchObject({ bab: 16, [will.toId]: 10 });
   });
 
   test("answers what a save would leave a class's spell tables at, by their names, refusing what isn't one", async () => {

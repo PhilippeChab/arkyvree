@@ -198,13 +198,17 @@ export interface ProgressionDeclaration extends Omit<ProgressionDescription, "tr
  * its features and feat pools), its tables (`tables`, which its tables' tab edits: none where its classes count
  * none) and what they count (`counts`), what its levels grant past their columns (`grants`), and the tabs its page had
  * before, by the address each one now opens (`tabAliases`: 3.5's Feat Pools tab's, its Progression; none for a ruleset
- * whose pages never had others).
+ * whose pages never had others), and where its progression's answer, and its plan's for a draft, hold the values its
+ * table shows that aren't its owned entities' own (`shown`: 3.5's `epicTracks`, a level's base attack bonus and saves
+ * past 20th, which its levels add nothing to), by the owned entity's id then the track's key (an amount track's, its
+ * entity's id), which its tab doesn't set.
  */
 export interface ProgressionDescription {
   counts?: ProgressionCounts;
   grants?: ProgressionGrants;
   grantsLabel: string;
   lastPosition: number;
+  shown?: string;
   tabAliases?: Record<string, string>;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
@@ -284,13 +288,9 @@ export interface ProgressionTable {
  * engine reads its label and bounds off (`RulesEngine`). A class of a kind whose creature's sheet works the column's
  * value out itself (3.5's familiar's base attack bonus, its master's) holds none at its levels, which a save of one
  * refuses setting (its module's rules): its table and its tab leave the column out, by the kind a class is for
- * (`omittedFor`, of `entityKinds`' values). Past a level its levels stop adding to it at (`beyond.position`: 3.5's 20th,
- * an epic level adding nothing to a character's base attack bonus or saves), it reads its value there and the bonus a
- * character of that level has (`beyond.bonuses`, from the next level: 3.5's epic attack and save bonuses), which its
- * table shows and its tab doesn't set.
+ * (`omittedFor`, of `entityKinds`' values).
  */
 export interface ProgressionTrack {
-  beyond?: { bonuses: number[]; position: number };
   field?: string;
   key: string;
   label: string;

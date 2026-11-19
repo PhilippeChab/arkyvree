@@ -68,12 +68,13 @@ import {
   readEditedTrack,
   readFeatureNotes,
   readFeatureOffers,
+  readShownTracks,
   readTrack,
   type TrackKey,
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { detectPreset, formatTrackValue, isTrackSetAt, presetsOf, readShownTrack } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
 import { useCreateFeature } from "./useCreateFeature.ts";
@@ -209,15 +210,8 @@ export function OwnerProgressionSection({
   // +18/+13/+8 at level 20")
   const describeChoice = (track: OwnerTrack) => (choice: number | string, positions: readonly number[]) => {
     const values = listTrackValues(track, choice, positions, shown);
-    // Past the level its rules stop the track at, its value there, made now or saved, and its bonus
-    const valueAt = (position: number) => {
-      const index = positions.indexOf(position);
-      if (index >= 0) return values[index];
-      const saved = ownedEntities.find((each) => each.position === position);
-      return saved && readTrack(saved, track.key);
-    };
     const at = (index: number) =>
-      `${formatTrackValue(track.rules, readShownTrack(track.rules, positions[index], values[index], valueAt))} at ${positionSingular} ${positions[index]}`;
+      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${positions[index]}`;
     if (positions.length === 0) return undefined;
     return positions.length === 1 ? at(0) : `${at(0)}, ${at(positions.length - 1)}`;
   };
@@ -248,22 +242,20 @@ export function OwnerProgressionSection({
     const choices = Object.fromEntries(tracks.map(({ key }) => [key, data.choices[key] ?? batchDefaults[key]]));
     createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists, shown));
   };
-  // A track's values its tab sets: none past the level its rules stop it at (3.5's 20th), which its table works out
+  // The values its table shows that aren't its owned entities' own, as saved (3.5's attack and saves past 20th), each
+  // by an owned entity's id then a track's key (an amount track's, its entity's id), which its rules answer
+  const shownKey = progressionRules?.shown ?? "";
+  const savedShown = readShownTracks(answer?.[shownKey]);
+  const shownKeyOf = (track: OwnerTrack) => track.toId ?? track.rules.key;
+  // A track's values its tab sets: not those its rules answer
   const valuesOf = (track: OwnerTrack, read: (ownedEntity: OwnedRead) => number) =>
     ownedEntities
-      .filter(({ position }) => isTrackSetAt(track.rules, position))
+      .filter((ownedEntity) => savedShown[ownedEntity.id]?.[shownKeyOf(track)] === undefined)
       .map((ownedEntity) => ({
         ownedId: ownedEntity.id,
         position: ownedEntity.position,
         value: read(ownedEntity),
       }));
-  // A track's value at an owned entity as its table shows it, its values read by `read`: past the level its rules stop
-  // it at, its value there and its bonus (a 3.5 Barbarian 21's +21/+16/+11/+6)
-  const shownValue = (track: OwnerTrack, ownedEntity: OwnedRead, read: (ownedEntity: OwnedRead) => number) =>
-    readShownTrack(track.rules, ownedEntity.position, read(ownedEntity), (position) => {
-      const at = ownedEntities.find((each) => each.position === position);
-      return at && read(at);
-    });
 
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
     ...row,
@@ -319,6 +311,10 @@ export function OwnerProgressionSection({
     placeholderData: keepPreviousData,
   });
   const notesKey = grantsRules?.notes ?? "";
+  // The values its table shows that aren't its owned entities' own: the draft's, as its plan answers them, else saved
+  const shownTracks = sends
+    ? readShownTracks(plan.isError ? undefined : plan.data?.[shownKey as keyof typeof plan.data])
+    : savedShown;
   // A failed plan's notes would be another draft's: none then, the save refusing what the engine refuses
   const notes = readFeatureNotes(
     sends ? (plan.isError ? undefined : plan.data?.[notesKey as keyof typeof plan.data]) : answer?.[notesKey],
@@ -442,8 +438,10 @@ export function OwnerProgressionSection({
     }
     const track = tracks.find((t) => t.key === columnKey);
     if (!track) return null;
-    const value = shownValue(track, ownedEntity, (each) => readEditedTrack(each, track.key, draft.edits));
-    const changed = value !== shownValue(track, ownedEntity, (each) => readTrack(each, track.key));
+    const value =
+      shownTracks[ownedEntity.id]?.[shownKeyOf(track)] ?? readEditedTrack(ownedEntity, track.key, draft.edits);
+    const saved = savedShown[ownedEntity.id]?.[shownKeyOf(track)] ?? readTrack(ownedEntity, track.key);
+    const changed = value !== saved;
     return (
       <Typography variant="body2" sx={[changed && CHANGED_CELL_SX]}>
         {formatTrackValue(track.rules, value)}

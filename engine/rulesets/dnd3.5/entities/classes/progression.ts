@@ -72,6 +72,8 @@ export const PROGRESSION: ProgressionDeclaration = {
   },
   grantsLabel: "Special",
   lastPosition: MAX_CLASS_LEVEL,
+  // Its levels past 20th add nothing to the base attack bonus or saves: its table shows a character's of that level
+  shown: "epicTracks",
   // Its Levels and Feat Pools tabs are its Progression's; Spells Known's, the Spells tab on its table
   tabAliases: {
     "feat-pools": "progression",
@@ -115,7 +117,6 @@ export const PROGRESSION: ProgressionDeclaration = {
   ],
   tracks: [
     {
-      beyond: ClassProgressions.describeEpicLevels(LevelRules.epicAttackBonus),
       field: CLASS_LEVEL_BAB,
       key: "bab",
       omittedFor: BONDED_KIND_SLUGS,
@@ -127,7 +128,6 @@ export const PROGRESSION: ProgressionDeclaration = {
       source: "field",
     },
     {
-      beyond: ClassProgressions.describeEpicLevels(LevelRules.epicSaveBonus),
       key: "saves",
       omittedFor: BONDED_KIND_SLUGS,
       labels: ProgressionLabels.listLabels(

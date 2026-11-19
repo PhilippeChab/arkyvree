@@ -3,7 +3,6 @@ import {
   BAB_PROGRESSIONS,
   type BabType,
   LAST_NONEPIC_LEVEL,
-  MAX_CLASS_LEVEL,
   SAVE_PROGRESSIONS,
   type SaveType,
 } from "@/vocabulary/dnd3.5/classes.ts";
@@ -45,15 +44,6 @@ export default class ClassProgressions {
   static babAt(progression: BabType, level: number): number {
     const { levels, points } = BAB_PROGRESSIONS[progression];
     return Math.floor((level * points) / levels);
-  }
-
-  /**
-   * A class table's column past 20th (`LAST_NONEPIC_LEVEL`), where its levels add nothing: its 20th's value and the
-   * epic bonus `bonusAt` gives a character of each level after it, to the last (`MAX_CLASS_LEVEL`), from the 21st.
-   */
-  static describeEpicLevels(bonusAt: (level: number) => number) {
-    const levels = Array.from({ length: MAX_CLASS_LEVEL - LAST_NONEPIC_LEVEL }, (_, i) => LAST_NONEPIC_LEVEL + i + 1);
-    return { bonuses: levels.map(bonusAt), position: LAST_NONEPIC_LEVEL };
   }
 
   /**

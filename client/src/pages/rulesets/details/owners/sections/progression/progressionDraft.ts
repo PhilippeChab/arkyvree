@@ -263,6 +263,29 @@ export function readFeatureOptions(entity: unknown): FeatureRow[] {
 }
 
 /**
+ * The values an answer holds that a table shows instead of its owned entities' own (`value`, at its rules' `shown`:
+ * 3.5's attack and saves past 20th), by the owned entity's id then the track's key; none for anything else.
+ */
+export function readShownTracks(value: unknown): Record<string, Record<string, number>> {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([ownedId, tracks]) =>
+      isRecord(tracks)
+        ? [
+            [
+              ownedId,
+              Object.fromEntries(Object.entries(tracks).filter(([, each]) => typeof each === "number")) as Record<
+                string,
+                number
+              >,
+            ],
+          ]
+        : [],
+    ),
+  );
+}
+
+/**
  * A track's value at an owned entity, as saved: 0 for an entity the owned entity has no amount of, or a field with no
  * number.
  */
