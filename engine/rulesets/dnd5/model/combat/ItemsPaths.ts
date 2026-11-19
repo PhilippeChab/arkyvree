@@ -115,7 +115,7 @@ export default class ItemsPaths implements PathCategory<Dnd5Components> {
    */
   static generateWeaponPaths(weaponGroupings: string[], kind: OperatorKind): TargetPath[] {
     const groupings = kind === "modifier" ? [...weaponGroupings, ALL_WEAPONS] : weaponGroupings;
-    return groupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind));
+    return groupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind, true));
   }
 
   /** Whether a target is a group of weapons' (`items.weapons.<group>.…`), which a set's scope narrows to its weapons. */
