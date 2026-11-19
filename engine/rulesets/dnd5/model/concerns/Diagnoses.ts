@@ -137,7 +137,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
     /**
      * The armor the character wears without its training, as the SRD 5.2.1's Armor Training says: Disadvantage on every
-     * D20 Test of Strength or Dexterity, and no spellcasting. A sheet tells it as an issue, which the rules don't refuse.
+     * D20 Test of Strength or Dexterity, and no spellcasting. A sheet tells it as an issue: equipping it was forced.
      */
     protected findArmorIssues(): RulesIssue[] {
       const { armor } = this.components.combat.getCombat();

@@ -21,22 +21,23 @@ holds names the code that holds it.
   `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). Jack of All Trades sets `skills.*.halfproficient`, which
   reaches every skill, one a ruleset adds included. The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
-  mastery: each is a feat. A skill's and a saving throw's set the path they give (`skills.<skill>.proficient`). A weapon,
-  an armor and the Shield work as 3.5's do: each requires the feat that makes its wielder proficient or trained with it
-  (the Longsword "Weapon Proficiency: Martial Weapons" or "Weapon Proficiency: Longsword", Chain Mail "Armor Training:
-  Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the character lacks it for
-  (`Builds.settleSheet`), and no path sets it. An item with no requirements of its own or its template's (a homebrew
-  weapon made from none, the SRD's Mithral Armor) is every character's to use with proficiency, as in 3.5: its form's
-  Category doesn't give it any. Equipping works as 3.5's: a weapon without them is equipped, and adds no Proficiency
-  Bonus; an armor or a Shield is refused unless forced, and forced, an armor stops spellcasting (an issue), a Shield
-  adds nothing. A template's requirements are all its proficiency, as 3.5's are: one a ruleset adds to a template (a
-  Strength 18 on its Leather Armor) counts as its training too: refused unless forced, then untrained. The core rules' v2 update gives a fork's copy of a
-  template its requirements only when it holds none. A weapon's mastery is its feat's modifier on its group (Weapon
-  Mastery: Longsword sets `items.weapons.longsword.mastered`), as 3.5's Weapon Focus adds to its group's attack. A
-  skill's Skill Proficiency and Expertise are made with the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
-  ruleset adds included; its Expertise requires proficiency in it however the character has it
-  (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's) picks them in
-  the Skill Proficiencies pool, which a new skill joins.
+  mastery: each is a feat. A skill's and a saving throw's set the path they give (`skills.<skill>.proficient`). A
+  weapon, an armor and the Shield work as 3.5's do: each requires the feat that makes its wielder proficient or
+  trained with it (the Longsword "Weapon Proficiency: Martial Weapons" or "Weapon Proficiency: Longsword", Chain Mail
+  "Armor Training: Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the
+  character lacks it for (`Builds.settleSheet`), and no path sets it. An item with no requirements of its own or its
+  template's (a homebrew weapon made from none, the SRD's Mithral Armor) is every character's to use with proficiency,
+  as in 3.5: its form's Category doesn't give it any. Equipping works as 3.5's: a weapon without them is equipped, and
+  adds no Proficiency Bonus; an armor or a Shield is refused unless forced, and forced, an armor stops spellcasting
+  (an issue), a Shield adds nothing. A template's requirements are all its proficiency, as 3.5's are: one a ruleset
+  adds to a template (a Strength 18 on its Leather Armor) counts as its training too: refused unless forced, then
+  untrained. The core rules' v2 update gives a fork's copy of a template its requirements only when it holds none. A
+  weapon's mastery is its feat's modifier on its group (Weapon Mastery: Longsword sets
+  `items.weapons.longsword.mastered`), as 3.5's Weapon Focus adds to its group's attack. A skill's Skill Proficiency
+  and Expertise are made with the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`,
+  `ExpertiseFeats`), a skill a ruleset adds included; its Expertise requires proficiency in it however the character
+  has it (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's)
+  picks them in the Skill Proficiencies pool, which a new skill joins.
 - **A class's starting proficiencies are one feat, a first class's or a multiclass's.** A class names the feat its first
   level grants when it's the character's first class (`startingProficiencies`: its saving throws, armor training,
   weapons, tools and skill picks) and the smaller one it grants a multiclass (`multiclassProficiencies`, the SRD's
@@ -62,10 +63,11 @@ holds names the code that holds it.
   (`PossessesVirtually`).
 - **An increase past 20 isn't refused.** A background's, an Ability Score Improvement's or a feat's +1 raises a score to
   20 at most by the SRD; the sheet adds them as they come, the table keeps the cap.
-- **Armor without its training is an issue, not a refusal.** A character wearing armor of a category it has no training
-  in has Disadvantage on Strength and Dexterity tests and can't cast spells (`Diagnoses.findArmorIssues`); a Shield
-  without training adds nothing to its Armor Class, its magic bonus neither (a Shield +1's, on `combat.ac.shield`, as
-  3.5's are: `ArmorClass`).
+- **Armor without its training is refused unless forced, as 3.5's.** Forced on, a character wearing armor of a category
+  it has no training in has Disadvantage on Strength and Dexterity tests and can't cast spells, an issue on its sheet
+  (`Diagnoses.findArmorIssues`); a Shield without training adds nothing to its Armor Class, its magic bonus neither (a
+  Shield +1's, on `combat.ac.shield`, as 3.5's are: `ArmorClass`). A character that wore one before the core rules' v2
+  keeps it on, untrained, until an edit of it, which is refused unless forced.
 
 ## Combat
 

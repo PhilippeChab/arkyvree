@@ -12,9 +12,9 @@ import { UpdatesWeaponRules } from "./concerns/UpdatesWeaponRules.ts";
 /**
  * Seeds a D&D 5th Edition ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
  * (`ContentSeeder`'s: items) or its own (`concerns/`: aptitudes, abilities, saves and languages, feats, skills,
- * species, backgrounds, classes, spells, the core rules' v2 update), and the steps made of others are its own. Each names the rows the steps
- * before it seeded by their ids in its context. It holds no content: the core rules' package gives `seedCore` theirs,
- * an extension's package gives `seedExtension` its book.
+ * species, backgrounds, classes, spells, the core rules' v2 update), and the steps made of others are its own. Each
+ * names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules' package
+ * gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,

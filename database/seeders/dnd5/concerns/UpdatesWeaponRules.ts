@@ -41,7 +41,7 @@ export function UpdatesWeaponRules<B extends Constructor<Dnd5ContentSeeder>>(Bas
         ]),
       );
       for (const { fields, id } of given) {
-        const write: Record<string, boolean | string> = {};
+        const write: Record<string, boolean> = {};
         for (const field of WEAPON_RULE_FIELDS) {
           const value = fields?.[field];
           if (value !== undefined && records.get(id)?.fields[field] === undefined) write[field] = value;

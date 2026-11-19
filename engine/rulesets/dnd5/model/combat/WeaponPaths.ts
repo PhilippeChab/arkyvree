@@ -81,7 +81,8 @@ export default class WeaponPaths implements PathCategory<Dnd5Components> {
     return WeaponPaths.buildPaths("weapon", "weapon", kind);
   }
 
-  readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";
+  readonly description =
+    "On an item: its own weapon's mastery, to-hit, damage, and how it's wielded, wherever it's held";
 
   readonly label = "Weapon";
 
