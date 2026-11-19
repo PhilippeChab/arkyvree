@@ -54,7 +54,7 @@ describe("A class's progression presets", () => {
       "+20/+15/+10/+5",
     ]);
     expect([0, 4].map((base) => formatTrackValue(SAVES, base))).toEqual(["+0", "+4"]);
-    expect(formatTrackValue(BAB, 21)).toBe("21");
+    expect(formatTrackValue(BAB, 31)).toBe("31");
     expect(formatTrackValue(SKILLS, 6)).toBe("6");
   });
 });
