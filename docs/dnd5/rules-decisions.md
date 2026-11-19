@@ -25,7 +25,10 @@ holds names the code that holds it.
   an armor and the Shield work as 3.5's do: each requires the feat that makes its wielder proficient or trained with it
   (the Longsword "Weapon Proficiency: Martial Weapons" or "Weapon Proficiency: Longsword", Chain Mail "Armor Training:
   Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the character lacks it for
-  (`Builds.settleSheet`), and no path sets it. A weapon's mastery is its feat's field (Weapon Mastery: Longsword's
+  (`Builds.settleSheet`), and no path sets it. An item with no requirements of its own or its template's (a homebrew
+  weapon made from none, the SRD's Mithral Armor) is every character's to use with proficiency, as in 3.5: its form's
+  Category doesn't give it any. Equipping one without them is never refused, the SRD's rule: a weapon then adds no
+  Proficiency Bonus, an armor stops spellcasting (an issue), a Shield adds nothing. A weapon's mastery is its feat's field (Weapon Mastery: Longsword's
   `FEAT_WEAPON_MASTERY`, Longsword). A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
   ruleset adds included; its Expertise requires proficiency in it however the character has it

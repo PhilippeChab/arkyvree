@@ -112,16 +112,17 @@ export default class Equipping {
   }
 
   /**
-   * The character meets the item's requirements and its template's, each its own group. A weapon's aren't checked:
-   * without its proficiency, a -4 penalty applies instead.
+   * The character meets the item's own requirements. Its template's are its proficiency or its training (a weapon's
+   * proficiency, an armor's or the Shield's Armor Training), which the SRD 5.2.1 never refuses: without it, a weapon's
+   * attacks add no Proficiency Bonus, an armor stops spellcasting, a Shield adds nothing (`Builds.settleSheet`), and an
+   * armor's is an issue (`Diagnoses`). A weapon's aren't checked.
    */
   private checkItemRequirements(item: EquippedEntry["item"]) {
     if (item.fields[ITEM_TYPE] === "Weapon") return;
-    const { own: requirements, template: proficiency } = this.view.rulesetData.templateRequirements("items", item);
-    if (proficiency.length === 0 && requirements.length === 0) return;
+    const { own: requirements } = this.view.rulesetData.templateRequirements("items", item);
+    if (requirements.length === 0) return;
 
-    // Two entities' requirements, each its own group: their levels each start at "1"
-    const issues = this.character.getUnmetRequirementIssues([proficiency, requirements]);
+    const issues = this.character.getUnmetRequirementIssues([requirements]);
     if (issues.length > 0)
       throw new RulesError("invalid", "Character does not meet the requirements to equip this item", issues);
   }

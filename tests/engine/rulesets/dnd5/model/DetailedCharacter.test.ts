@@ -283,6 +283,63 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     expect(await shieldAcOf("Wizard")).toEqual({ shield: 0, total: 10 });
   });
 
+  test("of armor and a Shield without their training: worn without forcing, no spellcasting, and the Shield's +0", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const idOf = async (name: string) =>
+      (await Entities.findOne(db, { entityType: "items", name, rulesetId: ctx.rulesetId }))!.id;
+    const wizard = await createDnd5Character(session);
+    await addLevel(session, wizard.id, "Wizard", 1, { hp: HIT_DICE.Wizard }, true);
+    // Neither is refused: the SRD 5.2.1 lets a character wear what it isn't trained with, at a cost
+    await CharacterInventoryService.addItem(
+      session,
+      wizard.id,
+      await idOf("Leather Armor"),
+      1,
+      "Armor",
+      null,
+      null,
+      [],
+    );
+    await CharacterInventoryService.addItem(session, wizard.id, await idOf("Shield"), 1, "Off Hand", null, null, [0]);
+    const combat = (await buildCharacter(wizard.id)).components.combat.getCombat();
+    expect(combat.armor).toMatchObject({ category: "light", trained: false });
+    expect(combat.weaponsets["0"].ac.shield).toBe(0);
+  });
+
+  test("of a weapon without its proficiency, a magic one made from it, and its mastery: its template's requirements", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const sword = (await Entities.findOne(db, {
+      entityType: "items",
+      name: "Longsword +1",
+      rulesetId: ctx.rulesetId,
+    }))!;
+    const wizard = await createDnd5Character(session, { abilities: { Strength: 14 } });
+    await addLevel(session, wizard.id, "Wizard", 1, { hp: HIT_DICE.Wizard }, true);
+    await CharacterInventoryService.addItem(session, wizard.id, sword.id, 1, "Main Hand", null, null, [0]);
+    const heldSword = async () =>
+      (await buildCharacter(wizard.id)).components.combat.getCombat().weaponsets["0"].mainhand!;
+    // The Longsword's requirements, which its +1 inherits: no Martial proficiency, no Proficiency Bonus, no mastery
+    expect(await heldSword()).toMatchObject({ proficient: false, mastery: null, tohit: { proficiency: 0, total: 3 } });
+    const grant = (feat: string) => ({ target: `feats.${feat}.possessed`, operator: "set", value: "true" });
+    await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponproficiencylongsword"));
+    await CharacterModifiersService.createModifier(session, wizard.id, grant("weaponmasterylongsword"));
+    expect(await heldSword()).toMatchObject({ proficient: true, mastery: "Sap", tohit: { proficiency: 2, total: 5 } });
+  });
+
+  test("of a monk's Martial Arts in armor: its Monk weapons back to Strength", async () => {
+    const ctx = await getDnd5SeedCtx();
+    const idOf = async (name: string) =>
+      (await Entities.findOne(db, { entityType: "items", name, rulesetId: ctx.rulesetId }))!.id;
+    const monk = await createDnd5Character(session, { abilities: { Strength: 10, Dexterity: 16 } });
+    await addLevel(session, monk.id, "Monk", 1, { hp: HIT_DICE.Monk }, true);
+    // A Club, a Simple Melee weapon without Finesse: Martial Arts' Dexterity, read off its fields
+    await CharacterInventoryService.addItem(session, monk.id, await idOf("Club"), 1, "Main Hand", null, null, [0]);
+    const club = async () => (await buildCharacter(monk.id)).components.combat.getCombat().weaponsets["0"].mainhand!;
+    expect(await club()).toMatchObject({ finesse: true, ability: "Dexterity" });
+    await CharacterInventoryService.addItem(session, monk.id, await idOf("Leather Armor"), 1, "Armor", null, null, []);
+    expect(await club()).toMatchObject({ finesse: false, ability: "Strength" });
+  });
+
   test("of a paladin's Blessed Warrior: two Cleric cantrips, cast with its Charisma", async () => {
     const character = await createDnd5Character(session, { abilities: { Strength: 15, Charisma: 16 } });
     await addLevel(session, character.id, "Paladin", 1, { hp: HIT_DICE.Paladin }, true);

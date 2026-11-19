@@ -3,7 +3,7 @@ import type CombatState from "@/engine/rulesets/dnd5/model/combat/CombatState.ts
 import { SLOT_MAP, type WeaponSlot } from "@/engine/rulesets/dnd5/model/combat/CombatState.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd5/rules/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { MONK_WEAPONS, UNARMED_STRIKE } from "@/vocabulary/dnd5/weapons.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd5/weapons.ts";
 
 /** What a weapon's attacks are from: its item (none for an unarmed strike), and the inventory entry that holds it. */
 interface HeldFrom {
@@ -54,14 +54,18 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return fields.ranged === true ? "Dexterity" : "Strength";
     }
 
-    /** Each weapon in a hand of a set, with its name in the Weapons table: its item's, or the Unarmed Strike's. */
-    private *weaponsByName(): Generator<{ name: string; set: string; weapon: WeaponSlot }> {
-      const names = new Map(this.heldWeapons.map(({ fields, weapon }) => [weapon, fields.type]));
+    /**
+     * Each weapon in a hand of a set, with its item's fields (none for the Unarmed Strike) and its name in the Weapons
+     * table (its item's, or the Unarmed Strike's).
+     */
+    private *weaponsByName(): Generator<{ fields?: WeaponFields; name: string; set: string; weapon: WeaponSlot }> {
+      const held = new Map(this.heldWeapons.map(({ fields, weapon }) => [weapon, fields]));
       for (const [set, weaponSet] of Object.entries(this.combat.weaponsets)) {
         for (const hand of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[hand];
-          if (weapon)
-            yield { name: weapon.entryId === null ? UNARMED_STRIKE.name : (names.get(weapon) ?? ""), set, weapon };
+          if (!weapon) continue;
+          const fields = held.get(weapon);
+          yield { fields, name: weapon.entryId === null ? UNARMED_STRIKE.name : (fields?.type ?? ""), set, weapon };
         }
       }
     }
@@ -133,12 +137,17 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
 
     /**
      * Marks Martial Arts' Dexterity (`active`: the character has a feat that gives it) on its Unarmed Strike and each
-     * Monk weapon of a set, while it wears no armor and the set holds no Shield, and on none otherwise.
+     * Monk weapon of a set, read off the weapon's fields as Martial Arts names them (a Simple Melee weapon, or a
+     * Martial Melee one with the Light property: a homebrew one too), while it wears no armor and the set holds no
+     * Shield, and on none otherwise.
      */
     applyMartialArts(active: boolean): void {
       const unarmored = this.combat.armor.category === "none";
-      for (const { name, set, weapon } of this.weaponsByName())
-        weapon.finesse = active && unarmored && !this.combat.weaponsets[set].shield.held && MONK_WEAPONS.includes(name);
+      const isMonkWeapon = (fields?: WeaponFields) =>
+        fields === undefined ||
+        (fields.ranged !== true && (fields.category === "Simple" || fields.properties.includes("Light")));
+      for (const { fields, set, weapon } of this.weaponsByName())
+        weapon.finesse = active && unarmored && !this.combat.weaponsets[set].shield.held && isMonkWeapon(fields);
     }
 
     /** Marks each weapon the character masters the kind of (`weapons`, by name), and every other one not. */

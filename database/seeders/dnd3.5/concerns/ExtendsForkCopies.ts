@@ -3,11 +3,8 @@
  * past 20th has a copy of its 20 levels, and a core feat it edited a copy not in the epic bonus feat lists.
  */
 
-import { and, inArray, ne } from "drizzle-orm";
-
 import { Entities, EntityLinks } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
@@ -15,30 +12,6 @@ import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 /** Bringing other rulesets' copies of the ruleset's entities up to what an update gave the entities. */
 export function ExtendsForkCopies<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class ExtendingForkCopies extends Base {
-    /** The copies other rulesets made of the ruleset's entities of a kind (`type`), each with its source's id. */
-    private async findForkCopies(type: string): Promise<{ copyId: string; sourceId: string }[]> {
-      const sources = await Entities.findMany(this.db, { entityType: type, rulesetIds: [this.ctx.rulesetId] });
-      if (sources.length === 0) return [];
-      const snapshots = await this.db
-        .select({ copyId: entitySnapshotsInRules.forkedEntityId, sourceId: entitySnapshotsInRules.sourceEntityId })
-        .from(entitySnapshotsInRules)
-        .where(
-          and(
-            inArray(
-              entitySnapshotsInRules.sourceEntityId,
-              sources.map(({ id }) => id),
-            ),
-            ne(entitySnapshotsInRules.rulesetId, this.ctx.rulesetId),
-          ),
-        );
-      const copies = await Entities.findMany(this.db, {
-        entityType: type,
-        ids: snapshots.map(({ copyId }) => copyId),
-      });
-      const live = new Set(copies.map(({ id }) => id));
-      return snapshots.filter(({ copyId }) => live.has(copyId));
-    }
-
     /**
      * Gives the forks' copies of the ruleset's classes the levels their source has past 20th (a core class's 21st to
      * 40th, `LAST_NONEPIC_LEVEL`): each a copy of its source's level, its fields, its links (its saves, the features it

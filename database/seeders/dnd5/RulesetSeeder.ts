@@ -3,7 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { FeatSeed } from "@/content/dnd5/builders/feats/types.ts";
 import type { Dnd5ItemSeed } from "@/content/dnd5/builders/items/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd5/builders/rulesets/types.ts";
-import { Entities } from "@/database/seeders/core/SeederState.ts";
+import { Entities, type Ids } from "@/database/seeders/core/SeederState.ts";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { FEAT_MARTIAL_ARTS, FEAT_WEAPON_MASTERY } from "@/vocabulary/dnd5/fields/index.ts";
@@ -76,11 +76,10 @@ export class RulesetSeeder extends include(
   }
 
   /**
-   * Deletes the modifiers of the ruleset's feats whose targets a weapon rule settles now (`SETTLED_TARGET`), with their
+   * Deletes the modifiers of feats (`featIds`) whose targets a weapon rule settles now (`SETTLED_TARGET`), with their
    * own requirements: their name bindings go with them.
    */
-  private async dropSettledModifiers() {
-    const featIds = Object.values(this.ctx.featMap);
+  private async dropSettledModifiers(featIds: string[]) {
     if (featIds.length === 0) return;
     const modifiers = await this.db
       .select({ id: modifiersInCustomization.id, target: modifiersInCustomization.target })
@@ -101,10 +100,9 @@ export class RulesetSeeder extends include(
     await this.db.delete(modifiersInCustomization).where(inArray(modifiersInCustomization.id, ids));
   }
 
-  /** Gives each of the ruleset's templates (`items`, by name) its content's requirements, when it has none yet. */
-  private async requireProficiency(items: Dnd5ItemSeed[]) {
-    const ids = await RulesetSeeder.namesOf(this.db, this.ctx.rulesetId, "items");
-    const required = items.filter(({ name, requirements }) => ids[name] && (requirements ?? []).length > 0);
+  /** Gives each item (`items`: its id and its content's requirements) its requirements, when it has none yet. */
+  private async requireProficiency(items: { id: string; requirements: Dnd5ItemSeed["requirements"] }[]) {
+    const required = items.filter(({ requirements }) => (requirements ?? []).length > 0);
     if (required.length === 0) return;
     const held = await this.db
       .select({ entityId: requirementsInCustomization.entityId })
@@ -112,31 +110,43 @@ export class RulesetSeeder extends include(
       .where(
         inArray(
           requirementsInCustomization.entityId,
-          required.map(({ name }) => ids[name]),
+          required.map(({ id }) => id),
         ),
       );
     const has = new Set(held.map(({ entityId }) => entityId));
     await this.insertAll(
       requirementsInCustomization,
       required
-        .filter(({ name }) => !has.has(ids[name]))
-        .flatMap(({ name, requirements }) => this.requirementRows(ids[name], "items", requirements)),
+        .filter(({ id }) => !has.has(id))
+        .flatMap(({ id, requirements }) => this.requirementRows(id, "items", requirements)),
     );
   }
 
-  /** Writes each of the ruleset's feats' weapon rule fields (`WEAPON_RULE_FIELDS`) its content gives, when they differ. */
-  private async writeWeaponRuleFields(feats: FeatSeed[]) {
-    const given = feats.filter(
-      ({ fields, name }) => this.ctx.featMap[name] && WEAPON_RULE_FIELDS.some((field) => fields?.[field] !== undefined),
-    );
+  /**
+   * The ruleset's entities of a kind (`type`) its content names (`seeds`, by name: `ids`), each with its seed, and the
+   * forks' copies of them, each with its source's seed.
+   */
+  private async withForkCopies<S extends { name: string }>(type: string, seeds: S[], ids: Ids) {
+    const own = seeds.filter(({ name }) => ids[name]).map((seed) => ({ id: ids[seed.name], seed }));
+    const seedOf = new Map(own.map(({ id, seed }) => [id, seed]));
+    const copies = (await this.findForkCopies(type)).flatMap(({ copyId, sourceId }) => {
+      const seed = seedOf.get(sourceId);
+      return seed ? [{ id: copyId, seed }] : [];
+    });
+    return [...own, ...copies];
+  }
+
+  /** Writes each feat's (`feats`: its id and its content's fields) weapon rule fields its content gives, when they differ. */
+  private async writeWeaponRuleFields(feats: { fields: FeatSeed["fields"]; id: string }[]) {
+    const given = feats.filter(({ fields }) => WEAPON_RULE_FIELDS.some((field) => fields?.[field] !== undefined));
     if (given.length === 0) return;
     const records = new Map(
-      (
-        await Entities.findMany(this.db, { entityType: "feats", ids: given.map(({ name }) => this.ctx.featMap[name]) })
-      ).map((record) => [record.id, record]),
+      (await Entities.findMany(this.db, { entityType: "feats", ids: given.map(({ id }) => id) })).map((record) => [
+        record.id,
+        record,
+      ]),
     );
-    for (const { fields, name } of given) {
-      const id = this.ctx.featMap[name];
+    for (const { fields, id } of given) {
       const write: Record<string, boolean | string> = {};
       for (const field of WEAPON_RULE_FIELDS) {
         const value = fields?.[field];
@@ -151,12 +161,16 @@ export class RulesetSeeder extends include(
    * Brings the seeded core rules up to their content (`core`) since v1, where a weapon's proficiency, an armor's and
    * the Shield's training, a mastery and Martial Arts' Dexterity work as 3.5's do: each template gets its requirements
    * (a weapon's proficiency feats, an armor's training), each feat its weapon rule fields (Weapon Mastery's weapon,
-   * Martial Arts' flag), and the feats' modifiers that set them before go. An update of the core rules' package
-   * (`updates.ts`); each step changes only what differs, so it's safe to run again.
+   * Martial Arts' flag), and the feats' modifiers that set them before go; and so do the forks' own copies of them, a
+   * copy its source's. An update of the core rules' package (`updates.ts`); each step changes only what differs, so
+   * it's safe to run again.
    */
   async updateCore(core: CoreContent) {
-    await this.requireProficiency(core.templateItems);
-    await this.writeWeaponRuleFields(core.feats);
-    await this.dropSettledModifiers();
+    const itemIds = await RulesetSeeder.namesOf(this.db, this.ctx.rulesetId, "items");
+    const items = await this.withForkCopies("items", core.templateItems, itemIds);
+    await this.requireProficiency(items.map(({ id, seed }) => ({ id, requirements: seed.requirements })));
+    const feats = await this.withForkCopies("feats", core.feats, this.ctx.featMap);
+    await this.writeWeaponRuleFields(feats.map(({ id, seed }) => ({ fields: seed.fields, id })));
+    await this.dropSettledModifiers(feats.map(({ id }) => id));
   }
 }
