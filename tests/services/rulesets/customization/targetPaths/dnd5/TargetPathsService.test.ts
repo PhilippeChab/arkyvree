@@ -16,10 +16,18 @@ import { makeSession } from "@/tests/support/users.ts";
 
 const session = makeSession();
 
-/** The seeded D&D 5th Edition core rules' paths of a kind, by path. */
-async function seedPaths(kind: TargetPathKind) {
+/** The first segments the editor offers a kind's entity (`entityType`) for a modifier or a requirement. */
+async function rootsOffered(kind: TargetPathKind, entityType: string) {
   const { rulesetId } = await getDnd5SeedCtx();
-  return new Map((await readTargetPaths(rulesetId, kind)).paths.map((p) => [p.path, p]));
+  const { items } = await TargetPathsService.getCompletions(
+    await ownerSessionOf(rulesetId),
+    rulesetId,
+    "",
+    0,
+    kind,
+    entityType,
+  );
+  return items.map((item) => item.insertText);
 }
 
 /** The id of one of the seeded core rules' entities, of a kind, by name. */
@@ -34,19 +42,13 @@ async function seededId(type: string, name: string) {
   return row.id;
 }
 
-/** The first segments the editor offers a kind's entity (`entityType`) for a modifier or a requirement. */
-async function rootsOffered(kind: TargetPathKind, entityType: string) {
+
+/** The seeded D&D 5th Edition core rules' paths of a kind, by path. */
+async function seedPaths(kind: TargetPathKind) {
   const { rulesetId } = await getDnd5SeedCtx();
-  const { items } = await TargetPathsService.getCompletions(
-    await ownerSessionOf(rulesetId),
-    rulesetId,
-    "",
-    0,
-    kind,
-    entityType,
-  );
-  return items.map((item) => item.insertText);
+  return new Map((await readTargetPaths(rulesetId, kind)).paths.map((p) => [p.path, p]));
 }
+
 
 describe("D&D 5th Edition target paths: an item's own weapon", () => {
   test("takes modifiers from an item only, and offers its proficiency and Finesse, never a mastery", async () => {
