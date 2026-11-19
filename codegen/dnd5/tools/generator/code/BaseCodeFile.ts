@@ -28,12 +28,16 @@ const FIELD_ORDER = Object.values(ENTITY_FIELDS as Readonly<Record<string, Field
 
 /**
  * Where each name a generated file's code can use comes from, in the order its imports list them: the requirement
- * builders a check is written with, the item builders a template's fields are, and the stored fields a seed's fields
- * are written by (the vocabulary's).
+ * builders a check is written with, the item builders a template's fields and its proficiency are, and the stored
+ * fields a seed's fields are written by (the vocabulary's).
  */
 const IMPORT_TABLE: ImportTable = [
   ["@/content/core/builders/customization/requirements.ts", ["and", "eq", "eqNum", "eqStr", "gte", "or"]],
   ["@/content/dnd5/builders/items/fields.ts", ["armorFields", "shieldFields", "weaponFields"]],
+  [
+    "@/content/dnd5/builders/items/proficiencies.ts",
+    ["HEAVY_ARMOR_TRAINING", "LIGHT_ARMOR_TRAINING", "martial", "MEDIUM_ARMOR_TRAINING", "SHIELD_TRAINING", "simple"],
+  ],
   ["@/vocabulary/dnd5/fields/index.ts", FIELD_ORDER],
 ];
 

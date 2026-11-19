@@ -1,7 +1,9 @@
 import type { WeaponFields } from "@/engine/rulesets/dnd5/entities/items/fields.ts";
 import type CombatState from "@/engine/rulesets/dnd5/model/combat/CombatState.ts";
 import { SLOT_MAP, type WeaponSlot } from "@/engine/rulesets/dnd5/model/combat/CombatState.ts";
+import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd5/rules/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { MONK_WEAPONS, UNARMED_STRIKE } from "@/vocabulary/dnd5/weapons.ts";
 
 /** What a weapon's attacks are from: its item (none for an unarmed strike), and the inventory entry that holds it. */
 interface HeldFrom {
@@ -33,15 +35,16 @@ function formatDamage(dice: string, bonus: number): string {
  * Proficiency Bonus when the character is proficient with it, and its magic and misc; its damage, its dice (a
  * Versatile weapon's two-handed ones in two hands, or a die it can roll instead when better: a monk's Martial Arts
  * die), its ability's modifier (an off-hand attack's only when negative, but with the Two-Weapon Fighting style), and
- * its magic and misc. A weapon's mastery property is the character's to use once it has mastered the weapon's kind; a
- * weapon a modifier makes `finesse` (a monk's Unarmed Strike) uses Dexterity as a Finesse weapon does.
+ * its magic and misc. A weapon's mastery property is the character's to use once it has mastered the weapon's kind; an
+ * Unarmed Strike and a Monk weapon Martial Arts makes `finesse` use Dexterity as a Finesse weapon does. What the
+ * character's feats make of them (its proficiency, its mastery, Martial Arts) its build settles between its rounds.
  */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
     /**
      * The ability a weapon's attack and damage add, as the sheet stands when read (an increase the modifiers applied
-     * counts): the better of Strength and Dexterity with a Finesse weapon or one a modifier makes `finesse` (Martial
-     * Arts), Dexterity with any other ranged weapon, Strength with any other melee weapon, a thrown one's too.
+     * counts): the better of Strength and Dexterity with a Finesse weapon or one Martial Arts makes `finesse`,
+     * Dexterity with any other ranged weapon, Strength with any other melee weapon, a thrown one's too.
      */
     private abilityOf(fields: WeaponFields, finesse: boolean): "Dexterity" | "Strength" {
       if (finesse || fields.properties.includes("Finesse")) {
@@ -51,10 +54,22 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return fields.ranged === true ? "Dexterity" : "Strength";
     }
 
+    /** Each weapon in a hand of a set, with its name in the Weapons table: its item's, or the Unarmed Strike's. */
+    private *weaponsByName(): Generator<{ name: string; set: string; weapon: WeaponSlot }> {
+      const names = new Map(this.heldWeapons.map(({ fields, weapon }) => [weapon, fields.type]));
+      for (const [set, weaponSet] of Object.entries(this.combat.weaponsets)) {
+        for (const hand of WEAPON_SET_SLOTS) {
+          const weapon = weaponSet[hand];
+          if (weapon)
+            yield { name: weapon.entryId === null ? UNARMED_STRIKE.name : (names.get(weapon) ?? ""), set, weapon };
+        }
+      }
+    }
+
     /**
      * A weapon in a hand of a set (`setIndex`, `location`): its attack and damage, computed when read from its ability,
-     * the character's Proficiency Bonus and what modifiers set (its proficiency, its mastery, its magic and misc).
-     * None for a location that's no hand.
+     * the character's Proficiency Bonus, its proficiency and mastery (`applyProficiencies`, `applyMasteries`), and what
+     * modifiers set (its magic and misc). None for a location that's no hand.
      */
     protected addWeapon(
       setIndex: number,
@@ -114,6 +129,33 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       };
       this.weaponSet(String(setIndex))[wielded] = weapon;
       return weapon;
+    }
+
+    /**
+     * Marks Martial Arts' Dexterity (`active`: the character has a feat that gives it) on its Unarmed Strike and each
+     * Monk weapon of a set, while it wears no armor and the set holds no Shield, and on none otherwise.
+     */
+    applyMartialArts(active: boolean): void {
+      const unarmored = this.combat.armor.category === "none";
+      for (const { name, set, weapon } of this.weaponsByName())
+        weapon.finesse = active && unarmored && !this.combat.weaponsets[set].shield.held && MONK_WEAPONS.includes(name);
+    }
+
+    /** Marks each weapon the character masters the kind of (`weapons`, by name), and every other one not. */
+    applyMasteries(weapons: ReadonlySet<string>): void {
+      for (const { name, weapon } of this.weaponsByName()) weapon.mastered = weapons.has(name);
+    }
+
+    /**
+     * Marks each weapon the character isn't proficient with (`unproficient`), by the entry holding it, which its
+     * attacks add no Proficiency Bonus to, and the armor and Shields it isn't trained with, by item (`untrainedItems`).
+     * Every other weapon, and the Unarmed Strike, is proficient, so the sheet reads what the latest call says.
+     */
+    applyProficiencies(unproficient: readonly { id: string; itemId: string }[]): void {
+      const entries = new Set(unproficient.map(({ id }) => id));
+      for (const { weapon } of this.weaponsByName())
+        weapon.proficient = weapon.entryId === null || !entries.has(weapon.entryId);
+      this.untrainedItems = new Set(unproficient.map(({ itemId }) => itemId));
     }
   }
   return WithAttacks;

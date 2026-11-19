@@ -3,12 +3,10 @@
  * character who takes one uses that weapon's mastery property, as the SRD 5.2.1's Mastery Properties describe it.
  */
 
-import { setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import { WEAPON_MASTERY_POOL } from "@/content/dnd5/builders/aptitudes/names.ts";
 import { weaponMastery } from "@/content/dnd5/builders/feats/proficiencies.ts";
 import type { FeatSeed } from "@/content/dnd5/builders/feats/types.ts";
-import { stripSeparators } from "@/shared/text.ts";
-import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_GENERATED, FEAT_WEAPON_MASTERY } from "@/vocabulary/dnd5/fields/index.ts";
 import { type MASTERY_PROPERTIES, WEAPON_DEFINITIONS, WEAPON_NAMES } from "@/vocabulary/dnd5/weapons.ts";
 
 /** What each mastery property does, as the SRD's Mastery Properties define it. */
@@ -24,14 +22,13 @@ const MASTERY_EFFECTS: Record<(typeof MASTERY_PROPERTIES)[number], string> = {
   Vex: "If you hit a creature with this weapon and deal damage to the creature, you have Advantage on your next attack roll against that creature before the end of your next turn.",
 };
 
-/** A weapon's mastery per weapon, in the Weapon Mastery pool, which uses its weapon's mastery property. */
+/** A weapon's mastery per weapon, in the Weapon Mastery pool: its weapon (`FEAT_WEAPON_MASTERY`) uses its mastery property. */
 export const WEAPON_MASTERY_FEATS: FeatSeed[] = WEAPON_NAMES.map((weapon) => {
   const mastery = WEAPON_DEFINITIONS[weapon]!.mastery;
   return {
     name: weaponMastery(weapon),
     description: `You can use the mastery property of the ${weapon}, ${mastery}: ${MASTERY_EFFECTS[mastery]}`,
     aptitudes: [WEAPON_MASTERY_POOL],
-    modifiers: [setFlag(`items.weapons.${stripSeparators(weapon)}.mastered`)],
-    fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Weapon Mastery"] },
+    fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Weapon Mastery"], [FEAT_WEAPON_MASTERY]: weapon },
   };
 });

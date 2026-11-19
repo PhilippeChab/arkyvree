@@ -21,7 +21,12 @@ holds names the code that holds it.
   `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). Jack of All Trades sets `skills.*.halfproficient`, which
   reaches every skill, one a ruleset adds included. The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
-  mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
+  mastery: each is a feat. A skill's and a saving throw's set the path they give (`skills.<skill>.proficient`). A weapon,
+  an armor and the Shield work as 3.5's do: each requires the feat that makes its wielder proficient or trained with it
+  (the Longsword "Weapon Proficiency: Martial Weapons" or "Weapon Proficiency: Longsword", Chain Mail "Armor Training:
+  Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the character lacks it for
+  (`Builds.settleSheet`), and no path sets it. A weapon's mastery is its feat's field (Weapon Mastery: Longsword's
+  `FEAT_WEAPON_MASTERY`, Longsword). A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
   ruleset adds included; its Expertise requires proficiency in it however the character has it
   (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's) picks them in
@@ -67,16 +72,19 @@ holds names the code that holds it.
   Monk 1 adds the better of Constitution and Wisdom, not both; a Barbarian of Constitution 8 keeps 10 and Dexterity:
   the SRD's "you choose which calculation to use; you can't use more than one".
 - **An attack** adds its ability's modifier (the better of Strength and Dexterity with a Finesse weapon, as the sheet
-  stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the Proficiency Bonus when proficient with the weapon (a feat sets `items.weapons.<kind or category>.proficient`),
-  and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the
-  Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
-  (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
+  stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the
+  Proficiency Bonus when proficient with the weapon (its requirements met), and its magic and misc; its damage, its
+  ability's modifier, an off-hand attack's only when negative without the Two-Weapon Fighting style
+  (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice (`Attacks`). A weapon's mastery
+  property shows once the character has a feat that masters its kind (`FEAT_WEAPON_MASTERY`). Without training with the
+  armor worn (its requirements), the character can't cast spells; an untrained Shield adds nothing.
 - **A monk's Martial Arts** lets its Unarmed Strike and its Monk weapons (Simple melee weapons, and Martial melee ones
-  with Light, by name) attack with Dexterity as a Finesse weapon does (`items.weapons.<weapon>.finesse`), and its levels
+  with Light, by name: `MONK_WEAPONS`) attack with Dexterity as a Finesse weapon does (its feat's `FEAT_MARTIAL_ARTS`, as
+  3.5's Weapon Finesse is its feat's), and its levels
   give each its die from the Monk table (`damage.die`: 6 sides, 8 from its 5th level, 10 from its 11th, 12 from its
   17th, as a 3.5 monk's levels give its unarmed damage), which a weapon rolls when better than its own dice (a
   Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
-  wears no armor, in each weapon set holding no Shield (a weapon modifier gated on the set reaches that set's weapons
+  wears no armor, in each weapon set holding no Shield (the die's modifier, gated on the set, reaches that set's weapons
   alone: `Builds.scopesOf`); that it wields only Monk weapons isn't checked.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
   3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2), and the sheet keeps the most any

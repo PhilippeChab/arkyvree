@@ -51,9 +51,6 @@ export const MASTERY_PROPERTIES = ["Cleave", "Graze", "Nick", "Push", "Sap", "Sl
  */
 export const UNARMED_STRIKE = { name: "Unarmed Strike", damage: "1", damageType: "Bludgeoning" } as const;
 
-/** The weapons' categories: the weapon proficiency a class gives is by category. */
-export const WEAPON_CATEGORIES = ["Simple", "Martial"] as const;
-
 /** Each weapon's row, by its name, as the table gives it: simple melee, simple ranged, martial melee, martial ranged. */
 // oxfmt-ignore
 export const WEAPON_DEFINITIONS: Partial<Record<string, WeaponDefinition>> = {
@@ -96,6 +93,20 @@ export const WEAPON_DEFINITIONS: Partial<Record<string, WeaponDefinition>> = {
   Musket: { category: "Martial", ranged: true, damage: "1d12", damageType: "Piercing", properties: ["Ammunition", "Loading", "Two-Handed"], range: { normal: 40, long: 120 }, mastery: "Slow", cost: 500, weight: 10 },
   Pistol: { category: "Martial", ranged: true, damage: "1d10", damageType: "Piercing", properties: ["Ammunition", "Loading"], range: { normal: 30, long: 90 }, mastery: "Vex", cost: 250, weight: 3 },
 };
+
+/**
+ * The Monk weapons, as Martial Arts names them, and the Unarmed Strike: Simple Melee weapons and Martial Melee weapons
+ * that have the Light property, by name, in the table's order.
+ */
+export const MONK_WEAPONS: readonly string[] = [
+  UNARMED_STRIKE.name,
+  ...Object.entries(WEAPON_DEFINITIONS).flatMap(([name, weapon]) =>
+    weapon && !weapon.ranged && (weapon.category === "Simple" || weapon.properties.includes("Light")) ? [name] : [],
+  ),
+];
+
+/** The weapons' categories: the weapon proficiency a class gives is by category. */
+export const WEAPON_CATEGORIES = ["Simple", "Martial"] as const;
 
 /** The weapons, the table's, by name. */
 export const WEAPON_NAMES = Object.keys(WEAPON_DEFINITIONS).toSorted();

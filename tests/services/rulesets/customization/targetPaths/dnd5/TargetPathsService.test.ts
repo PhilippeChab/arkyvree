@@ -48,15 +48,22 @@ async function seedPaths(kind: TargetPathKind) {
   return new Map((await readTargetPaths(rulesetId, kind)).paths.map((p) => [p.path, p]));
 }
 
-describe("D&D 5th Edition target paths: an item's own weapon", () => {
-  test("takes modifiers from an item only, and offers its proficiency and Finesse, never a mastery", async () => {
+describe("D&D 5th Edition target paths: a weapon's", () => {
+  test("takes modifiers from an item only", async () => {
     const modifiers = await seedPaths("modifier");
-    for (const path of ["weapon.proficient", "weapon.finesse", "weapon.tohit.magic", "weapon.damage.misc"])
+    for (const path of ["weapon.tohit.magic", "weapon.tohit.misc", "weapon.damage.magic", "weapon.damage.die"])
       expect(modifiers.get(path)?.allowedEntityTypes).toEqual(["items"]);
-    expect(modifiers.has("weapon.mastered")).toBe(false);
-    expect((await seedPaths("requirement")).has("weapon.mastered")).toBe(false);
-    // A weapon kind's mastery, what Weapon Mastery sets, stays
-    expect(modifiers.get("items.weapons.longsword.mastered")?.allowedEntityTypes).toBeUndefined();
+  });
+
+  test("offers no weapon proficiency, mastery, Finesse or armor training: an item's requirements and a feat's fields tell", async () => {
+    for (const kind of ["modifier", "requirement", "template"] as const) {
+      const paths = [...(await seedPaths(kind)).keys()];
+      expect(
+        paths.filter((path) =>
+          /^(weapon|items\.weapons\.[^.]+)\.(proficient|mastered|finesse)$|^combat\.armortraining\./.test(path),
+        ),
+      ).toEqual([]);
+    }
   });
 
   test("is offered for an item's modifiers, never a feat's or a character's", async () => {

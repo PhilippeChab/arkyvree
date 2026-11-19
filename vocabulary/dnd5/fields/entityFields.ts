@@ -44,7 +44,14 @@ import {
   ARMOR_TYPE,
 } from "./armor.ts";
 import { CLASS_HD, CLASS_MULTICLASS_SLOTS } from "./class.ts";
-import { FEAT_FAMILY, FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "./feat.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_GENERATED,
+  FEAT_MARTIAL_ARTS,
+  FEAT_SELECTABLE,
+  FEAT_STACKABLE,
+  FEAT_WEAPON_MASTERY,
+} from "./feat.ts";
 import {
   ITEM_ATTUNEMENT,
   ITEM_CHARGES,
@@ -166,7 +173,8 @@ const CLASS_LEVEL_FIELDS = {
  * A feat's fields: the pools it's picked in (its `listedIn` links beside its name, a new one needs one: its category's,
  * an Origin feat's, a General one's…), whether a character takes it more than once (Stackable, the SRD's "Repeatable",
  * which a class grants it at several levels by too), whether a level up picks it and whether its ruleset made it
- * (which its rules set: no form shows them), each of those three always written, and the families it's in.
+ * (which its rules set: no form shows them), each of those three always written, the families it's in, and the weapon
+ * rules it changes: the weapon it masters (Weapon Mastery: Longsword's), and Martial Arts' Dexterity.
  */
 const FEAT_FIELDS = {
   listedIn: {
@@ -213,6 +221,23 @@ const FEAT_FIELDS = {
     field: FEAT_FAMILY,
     merge: "union",
     values: FEAT_FAMILIES,
+  },
+  weaponMastery: {
+    description: "The weapon whose mastery property it lets its owner use (Weapon Mastery)",
+    kind: "text",
+    label: "Weapon Mastered",
+    field: FEAT_WEAPON_MASTERY,
+    merge: "fallback",
+    values: WEAPON_NAMES,
+  },
+  martialArts: {
+    description:
+      "Whether it lets its owner attack with Dexterity with an Unarmed Strike and Monk weapons, unarmored and without a Shield (Martial Arts)",
+    kind: "flag",
+    kindWide: true,
+    label: "Martial Arts",
+    field: FEAT_MARTIAL_ARTS,
+    merge: "fallback",
   },
 } as const;
 

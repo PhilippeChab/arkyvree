@@ -21,26 +21,10 @@ const ITEM_WEAPON_SOURCES = ["items"];
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
  * (`weapon.tohit.misc`, on the item). A part the sheet computes when read is for requirements only, the flat bonus in
- * the misc beside it. A mastery is a group's alone (`groupOnly`): its wielder's, of the weapon's kind (Weapon Mastery),
- * never an item's own, where proficiency and Finesse are (the Sun Blade's).
+ * the misc beside it. Whether its wielder is proficient with it, masters it or uses Dexterity with it (Martial Arts)
+ * isn't a path: its requirements and its wielder's feats tell, as 3.5's proficiency does.
  */
 const WEAPON_PATHS = [
-  {
-    path: "proficient",
-    description: "Whether proficient with it",
-    type: "boolean" as const,
-  },
-  {
-    path: "mastered",
-    description: "Whether it uses its mastery property",
-    type: "boolean" as const,
-    groupOnly: true,
-  },
-  {
-    path: "finesse",
-    description: "Whether it can use Dexterity, as a Finesse weapon (Martial Arts)",
-    type: "boolean" as const,
-  },
   { path: "tohit.ability", description: "Str/Dex modifier to attack", type: "number" as const, requirementOnly: true },
   {
     path: "tohit.proficiency",
@@ -69,28 +53,23 @@ const WEAPON_PATHS = [
 ];
 
 /** The first segments of a weapon's paths, which `weapon.*` reads on an item's own weapon. */
-const WEAPON_PATH_ROOTS = [
-  ...new Set(WEAPON_PATHS.filter((subPath) => !("groupOnly" in subPath)).map(({ path }) => path.split(".")[0])),
-];
+const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(".")[0]))];
 
 /**
  * An item's own weapon's target paths (weapon.tohit.* / weapon.damage.* / weapon.wielded): the weapon slots holding
  * its source, the item (its modifiers), or one entry of it (a weapon's proficiency).
  */
 export default class WeaponPaths implements PathCategory<Dnd5Components> {
-  /** A weapon's paths under `prefix`: a weapon group's (`group`), or an item's own weapon's, without a group's alone. */
-  static buildPaths(prefix: string, category: string, kind: OperatorKind, group = false): TargetPath[] {
-    const subPaths = WEAPON_PATHS.filter((subPath) => group || !("groupOnly" in subPath));
-    return subPaths
-      .filter((subPath) => isLeafOfKind(subPath, kind))
-      .map((subPath) => ({
-        path: `${prefix}.${subPath.path}`,
-        category,
-        description: subPath.description,
-        valueType: subPath.type,
-        operators: getOperators(subPath.type, kind),
-        ...("possibleValues" in subPath && { possibleValues: subPath.possibleValues }),
-      }));
+  /** A weapon's paths under `prefix`: a weapon group's, or an item's own weapon's. */
+  static buildPaths(prefix: string, category: string, kind: OperatorKind): TargetPath[] {
+    return WEAPON_PATHS.filter((subPath) => isLeafOfKind(subPath, kind)).map((subPath) => ({
+      path: `${prefix}.${subPath.path}`,
+      category,
+      description: subPath.description,
+      valueType: subPath.type,
+      operators: getOperators(subPath.type, kind),
+      ...("possibleValues" in subPath && { possibleValues: subPath.possibleValues }),
+    }));
   }
 
   /**
@@ -102,8 +81,7 @@ export default class WeaponPaths implements PathCategory<Dnd5Components> {
     return kind === "modifier" ? paths.map((path) => ({ ...path, allowedEntityTypes: ITEM_WEAPON_SOURCES })) : paths;
   }
 
-  readonly description =
-    "On an item: its own weapon's proficiency, Finesse, to-hit, damage, and how it's wielded, wherever it's held";
+  readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";
 
   readonly label = "Weapon";
 

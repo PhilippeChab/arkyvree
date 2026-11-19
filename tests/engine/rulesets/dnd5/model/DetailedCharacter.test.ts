@@ -6,7 +6,7 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
+import { armorTrainingOf, buildCharacter, createDnd5Character } from "@/tests/support/dnd5/characters.ts";
 import { addLevel } from "@/tests/support/dnd5/levels.ts";
 import { getDnd5SeedCtx } from "@/tests/support/dnd5/seed.ts";
 import { findSeededCharacter, uniqueId } from "@/tests/support/seed.ts";
@@ -150,7 +150,7 @@ describe("A D&D 5th Edition character's sheet, as the SRD 5.2.1 works it out", (
     // The cleric's saving throws alone: a multiclass's fighter level gives none
     expect(savesOf(built)).toMatchObject({ wisdom: 3 + 2, charisma: 1 + 2, strength: 2, constitution: 1 });
     // A fighter's multiclass gives no heavy armor: Scale Mail's 14, a Shield's +2, Defense's +1
-    expect(combat.armortraining).toEqual({ light: true, medium: true, heavy: false, shields: true });
+    expect(armorTrainingOf(built)).toEqual({ light: true, medium: true, heavy: false, shields: true });
     expect(combat.weaponsets["0"].ac.total).toBe(17);
     // The cleric's three levels count, the fighter's none: a 3rd-level caster's slots
     expect(slotsOf(built)).toEqual(["1: 4", "2: 2"]);

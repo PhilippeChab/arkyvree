@@ -2,14 +2,16 @@ import type CharacterState from "@/engine/rulesets/dnd5/model/CharacterState.ts"
 import CombatPaths from "@/engine/rulesets/dnd5/model/combat/CombatPaths.ts";
 import ItemsPaths from "@/engine/rulesets/dnd5/model/combat/ItemsPaths.ts";
 import SpellsPaths from "@/engine/rulesets/dnd5/model/spells/SpellsPaths.ts";
+import WeaponRuleFeats, { type WeaponRule } from "@/engine/rulesets/dnd5/rules/WeaponRuleFeats.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
  * A D&D 5th Edition character's build steps, which core's build runs (`CharacterBase.build`) around its components'
- * setup and finish: its Armor Class's modifiers applied in each weapon set (`scopesOf`), and its spells' DCs applied
- * last. Its proficiencies, its training and its masteries are what the modifiers set, in the rounds as any: nothing
- * settles between them.
+ * setup and finish: its Armor Class's modifiers applied in each weapon set (`scopesOf`), its spells' DCs applied last,
+ * and between the rounds, as 3.5's do, what its feats make of its weapons and armor: its proficiency with each weapon
+ * and its training with each armor and Shield (each item's requirements), its masteries and Martial Arts' Dexterity
+ * (the feats that hold them).
  */
 export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
@@ -46,8 +48,44 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       return readsSet || shieldPart ? combat.getSetKeys() : null;
     }
 
-    /** Nothing between the rounds: what a weapon's attack reads, its proficiency and its mastery, modifiers set. */
-    protected override settleSheet(): void {}
+    /**
+     * The weapon rules, by the feats the rounds have given the character so far: the weapons it isn't proficient with
+     * and the armor and Shields it isn't trained with, each the entry whose item's requirements (its template's, a magic
+     * item's) it doesn't meet, read of the entry holding it; the weapons it masters; and Martial Arts' Dexterity. Each
+     * run sets them as the sheet stands, both ways, so the rounds and the final check read them alike.
+     */
+    protected override settleSheet(): void {
+      const { combat } = this.components;
+      const unproficient = this.data.inventory
+        .filter(
+          (inv) =>
+            inv.location !== null && !this.areRequirementsMet([inv.item.baseItemRequirements], { sourceId: inv.id }),
+        )
+        .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
+      combat.applyProficiencies(unproficient);
+      combat.applyMasteries(this.masteredWeapons());
+      combat.applyMartialArts(this.hasFeatWith("martialArts"));
+    }
+
+    /**
+     * Whether the character has a feat that changes this weapon rule (Martial Arts'): picked, granted or given by a
+     * modifier. Only the view's feats that change it are read (`WeaponRuleFeats`), once each round.
+     */
+    private hasFeatWith(rule: WeaponRule): boolean {
+      return WeaponRuleFeats.of(this.rulesetData)
+        .featsWith(rule)
+        .some((feat) => this.components.feats.getFeat(feat.name)?.possessed ?? false);
+    }
+
+    /** The weapons the character masters, by name: those its feats of a weapon's mastery name (`WeaponRuleFeats`). */
+    private masteredWeapons(): Set<string> {
+      return new Set(
+        WeaponRuleFeats.of(this.rulesetData)
+          .masteries()
+          .filter(({ feat }) => this.components.feats.getFeat(feat.name)?.possessed ?? false)
+          .map(({ weapon }) => weapon),
+      );
+    }
   }
 
   return Building;

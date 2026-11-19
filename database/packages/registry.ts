@@ -13,6 +13,7 @@ import { RulesetSeeder as Dnd35RulesetSeeder } from "@/database/seeders/dnd3.5/R
 import { addEpicContent, addEpicLevels } from "@/database/seeders/dnd3.5/updates.ts";
 import { seedTestCharacters as seedDnd5TestCharacters } from "@/database/seeders/dnd5/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Dnd5RulesetSeeder } from "@/database/seeders/dnd5/RulesetSeeder.ts";
+import { addProficiencyRequirements } from "@/database/seeders/dnd5/updates.ts";
 import { seedTestCharacters as seedPf1TestCharacters } from "@/database/seeders/pf1/characters/seedTestCharacters.ts";
 import { RulesetSeeder as Pf1RulesetSeeder } from "@/database/seeders/pf1/RulesetSeeder.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -64,6 +65,7 @@ export const RULESET_CONTENT = {
     extensions: [],
     seedTestCharacters: seedDnd5TestCharacters,
     seeder: Dnd5RulesetSeeder,
+    updates: { [DND5_CORE_PACKAGE.name]: { 2: addProficiencyRequirements } },
   },
 } satisfies Record<BaseRules, RulesetContent>;
 
