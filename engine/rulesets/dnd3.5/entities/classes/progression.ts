@@ -2,6 +2,7 @@ import type { ProgressionDeclaration } from "@/engine/core/module/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassProgressions from "@/engine/rulesets/dnd3.5/rules/ClassProgressions.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { type BabType, LAST_NONEPIC_LEVEL, MAX_CLASS_LEVEL, type SaveType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -71,6 +72,8 @@ export const PROGRESSION: ProgressionDeclaration = {
   },
   grantsLabel: "Special",
   lastPosition: MAX_CLASS_LEVEL,
+  // Its levels past 20th add nothing to the base attack bonus or saves: its table shows a character's of that level
+  shown: "epicTracks",
   // Its Levels and Feat Pools tabs are its Progression's; Spells Known's, the Spells tab on its table
   tabAliases: {
     "feat-pools": "progression",
@@ -117,16 +120,23 @@ export const PROGRESSION: ProgressionDeclaration = {
       field: CLASS_LEVEL_BAB,
       key: "bab",
       omittedFor: BONDED_KIND_SLUGS,
-      labels: ProgressionLabels.listLabels(LAST_NONEPIC_LEVEL, (bab) => CombatSheet.formatBab(bab)),
+      labels: ProgressionLabels.listLabels(LAST_NONEPIC_LEVEL + LevelRules.epicAttackBonus(MAX_CLASS_LEVEL), (bab) =>
+        CombatSheet.formatBab(bab),
+      ),
       presets: ProgressionLabels.listPresets(BAB_PRESET_LABELS, LEVEL_PRESETS.bab),
       shortLabel: "BAB",
+      shownFrom: LAST_NONEPIC_LEVEL + 1,
       source: "field",
     },
     {
       key: "saves",
       omittedFor: BONDED_KIND_SLUGS,
-      labels: ProgressionLabels.listLabels(RULESET_LIMITS.saveBase, (base) => formatSigned(base)),
+      labels: ProgressionLabels.listLabels(
+        RULESET_LIMITS.saveBase + LevelRules.epicSaveBonus(MAX_CLASS_LEVEL),
+        (base) => formatSigned(base),
+      ),
       presets: ProgressionLabels.listPresets(SAVE_PRESET_LABELS, LEVEL_PRESETS.saves),
+      shownFrom: LAST_NONEPIC_LEVEL + 1,
       source: "amounts",
     },
     {

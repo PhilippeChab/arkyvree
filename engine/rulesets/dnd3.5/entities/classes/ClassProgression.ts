@@ -15,12 +15,14 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
 import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Dnd35Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeName, stripSeparators } from "@/shared/text.ts";
-import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { LAST_NONEPIC_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { CLASS_LEVEL_BAB, FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -187,6 +189,47 @@ export default class ClassProgression {
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
     return (this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
+  }
+
+  /**
+   * Each of the class's levels past 20th (`LAST_NONEPIC_LEVEL`), by its id, with its base attack bonus (`bab`) and its
+   * base saves (each by its save's id) as its table shows them: what a character of that level alone has, its 20th's
+   * and the epic bonuses (`LevelRules`), its levels past 20th adding nothing of their own. Its 20th's as a save's forms
+   * leave it (`owned`), else as the view has it; none without a 20th.
+   */
+  private describeEpicTracks(
+    owned: readonly { fields?: Record<string, unknown>; links?: Record<string, unknown>; ownedId: string }[] = [],
+  ): Record<string, Record<string, number>> {
+    const last = this.classLevels.find(({ position }) => position === LAST_NONEPIC_LEVEL);
+    if (!last) return {};
+    const form = owned.find(({ ownedId }) => ownedId === last.id);
+    const sentBab = form?.fields?.[CLASS_LEVEL_BAB];
+    const bab = typeof sentBab === "number" ? sentBab : Number(last.fields[CLASS_LEVEL_BAB] ?? 0);
+    const sentSaves = form?.links?.baseBonus;
+    const given = Array.isArray(sentSaves)
+      ? sentSaves.flatMap((link) =>
+          isRecord(link) && typeof link.toId === "string"
+            ? [{ amount: Number(link.amount ?? 0), toId: link.toId }]
+            : [],
+        )
+      : this.dnd35.baseBonusesOf(last.id).map(({ amount, toId }) => ({ amount: amount ?? 0, toId }));
+    // Every save of the ruleset, one the 20th gives nothing to at 0, as a character's sheet counts it
+    const { rulesetData } = this;
+    const saves = this.dnd35.saves.map(({ id }) => ({
+      amount: given.find(({ toId }) => rulesetData.canonicalize(toId) === rulesetData.canonicalize(id))?.amount ?? 0,
+      toId: id,
+    }));
+    return Object.fromEntries(
+      this.classLevels
+        .filter(({ position }) => position > LAST_NONEPIC_LEVEL)
+        .map(({ id, position }) => [
+          id,
+          {
+            bab: bab + LevelRules.epicAttackBonus(position),
+            ...Object.fromEntries(saves.map(({ amount, toId }) => [toId, amount + LevelRules.epicSaveBonus(position)])),
+          },
+        ]),
+    );
   }
 
   /** The view's 3.5 lists and indices. */
@@ -380,8 +423,9 @@ export default class ClassProgression {
    * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
    * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
    * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
-   * has none, which its first created feature makes), and the notes on its levels' grants that give nothing
-   * (`featureNotes`, `FeatureStacking.describeNotes`).
+   * has none, which its first created feature makes), the notes on its levels' grants that give nothing
+   * (`featureNotes`, `FeatureStacking.describeNotes`), and its levels' base attack bonus and saves past 20th as its
+   * table shows them (`epicTracks`, `describeEpicTracks`).
    */
   describe() {
     const { rulesetData } = this;
@@ -405,6 +449,7 @@ export default class ClassProgression {
     const list = this.spellList;
     const offers = new ClassOffers(this.view, this.klass).describe();
     return {
+      epicTracks: this.describeEpicTracks(),
       featPicks,
       featurePools: offers.featurePools,
       offeredPools: offers.pools,
@@ -433,13 +478,16 @@ export default class ClassProgression {
    * (`ClassTable.describe`). Refused as its save is for what it plans here: its schema, its counts' bounds, its pools'
    * picks and its spell tables. Its levels' own forms (`owned`), which change no table, it reads by its schema alone,
    * never as their save checks them (`ClassLevelEntity.planEdit`), but for the feats they grant: the notes on those
-   * that would give nothing once saved (`featureNotes`, `FeatureStacking.describeNotes`), as the card shows them.
+   * that would give nothing once saved (`featureNotes`, `FeatureStacking.describeNotes`), as the card shows them, and
+   * its levels' base attack bonus and saves past 20th once saved (`epicTracks`, `describeEpicTracks`).
    */
   describePlan(sent: ProgressionForm) {
     const { body, working } = this.planModifiers(sent);
     const modifiers = ProgressionColumns.readTableModifiers(working);
     return {
       tables: Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)])),
+      // Its levels' base attack bonus and saves past 20th, its 20th's as the save leaves it
+      epicTracks: this.describeEpicTracks(body.owned),
       // What its levels' grants give once saved, as its card shows them before the save
       featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(
         readSentGrants(body.owned),

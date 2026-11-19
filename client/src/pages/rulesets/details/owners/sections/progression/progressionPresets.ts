@@ -49,6 +49,14 @@ export function formatTrackValue(track: ProgressionTrack, value: number) {
   return track.labels?.[value - track.min] ?? String(value);
 }
 
+/**
+ * Whether a track is its owned entities' own at `position`, which its tab and a create set: not from where its rules
+ * answer it (`shownFrom`: 3.5's attack bonus and saves past 20th).
+ */
+export function isTrackSetAt(track: ProgressionTrack, position: number) {
+  return track.shownFrom === undefined || position < track.shownFrom;
+}
+
 /** A track's presets as its rules give them, each its value at a position, the last position's past its values. */
 export function presetsOf(track: ProgressionTrack): ProgressionPreset[] {
   return track.presets.map(({ key, label, values }) => ({

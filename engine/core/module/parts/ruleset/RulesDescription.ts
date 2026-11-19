@@ -198,13 +198,17 @@ export interface ProgressionDeclaration extends Omit<ProgressionDescription, "tr
  * its features and feat pools), its tables (`tables`, which its tables' tab edits: none where its classes count
  * none) and what they count (`counts`), what its levels grant past their columns (`grants`), and the tabs its page had
  * before, by the address each one now opens (`tabAliases`: 3.5's Feat Pools tab's, its Progression; none for a ruleset
- * whose pages never had others).
+ * whose pages never had others), and where its progression's answer, and its plan's for a draft, hold the values its
+ * table shows that aren't its owned entities' own (`shown`: 3.5's `epicTracks`, a level's base attack bonus and saves
+ * past 20th, which its levels add nothing to), by the owned entity's id then the track's key (an amount track's, its
+ * entity's id), which its tab doesn't set.
  */
 export interface ProgressionDescription {
   counts?: ProgressionCounts;
   grants?: ProgressionGrants;
   grantsLabel: string;
   lastPosition: number;
+  shown?: string;
   tabAliases?: Record<string, string>;
   tables: ProgressionTable[];
   tracks: ProgressionTrack[];
@@ -284,7 +288,8 @@ export interface ProgressionTable {
  * engine reads its label and bounds off (`RulesEngine`). A class of a kind whose creature's sheet works the column's
  * value out itself (3.5's familiar's base attack bonus, its master's) holds none at its levels, which a save of one
  * refuses setting (its module's rules): its table and its tab leave the column out, by the kind a class is for
- * (`omittedFor`, of `entityKinds`' values).
+ * (`omittedFor`, of `entityKinds`' values). From a position on (`shownFrom`: 3.5's attack bonus and saves from 21st),
+ * its table shows what its progression's answer holds (its rules' `shown`), which neither its tab nor a create sets.
  */
 export interface ProgressionTrack {
   field?: string;
@@ -296,6 +301,7 @@ export interface ProgressionTrack {
   omittedFor?: readonly string[];
   presets: { key: string; label: string; values: number[] }[];
   shortLabel?: string;
+  shownFrom?: number;
   source: "amounts" | "field";
   unitLabel?: string;
 }

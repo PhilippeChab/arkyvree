@@ -9,7 +9,7 @@
 import type { OwnedFormData, OwnedLists, OwnedRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 
 import type { TrackKey } from "./progressionDraft.ts";
-import { findNearestPreset, presetsOf, type ProgressionTrack } from "./progressionPresets.ts";
+import { findNearestPreset, isTrackSetAt, presetsOf, type ProgressionTrack } from "./progressionPresets.ts";
 
 /**
  * A track an owner's Progression tab sets: its key, its label (an entity's name, for a track of an owned entity's
@@ -105,7 +105,10 @@ export function defaultBatchChoices(
   return Object.fromEntries(
     tracks.map((track) => {
       const presets = presetsOf(track.rules);
-      const values = ownedEntities.map((owned) => ({ position: owned.position, value: read(owned, track.key) }));
+      // Not where its rules answer it, which its levels' own values don't follow
+      const values = ownedEntities
+        .filter((owned) => isTrackSetAt(track.rules, owned.position))
+        .map((owned) => ({ position: owned.position, value: read(owned, track.key) }));
       if (presets.length > 0) return [track.key, findNearestPreset(presets, values).key];
       return [track.key, highest ? read(highest, track.key) : track.rules.min];
     }),
