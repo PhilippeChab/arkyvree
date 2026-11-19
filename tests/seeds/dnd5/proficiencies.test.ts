@@ -3,14 +3,14 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { addProficiencyRequirements } from "@/database/seeders/dnd5/updates.ts";
-import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { entityFieldsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { copyEntity } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { FEAT_MARTIAL_ARTS, FEAT_WEAPON_MASTERY } from "@/vocabulary/dnd5/fields/index.ts";
+import { FEAT_MARTIAL_ARTS } from "@/vocabulary/dnd5/fields/index.ts";
 
 import { seededRows } from "./seededRows.ts";
 
@@ -56,12 +56,14 @@ describe("The seeded D&D 5th Edition weapons, armor and Shield", () => {
     expect(required("Shield")).toEqual(["1 feats.armortrainingshields.possessed"]);
   });
 
-  test("leave a mastery and Martial Arts to their feats' fields, and no modifier sets either", async () => {
+  test("leave Martial Arts to its feat's field and a mastery to its feat's modifier, as 3.5's Weapon Finesse and Weapon Focus", async () => {
     const rows = await seededRows();
-    expect(rows.feat("Weapon Mastery: Longsword").fields[FEAT_WEAPON_MASTERY]).toBe("Longsword");
     expect(rows.feat("Martial Arts (Monk)").fields[FEAT_MARTIAL_ARTS]).toBe(true);
+    const targets = (feat: string) =>
+      rows.raw.modifiers.filter(({ sourceId }) => sourceId === rows.feat(feat).id).map(({ target }) => target);
+    expect(targets("Weapon Mastery: Longsword")).toEqual(["items.weapons.longsword.mastered"]);
     const settled = rows.raw.modifiers.filter(({ target }) =>
-      /^(weapon|items\.weapons\.[^.]+)\.(proficient|mastered|finesse)$|^combat\.armortraining\./.test(target),
+      /^(weapon|items\.weapons\.[^.]+)\.(proficient|finesse)$|^combat\.armortraining\./.test(target),
     );
     expect(settled).toEqual([]);
   });
@@ -71,22 +73,25 @@ describe("The D&D 5th Edition core rules' update to v2", () => {
   test("brings v1's rows and a fork's copies of them to their content: requirements, fields, no settling modifiers", async () => {
     const rows = await seededRows();
     const chainMail = rows.items.find(({ name }) => name === "Chain Mail")!.id;
+    const martialArts = rows.feat("Martial Arts (Monk)").id;
     const mastery = rows.feat("Weapon Mastery: Longsword").id;
     const fork = await RulesetsService.forkRuleset(session, rows.ruleset.id, {
       name: `Fork ${uniqueId()}`,
       private: true,
     });
     const longswordCopy = await copyEntity(db, "items", rows.items.find(({ name }) => name === "Longsword")!.id, fork);
-    const masteryCopy = await copyEntity(db, "feats", mastery, fork);
-    // As v1 had them: no requirement on an armor or its fork's copy of a weapon, a mastery a modifier set
+    const martialArtsCopy = await copyEntity(db, "feats", martialArts, fork);
+    // As v1 had them: no requirement on an armor or its fork's copy of a weapon, Martial Arts' Dexterity a modifier
     for (const id of [chainMail, longswordCopy.id])
       await db.delete(requirementsInCustomization).where(eq(requirementsInCustomization.entityId, id));
-    for (const id of [mastery, masteryCopy.id]) {
-      await Entities.update(db, rows.ruleset.baseRules, "feats", { fields: { [FEAT_WEAPON_MASTERY]: "" } }, { id });
+    for (const id of [martialArts, martialArtsCopy.id]) {
+      await db
+        .delete(entityFieldsInRules)
+        .where(and(eq(entityFieldsInRules.entityId, id), eq(entityFieldsInRules.field, FEAT_MARTIAL_ARTS)));
       await db.insert(modifiersInCustomization).values({
         sourceId: id,
         sourceType: "feats",
-        target: "items.weapons.longsword.mastered",
+        target: "items.weapons.club.finesse",
         operator: "set",
         value: "true",
         valueType: "boolean",
@@ -101,9 +106,12 @@ describe("The D&D 5th Edition core rules' update to v2", () => {
       "1.1 feats.weaponproficiencymartialweapons.possessed",
       "1.2 feats.weaponproficiencylongsword.possessed",
     ]);
-    const feats = await Entities.findMany(db, { entityType: "feats", ids: [mastery, masteryCopy.id] });
-    expect(feats.map(({ fields }) => fields[FEAT_WEAPON_MASTERY])).toEqual(["Longsword", "Longsword"]);
-    expect([await modifierTargetsOf(mastery), await modifierTargetsOf(masteryCopy.id)]).toEqual([[], []]);
+    const feats = await Entities.findMany(db, { entityType: "feats", ids: [martialArts, martialArtsCopy.id] });
+    expect(feats.map(({ fields }) => fields[FEAT_MARTIAL_ARTS])).toEqual([true, true]);
+    for (const id of [martialArts, martialArtsCopy.id])
+      expect(await modifierTargetsOf(id)).not.toContain("items.weapons.club.finesse");
+    // A mastery stays its feat's modifier
+    expect(await modifierTargetsOf(mastery)).toEqual(["items.weapons.longsword.mastered"]);
   });
 
   test("changes nothing on rules seeded at v2", async () => {

@@ -15,16 +15,20 @@ import { isRecord } from "@/shared/isRecord.ts";
 import type CombatComponent from "./CombatComponent.ts";
 import { WIELDED_VALUES } from "./CombatState.ts";
 
-/** The kinds an item's own weapon takes modifiers from: an item's, which the slots holding it read. */
-const ITEM_WEAPON_SOURCES = ["items"];
-
 /**
  * A weapon's paths: a weapon group's (`items.weapons.<group>.tohit.misc`), and an item's own weapon's
  * (`weapon.tohit.misc`, on the item). A part the sheet computes when read is for requirements only, the flat bonus in
- * the misc beside it. Whether its wielder is proficient with it, masters it or uses Dexterity with it (Martial Arts)
- * isn't a path: its requirements and its wielder's feats tell, as 3.5's proficiency does.
+ * the misc beside it. Whether its wielder masters it is a path, a feat's modifier sets it on its group (Weapon Mastery:
+ * Longsword's), as 3.5's Weapon Focus adds to its group's attack. Whether its wielder is proficient with it or uses
+ * Dexterity with it (Martial Arts) isn't: its requirements and its wielder's feats tell, as 3.5's proficiency and Weapon
+ * Finesse do.
  */
 const WEAPON_PATHS = [
+  {
+    path: "mastered",
+    description: "Whether it uses its mastery property",
+    type: "boolean" as const,
+  },
   { path: "tohit.ability", description: "Str/Dex modifier to attack", type: "number" as const, requirementOnly: true },
   {
     path: "tohit.proficiency",
@@ -72,13 +76,9 @@ export default class WeaponPaths implements PathCategory<Dnd5Components> {
     }));
   }
 
-  /**
-   * The paths an item's modifiers and requirements read on its own weapon (`weapon.tohit.misc`), wherever it's held. A
-   * modifier's an item's only: from another source (a feat), no slot holds it, and it would change nothing.
-   */
+  /** The paths an item's modifiers and requirements read on its own weapon (`weapon.tohit.misc`), wherever it's held. */
   static generateItemWeaponPaths(kind: OperatorKind): TargetPath[] {
-    const paths = WeaponPaths.buildPaths("weapon", "weapon", kind);
-    return kind === "modifier" ? paths.map((path) => ({ ...path, allowedEntityTypes: ITEM_WEAPON_SOURCES })) : paths;
+    return WeaponPaths.buildPaths("weapon", "weapon", kind);
   }
 
   readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";

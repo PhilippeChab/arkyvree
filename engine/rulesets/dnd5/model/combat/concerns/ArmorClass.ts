@@ -42,10 +42,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       const base = () => this.unarmoredBase(shared().unarmored, unarmored);
       const shields = () => this.shieldSets[setKey] ?? [];
       // The Shield it uses, its first, with the training to: an untrained one adds nothing
-      const trained = () => {
-        const used = shields()[0];
-        return used === undefined || !this.untrainedItems.has(used.itemId);
-      };
+      const trained = () => shields()[0]?.trained ?? true;
       const ac: WeaponSet["ac"] = {
         get base() {
           return base();
@@ -118,7 +115,6 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       const base = () => this.unarmoredBase(unarmored);
       const dexterity = () => abilities.getAbilityModifier("Dexterity");
       const strength = () => this.abilities.getAbility("Strength")?.total ?? 0;
-      const untrained = () => this.untrainedItems;
       const sets = () => Object.values(this.combat.weaponsets);
       this.combat.ac = {
         get base() {
@@ -144,8 +140,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           return strength() >= (worn()?.strength ?? 0);
         },
         get trained() {
-          const armor = worn();
-          return armor === undefined || !untrained().has(armor.itemId);
+          return worn()?.trained ?? true;
         },
       };
       this.combat.shield = {

@@ -5,8 +5,8 @@ import { RulesetSeeder } from "./RulesetSeeder.ts";
 
 /**
  * The D&D 5th Edition core rules' v2: a weapon's proficiency, an armor's and the Shield's training are the item's
- * requirements, a mastery and Martial Arts' Dexterity a feat's fields, as 3.5's proficiency and Weapon Finesse are, in
- * place of the feats' modifiers that set them (`RulesetSeeder.updateCore`).
+ * requirements, Martial Arts' Dexterity a feat's field, as 3.5's proficiency and Weapon Finesse are, in place of the
+ * feats' modifiers that set them (`RulesetSeeder.updateCore`).
  */
 export async function addProficiencyRequirements(db: Db) {
   const rulesetId = await RulesetSeeder.findCoreRulesetId(db, DND5_CORE_PACKAGE, "The weapons' proficiency");

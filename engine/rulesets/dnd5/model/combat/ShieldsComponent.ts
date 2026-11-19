@@ -16,6 +16,8 @@ export interface ShieldSlot {
   ac: { bonus: number; misc: number; readonly total: number };
   itemId: string;
   name: string;
+  /** Whether the character is trained with it (`applyProficiencies`): without, it adds nothing. */
+  trained: boolean;
 }
 
 /**
@@ -43,6 +45,7 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
     const slot: ShieldSlot = {
       name: entry.item.name,
       itemId: entry.item.id,
+      trained: true,
       // Its total is computed when read, from its bonus and what modifiers add
       ac: {
         bonus: fields.shield.acBonus ?? 0,

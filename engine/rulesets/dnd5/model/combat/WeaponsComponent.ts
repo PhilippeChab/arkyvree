@@ -15,8 +15,8 @@ type WeaponsData = Record<string, WeaponGroup>;
 /**
  * The weapons a character holds, under each group the listing offers (`items.weapons.<group>`): its kind (`longsword`)
  * and its category (`martial`), the inventory's, as its combat placed them (`CombatComponent.getHeldWeapons`), and an
- * empty hand's unarmed strike. A bonus a feat gives a group is a modifier on it: every weapon of it (Archery's, a
- * monk's Martial Arts die).
+ * empty hand's unarmed strike. What a feat gives a group is a modifier on it: every weapon of it (a mastery, a monk's
+ * Martial Arts die).
  */
 export default class WeaponsComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(private readonly combat: CombatComponent) {

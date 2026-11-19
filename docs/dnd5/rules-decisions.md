@@ -27,12 +27,13 @@ holds names the code that holds it.
   Heavy Armor"), which an item made from it (a Longsword +1) inherits; its build marks what the character lacks it for
   (`Builds.settleSheet`), and no path sets it. An item with no requirements of its own or its template's (a homebrew
   weapon made from none, the SRD's Mithral Armor) is every character's to use with proficiency, as in 3.5: its form's
-  Category doesn't give it any. Equipping one without them is never refused, the SRD's rule: a weapon then adds no
-  Proficiency Bonus, an armor stops spellcasting (an issue), a Shield adds nothing. A template's requirements are all
-  its proficiency, as 3.5's are: one a ruleset adds to a template (a Strength 18 on its Leather Armor) counts as its
-  training too. The core rules' v2 update gives a fork's copy of a template its requirements only when it holds none. A weapon's mastery is its feat's field (Weapon Mastery: Longsword's
-  `FEAT_WEAPON_MASTERY`, Longsword). A skill's Skill Proficiency and Expertise are made with
-  the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
+  Category doesn't give it any. Equipping works as 3.5's: a weapon without them is equipped, and adds no Proficiency
+  Bonus; an armor or a Shield is refused unless forced, and forced, an armor stops spellcasting (an issue), a Shield
+  adds nothing. A template's requirements are all its proficiency, as 3.5's are: one a ruleset adds to a template (a
+  Strength 18 on its Leather Armor) counts as its training too: refused unless forced, then untrained. The core rules' v2 update gives a fork's copy of a
+  template its requirements only when it holds none. A weapon's mastery is its feat's modifier on its group (Weapon
+  Mastery: Longsword sets `items.weapons.longsword.mastered`), as 3.5's Weapon Focus adds to its group's attack. A
+  skill's Skill Proficiency and Expertise are made with the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
   ruleset adds included; its Expertise requires proficiency in it however the character has it
   (`skills.<skill>.proficient`, a homebrew feat's too). A class whose skill picks are any skill (a bard's) picks them in
   the Skill Proficiencies pool, which a new skill joins.
@@ -81,15 +82,14 @@ holds names the code that holds it.
   Proficiency Bonus when proficient with the weapon (its requirements met), and its magic and misc; its damage, its
   ability's modifier, an off-hand attack's only when negative without the Two-Weapon Fighting style
   (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice (`Attacks`). A weapon's mastery
-  property shows once the character has a feat that masters its kind (`FEAT_WEAPON_MASTERY`). Without training with the
-  armor worn (its requirements), the character can't cast spells; an untrained Shield adds nothing.
+  property shows once a feat sets `items.weapons.<kind>.mastered`. Without training with the armor worn (its
+  requirements), the character can't cast spells; an untrained Shield adds nothing.
 - **A monk's Martial Arts** lets its Unarmed Strike and its Monk weapons (Simple melee weapons, and Martial melee ones
   with Light, read off the weapon's fields, a homebrew one's too) attack with Dexterity as a Finesse weapon does (its
   feat's `FEAT_MARTIAL_ARTS`, as 3.5's Weapon Finesse is its feat's), and its levels give each SRD Monk weapon its die
   from the Monk table (`damage.die`, a modifier per weapon, `MONK_WEAPONS`: 6 sides, 8 from its 5th level, 10 from its
   11th, 12 from its 17th, as a 3.5 monk's levels give its unarmed damage; a homebrew weapon none unless its ruleset
-  adds it), which a weapon rolls when better than its own dice (a
-  Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
+  adds it), which a weapon rolls when better than its own dice (a Quarterstaff's d8 in two hands stays): a Monk 1 of Dexterity 16 strikes unarmed at +5 for 1d6+3. Both hold while it
   wears no armor, in each weapon set holding no Shield (the die's modifier, gated on the set, reaches that set's weapons
   alone: `Builds.scopesOf`); that it wields only Monk weapons isn't checked.
 - **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to

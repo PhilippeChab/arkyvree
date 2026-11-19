@@ -3,7 +3,6 @@ import type CombatState from "@/engine/rulesets/dnd5/model/combat/CombatState.ts
 import { SLOT_MAP, type WeaponSlot } from "@/engine/rulesets/dnd5/model/combat/CombatState.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd5/rules/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { UNARMED_STRIKE } from "@/vocabulary/dnd5/weapons.ts";
 
 /** What a weapon's attacks are from: its item (none for an unarmed strike), and the inventory entry that holds it. */
 interface HeldFrom {
@@ -35,9 +34,10 @@ function formatDamage(dice: string, bonus: number): string {
  * Proficiency Bonus when the character is proficient with it, and its magic and misc; its damage, its dice (a
  * Versatile weapon's two-handed ones in two hands, or a die it can roll instead when better: a monk's Martial Arts
  * die), its ability's modifier (an off-hand attack's only when negative, but with the Two-Weapon Fighting style), and
- * its magic and misc. A weapon's mastery property is the character's to use once it has mastered the weapon's kind; an
- * Unarmed Strike and a Monk weapon Martial Arts makes `finesse` use Dexterity as a Finesse weapon does. What the
- * character's feats make of them (its proficiency, its mastery, Martial Arts) its build settles between its rounds.
+ * its magic and misc. A weapon's mastery property is the character's to use once a modifier marks it mastered (Weapon
+ * Mastery: Longsword's, on its group); an Unarmed Strike and a Monk weapon Martial Arts makes `finesse` use Dexterity as
+ * a Finesse weapon does. What the character's feats make of them (its proficiency, Martial Arts) its build settles
+ * between its rounds, as 3.5's does.
  */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
@@ -54,26 +54,21 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return fields.ranged === true ? "Dexterity" : "Strength";
     }
 
-    /**
-     * Each weapon in a hand of a set, with its item's fields (none for the Unarmed Strike) and its name in the Weapons
-     * table (its item's, or the Unarmed Strike's).
-     */
-    private *weaponsByName(): Generator<{ fields?: WeaponFields; name: string; set: string; weapon: WeaponSlot }> {
+    /** Each weapon in a hand of a set, with its item's fields (none for the Unarmed Strike). */
+    private *heldInSets(): Generator<{ fields?: WeaponFields; set: string; weapon: WeaponSlot }> {
       const held = new Map(this.heldWeapons.map(({ fields, weapon }) => [weapon, fields]));
       for (const [set, weaponSet] of Object.entries(this.combat.weaponsets)) {
         for (const hand of WEAPON_SET_SLOTS) {
           const weapon = weaponSet[hand];
-          if (!weapon) continue;
-          const fields = held.get(weapon);
-          yield { fields, name: weapon.entryId === null ? UNARMED_STRIKE.name : (fields?.type ?? ""), set, weapon };
+          if (weapon) yield { fields: held.get(weapon), set, weapon };
         }
       }
     }
 
     /**
      * A weapon in a hand of a set (`setIndex`, `location`): its attack and damage, computed when read from its ability,
-     * the character's Proficiency Bonus, its proficiency and mastery (`applyProficiencies`, `applyMasteries`), and what
-     * modifiers set (its magic and misc). None for a location that's no hand.
+     * the character's Proficiency Bonus, its proficiency (`applyProficiencies`), and what modifiers set (its mastery, its
+     * magic and misc). None for a location that's no hand.
      */
     protected addWeapon(
       setIndex: number,
@@ -146,25 +141,23 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const isMonkWeapon = (fields?: WeaponFields) =>
         fields === undefined ||
         (fields.ranged !== true && (fields.category === "Simple" || fields.properties.includes("Light")));
-      for (const { fields, set, weapon } of this.weaponsByName())
+      for (const { fields, set, weapon } of this.heldInSets())
         weapon.finesse = active && unarmored && !this.combat.weaponsets[set].shield.held && isMonkWeapon(fields);
-    }
-
-    /** Marks each weapon the character masters the kind of (`weapons`, by name), and every other one not. */
-    applyMasteries(weapons: ReadonlySet<string>): void {
-      for (const { name, weapon } of this.weaponsByName()) weapon.mastered = weapons.has(name);
     }
 
     /**
      * Marks each weapon the character isn't proficient with (`unproficient`), by the entry holding it, which its
-     * attacks add no Proficiency Bonus to, and the armor and Shields it isn't trained with, by item (`untrainedItems`).
-     * Every other weapon, and the Unarmed Strike, is proficient, so the sheet reads what the latest call says.
+     * attacks add no Proficiency Bonus to; and the armor and Shields it isn't trained with, by item: an armor stops its
+     * spellcasting, a Shield adds nothing. Every other weapon (the Unarmed Strike too), armor and Shield is marked
+     * proficient or trained, so the sheet reads what the latest call says, as 3.5's `applyProficiencyPenalties` does.
      */
     applyProficiencies(unproficient: readonly { id: string; itemId: string }[]): void {
-      const entries = new Set(unproficient.map(({ id }) => id));
-      for (const { weapon } of this.weaponsByName())
-        weapon.proficient = weapon.entryId === null || !entries.has(weapon.entryId);
-      this.untrainedItems = new Set(unproficient.map(({ itemId }) => itemId));
+      const entryIds = new Set(unproficient.map(({ id }) => id));
+      const itemIds = new Set(unproficient.map(({ itemId }) => itemId));
+      for (const { weapon } of this.heldInSets())
+        weapon.proficient = weapon.entryId === null || !entryIds.has(weapon.entryId);
+      for (const gear of [...Object.values(this.combat.armors), ...Object.values(this.shieldSets).flat()])
+        gear.trained = !itemIds.has(gear.itemId);
     }
   }
   return WithAttacks;

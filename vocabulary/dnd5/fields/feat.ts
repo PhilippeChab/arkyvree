@@ -10,5 +10,3 @@ export const FEAT_MARTIAL_ARTS = "FEAT_MARTIAL_ARTS";
 export const FEAT_SELECTABLE = "FEAT_SELECTABLE";
 /** Whether a character can take a feat more than once. */
 export const FEAT_STACKABLE = "FEAT_STACKABLE";
-/** The weapon whose mastery property the feat lets its owner use (Weapon Mastery: Longsword's Longsword). */
-export const FEAT_WEAPON_MASTERY = "FEAT_WEAPON_MASTERY";

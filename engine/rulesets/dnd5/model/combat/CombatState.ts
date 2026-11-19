@@ -45,7 +45,7 @@ export interface CombatData {
     readonly category: WornArmorCategory;
     /** Whether its wearer meets its Strength: without, its speed is 10 feet lower. */
     readonly strengthmet: boolean;
-    /** Whether it has training with the armor worn (the armor's requirements met): without, it can't cast spells. */
+    /** Whether it's trained with the armor worn (`ArmorSlot.trained`): without, it can't cast spells. */
     readonly trained: boolean;
   };
   armors: ArmorsData;
@@ -139,7 +139,7 @@ export interface WeaponSlot {
   /** Whether it can use Dexterity as a Finesse weapon does: a monk's Unarmed Strike and Monk weapons (Martial Arts). */
   finesse: boolean;
   itemId: string | null;
-  /** Whether its wielder masters its kind: has a feat of its mastery (Weapon Mastery: Longsword). */
+  /** Whether its wielder masters its kind: a modifier sets it (Weapon Mastery: Longsword's). */
   mastered: boolean;
   /** Its mastery property, when its wielder has mastered its kind (`mastered`). */
   readonly mastery: string | null;
@@ -248,12 +248,6 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
 
   /** Each level's hit points, which its Constitution modifier adds to (`HitPoints`). */
   protected levelHitPoints: number[] = [];
-
-  /**
-   * The armor and Shields the character isn't trained with, by item: those whose requirements it doesn't meet
-   * (`Attacks.applyProficiencies`), which an armor's training and a Shield's bonus read.
-   */
-  protected untrainedItems: ReadonlySet<string> = new Set();
 
   /** A weapon set's Armor Class and shield (`WeaponSet`), which read its own: the armor class's concern makes them. */
   protected abstract defenseOf(setKey: string): Pick<WeaponSet, "ac" | "shield">;
