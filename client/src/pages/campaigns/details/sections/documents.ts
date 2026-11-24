@@ -298,12 +298,18 @@ export function toDocumentName(filename: string) {
 }
 
 /**
- * A new document's form's values as its upload sends them, a form's fields: its file (`file`), its name, its folder
- * (`parentId`, none at the top), and seats only for a Selected setting.
+ * A new document's form's values as its upload's query sends them, beside its file's bytes: its file's name (`file`),
+ * its own, its folder (`parentId`, none at the top), and seats only for a Selected setting.
  */
-export function toDocumentUpload(data: DocumentFormData, file: File, parentId: string | null) {
+export function toDocumentUpload(data: DocumentFormData, file: Pick<File, "name">, parentId: string | null) {
   const readerIds = data.visibility === "Selected" ? data.readerIds : [];
-  return { file, name: data.name, visibility: data.visibility, readerIds, ...(parentId && { parentId }) };
+  return {
+    filename: file.name,
+    name: data.name,
+    visibility: data.visibility,
+    readerIds,
+    ...(parentId && { parentId }),
+  };
 }
 
 /**

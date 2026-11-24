@@ -60,7 +60,7 @@ describe("DiskStorageBackend", () => {
 
   test("keeps a file the server holds, reads it back, serves it with its type, and deletes it with its folder", async () => {
     const key = keyFor("portrait.png");
-    await storage.putObject(key, png(100));
+    await storage.putObject(key, [png(100)]);
 
     expect(await storage.objectStats(key)).toEqual({ size: 100, etag: expect.any(String) });
     expect(await storage.objectExists(key)).toBe(true);
@@ -76,11 +76,11 @@ describe("DiskStorageBackend", () => {
 
   test("serves a PDF, a Word document and a text file as what their bytes (and a Word file's name) are", async () => {
     const pdf = keyFor("map.pdf");
-    await storage.putObject(pdf, new TextEncoder().encode("%PDF-1.7 rest"));
+    await storage.putObject(pdf, [new TextEncoder().encode("%PDF-1.7 rest")]);
     const word = keyFor("Prep.docx");
-    await storage.putObject(word, new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3]));
+    await storage.putObject(word, [new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3])]);
     const text = keyFor("notes.txt");
-    await storage.putObject(text, new TextEncoder().encode("The party rests."));
+    await storage.putObject(text, [new TextEncoder().encode("The party rests.")]);
 
     expect((await storage.serve(pdf)).contentType).toBe("application/pdf");
     expect((await storage.serve(word)).contentType).toBe(WORD_DOCUMENT_TYPE);
@@ -99,7 +99,7 @@ describe("DiskStorageBackend", () => {
       `.uploading/${crypto.randomUUID()}`,
     ]) {
       expect(storage.serve(key)).rejects.toBeInstanceOf(NotFoundError);
-      expect(storage.putObject(key, png())).rejects.toBeInstanceOf(NotFoundError);
+      expect(storage.putObject(key, [png()])).rejects.toBeInstanceOf(NotFoundError);
     }
   });
 

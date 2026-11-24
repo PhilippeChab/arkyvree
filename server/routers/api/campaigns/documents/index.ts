@@ -1,5 +1,5 @@
-import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
+import { type Context, Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import { z } from "zod";
 
 import { BadRequestError } from "@/server/errors/index.ts";
@@ -15,22 +15,24 @@ const documentParams = idParam.extend({ documentId: z.string().uuid() });
 /** A note's text, as its Game Master wrote it. */
 const documentText = z.string().max(MAX_DOCUMENT_BODY_LENGTH);
 
-/** What a form adds to its file: each part's boundary and headers. */
-const FORM_OVERHEAD_BYTES = 64 * 1024;
-
-/** Refuses a file's form before its body is read whole: a part's headers take a few bytes past the file. */
-const fileLimit = bodyLimit({
-  maxSize: MAX_DOCUMENT_FILE_BYTES + FORM_OVERHEAD_BYTES,
-  onError: () => {
+/**
+ * Refuses a file whose request says it's larger than a document takes, before a byte of it is read. One that says
+ * nothing is counted as it's stored (`AttachmentsService`), never held whole, as Hono's `bodyLimit` would hold it.
+ */
+const fileLimit = createMiddleware(async (c, next) => {
+  if (Number(c.req.header("content-length")) > MAX_DOCUMENT_FILE_BYTES)
     throw new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`);
-  },
+  await next();
 });
+
+/** A file's name, which its request's query carries beside its bytes. */
+const filename = z.string().min(1);
 
 /** The seats a Selected folder, document or note admits. */
 const readerIds = z.array(z.string().uuid());
 
-/** A form's seats: one field for each, which a form with one alone sends as a string. */
-const formReaderIds = z
+/** A query's seats: one parameter for each, which a query with one alone reads as a string. */
+const queryReaderIds = z
   .union([z.string().uuid(), readerIds])
   .optional()
   .transform((ids) => (ids === undefined ? [] : [ids].flat()));
@@ -49,6 +51,14 @@ function toDisposition(filename: string, contentType: string) {
   );
   const kind = contentType === WORD_DOCUMENT_TYPE ? "attachment" : "inline";
   return `${kind}; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
+/**
+ * The file a request's body is (`filename`, its query's), streamed as it comes, never held whole: an empty one when it
+ * sends no body.
+ */
+function toIncomingFile(c: Context, name: string) {
+  return { name, stream: () => c.req.raw.body ?? new Response(new Uint8Array()).body! };
 }
 
 export default new Hono<SessionContext>()
@@ -104,31 +114,37 @@ export default new Hono<SessionContext>()
       return c.json(await CampaignDocumentsService.createDocument(c.var.requestSession, id, body), 201);
     },
   )
-  // A document: the file its Game Master uploads, with its name, its folder and whom it admits
+  // A document: the file its Game Master uploads, its bytes the request's body, streamed to the storage as they come;
+  // its file's name, its own, its folder and whom it admits, the query's
   .post(
     "/:id/documents/upload",
     attachmentUploadRateLimit,
     fileLimit,
     validate("param", idParam),
     validate(
-      "form",
+      "query",
       z.object({
-        file: z.file(),
+        filename,
         name: documentName,
-        // A form's field is text: none, or an empty one, is the top
+        // A query's parameter is text: none, or an empty one, is the top
         parentId: z
           .union([z.literal(""), z.string().uuid()])
           .optional()
           .transform((id) => id || null),
         visibility: z.enum(DOCUMENT_VISIBILITY_OPTIONS).default("Private"),
-        readerIds: formReaderIds,
+        readerIds: queryReaderIds,
       }),
     ),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { file, ...document } = c.req.valid("form");
+      const { filename: name, ...document } = c.req.valid("query");
       return c.json(
-        await CampaignDocumentFilesService.createDocumentFile(c.var.requestSession, id, document, file),
+        await CampaignDocumentFilesService.createDocumentFile(
+          c.var.requestSession,
+          id,
+          document,
+          toIncomingFile(c, name),
+        ),
         201,
       );
     },
@@ -158,12 +174,17 @@ export default new Hono<SessionContext>()
     attachmentUploadRateLimit,
     fileLimit,
     validate("param", documentParams),
-    validate("form", z.object({ file: z.file() })),
+    validate("query", z.object({ filename })),
     async (c) => {
       const { id, documentId } = c.req.valid("param");
-      const { file } = c.req.valid("form");
+      const { filename: name } = c.req.valid("query");
       return c.json(
-        await CampaignDocumentFilesService.setDocumentFile(c.var.requestSession, id, documentId, file),
+        await CampaignDocumentFilesService.setDocumentFile(
+          c.var.requestSession,
+          id,
+          documentId,
+          toIncomingFile(c, name),
+        ),
         200,
       );
     },

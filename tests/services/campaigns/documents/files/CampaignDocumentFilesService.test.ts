@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Notifications, Players } from "@/server/repositories/index.ts";
-import { AttachmentsService } from "@/server/services/attachments/index.ts";
+import { AttachmentsService, type IncomingFile } from "@/server/services/attachments/index.ts";
 import { CampaignDocumentFilesService } from "@/server/services/campaigns/documents/files/index.ts";
 import { CampaignDocumentsService } from "@/server/services/campaigns/documents/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
@@ -12,7 +12,7 @@ import { collectNotified } from "@/server/websockets/index.ts";
 import { DOCUMENT_FILE_SLOT, MAX_DOCUMENT_FILE_BYTES, WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
+import { fakeStorage, readBody, streamOf } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** The bytes a Word document opens with: a ZIP's. */
@@ -31,6 +31,11 @@ function fileOf(bytes: Uint8Array<ArrayBuffer>, name: string, type = "image/png"
   return new File([bytes], name, { type });
 }
 
+/** A request's body under `name`, as the route streams it: its bytes in `chunks`, and no size said ahead. */
+function streamedOf(chunks: Uint8Array[], name: string) {
+  return { name, stream: () => new Blob(chunks.map((chunk) => new Uint8Array(chunk))).stream() };
+}
+
 /**
  * A Game Master's campaign with a player, and how its Game Master uploads a document (`upload`: Public at the top,
  * unless `parts` say otherwise).
@@ -40,7 +45,10 @@ async function setup() {
   const { campaign } = await createTestCampaign(user.id);
   const { user: playerUser, session: player } = await createTestUser("player");
   await Players.create(db, { userId: playerUser.id, campaignId: campaign.id, role: "Player Character" });
-  const upload = (file: File, parts: { name?: string; parentId?: string; visibility?: "Private" | "Public" } = {}) =>
+  const upload = (
+    file: IncomingFile,
+    parts: { name?: string; parentId?: string; visibility?: "Private" | "Public" } = {},
+  ) =>
     CampaignDocumentFilesService.createDocumentFile(
       gm,
       campaign.id,
@@ -57,8 +65,8 @@ describe("CampaignDocumentFilesService", () => {
     stored = new Map();
     ObjectStorage.setForTest(
       fakeStorage({
-        async putObject(key, data) {
-          stored.set(key, data);
+        async putObject(key, body) {
+          stored.set(key, await readBody(body));
         },
         async streamObject(key) {
           return streamOf(stored.get(key));
@@ -132,6 +140,35 @@ describe("CampaignDocumentFilesService", () => {
     const { items } = await CampaignDocumentsService.getDocuments(gm, campaign.id);
     expect(items.every(({ file }) => file !== null)).toBe(true);
     expect(items).toHaveLength(5);
+  });
+
+  test("checks a streamed file as it's stored: its text to its end, and its size when none was said", async () => {
+    const { gm, campaign, upload } = await setup();
+    const encode = (text: string) => new TextEncoder().encode(text);
+    // A character cut between two chunks is read whole
+    const accented = encode("Élodie's letter");
+    const letter = await upload(streamedOf([accented.slice(0, 1), accented.slice(1)], "letter.txt"));
+    expect(letter.file).toMatchObject({ contentType: "text/plain", byteSize: accented.byteLength });
+    expect(stored.get([...stored.keys()][0]!)).toEqual(accented);
+
+    // A control character past its head, and a file past what a document takes, refused midway; nothing is kept
+    const late = streamedOf([encode("Meet me at the old mill."), new Uint8Array([0x00])], "late.txt");
+    expect(upload(late)).rejects.toEqual(
+      new BadRequestError(
+        "The file isn't a picture, a PDF, a Word document (.docx) or a text file (.txt or .md, saved as UTF-8)",
+      ),
+    );
+    const chunk = new Uint8Array(MAX_DOCUMENT_FILE_BYTES / 2);
+    chunk.set(PNG);
+    const huge = streamedOf([chunk, new Uint8Array(MAX_DOCUMENT_FILE_BYTES / 2), new Uint8Array(1)], "huge.png");
+    expect(upload(huge)).rejects.toEqual(
+      new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`),
+    );
+    expect(stored.size).toBe(1);
+    expect((await CampaignDocumentsService.getDocuments(gm, campaign.id)).items).toHaveLength(1);
+    expect(
+      await Blobs.findOrphans(db, { createdBefore: new Date().toISOString(), excludeIds: [] }, { limit: 50 }),
+    ).toEqual([]);
   });
 
   test("stores a file's name without control characters nor the marks that reverse its text, cut short", async () => {

@@ -1,7 +1,7 @@
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Documents } from "@/server/repositories/index.ts";
-import { AttachmentsService } from "@/server/services/attachments/index.ts";
+import { AttachmentsService, type IncomingFile } from "@/server/services/attachments/index.ts";
 import { CampaignDocumentsService, noteDocumentChanged } from "@/server/services/campaigns/documents/index.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { withCampaignWrite } from "@/server/services/writes/index.ts";
@@ -36,7 +36,7 @@ class CampaignDocumentFilesService {
    * (`CampaignDocumentsService.createDocument`), so no document is ever without its file; a refused creation removes
    * what it stored.
    */
-  async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: File) {
+  async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: IncomingFile) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canManageDocuments();
     const pending = await AttachmentsService.createPendingFile(DOCUMENT_FILE_SLOT.recordType, file);
@@ -73,7 +73,7 @@ class CampaignDocumentFilesService {
    * page refreshed.
    * Answers what the document now holds: its file's name, type, size and upload time.
    */
-  async setDocumentFile(session: Session, campaignId: string, documentId: string, file: File) {
+  async setDocumentFile(session: Session, campaignId: string, documentId: string, file: IncomingFile) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canUpdate();
     await this.assertInCampaign(campaignId, documentId);

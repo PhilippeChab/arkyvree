@@ -148,9 +148,10 @@ describe("the Documents tab", () => {
     });
 
     const file = new File(["%PDF-"], "Keep map.v2.pdf", { type: "application/pdf" });
-    expect(toDocumentUpload(form, file, null)).toEqual({ file, name: "Map", visibility: "Public", readerIds: [] });
+    const filename = "Keep map.v2.pdf";
+    expect(toDocumentUpload(form, file, null)).toEqual({ filename, name: "Map", visibility: "Public", readerIds: [] });
     expect(toDocumentUpload({ ...form, visibility: "Selected" }, file, "act")).toEqual({
-      file,
+      filename,
       name: "Map",
       visibility: "Selected",
       readerIds: ["rogue"],
