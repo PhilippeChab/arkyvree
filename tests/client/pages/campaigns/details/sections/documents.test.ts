@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildTree,
   type CampaignDocument,
+  describeAcceptedFiles,
   describeAudience,
   describeContents,
   describeDocumentFile,
@@ -20,7 +21,7 @@ import {
   toDocumentUpload,
   toEditForm,
 } from "@/client/src/pages/campaigns/details/sections/documents.ts";
-import { MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
+import { MAX_DOCUMENT_FILE_BYTES, WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { readDocumentAudience } from "@/shared/campaignDocuments.ts";
 
 type Item = Pick<CampaignDocument, "id" | "kind" | "name" | "parentId"> &
@@ -147,9 +148,10 @@ describe("the Documents tab", () => {
     });
 
     const file = new File(["%PDF-"], "Keep map.v2.pdf", { type: "application/pdf" });
-    expect(toDocumentUpload(form, file, null)).toEqual({ file, name: "Map", visibility: "Public", readerIds: [] });
+    const filename = "Keep map.v2.pdf";
+    expect(toDocumentUpload(form, file, null)).toEqual({ filename, name: "Map", visibility: "Public", readerIds: [] });
     expect(toDocumentUpload({ ...form, visibility: "Selected" }, file, "act")).toEqual({
-      file,
+      filename,
       name: "Map",
       visibility: "Selected",
       readerIds: ["rogue"],
@@ -190,22 +192,25 @@ describe("the Documents tab", () => {
     const picture = { byteSize: 840_000, contentType: "image/png" };
     const pdf = { byteSize: 2_500_000, contentType: "application/pdf" };
     const text = { byteSize: 2_100, contentType: "text/plain" };
-    expect([picture, pdf, text].map(describeDocumentFile)).toEqual([
+    const word = { byteSize: 48_000, contentType: WORD_DOCUMENT_TYPE };
+    expect([picture, pdf, text, word].map(describeDocumentFile)).toEqual([
       "Picture · 820 KB",
       "PDF · 2.4 MB",
       "Text file · 2 KB",
+      "Word document · 47 KB",
     ]);
     expect(describeDocumentFile({ byteSize: 12, contentType: "image/gif" })).toBe("Picture · 1 KB");
 
     expect(readDocumentIconKind({ kind: "Folder", file: null })).toBe("Folder");
     expect(readDocumentIconKind({ kind: "Note", file: null })).toBe("Note");
-    expect([picture, pdf, text].map((file) => readDocumentIconKind({ kind: "Document", file }))).toEqual([
+    expect([picture, pdf, text, word].map((file) => readDocumentIconKind({ kind: "Document", file }))).toEqual([
       "Picture",
       "Pdf",
       "Text",
+      "Word",
     ]);
 
-    const refusal = "Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)";
+    const refusal = "Pick a picture (PNG, JPEG, WebP, GIF), a PDF, a Word document (.docx) or a text file (.txt, .md)";
     expect(describeFileRefusal({ name: "map.pdf", size: 10, type: "application/pdf" })).toBeNull();
     expect(describeFileRefusal({ name: "page.html", size: 10, type: "text/html" })).toBe(refusal);
     // A text file by its name, whatever the browser calls it, stored as plain text
@@ -214,10 +219,18 @@ describe("the Documents tab", () => {
     expect(describeFileRefusal({ name: "server.log", size: 10, type: "text/plain" })).toBe(refusal);
     expect(toContentType({ name: "Prep.MD", type: "text/markdown" })).toBe("text/plain");
     expect(toContentType({ name: "map.png", type: "image/png" })).toBe("image/png");
+    // A Word document by its type or its name, whatever the browser calls it; an older Word file (.doc) is no such
+    expect(describeFileRefusal({ name: "Prep.docx", size: 10, type: WORD_DOCUMENT_TYPE })).toBeNull();
+    expect(describeFileRefusal({ name: "Prep.DOCX", size: 10, type: "application/octet-stream" })).toBeNull();
+    expect(describeFileRefusal({ name: "Prep.doc", size: 10, type: "application/msword" })).toBe(refusal);
+    expect(toContentType({ name: "Prep.DOCX", type: "application/octet-stream" })).toBe(WORD_DOCUMENT_TYPE);
     // A file the browser can't name goes to the server, which reads its bytes
     expect(describeFileRefusal({ name: "map", size: 10, type: "" })).toBeNull();
     expect(describeFileRefusal({ name: "map.png", size: MAX_DOCUMENT_FILE_BYTES + 1, type: "image/png" })).toBe(
-      "Pick a file of 10 MB at most",
+      "Pick a file of 25 MB at most",
+    );
+    expect(describeAcceptedFiles()).toBe(
+      "A picture (PNG, JPEG, WebP, GIF), a PDF, a Word document (.docx) or a text file (.txt, .md), 25 MB at most",
     );
   });
 });

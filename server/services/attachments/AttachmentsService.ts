@@ -9,8 +9,14 @@ import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import { getFileEditableDocument, getFileReadableDocument } from "@/server/services/campaigns/documents/index.ts";
 import { getPortraitEditableCharacter } from "@/server/services/characters/index.ts";
 import { withAttachmentWrite, withBlobDeletion, withNewBlob } from "@/server/services/writes/index.ts";
-import { detectDocumentFileType, detectImageType } from "@/server/storage/fileTypes.ts";
+import {
+  createTextCheck,
+  detectDocumentFileType,
+  detectImageType,
+  FILE_HEAD_BYTES,
+} from "@/server/storage/fileTypes.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
+import { UploadQueue } from "@/server/storage/UploadQueue.ts";
 import {
   ALLOWED_DOCUMENT_FILE_TYPES,
   ALLOWED_IMAGE_TYPES,
@@ -32,10 +38,11 @@ interface AttachableConfig {
    */
   canRead?: AttachRight;
   /**
-   * The type a file's bytes say it is (and its name, `filename`, for a text file, whose bytes have no signature), of
-   * those its record type takes, or null for any other: what it's stored as.
+   * The type a file's head says it is (its first `FILE_HEAD_BYTES`, and its name, `filename`, for a text file or a
+   * Word document, whose head says no more), of those its record type takes, or null for any other: what it's stored
+   * as. A text file's bytes are checked as they're stored (`readChecked`).
    */
-  detect: (data: Uint8Array, filename: string) => string | null;
+  detect: (head: Uint8Array, filename: string) => string | null;
   /** Whether a file goes straight to the storage (`createDirectUpload`), unread, or through the server alone. */
   directUpload: boolean;
   names: readonly string[];
@@ -43,6 +50,7 @@ interface AttachableConfig {
   /** What a file it refuses isn't, in a refusal's words: "a PNG, JPEG, WebP or GIF image". */
   takes: string;
 }
+
 interface SignedTokenPayload {
   blobId: string;
   iat: number;
@@ -61,6 +69,12 @@ interface UploadPolicy {
  * answers its record).
  */
 type AttachRight = (database: Db, session: Session, recordId: string) => Promise<unknown>;
+
+/**
+ * A file the server takes, its bytes read as they come (`stream`), never held whole: a form's file, or a request's
+ * body, under its name (`name`), and its size when it's known before it's read (`size`, a form's file's).
+ */
+export type IncomingFile = Pick<File, "name" | "stream"> & { size?: number };
 
 const imagePolicy: UploadPolicy = {
   maxBytes: MAX_UPLOAD_BYTES,
@@ -111,7 +125,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       directUpload: false,
       names: [DOCUMENT_FILE_SLOT.name],
       policy: { maxBytes: MAX_DOCUMENT_FILE_BYTES, contentTypes: [...ALLOWED_DOCUMENT_FILE_TYPES] },
-      takes: "a picture, a PDF or a text file (.txt or .md, saved as UTF-8)",
+      takes: "a picture, a PDF, a Word document (.docx) or a text file (.txt or .md, saved as UTF-8)",
     },
   ],
 ]);
@@ -121,7 +135,69 @@ const MAX_FILENAME_LENGTH = 255;
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * The uploads the server stores at once, the others waiting their turn (`UploadQueue`): each holds up to about 17 MB
+ * as it's streamed to S3 (its part, as Bun holds it), so they hold under 200 MB together. One waits 30 seconds at most,
+ * and a user holds 3 at most, running or waiting, so none takes every turn.
+ */
+const UPLOAD_QUEUE = { limit: 10, maxWaitMs: 30_000, perOwner: 3 };
+
+/** The longest an upload takes, once its turn has come: one that trickles in is refused, freeing its turn. */
+const UPLOAD_TIME_LIMIT_MS = 10 * 60_000;
+
+/**
+ * A file's bytes as they're stored: its head (`head`, read for its type), then the rest as it comes (`reader`),
+ * counted into `read`, refused once past `maxBytes`, past its `deadline`, and for a text file (`text`), once they stop
+ * being text (`createTextCheck`, `takes` its refusal's words). A refusal fails the read, and the storage keeps nothing.
+ */
+async function* readChecked(
+  head: Uint8Array,
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  check: { deadline: number; maxBytes: number; read: { bytes: number }; takes: string; text: boolean },
+) {
+  const textCheck = check.text ? createTextCheck() : null;
+  const accept = (chunk: Uint8Array) => {
+    if (Date.now() > check.deadline) throw new BadRequestError("The upload took too long: try a faster connection");
+    check.read.bytes += chunk.byteLength;
+    if (check.read.bytes > check.maxBytes)
+      throw new BadRequestError(`File exceeds maximum size of ${check.maxBytes} bytes`);
+    if (textCheck && !textCheck.push(chunk)) throw new BadRequestError(`The file isn't ${check.takes}`);
+    return chunk;
+  };
+  if (head.byteLength > 0) yield accept(head);
+  for (let next = await readNext(reader); !next.done; next = await readNext(reader)) yield accept(next.value);
+  if (textCheck && !textCheck.end()) throw new BadRequestError(`The file isn't ${check.takes}`);
+}
+
+/** A file's first bytes, its head (`FILE_HEAD_BYTES`), which its type is read from: fewer for a shorter file. */
+async function readHead(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  while (length < FILE_HEAD_BYTES) {
+    const { done, value } = await readNext(reader);
+    if (done) break;
+    chunks.push(value);
+    length += value.byteLength;
+  }
+  return Buffer.concat(chunks);
+}
+
+/**
+ * A body's next chunk: one cut off before its end (its client gone, its connection timed out) refused as a bad
+ * request, a client's doing, never the server's error.
+ */
+async function readNext(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  try {
+    return await reader.read();
+  } catch {
+    throw new BadRequestError("The upload was cut off before its end");
+  }
+}
+
 class AttachmentsService {
+  /** The uploads being stored, and those waiting their turn (`UPLOAD_QUEUE`). */
+  private readonly uploads = new UploadQueue(UPLOAD_QUEUE);
+
   /** Refuses a record type whose files go through the server alone (`directUpload`: a campaign document's). */
   private assertDirectUpload(recordType: string) {
     if (!this.getAttachableConfig(recordType).directUpload)
@@ -311,38 +387,68 @@ class AttachmentsService {
   }
 
   /**
-   * Stores a file a record type takes (`recordType`), ahead of its attach: its type read from its bytes (and its name,
-   * for one with no signature), within its record type's policy, as a pending blob first, so one a crash leaves
-   * unattached is swept with its row, then put in storage. A failed write deletes what it stored. Answers its blob.
+   * Stores a file a record type takes (`recordType`), ahead of its attach, streamed, never held whole: its type read
+   * from its head (and its name, for one with no signature), within its record type's policy, as a pending blob first,
+   * so one a crash leaves unattached is swept with its row, then put in storage as its bytes come, checked as they go
+   * (`readChecked`), and its size and upload time noted once they're all stored, its turn waited for first, its
+   * uploader's (`owner`, `UploadQueue`). A failed write deletes what it stored. Answers its blob.
    */
-  private async storeFile(recordType: string, file: File) {
-    const data = new Uint8Array(await file.arrayBuffer());
+  private async storeFile(owner: string, recordType: string, file: IncomingFile) {
+    return await this.uploads.run(owner, () => this.streamFile(recordType, file));
+  }
+
+  /** Stores a file as `storeFile` says, once its turn has come. */
+  private async streamFile(recordType: string, file: IncomingFile) {
     const config = this.getAttachableConfig(recordType);
     const filename = this.cleanFilename(file.name);
-    const contentType = config.detect(data, filename);
-    if (!contentType) throw new BadRequestError(`The file isn't ${config.takes}`);
-    this.assertWithinPolicy(recordType, data.byteLength, contentType);
-
-    const id = randomUUID();
-    const key = this.buildKey(id, filename);
-    await withNewBlob((tx) => Blobs.create(tx, { id, key, filename, contentType, byteSize: data.byteLength }));
+    const reader = file.stream().getReader();
     try {
-      await ObjectStorage.get().putObject(key, data, { contentType });
-    } catch (error) {
-      await this.purgeOrphan({ id, key });
-      throw error;
+      const deadline = Date.now() + UPLOAD_TIME_LIMIT_MS;
+      const head = await readHead(reader);
+      const contentType = config.detect(head, filename);
+      if (!contentType) throw new BadRequestError(`The file isn't ${config.takes}`);
+      this.assertWithinPolicy(recordType, file.size ?? head.byteLength, contentType);
+
+      const id = randomUUID();
+      const key = this.buildKey(id, filename);
+      // Its size and upload time, known once it's stored
+      await withNewBlob((tx) => Blobs.create(tx, { id, key, filename, contentType, byteSize: 0 }));
+      try {
+        const read = { bytes: 0 };
+        const check = {
+          deadline,
+          maxBytes: config.policy.maxBytes,
+          read,
+          takes: config.takes,
+          text: contentType === "text/plain",
+        };
+        await ObjectStorage.get().putObject(key, readChecked(head, reader, check), { contentType });
+        // Uploaded once it's stored whole, which its page says, and the sweep of pending blobs counts from
+        const uploaded = { byteSize: read.bytes, createdAt: new Date().toISOString() };
+        await withNewBlob((tx) => Blobs.update(tx, uploaded, { id }));
+      } catch (error) {
+        await this.purgeOrphan({ id, key });
+        throw error;
+      }
+      return { id, key };
+    } finally {
+      // A file refused before it's read whole: the rest of its body is let go, not left open
+      await reader.cancel().catch(() => undefined);
     }
-    return { id, key };
   }
 
   /**
    * Uploads a file through the server into its slot, at once: stored (`storeFile`), then attached. A failed attach
    * deletes what it stored. Answers the attachment and its blob.
    */
-  private async uploadFile(session: Session, slot: { name: string; recordId: string; recordType: string }, file: File) {
+  private async uploadFile(
+    session: Session,
+    slot: { name: string; recordId: string; recordType: string },
+    file: IncomingFile,
+  ) {
     await this.assertCanAttach(db, session, slot.recordType, slot.recordId);
     this.assertValidName(slot.recordType, slot.name);
-    const stored = await this.storeFile(slot.recordType, file);
+    const stored = await this.storeFile(session.userId, slot.recordType, file);
 
     let result;
     try {
@@ -467,11 +573,12 @@ class AttachmentsService {
 
   /**
    * Stores a private file (a campaign document's) ahead of the record it's for, which its write then attaches
-   * (`attachPendingFile`) or, failing, removes (`removePendingFile`). Its caller has asked who may. Answers its blob.
+   * (`attachPendingFile`) or, failing, removes (`removePendingFile`). Its caller has asked who may (`session`). Answers
+   * its blob.
    */
-  async createPendingFile(recordType: string, file: File) {
+  async createPendingFile(session: Session, recordType: string, file: IncomingFile) {
     this.assertPrivateType(recordType);
-    return await this.storeFile(recordType, file);
+    return await this.storeFile(session.userId, recordType, file);
   }
 
   /** Removes a display asset (an avatar, a portrait): a private file's attachment is answered as an unknown one. */
@@ -532,7 +639,11 @@ class AttachmentsService {
    * Uploads a private file (a campaign document's) into its slot (`uploadFile`), replacing the one there. Answers what
    * the slot now holds, its name, type, size and upload time: no URL to it, whose bytes its record's route hands on.
    */
-  async setAttachmentFile(session: Session, slot: { name: string; recordId: string; recordType: string }, file: File) {
+  async setAttachmentFile(
+    session: Session,
+    slot: { name: string; recordId: string; recordType: string },
+    file: IncomingFile,
+  ) {
     this.assertPrivateType(slot.recordType);
     const { blob } = await this.uploadFile(session, slot, file);
     return this.describeFile(blob);

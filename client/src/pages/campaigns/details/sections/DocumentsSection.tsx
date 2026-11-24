@@ -156,7 +156,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
   const columns = !isGameMaster ? PLAYER_COLUMNS : canManageDocuments ? MASTER_COLUMNS : READER_COLUMNS;
   const newItem = createDialog.target;
 
-  // A document is uploaded with its file, in one request; a folder and a note are created as they're typed
+  // A document is uploaded with its file, in one request, its bytes the body; a folder and a note are created as
+  // they're typed
   const createMutation = useMutation({
     mutationFn: ({ kind, parentId, data }: NewItem & { data: DocumentFormData }) => {
       const param = { id: campaign.id };
@@ -164,7 +165,8 @@ export function DocumentsSection({ campaign }: DocumentsSectionProps) {
       if (kind !== "Document")
         return parseResponse(api.$post({ param, json: { parentId, ...toDocumentBody(data, kind) } }));
       if (!data.file) throw new Error("Pick a file");
-      return parseResponse(api.upload.$post({ param, form: toDocumentUpload(data, data.file, parentId) }));
+      const query = toDocumentUpload(data, data.file, parentId);
+      return parseResponse(api.upload.$post({ param, query }, { init: { body: data.file } }));
     },
     onSuccess: (created) => {
       snackbar.success(`${created.kind} ${created.kind === "Document" ? "uploaded" : "created"}`);

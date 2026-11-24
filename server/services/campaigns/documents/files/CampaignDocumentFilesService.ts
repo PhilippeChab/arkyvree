@@ -1,7 +1,7 @@
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Documents } from "@/server/repositories/index.ts";
-import { AttachmentsService } from "@/server/services/attachments/index.ts";
+import { AttachmentsService, type IncomingFile } from "@/server/services/attachments/index.ts";
 import { CampaignDocumentsService, noteDocumentChanged } from "@/server/services/campaigns/documents/index.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { withCampaignWrite } from "@/server/services/writes/index.ts";
@@ -30,16 +30,16 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Adds a document to a campaign (`campaignId`): the file its Game Master uploads (a picture, a PDF or a text file,
-   * its type read from its bytes), under a name, in a folder, admitting its seats (`document`). Who asks first, before
-   * anything is stored; then its file, stored ahead of it and attached in the write that creates it
+   * Adds a document to a campaign (`campaignId`): the file its Game Master uploads (a picture, a PDF, a Word document
+   * or a text file, its type read from its bytes), under a name, in a folder, admitting its seats (`document`). Who
+   * asks first, before anything is stored; then its file, stored ahead of it and attached in the write that creates it
    * (`CampaignDocumentsService.createDocument`), so no document is ever without its file; a refused creation removes
    * what it stored.
    */
-  async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: File) {
+  async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: IncomingFile) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canManageDocuments();
-    const pending = await AttachmentsService.createPendingFile(DOCUMENT_FILE_SLOT.recordType, file);
+    const pending = await AttachmentsService.createPendingFile(session, DOCUMENT_FILE_SLOT.recordType, file);
     try {
       return await CampaignDocumentsService.createDocument(
         session,
@@ -68,11 +68,12 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Puts another file in a document (a picture, a PDF or a text file), replacing the one it held: its campaign's Game
-   * Master's, who asks first, then the document, which is marked changed; whoever sees it has their page refreshed.
+   * Puts another file in a document (a picture, a PDF, a Word document or a text file), replacing the one it held: its
+   * campaign's Game Master's, who asks first, then the document, which is marked changed; whoever sees it has their
+   * page refreshed.
    * Answers what the document now holds: its file's name, type, size and upload time.
    */
-  async setDocumentFile(session: Session, campaignId: string, documentId: string, file: File) {
+  async setDocumentFile(session: Session, campaignId: string, documentId: string, file: IncomingFile) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canUpdate();
     await this.assertInCampaign(campaignId, documentId);

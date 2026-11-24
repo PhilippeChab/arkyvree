@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import type { DiskStorageBackend } from "@/server/storage/DiskStorageBackend.ts";
+import { WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { diskStorage } from "@/tests/support/storage.ts";
 
 const HOUR = 60 * 60 * 1000;
@@ -59,7 +60,7 @@ describe("DiskStorageBackend", () => {
 
   test("keeps a file the server holds, reads it back, serves it with its type, and deletes it with its folder", async () => {
     const key = keyFor("portrait.png");
-    await storage.putObject(key, png(100));
+    await storage.putObject(key, [png(100)]);
 
     expect(await storage.objectStats(key)).toEqual({ size: 100, etag: expect.any(String) });
     expect(await storage.objectExists(key)).toBe(true);
@@ -73,13 +74,16 @@ describe("DiskStorageBackend", () => {
     expect(existsSync(path.join(disk.root, path.dirname(key)))).toBe(false);
   });
 
-  test("serves a PDF and a text file as what their bytes are", async () => {
+  test("serves a PDF, a Word document and a text file as what their bytes (and a Word file's name) are", async () => {
     const pdf = keyFor("map.pdf");
-    await storage.putObject(pdf, new TextEncoder().encode("%PDF-1.7 rest"));
+    await storage.putObject(pdf, [new TextEncoder().encode("%PDF-1.7 rest")]);
+    const word = keyFor("Prep.docx");
+    await storage.putObject(word, [new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3])]);
     const text = keyFor("notes.txt");
-    await storage.putObject(text, new TextEncoder().encode("The party rests."));
+    await storage.putObject(text, [new TextEncoder().encode("The party rests.")]);
 
     expect((await storage.serve(pdf)).contentType).toBe("application/pdf");
+    expect((await storage.serve(word)).contentType).toBe(WORD_DOCUMENT_TYPE);
     expect((await storage.serve(text)).contentType).toBe("text/plain; charset=utf-8");
   });
 
@@ -95,7 +99,7 @@ describe("DiskStorageBackend", () => {
       `.uploading/${crypto.randomUUID()}`,
     ]) {
       expect(storage.serve(key)).rejects.toBeInstanceOf(NotFoundError);
-      expect(storage.putObject(key, png())).rejects.toBeInstanceOf(NotFoundError);
+      expect(storage.putObject(key, [png()])).rejects.toBeInstanceOf(NotFoundError);
     }
   });
 

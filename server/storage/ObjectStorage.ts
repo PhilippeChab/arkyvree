@@ -11,8 +11,11 @@ export interface StorageBackend {
   /** A link a browser uploads one file to (`PUT`), of its type (`contentType`) and at most its size (`byteSize`). */
   presignPut(key: string, opts: { byteSize?: number; contentType: string; expiresIn?: number }): string;
   publicUrl(key: string): string;
-  /** Stores an object the server holds whole: a file uploaded through it rather than straight to the storage. */
-  putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void>;
+  /**
+   * Stores an object as its bytes come (`body`), never held whole: a file uploaded through the server rather than
+   * straight to the storage. A body that fails as it's read (a file refused midway) stores nothing.
+   */
+  putObject(key: string, body: StoredBody, opts: { contentType: string }): Promise<void>;
   /**
    * An object's bytes as they come from the storage, with how many there are, or `null` when there's none: the server
    * hands a private file on as it reads it, never holding it whole.
@@ -26,11 +29,17 @@ export interface StoredStream {
   stream: ReadableStream<Uint8Array>;
 }
 
+/** An object's bytes as they're stored: chunks as they come (a request's body), or a few the server holds. */
+export type StoredBody = AsyncIterable<Uint8Array> | Iterable<Uint8Array>;
+
 /**
  * 5-minute cooldown so a credentials rotation that breaks the backend re-warns instead of staying silent forever after
  * the first miss.
  */
 const PUBLIC_URL_WARN_COOLDOWN_MS = 5 * 60 * 1000;
+
+/** The size of each part an upload streams to S3 in: S3's smallest. */
+const S3_PART_BYTES = 5 * 1024 * 1024;
 
 /** The variables S3 storage reads: all set, the files go to the bucket; none, to the server's disk. */
 const S3_VARIABLES = [
@@ -45,6 +54,24 @@ function isNotFound(err: unknown): boolean {
   if (typeof err !== "object" || err === null) return false;
   const e = err as { code?: string; status?: number; statusCode?: number };
   return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
+}
+
+/**
+ * A body as a stream, read as it's pulled: one that fails as it's read fails the stream with its error, which aborts
+ * what S3 was storing (a multipart upload's parts, a plain upload's request) rather than complete it.
+ */
+function toStream(body: StoredBody) {
+  const chunks = Symbol.asyncIterator in body ? body[Symbol.asyncIterator]() : body[Symbol.iterator]();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const next = await chunks.next();
+      if (next.done) controller.close();
+      else controller.enqueue(next.value);
+    },
+    async cancel() {
+      await chunks.return?.();
+    },
+  });
 }
 
 /** Stops a start with no storage it can use (`findStorageKind`), saying what to set. */
@@ -105,8 +132,16 @@ class S3StorageBackend implements StorageBackend {
     }
   }
 
-  async putObject(key: string, data: Uint8Array, opts: { contentType: string }): Promise<void> {
-    await Bun.s3.write(key, data, { type: opts.contentType });
+  /**
+   * Streams a body to the bucket in parts (`S3_PART_BYTES`), one in flight at a time, so an upload holds a part or two,
+   * never the file whole; a body that fails as it's read aborts the upload, storing nothing.
+   */
+  async putObject(key: string, body: StoredBody, opts: { contentType: string }): Promise<void> {
+    await Bun.s3.write(key, new Response(toStream(body)), {
+      type: opts.contentType,
+      partSize: S3_PART_BYTES,
+      queueSize: 1,
+    });
   }
 
   async streamObject(key: string): Promise<StoredStream | null> {

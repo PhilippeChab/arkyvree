@@ -46,7 +46,7 @@ describe("/files", () => {
 
   test("serves a PDF without a sandbox, which would stop its viewer", async () => {
     const key = `blobs/${crypto.randomUUID()}/map.pdf`;
-    await disk.storage.putObject(key, new TextEncoder().encode("%PDF-1.7 map"));
+    await disk.storage.putObject(key, [new TextEncoder().encode("%PDF-1.7 map")]);
     const read = await application.request(`/files/${key}`);
     expect(read.headers.get("content-type")).toBe("application/pdf");
     expect(read.headers.get("content-security-policy")).toBeNull();

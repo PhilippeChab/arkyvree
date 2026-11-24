@@ -9,9 +9,13 @@ import type { DocumentFile } from "./documents.ts";
 /** A document's file's route: its bytes, through the server, to whoever sees the document. */
 const fileApi = rpc.api.campaigns[":id"].documents[":documentId"].file;
 
-/** Replaces a document's file with another (`file`), which its Game Master picked and confirmed. */
+/**
+ * Replaces a document's file with another (`file`), which its Game Master picked and confirmed: its bytes the request's
+ * body, which the server streams to the storage, and its name the query's.
+ */
 export function replaceDocumentFileFn(campaignId: string, documentId: string, file: File) {
-  return parseResponse(fileApi.$put({ param: { id: campaignId, documentId }, form: { file } }));
+  const query = { filename: file.name };
+  return parseResponse(fileApi.$put({ param: { id: campaignId, documentId }, query }, { init: { body: file } }));
 }
 
 /** Where a document's file is read, its upload time in it: a replaced one is read anew, never from a cache. */

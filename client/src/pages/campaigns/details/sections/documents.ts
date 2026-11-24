@@ -2,13 +2,23 @@
 
 import type { InferRequestType, InferResponseType } from "hono/client";
 
-import { DocumentIcon, FolderIcon, ImageOutlinedIcon, NoteIcon, PdfIcon } from "@/client/src/components/icons/index.ts";
+import {
+  DocumentIcon,
+  FolderIcon,
+  ImageOutlinedIcon,
+  NoteIcon,
+  PdfIcon,
+  WordDocumentIcon,
+} from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import {
   ALLOWED_DOCUMENT_FILE_TYPES,
   DOCUMENT_TEXT_EXTENSIONS,
+  DOCUMENT_WORD_EXTENSIONS,
+  isNamedAs,
   MAX_DOCUMENT_FILE_BYTES,
+  WORD_DOCUMENT_TYPE,
 } from "@/shared/attachments.ts";
 import {
   countDocumentDepth,
@@ -56,18 +66,22 @@ export type DocumentEdit = InferRequestType<DocumentsApi[":documentId"]["$put"]>
 /** A document's file, as its tree says: its name, its type, its size and when it was uploaded. */
 export type DocumentFile = NonNullable<CampaignDocument["file"]>;
 
-/** What a document's file is, in words, by its kind (`readDocumentIconKind`). */
-const FILE_KIND_LABELS = { Pdf: "PDF", Picture: "Picture", Text: "Text file" } as const;
+/** What a document takes, in words, after an article: its file's field's hint and its refusal say it. */
+const DOCUMENT_FILE_KINDS = "picture (PNG, JPEG, WebP, GIF), a PDF, a Word document (.docx) or a text file (.txt, .md)";
 
-/** The files a document takes, as a file input's `accept` lists them: their types, and a text file's names. */
+/** What a document's file is, in words, by its kind (`readDocumentIconKind`). */
+const FILE_KIND_LABELS = { Pdf: "PDF", Picture: "Picture", Text: "Text file", Word: "Word document" } as const;
+
+/** The files a document takes, as a file input's `accept` lists them: their types, and a text or Word file's names. */
 export const DOCUMENT_FILE_ACCEPT = [
   ...ALLOWED_DOCUMENT_FILE_TYPES.filter((type) => type !== "text/plain"),
   ...DOCUMENT_TEXT_EXTENSIONS,
+  ...DOCUMENT_WORD_EXTENSIONS,
 ].join(",");
 
 /**
- * Each item's icon (`readDocumentIconKind`): a folder's, a note's, and a document's by its file, a picture's, a PDF's
- * or a text file's.
+ * Each item's icon (`readDocumentIconKind`): a folder's, a note's, and a document's by its file, a picture's, a PDF's,
+ * a Word document's or a text file's.
  */
 export const DOCUMENT_ICONS = {
   Folder: FolderIcon,
@@ -75,6 +89,7 @@ export const DOCUMENT_ICONS = {
   Pdf: PdfIcon,
   Picture: ImageOutlinedIcon,
   Text: DocumentIcon,
+  Word: WordDocumentIcon,
 } as const;
 
 /** A new item's form: Private, as the server stores one, until its Game Master shows it. */
@@ -96,15 +111,10 @@ export const VISIBILITY_DESCRIPTIONS: Record<DocumentVisibility, string> = {
   Selected: "The players picked, where its folders show it",
 };
 
-/** A file's size, in the unit that reads best: "820 KB", "2.4 MB", "10 MB". */
+/** A file's size, in the unit that reads best: "820 KB", "2.4 MB", "25 MB". */
 function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
-}
-
-/** Whether a file is named as a text file (`DOCUMENT_TEXT_EXTENSIONS`), which a document takes as plain text. */
-function isNamedAsText(filename: string) {
-  return DOCUMENT_TEXT_EXTENSIONS.some((extension) => filename.toLowerCase().endsWith(extension));
 }
 
 /** Whether two lists of seats name the same seats, in any order. */
@@ -120,6 +130,11 @@ function toNode(item: CampaignDocument): DocumentNode {
 /** The tab's tree, by id, as the shared rules read it (`shared/campaignDocuments.ts`). */
 export function buildTree(items: readonly CampaignDocument[]) {
   return new Map(items.map((item) => [item.id, toNode(item)]));
+}
+
+/** What a document takes, in words, under its file's field before one is picked: its kinds and its size at most. */
+export function describeAcceptedFiles() {
+  return `A ${DOCUMENT_FILE_KINDS}, ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;
 }
 
 /**
@@ -144,7 +159,10 @@ export function describeContents(items: readonly CampaignDocument[], folderId: s
   return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts.join("");
 }
 
-/** What a document's file is, in words, under its name: "PDF · 2.4 MB", "Picture · 820 KB", "Text file · 2 KB". */
+/**
+ * What a document's file is, in words, under its name: "PDF · 2.4 MB", "Picture · 820 KB", "Word document · 47 KB",
+ * "Text file · 2 KB".
+ */
 export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "contentType">) {
   return `${FILE_KIND_LABELS[readFileKind(file)]} · ${formatFileSize(file.byteSize)}`;
 }
@@ -155,10 +173,10 @@ export function describeDocumentFile(file: Pick<DocumentFile, "byteSize" | "cont
  * it can.
  */
 export function describeFileRefusal(file: Pick<File, "name" | "size" | "type">) {
-  // A text file by its name alone, as the server takes it, whatever the browser calls it
+  // A text file or a Word document by its name alone, as the server takes it, whatever the browser calls it
   const typed = file.type !== "text/plain" && (ALLOWED_DOCUMENT_FILE_TYPES as readonly string[]).includes(file.type);
-  if (file.type && !typed && !isNamedAsText(file.name))
-    return "Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)";
+  const named = isNamedAs(file.name, DOCUMENT_TEXT_EXTENSIONS) || isNamedAs(file.name, DOCUMENT_WORD_EXTENSIONS);
+  if (file.type && !typed && !named) return `Pick a ${DOCUMENT_FILE_KINDS}`;
   if (file.size > MAX_DOCUMENT_FILE_BYTES) return `Pick a file of ${formatFileSize(MAX_DOCUMENT_FILE_BYTES)} at most`;
   return null;
 }
@@ -225,10 +243,11 @@ export function readDocumentIconKind(
   return item.file ? readFileKind(item.file) : "Text";
 }
 
-/** What a document's file is, which its page shows it by: a picture, a PDF, or a text file. */
+/** What a document's file is, which its page shows it by: a picture, a PDF, a Word document, or a text file. */
 export function readFileKind(file: Pick<DocumentFile, "contentType">) {
   if (file.contentType.startsWith("image/")) return "Picture";
-  return file.contentType === "application/pdf" ? "Pdf" : "Text";
+  if (file.contentType === "application/pdf") return "Pdf";
+  return file.contentType === WORD_DOCUMENT_TYPE ? "Word" : "Text";
 }
 
 /**
@@ -249,10 +268,11 @@ export function readSeatNames(players: readonly CampaignPlayer[]) {
 
 /**
  * The type a file picked for a document is stored as, as far as the browser tells: plain text for one named as a text
- * file, whatever the browser calls it.
+ * file, and a Word document for one named as one, whatever the browser calls it.
  */
 export function toContentType(file: Pick<File, "name" | "type">) {
-  return isNamedAsText(file.name) ? "text/plain" : file.type;
+  if (isNamedAs(file.name, DOCUMENT_TEXT_EXTENSIONS)) return "text/plain";
+  return isNamedAs(file.name, DOCUMENT_WORD_EXTENSIONS) ? WORD_DOCUMENT_TYPE : file.type;
 }
 
 /** A new folder's or note's form's values as its create sends them: seats only for a Selected setting, a note's text. */
@@ -278,12 +298,18 @@ export function toDocumentName(filename: string) {
 }
 
 /**
- * A new document's form's values as its upload sends them, a form's fields: its file (`file`), its name, its folder
- * (`parentId`, none at the top), and seats only for a Selected setting.
+ * A new document's form's values as its upload's query sends them, beside its file's bytes: its file's name (`file`),
+ * its own, its folder (`parentId`, none at the top), and seats only for a Selected setting.
  */
-export function toDocumentUpload(data: DocumentFormData, file: File, parentId: string | null) {
+export function toDocumentUpload(data: DocumentFormData, file: Pick<File, "name">, parentId: string | null) {
   const readerIds = data.visibility === "Selected" ? data.readerIds : [];
-  return { file, name: data.name, visibility: data.visibility, readerIds, ...(parentId && { parentId }) };
+  return {
+    filename: file.name,
+    name: data.name,
+    visibility: data.visibility,
+    readerIds,
+    ...(parentId && { parentId }),
+  };
 }
 
 /**

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - D&D 3.5 and Pathfinder 1: epic levels
+- Campaign documents take Word documents (.docx), and files up to 25 MB
 
 ## 0.8.0 — 2026-11-14
 

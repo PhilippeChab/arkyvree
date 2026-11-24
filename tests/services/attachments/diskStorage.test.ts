@@ -107,7 +107,9 @@ describe("attachments on the server's disk", () => {
   });
 
   test("a private file the server stores reads back through it, as it was stored", async () => {
+    const { session } = await createTestUser();
     const pending = await AttachmentsService.createPendingFile(
+      session,
       DOCUMENT_FILE_SLOT.recordType,
       new File([new TextEncoder().encode("%PDF-1.7 map")], "map.pdf", { type: "application/pdf" }),
     );
@@ -121,7 +123,7 @@ describe("attachments on the server's disk", () => {
 
   test("the sweep deletes a pending upload's file and row once it's old enough, and an upload cut short", async () => {
     const key = `blobs/${crypto.randomUUID()}/old.png`;
-    await disk.storage.putObject(key, png(100));
+    await disk.storage.putObject(key, [png(100)]);
     const [blob] = await Blobs.create(db, { key, filename: "old.png", contentType: "image/png", byteSize: 100 });
     await Blobs.update(db, { createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() }, { id: blob!.id });
 

@@ -6,8 +6,8 @@ import { compareInConstantTime } from "@/server/constantTime.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 
-import { detectDocumentFileType, detectImageType } from "./fileTypes.ts";
-import type { StorageBackend, StoredStream } from "./ObjectStorage.ts";
+import { detectDocumentFileType, detectImageType, FILE_HEAD_BYTES } from "./fileTypes.ts";
+import type { StorageBackend, StoredBody, StoredStream } from "./ObjectStorage.ts";
 
 /** What a signed upload's link carries, which its signature covers: the type and size it may hold, and until when. */
 export interface UploadGrant {
@@ -15,9 +15,6 @@ export interface UploadGrant {
   contentType: string;
   expires: number;
 }
-
-/** How many bytes of a file its type is read from: enough for every signature `fileTypes.ts` reads. */
-const HEAD_BYTES = 16;
 
 /**
  * A stored file's key, as `AttachmentsService.buildKey` makes it: `blobs/<its blob's id>/<its name, made safe>`. A name
@@ -52,13 +49,17 @@ function signingSecret() {
   return secret;
 }
 
-/** The type a stored file's bytes say it is: an image's, a PDF's, or text, the only files the app stores. */
-function typeOfStored(head: Uint8Array) {
-  return detectDocumentFileType(head, "") ?? "text/plain; charset=utf-8";
+/**
+ * The type a stored file's bytes say it is, and its key's name for a Word document: an image's, a PDF's, a Word
+ * document's, or text, the only files the app stores.
+ */
+function typeOfStored(head: Uint8Array, key: string) {
+  const type = detectDocumentFileType(head, key);
+  return !type || type === "text/plain" ? "text/plain; charset=utf-8" : type;
 }
 
-/** Writes a body to a file as it comes, refused once it's longer than `maxBytes`. */
-async function writeLimited(file: string, body: ReadableStream<Uint8Array>, maxBytes: number) {
+/** Writes a body to a file as it comes, never held whole, refused once it's longer than `maxBytes`. */
+async function writeLimited(file: string, body: StoredBody, maxBytes = Infinity) {
   const writer = Bun.file(file).writer();
   let written = 0;
   try {
@@ -168,8 +169,8 @@ export class DiskStorageBackend implements StorageBackend {
     return stats?.isFile() ? { size: stats.size, etag: `${stats.size}-${Math.floor(stats.mtimeMs)}` } : null;
   }
 
-  async putObject(key: string, data: Uint8Array): Promise<void> {
-    await this.writeAtomically(this.pathOf(key), (temporary) => Bun.write(temporary, data).then(() => undefined));
+  async putObject(key: string, body: StoredBody): Promise<void> {
+    await this.writeAtomically(this.pathOf(key), (temporary) => writeLimited(temporary, body));
   }
 
   /**
@@ -188,7 +189,7 @@ export class DiskStorageBackend implements StorageBackend {
       file,
       async (temporary) => {
         await writeLimited(temporary, body, grant.byteSize);
-        const head = new Uint8Array(await Bun.file(temporary).slice(0, HEAD_BYTES).arrayBuffer());
+        const head = new Uint8Array(await Bun.file(temporary).slice(0, FILE_HEAD_BYTES).arrayBuffer());
         if (!detectImageType(head)) throw new BadRequestError("The upload isn't a PNG, JPEG, WebP or GIF image");
       },
       true,
@@ -210,8 +211,8 @@ export class DiskStorageBackend implements StorageBackend {
   async serve(key: string) {
     const stored = await this.streamObject(key);
     if (!stored) throw new NotFoundError("File not found");
-    const head = new Uint8Array(await Bun.file(this.pathOf(key)).slice(0, HEAD_BYTES).arrayBuffer());
-    return { ...stored, contentType: typeOfStored(head) };
+    const head = new Uint8Array(await Bun.file(this.pathOf(key)).slice(0, FILE_HEAD_BYTES).arrayBuffer());
+    return { ...stored, contentType: typeOfStored(head, key) };
   }
 
   async streamObject(key: string): Promise<StoredStream | null> {

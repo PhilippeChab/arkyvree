@@ -4,6 +4,9 @@ import {
   type ALLOWED_DOCUMENT_FILE_TYPES,
   type ALLOWED_IMAGE_TYPES,
   DOCUMENT_TEXT_EXTENSIONS,
+  DOCUMENT_WORD_EXTENSIONS,
+  isNamedAs,
+  WORD_DOCUMENT_TYPE,
 } from "@/shared/attachments.ts";
 
 /** A type a campaign's document's file may be. */
@@ -11,6 +14,9 @@ type AllowedDocumentFileType = (typeof ALLOWED_DOCUMENT_FILE_TYPES)[number];
 
 /** An image type an upload may be. */
 type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
+
+/** A control character, which a binary file holds and a text file doesn't, but its tabs and line ends. */
+const CONTROL_CHARACTER = /[\p{Cc}--[\t\n\r\f]]/v;
 
 /** The bytes a PDF opens with: `%PDF-`. */
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d];
@@ -29,28 +35,44 @@ const SIGNATURES: Record<AllowedImageType, readonly (readonly [offset: number, b
   ],
 };
 
+/** The bytes a ZIP opens with (`PK\x03\x04`), which a Word document (`.docx`) is. */
+const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04];
+
+/** How many bytes a file's type is read from, its head: enough for every signature this file reads. */
+export const FILE_HEAD_BYTES = 16;
+
 /**
- * Whether a file's bytes are text: UTF-8, with no control character but its tabs and line ends, which a binary file
- * holds.
+ * Checks a text file's bytes as they come, chunk by chunk (`push`, then `end`), never held whole: whether they're
+ * UTF-8, a character cut between two chunks read whole, with no control character (`CONTROL_CHARACTER`).
  */
-function isText(data: Uint8Array) {
-  try {
-    return !/[\p{Cc}--[\t\n\r\f]]/v.test(new TextDecoder("utf-8", { fatal: true }).decode(data));
-  } catch {
-    return false;
-  }
+export function createTextCheck() {
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const isText = (read: () => string) => {
+    try {
+      return !CONTROL_CHARACTER.test(read());
+    } catch {
+      return false;
+    }
+  };
+  return {
+    end: () => isText(() => decoder.decode()),
+    push: (chunk: Uint8Array) => isText(() => decoder.decode(chunk, { stream: true })),
+  };
 }
 
 /**
- * The type of a campaign's document's file: the one its bytes open with (an image's, or a PDF's), or plain text for a
- * file named as one (`filename`: `DOCUMENT_TEXT_EXTENSIONS`) whose bytes are text; null for any other file.
+ * The type of a campaign's document's file, by its head (`head`, its first `FILE_HEAD_BYTES`): the one its bytes open
+ * with (an image's, or a PDF's), a Word document for a ZIP named as one (`filename`: `DOCUMENT_WORD_EXTENSIONS`), or
+ * plain text for a file named as one (`DOCUMENT_TEXT_EXTENSIONS`), whose bytes are checked as they're stored
+ * (`createTextCheck`); null for any other file.
  */
-export function detectDocumentFileType(data: Uint8Array, filename: string): AllowedDocumentFileType | null {
-  if (PDF_SIGNATURE.every((byte, i) => data[i] === byte)) return "application/pdf";
-  const image = detectImageType(data);
+export function detectDocumentFileType(head: Uint8Array, filename: string): AllowedDocumentFileType | null {
+  if (PDF_SIGNATURE.every((byte, i) => head[i] === byte)) return "application/pdf";
+  const image = detectImageType(head);
   if (image) return image;
-  const named = DOCUMENT_TEXT_EXTENSIONS.some((extension) => filename.toLowerCase().endsWith(extension));
-  return named && isText(data) ? "text/plain" : null;
+  if (ZIP_SIGNATURE.every((byte, i) => head[i] === byte))
+    return isNamedAs(filename, DOCUMENT_WORD_EXTENSIONS) ? WORD_DOCUMENT_TYPE : null;
+  return isNamedAs(filename, DOCUMENT_TEXT_EXTENSIONS) ? "text/plain" : null;
 }
 
 /** The image type a file's bytes open with (PNG, JPEG, GIF, WebP), or null for any other file. */

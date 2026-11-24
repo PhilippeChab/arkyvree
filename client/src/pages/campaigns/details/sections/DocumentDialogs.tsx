@@ -35,6 +35,7 @@ import { DOCUMENT_VISIBILITY_OPTIONS, MAX_DOCUMENT_NAME_LENGTH } from "@/shared/
 import {
   type AudienceChange,
   type CampaignDocument,
+  describeAcceptedFiles,
   describeContents,
   describeDocumentFile,
   describeFileRefusal,
@@ -155,8 +156,9 @@ function AudienceNote({ change, doing, loadError }: AudienceNoteProps) {
 }
 
 /**
- * A new document's file (a picture, a PDF or a text file), picked before its dialog opened and checked as it's picked:
- * a field as the form's others are, its icon and name, what picks another at its end, and its kind and size under it.
+ * A new document's file (a picture, a PDF, a Word document or a text file), picked before its dialog opened and
+ * checked as it's picked: a field as the form's others are, its icon and name, what picks another at its end, and its
+ * kind and size under it.
  */
 function DocumentFileField({ disabled, form }: DocumentFileFieldProps) {
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
@@ -170,9 +172,7 @@ function DocumentFileField({ disabled, form }: DocumentFileFieldProps) {
   });
   const shown = picked && { name: picked.name, byteSize: picked.size, contentType: toContentType(picked) };
   const ShownIcon = DOCUMENT_ICONS[readDocumentIconKind({ kind: "Document", file: shown })];
-  const said = shown
-    ? describeDocumentFile(shown)
-    : "A picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md), 10 MB at most";
+  const said = shown ? describeDocumentFile(shown) : describeAcceptedFiles();
 
   return (
     <>

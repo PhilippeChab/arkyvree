@@ -17,6 +17,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import {
   DeleteIcon,
+  DownloadIcon,
   EditIcon,
   OpenInNewIcon,
   UploadFileIcon,
@@ -64,7 +65,8 @@ const PICTURE_MAX_HEIGHT = "60vh";
 /**
  * A document's file, by what it is. A picture is shown whole, alone, and opens at its full size when it's clicked; a
  * text file's words are shown, over the link that opens it in its own tab (one too large to show has the link alone).
- * A PDF is its file's name, kind and size, and what opens it in its own tab, the browser's reader.
+ * A PDF is its file's name, kind and size, and what opens it in its own tab, the browser's reader; a Word document,
+ * which no browser shows, the same with what downloads it.
  */
 function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFilePanelProps) {
   const kind = readFileKind(file);
@@ -72,7 +74,7 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
   const url = toDocumentFileUrl(campaignId, documentId, file);
   const text = useQuery(campaignDocumentTextQuery(campaignId, documentId, file));
 
-  if (kind === "Pdf") {
+  if (kind === "Pdf" || kind === "Word") {
     return (
       <Panel>
         <Stack
@@ -91,16 +93,28 @@ function DocumentFilePanel({ campaignId, documentId, file, name }: DocumentFileP
               </Typography>
             </Box>
           </Stack>
-          <Button
-            variant="outlined"
-            startIcon={<OpenInNewIcon />}
-            href={url}
-            target="_blank"
-            rel="noopener"
-            sx={{ flexShrink: 0 }}
-          >
-            Open PDF
-          </Button>
+          {kind === "Pdf" ? (
+            <Button
+              variant="outlined"
+              startIcon={<OpenInNewIcon />}
+              href={url}
+              target="_blank"
+              rel="noopener"
+              sx={{ flexShrink: 0 }}
+            >
+              Open PDF
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              href={url}
+              download={file.name}
+              sx={{ flexShrink: 0 }}
+            >
+              Download
+            </Button>
+          )}
         </Stack>
       </Panel>
     );
