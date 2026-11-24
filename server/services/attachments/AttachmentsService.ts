@@ -133,26 +133,31 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
 /** The longest name a file is stored under, as most file systems take. */
 const MAX_FILENAME_LENGTH = 255;
 
-/**
- * How many uploads the server stores at once, the others waiting their turn (`UploadQueue`): each holds up to about
- * 17 MB as it's streamed to S3 (its part, as Bun's writer holds it), so they hold under 200 MB together.
- */
-const MAX_UPLOADS_AT_ONCE = 10;
-
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * The uploads the server stores at once, the others waiting their turn (`UploadQueue`): each holds up to about 17 MB
+ * as it's streamed to S3 (its part, as Bun holds it), so they hold under 200 MB together. One waits a minute at most,
+ * and a user holds 3 at most, running or waiting, so none takes every turn.
+ */
+const UPLOAD_QUEUE = { limit: 10, maxWaitMs: 60_000, perOwner: 3 };
+
+/** The longest an upload takes, once its turn has come: one that trickles in is refused, freeing its turn. */
+const UPLOAD_TIME_LIMIT_MS = 10 * 60_000;
+
+/**
  * A file's bytes as they're stored: its head (`head`, read for its type), then the rest as it comes (`reader`),
- * counted into `read`, refused once past `maxBytes`, and for a text file (`text`), once they stop being text
- * (`createTextCheck`, `takes` its refusal's words). A refusal fails the read, and the storage keeps nothing.
+ * counted into `read`, refused once past `maxBytes`, past its `deadline`, and for a text file (`text`), once they stop
+ * being text (`createTextCheck`, `takes` its refusal's words). A refusal fails the read, and the storage keeps nothing.
  */
 async function* readChecked(
   head: Uint8Array,
   reader: ReadableStreamDefaultReader<Uint8Array>,
-  check: { maxBytes: number; read: { bytes: number }; takes: string; text: boolean },
+  check: { deadline: number; maxBytes: number; read: { bytes: number }; takes: string; text: boolean },
 ) {
   const textCheck = check.text ? createTextCheck() : null;
   const accept = (chunk: Uint8Array) => {
+    if (Date.now() > check.deadline) throw new BadRequestError("The upload took too long: try a faster connection");
     check.read.bytes += chunk.byteLength;
     if (check.read.bytes > check.maxBytes)
       throw new BadRequestError(`File exceeds maximum size of ${check.maxBytes} bytes`);
@@ -160,7 +165,7 @@ async function* readChecked(
     return chunk;
   };
   if (head.byteLength > 0) yield accept(head);
-  for (let next = await reader.read(); !next.done; next = await reader.read()) yield accept(next.value);
+  for (let next = await readNext(reader); !next.done; next = await readNext(reader)) yield accept(next.value);
   if (textCheck && !textCheck.end()) throw new BadRequestError(`The file isn't ${check.takes}`);
 }
 
@@ -169,7 +174,7 @@ async function readHead(reader: ReadableStreamDefaultReader<Uint8Array>) {
   const chunks: Uint8Array[] = [];
   let length = 0;
   while (length < FILE_HEAD_BYTES) {
-    const { done, value } = await reader.read();
+    const { done, value } = await readNext(reader);
     if (done) break;
     chunks.push(value);
     length += value.byteLength;
@@ -177,9 +182,21 @@ async function readHead(reader: ReadableStreamDefaultReader<Uint8Array>) {
   return Buffer.concat(chunks);
 }
 
+/**
+ * A body's next chunk: one cut off before its end (its client gone, its connection timed out) refused as a bad
+ * request, a client's doing, never the server's error.
+ */
+async function readNext(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  try {
+    return await reader.read();
+  } catch {
+    throw new BadRequestError("The upload was cut off before its end");
+  }
+}
+
 class AttachmentsService {
-  /** The uploads being stored, `MAX_UPLOADS_AT_ONCE` at most, and those waiting their turn. */
-  private readonly uploads = new UploadQueue(MAX_UPLOADS_AT_ONCE);
+  /** The uploads being stored, and those waiting their turn (`UPLOAD_QUEUE`). */
+  private readonly uploads = new UploadQueue(UPLOAD_QUEUE);
 
   /** Refuses a record type whose files go through the server alone (`directUpload`: a campaign document's). */
   private assertDirectUpload(recordType: string) {
@@ -373,11 +390,11 @@ class AttachmentsService {
    * Stores a file a record type takes (`recordType`), ahead of its attach, streamed, never held whole: its type read
    * from its head (and its name, for one with no signature), within its record type's policy, as a pending blob first,
    * so one a crash leaves unattached is swept with its row, then put in storage as its bytes come, checked as they go
-   * (`readChecked`), and its size noted once they're all stored, its turn waited for first (`UploadQueue`). A failed
-   * write deletes what it stored. Answers its blob.
+   * (`readChecked`), and its size and upload time noted once they're all stored, its turn waited for first, its
+   * uploader's (`owner`, `UploadQueue`). A failed write deletes what it stored. Answers its blob.
    */
-  private async storeFile(recordType: string, file: IncomingFile) {
-    return await this.uploads.run(() => this.streamFile(recordType, file));
+  private async storeFile(owner: string, recordType: string, file: IncomingFile) {
+    return await this.uploads.run(owner, () => this.streamFile(recordType, file));
   }
 
   /** Stores a file as `storeFile` says, once its turn has come. */
@@ -386,6 +403,7 @@ class AttachmentsService {
     const filename = this.cleanFilename(file.name);
     const reader = file.stream().getReader();
     try {
+      const deadline = Date.now() + UPLOAD_TIME_LIMIT_MS;
       const head = await readHead(reader);
       const contentType = config.detect(head, filename);
       if (!contentType) throw new BadRequestError(`The file isn't ${config.takes}`);
@@ -393,18 +411,21 @@ class AttachmentsService {
 
       const id = randomUUID();
       const key = this.buildKey(id, filename);
-      // Its size, known once it's stored
+      // Its size and upload time, known once it's stored
       await withNewBlob((tx) => Blobs.create(tx, { id, key, filename, contentType, byteSize: 0 }));
       try {
         const read = { bytes: 0 };
         const check = {
+          deadline,
           maxBytes: config.policy.maxBytes,
           read,
           takes: config.takes,
           text: contentType === "text/plain",
         };
         await ObjectStorage.get().putObject(key, readChecked(head, reader, check), { contentType });
-        await withNewBlob((tx) => Blobs.update(tx, { byteSize: read.bytes }, { id }));
+        // Uploaded once it's stored whole, which its page says, and the sweep of pending blobs counts from
+        const uploaded = { byteSize: read.bytes, createdAt: new Date().toISOString() };
+        await withNewBlob((tx) => Blobs.update(tx, uploaded, { id }));
       } catch (error) {
         await this.purgeOrphan({ id, key });
         throw error;
@@ -427,7 +448,7 @@ class AttachmentsService {
   ) {
     await this.assertCanAttach(db, session, slot.recordType, slot.recordId);
     this.assertValidName(slot.recordType, slot.name);
-    const stored = await this.storeFile(slot.recordType, file);
+    const stored = await this.storeFile(session.userId, slot.recordType, file);
 
     let result;
     try {
@@ -552,11 +573,12 @@ class AttachmentsService {
 
   /**
    * Stores a private file (a campaign document's) ahead of the record it's for, which its write then attaches
-   * (`attachPendingFile`) or, failing, removes (`removePendingFile`). Its caller has asked who may. Answers its blob.
+   * (`attachPendingFile`) or, failing, removes (`removePendingFile`). Its caller has asked who may (`session`). Answers
+   * its blob.
    */
-  async createPendingFile(recordType: string, file: IncomingFile) {
+  async createPendingFile(session: Session, recordType: string, file: IncomingFile) {
     this.assertPrivateType(recordType);
-    return await this.storeFile(recordType, file);
+    return await this.storeFile(session.userId, recordType, file);
   }
 
   /** Removes a display asset (an avatar, a portrait): a private file's attachment is answered as an unknown one. */

@@ -107,7 +107,9 @@ describe("attachments on the server's disk", () => {
   });
 
   test("a private file the server stores reads back through it, as it was stored", async () => {
+    const { session } = await createTestUser();
     const pending = await AttachmentsService.createPendingFile(
+      session,
       DOCUMENT_FILE_SLOT.recordType,
       new File([new TextEncoder().encode("%PDF-1.7 map")], "map.pdf", { type: "application/pdf" }),
     );

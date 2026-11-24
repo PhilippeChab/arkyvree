@@ -56,6 +56,24 @@ function isNotFound(err: unknown): boolean {
   return e.code === "NoSuchKey" || e.status === 404 || e.statusCode === 404;
 }
 
+/**
+ * A body as a stream, read as it's pulled: one that fails as it's read fails the stream with its error, which aborts
+ * what S3 was storing (a multipart upload's parts, a plain upload's request) rather than complete it.
+ */
+function toStream(body: StoredBody) {
+  const chunks = Symbol.asyncIterator in body ? body[Symbol.asyncIterator]() : body[Symbol.iterator]();
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const next = await chunks.next();
+      if (next.done) controller.close();
+      else controller.enqueue(next.value);
+    },
+    async cancel() {
+      await chunks.return?.();
+    },
+  });
+}
+
 /** Stops a start with no storage it can use (`findStorageKind`), saying what to set. */
 export function checkStorageConfiguration(processName: string) {
   if (findStorageKind()) return;
@@ -119,25 +137,11 @@ class S3StorageBackend implements StorageBackend {
    * never the file whole; a body that fails as it's read aborts the upload, storing nothing.
    */
   async putObject(key: string, body: StoredBody, opts: { contentType: string }): Promise<void> {
-    const writer = Bun.s3.file(key).writer({ type: opts.contentType, partSize: S3_PART_BYTES, queueSize: 1 });
-    try {
-      let buffered = 0;
-      for await (const chunk of body) {
-        await writer.write(chunk);
-        buffered += chunk.byteLength;
-        // A part's worth sent before more is read: the writer takes chunks faster than the network, and would hold them
-        if (buffered >= S3_PART_BYTES) {
-          await writer.flush();
-          buffered = 0;
-        }
-      }
-    } catch (error) {
-      await Promise.resolve(writer.end(error instanceof Error ? error : new Error(String(error)))).catch(
-        () => undefined,
-      );
-      throw error;
-    }
-    await writer.end();
+    await Bun.s3.write(key, new Response(toStream(body)), {
+      type: opts.contentType,
+      partSize: S3_PART_BYTES,
+      queueSize: 1,
+    });
   }
 
   async streamObject(key: string): Promise<StoredStream | null> {

@@ -164,6 +164,18 @@ describe("CampaignDocumentFilesService", () => {
     expect(upload(huge)).rejects.toEqual(
       new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`),
     );
+    // A body cut off midway (its client gone) is the client's doing, refused as a bad request
+    const cut = {
+      name: "cut.png",
+      stream: () =>
+        new ReadableStream<Uint8Array<ArrayBuffer>>({
+          pull(controller) {
+            controller.enqueue(new Uint8Array(PNG));
+            controller.error(new Error("The connection was closed."));
+          },
+        }),
+    };
+    expect(upload(cut)).rejects.toEqual(new BadRequestError("The upload was cut off before its end"));
     expect(stored.size).toBe(1);
     expect((await CampaignDocumentsService.getDocuments(gm, campaign.id)).items).toHaveLength(1);
     expect(

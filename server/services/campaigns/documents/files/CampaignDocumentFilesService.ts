@@ -39,7 +39,7 @@ class CampaignDocumentFilesService {
   async createDocumentFile(session: Session, campaignId: string, document: NewDocumentFile, file: IncomingFile) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
     policy.canManageDocuments();
-    const pending = await AttachmentsService.createPendingFile(DOCUMENT_FILE_SLOT.recordType, file);
+    const pending = await AttachmentsService.createPendingFile(session, DOCUMENT_FILE_SLOT.recordType, file);
     try {
       return await CampaignDocumentsService.createDocument(
         session,

@@ -38,6 +38,12 @@ const queryReaderIds = z
   .transform((ids) => (ids === undefined ? [] : [ids].flat()));
 
 /**
+ * How long an upload's connection may go without a byte, in seconds, past Bun's 10: one waiting its turn
+ * (`UploadQueue`, a minute at most) reads none, nor one whose last part S3 is still storing.
+ */
+const UPLOAD_IDLE_SECONDS = 120;
+
+/**
  * A file's `Content-Disposition`, under its name: shown in the browser, or saved (`attachment`) for a Word document,
  * which no browser shows. An ASCII name for the browsers that read no other, and its own (RFC 5987), whose encoding
  * escapes what `encodeURIComponent` leaves (`'`, `(`, `)`, `*`), which a browser would read as its syntax and drop the
@@ -58,6 +64,9 @@ function toDisposition(filename: string, contentType: string) {
  * sends no body.
  */
 function toIncomingFile(c: Context, name: string) {
+  // Bun's server, which a test's request runs without
+  const server = c.env as Partial<Pick<Bun.Server<unknown>, "timeout">> | undefined;
+  server?.timeout?.(c.req.raw, UPLOAD_IDLE_SECONDS);
   return { name, stream: () => c.req.raw.body ?? new Response(new Uint8Array()).body! };
 }
 
