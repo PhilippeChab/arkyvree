@@ -137,10 +137,10 @@ const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The uploads the server stores at once, the others waiting their turn (`UploadQueue`): each holds up to about 17 MB
- * as it's streamed to S3 (its part, as Bun holds it), so they hold under 200 MB together. One waits a minute at most,
+ * as it's streamed to S3 (its part, as Bun holds it), so they hold under 200 MB together. One waits 30 seconds at most,
  * and a user holds 3 at most, running or waiting, so none takes every turn.
  */
-const UPLOAD_QUEUE = { limit: 10, maxWaitMs: 60_000, perOwner: 3 };
+const UPLOAD_QUEUE = { limit: 10, maxWaitMs: 30_000, perOwner: 3 };
 
 /** The longest an upload takes, once its turn has come: one that trickles in is refused, freeing its turn. */
 const UPLOAD_TIME_LIMIT_MS = 10 * 60_000;

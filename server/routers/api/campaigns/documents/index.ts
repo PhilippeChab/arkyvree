@@ -39,7 +39,7 @@ const queryReaderIds = z
 
 /**
  * How long an upload's connection may go without a byte, in seconds, past Bun's 10: one waiting its turn
- * (`UploadQueue`, a minute at most) reads none, nor one whose last part S3 is still storing.
+ * (`UploadQueue`, 30 seconds at most) reads none, nor one whose last part S3 is still storing.
  */
 const UPLOAD_IDLE_SECONDS = 120;
 
