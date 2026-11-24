@@ -52,9 +52,13 @@ function signingSecret() {
   return secret;
 }
 
-/** The type a stored file's bytes say it is: an image's, a PDF's, or text, the only files the app stores. */
-function typeOfStored(head: Uint8Array) {
-  return detectDocumentFileType(head, "") ?? "text/plain; charset=utf-8";
+/**
+ * The type a stored file's bytes say it is, and its key's name for a Word document: an image's, a PDF's, a Word
+ * document's, or text, the only files the app stores.
+ */
+function typeOfStored(head: Uint8Array, key: string) {
+  const type = detectDocumentFileType(head, key);
+  return !type || type === "text/plain" ? "text/plain; charset=utf-8" : type;
 }
 
 /** Writes a body to a file as it comes, refused once it's longer than `maxBytes`. */
@@ -211,7 +215,7 @@ export class DiskStorageBackend implements StorageBackend {
     const stored = await this.streamObject(key);
     if (!stored) throw new NotFoundError("File not found");
     const head = new Uint8Array(await Bun.file(this.pathOf(key)).slice(0, HEAD_BYTES).arrayBuffer());
-    return { ...stored, contentType: typeOfStored(head) };
+    return { ...stored, contentType: typeOfStored(head, key) };
   }
 
   async streamObject(key: string): Promise<StoredStream | null> {

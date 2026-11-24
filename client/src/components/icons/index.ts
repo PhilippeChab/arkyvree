@@ -99,5 +99,6 @@ export {
   EventRepeat as UsesIcon,
   MarkEmailRead as VerifyEmailIcon,
   Visibility as VisibilityIcon,
+  Article as WordDocumentIcon,
 } from "@mui/icons-material";
 export type { SvgIconComponent } from "@mui/icons-material";

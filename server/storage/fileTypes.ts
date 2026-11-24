@@ -4,6 +4,9 @@ import {
   type ALLOWED_DOCUMENT_FILE_TYPES,
   type ALLOWED_IMAGE_TYPES,
   DOCUMENT_TEXT_EXTENSIONS,
+  DOCUMENT_WORD_EXTENSIONS,
+  isNamedAs,
+  WORD_DOCUMENT_TYPE,
 } from "@/shared/attachments.ts";
 
 /** A type a campaign's document's file may be. */
@@ -29,6 +32,9 @@ const SIGNATURES: Record<AllowedImageType, readonly (readonly [offset: number, b
   ],
 };
 
+/** The bytes a ZIP opens with (`PK\x03\x04`), which a Word document (`.docx`) is. */
+const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04];
+
 /**
  * Whether a file's bytes are text: UTF-8, with no control character but its tabs and line ends, which a binary file
  * holds.
@@ -42,15 +48,17 @@ function isText(data: Uint8Array) {
 }
 
 /**
- * The type of a campaign's document's file: the one its bytes open with (an image's, or a PDF's), or plain text for a
- * file named as one (`filename`: `DOCUMENT_TEXT_EXTENSIONS`) whose bytes are text; null for any other file.
+ * The type of a campaign's document's file: the one its bytes open with (an image's, or a PDF's), a Word document for
+ * a ZIP named as one (`filename`: `DOCUMENT_WORD_EXTENSIONS`), or plain text for a file named as one
+ * (`DOCUMENT_TEXT_EXTENSIONS`) whose bytes are text; null for any other file.
  */
 export function detectDocumentFileType(data: Uint8Array, filename: string): AllowedDocumentFileType | null {
   if (PDF_SIGNATURE.every((byte, i) => data[i] === byte)) return "application/pdf";
   const image = detectImageType(data);
   if (image) return image;
-  const named = DOCUMENT_TEXT_EXTENSIONS.some((extension) => filename.toLowerCase().endsWith(extension));
-  return named && isText(data) ? "text/plain" : null;
+  if (ZIP_SIGNATURE.every((byte, i) => data[i] === byte))
+    return isNamedAs(filename, DOCUMENT_WORD_EXTENSIONS) ? WORD_DOCUMENT_TYPE : null;
+  return isNamedAs(filename, DOCUMENT_TEXT_EXTENSIONS) && isText(data) ? "text/plain" : null;
 }
 
 /** The image type a file's bytes open with (PNG, JPEG, GIF, WebP), or null for any other file. */

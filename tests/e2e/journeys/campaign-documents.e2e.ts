@@ -47,7 +47,9 @@ test.describe("A campaign's documents", () => {
         buffer: Buffer.from("<html></html>"),
       });
       await expect(
-        page.getByText("Pick a picture (PNG, JPEG, WebP, GIF), a PDF or a text file (.txt, .md)"),
+        page.getByText(
+          "Pick a picture (PNG, JPEG, WebP, GIF), a PDF, a Word document (.docx) or a text file (.txt, .md)",
+        ),
       ).toBeVisible();
       await expect(page.getByRole("dialog")).toHaveCount(0);
       const letter = Buffer.from("Meet me at the old mill.");

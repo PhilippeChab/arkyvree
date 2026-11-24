@@ -7,7 +7,7 @@ import { attachmentUploadRateLimit, type SessionContext, validate } from "@/serv
 import { documentName, idParam } from "@/server/routers/api/validation.ts";
 import { CampaignDocumentFilesService } from "@/server/services/campaigns/documents/files/index.ts";
 import { CampaignDocumentsService } from "@/server/services/campaigns/documents/index.ts";
-import { MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
+import { MAX_DOCUMENT_FILE_BYTES, WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { DOCUMENT_KINDS, DOCUMENT_VISIBILITY_OPTIONS, MAX_DOCUMENT_BODY_LENGTH } from "@/shared/campaignDocuments.ts";
 
 const documentParams = idParam.extend({ documentId: z.string().uuid() });
@@ -36,17 +36,19 @@ const formReaderIds = z
   .transform((ids) => (ids === undefined ? [] : [ids].flat()));
 
 /**
- * A file's `Content-Disposition`, shown in the browser under its name: an ASCII name for the browsers that read no
- * other, and its own (RFC 5987), whose encoding escapes what `encodeURIComponent` leaves (`'`, `(`, `)`, `*`), which a
- * browser would read as its syntax and drop the name for.
+ * A file's `Content-Disposition`, under its name: shown in the browser, or saved (`attachment`) for a Word document,
+ * which no browser shows. An ASCII name for the browsers that read no other, and its own (RFC 5987), whose encoding
+ * escapes what `encodeURIComponent` leaves (`'`, `(`, `)`, `*`), which a browser would read as its syntax and drop the
+ * name for.
  */
-function toInlineDisposition(filename: string) {
+function toDisposition(filename: string, contentType: string) {
   const ascii = filename.replace(/[^\x20-\x7e]|["\\]/g, "_");
   const encoded = encodeURIComponent(filename).replace(
     /['()*]/g,
     (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
   );
-  return `inline; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+  const kind = contentType === WORD_DOCUMENT_TYPE ? "attachment" : "inline";
+  return `${kind}; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 }
 
 export default new Hono<SessionContext>()
@@ -64,12 +66,12 @@ export default new Hono<SessionContext>()
     const file = await CampaignDocumentFilesService.getDocumentFile(c.var.requestSession, id, documentId);
     const headers = {
       "Cache-Control": "private, no-store",
-      "Content-Disposition": toInlineDisposition(file.filename),
+      "Content-Disposition": toDisposition(file.filename, file.contentType),
       // A text file's bytes are UTF-8 (its upload's check)
       "Content-Type": file.contentType === "text/plain" ? "text/plain; charset=utf-8" : file.contentType,
-      // Nothing a picture or a text file holds runs, were a browser to read it as a page. No more than that: the
-      // browser's own viewer styles what it shows (a picture centered, a text file's lines wrapped), which a stricter
-      // policy would strip. A PDF's reader, the browser's, takes none
+      // Nothing a picture, a Word document or a text file holds runs, were a browser to read it as a page. No more than
+      // that: the browser's own viewer styles what it shows (a picture centered, a text file's lines wrapped), which a
+      // stricter policy would strip. A PDF's reader, the browser's, takes none
       ...(file.contentType !== "application/pdf" && { "Content-Security-Policy": "sandbox" }),
       "X-Content-Type-Options": "nosniff",
     };

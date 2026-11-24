@@ -30,9 +30,9 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Adds a document to a campaign (`campaignId`): the file its Game Master uploads (a picture, a PDF or a text file,
-   * its type read from its bytes), under a name, in a folder, admitting its seats (`document`). Who asks first, before
-   * anything is stored; then its file, stored ahead of it and attached in the write that creates it
+   * Adds a document to a campaign (`campaignId`): the file its Game Master uploads (a picture, a PDF, a Word document
+   * or a text file, its type read from its bytes), under a name, in a folder, admitting its seats (`document`). Who
+   * asks first, before anything is stored; then its file, stored ahead of it and attached in the write that creates it
    * (`CampaignDocumentsService.createDocument`), so no document is ever without its file; a refused creation removes
    * what it stored.
    */
@@ -68,8 +68,9 @@ class CampaignDocumentFilesService {
   }
 
   /**
-   * Puts another file in a document (a picture, a PDF or a text file), replacing the one it held: its campaign's Game
-   * Master's, who asks first, then the document, which is marked changed; whoever sees it has their page refreshed.
+   * Puts another file in a document (a picture, a PDF, a Word document or a text file), replacing the one it held: its
+   * campaign's Game Master's, who asks first, then the document, which is marked changed; whoever sees it has their
+   * page refreshed.
    * Answers what the document now holds: its file's name, type, size and upload time.
    */
   async setDocumentFile(session: Session, campaignId: string, documentId: string, file: File) {

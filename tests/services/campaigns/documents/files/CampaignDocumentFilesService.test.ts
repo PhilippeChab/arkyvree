@@ -9,12 +9,14 @@ import { CampaignDocumentsService } from "@/server/services/campaigns/documents/
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
-import { DOCUMENT_FILE_SLOT, MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
+import { DOCUMENT_FILE_SLOT, MAX_DOCUMENT_FILE_BYTES, WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
+/** The bytes a Word document opens with: a ZIP's. */
+const DOCX = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 1, 2, 3]);
 /** An HTML page, which no document is. */
 const HTML = new TextEncoder().encode("<html><script>alert(1)</script></html>");
 /** The bytes a PDF opens with. */
@@ -96,7 +98,7 @@ describe("CampaignDocumentFilesService", () => {
     expect(inbox.map(({ type }) => type)).toEqual(["shareCampaignDocument"]);
   });
 
-  test("takes a picture, a PDF or a text file, its type read from its bytes and, for text, its name", async () => {
+  test("takes a picture, a PDF, a Word document or a text file, its type read from its bytes and name", async () => {
     const { gm, campaign, upload } = await setup();
     const typeOf = async (file: File) => (await upload(file)).file?.contentType;
     // Whatever its part declares
@@ -104,22 +106,32 @@ describe("CampaignDocumentFilesService", () => {
     expect(await typeOf(fileOf(PNG, "map.txt", "text/plain"))).toBe("image/png");
     expect(await typeOf(fileOf(TEXT, "letter.txt", "application/octet-stream"))).toBe("text/plain");
     expect(await typeOf(fileOf(TEXT, "LETTER.MD"))).toBe("text/plain");
+    expect(await typeOf(fileOf(DOCX, "Notes.DOCX", "application/octet-stream"))).toBe(WORD_DOCUMENT_TYPE);
 
-    // No other file: a page, text under another name, a file whose bytes aren't text, one too large; a note holds none
-    const refused = new BadRequestError("The file isn't a picture, a PDF or a text file (.txt or .md, saved as UTF-8)");
+    // No other file: a page, text under another name, a file whose bytes aren't text, a ZIP that isn't named as a Word
+    // document, a file named as one that isn't a ZIP, one too large; a note holds none
+    const refused = new BadRequestError(
+      "The file isn't a picture, a PDF, a Word document (.docx) or a text file (.txt or .md, saved as UTF-8)",
+    );
     const binary = new Uint8Array([0x4d, 0x5a, 0x00, 0x01, 0xff]);
-    for (const file of [fileOf(HTML, "map.png"), fileOf(HTML, "page.html"), fileOf(binary, "tool.txt")])
-      expect(upload(file)).rejects.toEqual(refused);
+    const files = [
+      fileOf(HTML, "map.png"),
+      fileOf(HTML, "page.html"),
+      fileOf(binary, "tool.txt"),
+      fileOf(DOCX, "maps.zip"),
+      fileOf(TEXT, "letter.docx"),
+    ];
+    for (const file of files) expect(upload(file)).rejects.toEqual(refused);
     const large = new Uint8Array(MAX_DOCUMENT_FILE_BYTES + 1);
     large.set(PNG);
     expect(upload(fileOf(large, "huge.png"))).rejects.toEqual(
       new BadRequestError(`File exceeds maximum size of ${MAX_DOCUMENT_FILE_BYTES} bytes`),
     );
     // What a refused upload stored is removed, and no document is left without its file
-    expect(stored.size).toBe(4);
+    expect(stored.size).toBe(5);
     const { items } = await CampaignDocumentsService.getDocuments(gm, campaign.id);
     expect(items.every(({ file }) => file !== null)).toBe(true);
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
   });
 
   test("stores a file's name without control characters nor the marks that reverse its text, cut short", async () => {

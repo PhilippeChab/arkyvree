@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { Players } from "@/server/repositories/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
-import { MAX_DOCUMENT_FILE_BYTES } from "@/shared/attachments.ts";
+import { MAX_DOCUMENT_FILE_BYTES, WORD_DOCUMENT_TYPE } from "@/shared/attachments.ts";
 import { api, createSignedInUser, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { fakeStorage, streamOf } from "@/tests/support/storage.ts";
@@ -152,6 +152,15 @@ describe("campaign documents", () => {
     const text = await playerFile.$get({ param: { ...param, documentId: map.id } });
     expect(text.headers.get("content-type")).toBe("text/plain; charset=utf-8");
     expect(await text.text()).toBe("Meet me at the old mill.");
+
+    // Then by a Word document, which no browser shows: downloaded, under its name
+    const docx = new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3])], "Prep.docx");
+    await expectOk(document.file.$put({ param: { ...param, documentId: map.id }, form: { file: docx } }));
+    const word = await playerFile.$get({ param: { ...param, documentId: map.id } });
+    expect(Object.fromEntries(word.headers)).toMatchObject({
+      "content-disposition": `attachment; filename="Prep.docx"; filename*=UTF-8''Prep.docx`,
+      "content-type": WORD_DOCUMENT_TYPE,
+    });
 
     // A hidden document's file is an unknown one's, and a player uploads and changes none
     await expectStatus(playerFile.$get({ param: { ...param, documentId: twist.id } }), 404);

@@ -111,7 +111,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       directUpload: false,
       names: [DOCUMENT_FILE_SLOT.name],
       policy: { maxBytes: MAX_DOCUMENT_FILE_BYTES, contentTypes: [...ALLOWED_DOCUMENT_FILE_TYPES] },
-      takes: "a picture, a PDF or a text file (.txt or .md, saved as UTF-8)",
+      takes: "a picture, a PDF, a Word document (.docx) or a text file (.txt or .md, saved as UTF-8)",
     },
   ],
 ]);
